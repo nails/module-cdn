@@ -43,7 +43,7 @@ class NAILS_CDN_Controller extends NAILS_Controller
 		// --------------------------------------------------------------------------
 
 		//	Define variables
-		$this->_cdn_root	= NAILS_PATH . 'modules/cdn/';
+		$this->_cdn_root	= NAILS_PATH . 'module-cdn/cdn/';
 		$this->_cachedir	= DEPLOY_CACHE_DIR;
 
 		$this->_cache_headers_set			= FALSE;
@@ -299,9 +299,9 @@ class NAILS_CDN_Controller extends NAILS_Controller
 		// --------------------------------------------------------------------------
 
 		//	Create the icon
-		$_icon = @imagecreatefrompng( $this->_cdn_root . '_resources/img/fail.png' );
-		$_icon_w = imagesx( $_icon );
-		$_icon_h = imagesy( $_icon );
+		$_icon		= @imagecreatefrompng( $this->_cdn_root . '_resources/img/fail.png' );
+		$_icon_w	= imagesx( $_icon );
+		$_icon_h	= imagesy( $_icon );
 
 		// --------------------------------------------------------------------------
 
