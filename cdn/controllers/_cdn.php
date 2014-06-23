@@ -61,7 +61,7 @@ class NAILS_CDN_Controller extends NAILS_Controller
 		// --------------------------------------------------------------------------
 
 		//	Load CDN library
-		$this->load->library( 'cdn' );
+		$this->load->library( 'cdn/cdn' );
 	}
 
 

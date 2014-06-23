@@ -25,6 +25,7 @@
 	{
 		"php": ">=5.4.0",
 		"nailsapp/common" : "dev-develop",
+		"nailsapp/module-curl" : "dev-develop",
 		"aws/aws-sdk-php": "~2.4.5",
 		"masterexploder/phpthumb": "v2.0",
 		"sybio/gif-creator": "~1.0.0",

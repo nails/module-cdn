@@ -49,7 +49,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Load CDN library
-		$this->load->library( 'cdn' );
+		$this->load->library( 'cdn/cdn' );
 
 		// --------------------------------------------------------------------------
 
@@ -257,7 +257,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Upload the file
-		$this->load->library( 'cdn' );
+		$this->load->library( 'cdn/cdn' );
 		if ( $this->cdn->object_create( 'userfile', $this->data['bucket']->id, $_options ) ) :
 
 			$this->session->set_flashdata( 'success', '<strong>Success!</strong> File uploaded successfully!' );
@@ -295,7 +295,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 		// --------------------------------------------------------------------------
 
-		$this->load->library( 'cdn' );
+		$this->load->library( 'cdn/cdn' );
 
 		//	Fetch the object
 		if ( ! $this->uri->segment( 4 ) ) :
@@ -361,7 +361,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 		// --------------------------------------------------------------------------
 
-		$this->load->library( 'cdn' );
+		$this->load->library( 'cdn/cdn' );
 
 		//	Fetch the object
 		if ( ! $this->uri->segment( 4 ) ) :
