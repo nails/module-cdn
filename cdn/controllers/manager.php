@@ -179,7 +179,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 	public function browse()
 	{
 		//	Unload all styles and load just the nails styles
-		$this->asset->clear_all();
+		$this->asset->clear();
 		$this->asset->load( 'nails.default.css', TRUE );
 
 		//	Fetch files
@@ -192,12 +192,10 @@ class NAILS_Manager extends NAILS_CDN_Controller
 			$this->asset->load( 'jquery.scrollTo/jquery.scrollTo.min.js',	'BOWER' );
 			$this->asset->load( 'tipsy/src/javascripts/jquery.tipsy.js',	'BOWER' );
 			$this->asset->load( 'tipsy/src/stylesheets/tipsy.css',			'BOWER' );
-			$this->asset->load( 'mustache.js/mustache.js',						'BOWER' );
+			$this->asset->load( 'mustache.js/mustache.js',					'BOWER' );
 			$this->asset->load( 'jquery-cookie/jquery.cookie.js',			'BOWER' );
 
 			//	Load other assets
-			$this->asset->load( 'jquery.chosen.min.js',						TRUE );
-			$this->asset->load( 'jquery.chosen.css',						TRUE );
 			$this->asset->load( 'nails.default.min.js',						TRUE );
 			$this->asset->load( 'nails.api.min.js',							TRUE );
 			$this->asset->load( 'nails.cdn.manager.min.js',					TRUE );
