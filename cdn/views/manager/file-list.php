@@ -17,7 +17,7 @@
 		elseif ( $object->mime == 'audio/mpeg' ) :
 
 			//	PDF
-			echo '<div class="icon"><span class="ion-music-note" style="font-size:2.2em"></span></div>';
+			echo '<div class="icon"><span class="fa fa-music" style="font-size:2.2em"></span></div>';
 			$_fancybox_class	= 'cdn-fancybox';
 			$_fancybox_type		= 'iframe';
 			$_url				= cdn_serve( $object->id );
@@ -27,7 +27,7 @@
 		elseif ( $object->mime == 'application/pdf' ) :
 
 			//	PDF
-			echo '<div class="icon"><span class="ion-document" style="font-size:2.2em"></span></div>';
+			echo '<div class="icon"><span class="fa fa-file-o" style="font-size:2.2em"></span></div>';
 			$_fancybox_class	= 'cdn-fancybox';
 			$_fancybox_type		= 'iframe';
 			$_url				= cdn_serve( $object->id );
@@ -36,7 +36,7 @@
 		else :
 
 			//	Generic file, force download
-			echo '<div class="icon"><span class="ion-document" style="font-size:2.2em"></span></div>';
+			echo '<div class="icon"><span class="fa fa-file-o" style="font-size:2.2em"></span></div>';
 			$_fancybox_class	= '';
 			$_fancybox_type		= '';
 			$_url				= cdn_serve( $object->id, TRUE );
