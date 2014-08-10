@@ -79,7 +79,7 @@ class NAILS_CDN_Controller extends NAILS_Controller
 		$this->_set_cache_headers( $_stats[9], $file, $hit );
 
 		//	Work out content type
-		$_mime = $this->cdn->get_mime_type_from_file( $this->_cachedir . $file );
+		$_mime = $this->cdn->get_mime_from_file( $this->_cachedir . $file );
 
 		header( 'Content-Type: ' . $_mime, TRUE );
 

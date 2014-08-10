@@ -14,7 +14,6 @@ class Cdn
 	private $_cdn;
 	private $db;
 	private $_errors;
-	private $_magic;
 	private $_cache_values;
 	private $_cache_keys;
 	private $_cache_method;
@@ -59,46 +58,6 @@ class Cdn
 		//	Load the storage driver
 		$_class = $this->_include_driver( );
 		$this->_cdn = new $_class( $options );
-
-		// --------------------------------------------------------------------------
-
-		//	Define the mime.magic file
-		if ( ! DEPLOY_CDN_MAGIC ) :
-
-			$_found			= FALSE;
-			$_locations		= array();
-			$_locations[]	= '/etc/mime.types';
-			$_locations[]	= '/private/etc/apache2/mime.types';
-
-			foreach( $_locations AS $location ) :
-
-				if ( file_exists( $location ) ) :
-
-					$_found	= $location;
-					break;
-
-				endif;
-
-			endforeach;
-
-			//	Did we find anything?
-			if ( $_found ) :
-
-				//	Whoop! We totes did.
-				$this->_magic = $_found;
-
-			else :
-
-				//	Hmm, set this to NULL so that PHP uses it's internal database
-				$this->_magic = NULL;
-
-			endif;
-
-		else :
-
-			$this->_magic = DEPLOY_CDN_MAGIC;
-
-		endif;
 	}
 
 
@@ -1078,7 +1037,7 @@ class Cdn
 
 			else :
 
-				$_data->mime = $this->get_mime_type_from_file( $_data->file );
+				$_data->mime = $this->get_mime_from_file( $_data->file );
 
 			endif;
 
@@ -1087,7 +1046,7 @@ class Cdn
 			//	If no extension, then guess it
 			if ( empty( $_data->ext ) ) :
 
-				$_data->ext = $this->get_ext_from_mimetype( $_data->mime );
+				$_data->ext = $this->get_ext_from_mime( $_data->mime );
 
 			endif;
 
@@ -1127,7 +1086,7 @@ class Cdn
 
 					else :
 
-						$_data->ext = $this->get_ext_from_mimetype( $_data->mime );
+						$_data->ext = $this->get_ext_from_mime( $_data->mime );
 
 					endif;
 
@@ -2588,45 +2547,52 @@ class Cdn
 	 **/
 	protected function _detect_animated_gif( $file )
 	{
-		$filecontents=file_get_contents($file);
+		$filecontents	= file_get_contents( $file );
+		$str_loc		= 0;
+		$count			= 0;
 
-		$str_loc=0;
-		$count=0;
-		while ($count < 2) # There is no point in continuing after we find a 2nd frame
-		{
+		while ( $count < 2 ) :
 
-			$where1=strpos($filecontents,"\x00\x21\xF9\x04",$str_loc);
-			if ($where1 === FALSE)
-			{
+			$where1 = strpos( $filecontents, "\x00\x21\xF9\x04", $str_loc );
+
+			if ( $where1 === FALSE ) :
+
 				break;
-			}
-			else
-			{
-				$str_loc=$where1+1;
-				$where2=strpos($filecontents,"\x00\x2C",$str_loc);
-				if ($where2 === FALSE)
-				{
-					break;
-				}
-				else
-				{
-					if ($where1+8 == $where2)
-					{
-						$count++;
-					}
-					$str_loc=$where2+1;
-				}
-			}
-		}
 
-		if ($count > 1)
-		{
-			return(true);
-		}
-		else
-		{
-			return(false);
-		}
+			else :
+
+				$str_loc	= $where1 + 1;
+				$where2		= strpos( $filecontents, "\x00\x2C", $str_loc );
+
+				if ( $where2 === FALSE ) :
+
+					break;
+
+				else :
+
+					if ( $where1 + 8 == $where2 ) :
+
+						$count++;
+
+					endif;
+
+					$str_loc = $where2 + 1;
+
+				endif;
+
+			endif;
+
+		endwhile;
+
+		if ( $count > 1 ) :
+
+			return TRUE;
+
+		else :
+
+			return FALSE;
+
+		endif;
 	}
 
 
@@ -2639,103 +2605,44 @@ class Cdn
 	 * @access	public
 	 * @return	string
 	 **/
-	public function get_ext_from_mimetype( $mime_type )
+	public function get_ext_from_mime( $mime )
 	{
-		//	Returns the system MIME type mapping of extensions to MIME types, as defined in /etc/mime.types.
-		//	Thanks, 'chaos' - http://stackoverflow.com/a/1147952/789224
+		$mimes	= $this->_get_mime_mappings();
+		$_ext	= FALSE;
 
-		// --------------------------------------------------------------------------
+		foreach ( $mimes AS $ext => $mime ) :
 
-		//	Before we start map some common mime-types which are troublesome with the system.
-		//	Please forgive me future dev.
+			if ( is_array( $mime ) ) :
 
-		switch ( $mime_type ) :
+				foreach( $mime AS $submime ) :
 
-			case 'application/vnd.ms-office' :	return 'doc';	break;	//	OpenOffice .doc
-			case 'text/rtf' :					return 'rtf';	break;	//	Rich Text Format
-
-		endswitch;
-
-		// --------------------------------------------------------------------------
-
-		if ( $this->_magic ) :
-
-			$_file	= fopen( $this->_magic, 'r' );
-			$_ext	= NULL;
-
-			while( ( $line = fgets( $_file ) ) !== FALSE ) :
-
-				$line = trim( preg_replace( '/#.*/', '', $line ) );
-
-				if ( ! $line )
-					continue;
-
-				$_parts = preg_split( '/\s+/', $line );
-
-				if ( count( $_parts ) == 1 )
-					continue;
-
-				$_type = array_shift( $_parts );
-
-				foreach ( $_parts as $part ) :
-
-					if ( $_type == strtolower( $mime_type ) ) :
-
-						$_ext = $part;
-
-						break;
-
-					endif;
-
-				endforeach;
-
-			endwhile;
-
-			fclose( $_file );
-
-		else :
-
-			//	We don't have a magic database, eep. Try to work it out using CodeIgniter's mapping
-			require FCPATH . APPPATH . 'config/mimes.php';
-
-			$_ext = FALSE;
-
-			foreach ( $mimes AS $ext => $mime ) :
-
-				if ( is_array( $mime ) ) :
-
-					foreach( $mime AS $submime ) :
-
-						if ( $submime == $mime_type ) :
-
-							$_ext = $ext;
-							break;
-
-						endif;
-
-					endforeach;
-
-					if ( $_ext ) :
-
-						break;
-
-					endif;
-
-				else :
-
-					if ( $mime == $mime_type ) :
+					if ( $submime == $mime ) :
 
 						$_ext = $ext;
 						break;
 
 					endif;
 
+				endforeach;
+
+				if ( $_ext ) :
+
+					break;
+
 				endif;
 
-			endforeach;
+			else :
 
+				if ( $mime == $mime ) :
 
-		endif;
+					$_ext = $ext;
+					break;
+
+				endif;
+
+			endif;
+
+		endforeach;
 
 		// --------------------------------------------------------------------------
 
@@ -2757,61 +2664,38 @@ class Cdn
 
 	/**
 	 * Gets the mime type from the extension
-	 *
-	 * @access	public
-	 * @return	string
-	 **/
-	public function get_mimetype_from_ext( $ext )
+	 * @param  string $ext The extension to return the mime type for
+	 * @return string
+	 */
+	public function get_mime_from_ext( $ext )
 	{
-		//	TODO: Handle no magic database
-
-		// --------------------------------------------------------------------------
-
 		//	Prep $ext, make sure it has no dots
 		$ext = substr( $ext, (int) strrpos( $ext, '.' ) + 1 );
 
-		// --------------------------------------------------------------------------
+		$_mimes = $this->_get_mime_mappings();
 
-		//	Returns the system MIME type mapping of extensions to MIME types, as defined in /etc/mime.types.
-		//	Thanks, 'chaos' - http://stackoverflow.com/a/1147952/789224
+		foreach ( $_mimes AS $_ext => $mime ) :
 
-		$_file = fopen( $this->_magic, 'r' );
-		$_mime = NULL;
+			if ( $_ext == $ext ) :
 
+				if ( is_string( $mime ) ) :
 
-		while( ( $line = fgets( $_file ) ) !== FALSE ) :
+					$_return = $mime;
+					break;
 
-			$line = trim( preg_replace( '/#.*/', '', $line ) );
+				elseif ( is_array( $mime ) ) :
 
-			if ( ! $line )
-				continue;
-
-			$_parts = preg_split( '/\s+/', $line );
-
-			if ( count( $_parts ) == 1 )
-				continue;
-
-			$_part = array_shift( $_parts );
-
-			foreach( $_parts as $_ext ) :
-
-				if ( strtolower( $_ext ) == strtolower( $ext ) ) :
-
-					$_mime = $_part;
-
+					$_return = reset( $mime );
 					break;
 
 				endif;
 
-			endforeach;
+			endif;
 
-		endwhile;
 
-		fclose( $_file );
+		endforeach;
 
-		// --------------------------------------------------------------------------
-
-		return $_mime;
+		return $_return ? $_return : 'application/octet-stream';
 	}
 
 
@@ -2824,42 +2708,10 @@ class Cdn
 	 * @access	public
 	 * @return	string
 	 **/
-	public function get_mime_type_from_file( $object )
+	public function get_mime_from_file( $object )
 	{
-		//	TODO: Handle no magic database
-
-		// --------------------------------------------------------------------------
-
 		$_fi = finfo_open( FILEINFO_MIME_TYPE );
-
-		//	Use normal magic
-		$_result = finfo_file( $_fi, $object );
-
-		//	If normal magic responds with a ZIP, use specific magic to test if it's
-		//	an office doc - doing this because Jon T told us that specifying the file
-		//	to use might cause the funciton to 'forget' it's other magic, so using
-		//	defaults first and falling back to this.
-
-		if ( $_result == 'application/zip' ) :
-
-			$_fi = @finfo_open( FILEINFO_MIME_TYPE, $this->_magic );
-
-			if ( $_fi ) :
-
-				$_result = finfo_file( $_fi, $object );
-
-			endif;
-
-			//	If this comes back as an octet stream then fallback to application/zip
-			if ( $_result == 'application/octet-stream' ) :
-
-				$_result = 'application/zip';
-
-			endif;
-
-		endif;
-
-		return $_result;
+		return finfo_file( $_fi, $object );
 	}
 
 
@@ -2867,108 +2719,64 @@ class Cdn
 
 
 	/**
-	 * Determins whether an extension is valid for a specific mime typ
+	 * Determines whether an extension is valid for a specific mime typ
 	 * @param  string $ext  The extension to test, no leading period
 	 * @param  string $mime The mime type to test agains
 	 * @return bool
 	 */
 	public function valid_ext_for_mime( $ext, $mime )
 	{
-		$_assocs = array();
+		$_assocs	= array();
+		$_mimes		= $this->_get_mime_mappings();
+		$_ext		= FALSE;
 
-		if ( $this->_magic ) :
+		//	Prep $ext, make sure it has no dots
+		$ext = substr( $ext, (int) strrpos( $ext, '.' ) + 1 );
 
-			$_file = fopen( $this->_magic, 'r' );
+		foreach ( $_mimes AS $_ext => $_mime ) :
 
-			while ( ( $line = fgets( $_file ) ) !== FALSE ) :
+			if ( is_array( $_mime ) ) :
 
-				$line = trim( preg_replace( '/#.*/', '', $line ) );
+				foreach( $_mime AS $_subext => $_submime ) :
 
-				if ( ! $line ) :
+					if ( ! isset( $_assocs[strtolower( $_submime )] ) ) :
 
-					continue;
-
-				endif;
-
-				$_parts = preg_split( '/\s+/', $line );
-
-				if ( count( $_parts ) == 1 ) :
-
-					continue;
-
-				endif;
-
-				$_mime = strtolower( array_shift( $_parts ) );
-
-				if ( ! isset( $_stuffs[$_mime] ) ) :
-
-					$_assocs[$_mime] = array();
-
-				endif;
-
-				foreach ( $_parts as $part ) :
-
-					$_assocs[$_mime][] = $part;
-
-				endforeach;
-
-			endwhile;
-
-			fclose( $_file );
-
-		else :
-
-			//	We don't have a magic database, eep. Try to work it out using CodeIgniter's mapping
-			require FCPATH . APPPATH . 'config/mimes.php';
-
-			$_ext = FALSE;
-
-			foreach ( $mimes AS $_ext => $_mime ) :
-
-				if ( is_array( $_mime ) ) :
-
-					foreach( $_mime AS $_subext => $_submime ) :
-
-						if ( ! isset( $_assocs[strtolower( $_submime )] ) ) :
-
-							$_assocs[strtolower( $_submime )] = array();
-
-						endif;
-
-					endforeach;
-
-				else :
-
-					if ( ! isset( $_assocs[strtolower( $_mime )] ) ) :
-
-						$_assocs[strtolower( $_mime )] = array();
+						$_assocs[strtolower( $_submime )] = array();
 
 					endif;
 
-				endif;
+				endforeach;
 
-			endforeach;
+			else :
 
-			//	Now put extensions into the appropriate slots
-			foreach ( $mimes AS $_ext => $_mime ) :
+				if ( ! isset( $_assocs[strtolower( $_mime )] ) ) :
 
-				if ( is_array( $_mime ) ) :
-
-					foreach( $_mime AS $_submime ) :
-
-						$_assocs[strtolower( $_submime )][] = $_ext;
-
-					endforeach;
-
-				else :
-
-					$_assocs[strtolower( $_mime )][] = $_ext;
+					$_assocs[strtolower( $_mime )] = array();
 
 				endif;
 
-			endforeach;
+			endif;
 
-		endif;
+		endforeach;
+
+		//	Now put extensions into the appropriate slots
+		foreach ( $_mimes AS $_ext => $_mime ) :
+
+			if ( is_array( $_mime ) ) :
+
+				foreach( $_mime AS $_submime ) :
+
+					$_assocs[strtolower( $_submime )][] = $_ext;
+
+				endforeach;
+
+			else :
+
+				$_assocs[strtolower( $_mime )][] = $_ext;
+
+			endif;
+
+		endforeach;
 
 		// --------------------------------------------------------------------------
 
@@ -2989,6 +2797,44 @@ class Cdn
 			return FALSE;
 
 		endif;
+	}
+
+
+	// --------------------------------------------------------------------------
+
+
+	/**
+	 * Returns an array of file extension to mime types
+	 * @return array
+	 */
+	protected function _get_mime_mappings()
+	{
+		$_cache_key = 'mimes';
+		$_cache		= $this->_get_cache( $_cache_key );
+
+		if ( $_cache ) :
+
+			return $_cache;
+
+		endif;
+
+		// --------------------------------------------------------------------------
+
+		//	Try to work it out using CodeIgniter's mapping
+		require NAILS_COMMON_PATH . 'config/mimes.php';
+
+		// --------------------------------------------------------------------------
+
+		//	Override/add mimes
+		$mimes['doc'] = array( 'application/msword', 'application/vnd.ms-office' );
+
+		// --------------------------------------------------------------------------
+
+		$this->_set_cache( $_cache_key, $mimes );
+
+		// --------------------------------------------------------------------------
+
+		return $mimes;
 	}
 
 
