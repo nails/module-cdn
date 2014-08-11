@@ -2670,7 +2670,7 @@ class Cdn
 	public function get_mime_from_ext( $ext )
 	{
 		//	Prep $ext, make sure it has no dots
-		$ext = substr( $ext, (int) strrpos( $ext, '.' ) + 1 );
+		$ext = strpos( $ext, '.' ) !== FALSE ? substr( $ext, (int) strrpos( $ext, '.' ) + 1 ) : $ext;
 
 		$_mimes = $this->_get_mime_mappings();
 
@@ -2731,7 +2731,7 @@ class Cdn
 		$_ext		= FALSE;
 
 		//	Prep $ext, make sure it has no dots
-		$ext = substr( $ext, (int) strrpos( $ext, '.' ) + 1 );
+		$ext = strpos( $ext, '.' ) !== FALSE ? substr( $ext, (int) strrpos( $ext, '.' ) + 1 ) : $ext;
 
 		foreach ( $_mimes AS $_ext => $_mime ) :
 
@@ -2782,7 +2782,7 @@ class Cdn
 
 		if ( isset( $_assocs[strtolower( $mime )] ) ) :
 
-			if ( array_search( $ext, $_assocs[strtolower( $mime )]) !== FALSE ) :
+			if ( array_search( $ext, $_assocs[strtolower( $mime )] ) !== FALSE ) :
 
 				return TRUE;
 
