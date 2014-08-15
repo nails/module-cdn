@@ -70,8 +70,10 @@ class NAILS_CDN_Controller extends NAILS_Controller
 
 	protected function _serve_from_cache( $file, $hit = TRUE )
 	{
-		//	Cache object exists, set the appropriate headers and return the
-		//	contents of the file.
+		/**
+		 * Cache object exists, set the appropriate headers and return the
+		 * contents of the file.
+		 **/
 
 		$_stats = stat( $this->_cachedir . $file );
 
@@ -88,9 +90,11 @@ class NAILS_CDN_Controller extends NAILS_Controller
 		//	Send the contents of the file to the browser
 		echo file_get_contents( $this->_cachedir . $file );
 
-		//	Kill script, th, th, that's all folks.
-		//	Stop the output class from hijacking our headers and
-		//	setting an incorrect Content-Type
+		/**
+		 * Kill script, th, th, that's all folks.
+		 * Stop the output class from hijacking our headers and
+		 * setting an incorrect Content-Type
+		 **/
 
 		exit(0);
 	}
@@ -167,8 +171,10 @@ class NAILS_CDN_Controller extends NAILS_Controller
 
 		elseif( isset( $_SERVER ) ) :
 
-			//	Can we work the headers out for ourself?
-			//	Credit: http://www.php.net/manual/en/function.apache-request-headers.php#70810
+			/**
+			 * Can we work the headers out for ourself?
+			 * Credit: http://www.php.net/manual/en/function.apache-request-headers.php#70810
+			 **/
 
 			$_headers	= array();
 			$rx_http	= '/\AHTTP_/';
@@ -179,8 +185,11 @@ class NAILS_CDN_Controller extends NAILS_Controller
 					$arh_key	= preg_replace($rx_http, '', $key);
 					$rx_matches	= array();
 
-					// do some nasty string manipulations to restore the original letter case
-					// this should work in most cases
+					/**
+					 * Do some nasty string manipulations to restore the original letter case
+					 * this should work in most cases
+					 **/
+
 					$rx_matches = explode('_', $arh_key);
 
 					if ( count( $rx_matches ) > 0 && strlen( $arh_key ) > 2 ) :
@@ -226,9 +235,11 @@ class NAILS_CDN_Controller extends NAILS_Controller
 
 	protected function _fetch_sourcefile( $bucket, $object )
 	{
-		//	If we're using the AWS Driver then we must check that a source file exists;
-		//	if it doesn't then pull it down and save it. Cache maintenance scripts will
-		//	clear this out every now and then.
+		/**
+		 * If we're using the AWS Driver then we must check that a source file exists;
+		 * if it doesn't then pull it down and save it. Cache maintenance scripts will
+		 * clear this out every now and then.
+		 **/
 
 		if ( APP_CDN_DRIVER == 'AWS_LOCAL' ) :
 
@@ -261,17 +272,21 @@ class NAILS_CDN_Controller extends NAILS_Controller
 
 			endif;
 
-
 		// --------------------------------------------------------------------------
 
-		//	If we're using the local driver then we need to check the source file exists
-		//	in the DEPLOY_CDN_PATH.
+		/**
+		 * If we're using the local driver then we need to check the source file exists
+		 * in the DEPLOY_CDN_PATH.
+		 **/
 
 		elseif ( APP_CDN_DRIVER == 'LOCAL' && file_exists( DEPLOY_CDN_PATH . $bucket . '/' . $object ) ) :
 
 			//	Object exists, time for manipulation fun times :>
 			return DEPLOY_CDN_PATH . $bucket . '/' . $object;
 
+		// --------------------------------------------------------------------------
+
+		//	Fall over
 		else :
 
 			//	This object does not exist / something went wrong
@@ -332,9 +347,11 @@ class NAILS_CDN_Controller extends NAILS_Controller
 
 		// --------------------------------------------------------------------------
 
-		//	Kill script, th, th, that's all folks.
-		//	Stop the output class from hijacking our headers and
-		//	setting an incorrect Content-Type
+		/**
+		 * Kill script, th, th, that's all folks.
+		 * Stop the output class from hijacking our headers and
+		 * setting an incorrect Content-Type
+		 **/
 
 		exit(0);
 	}
