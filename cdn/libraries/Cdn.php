@@ -2105,6 +2105,8 @@ class Cdn
 		$this->db->join( NAILS_DB_PREFIX . 'user u', 'u.id = b.created_by', 'LEFT' );
 		$this->db->join( NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = b.created_by AND ue.is_primary = 1', 'LEFT' );
 
+		$this->db->order_by( 'b.label' );
+
 		$_buckets = $this->db->get( NAILS_DB_PREFIX . 'cdn_bucket b' )->result();
 
 		// --------------------------------------------------------------------------
@@ -2137,6 +2139,24 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		return $_buckets;
+	}
+
+
+	// --------------------------------------------------------------------------
+
+
+	public function get_buckets_flat( $filter_tag = FALSE, $include_deleted = FALSE )
+	{
+		$_buckets	= $this->get_buckets( FALSE, $filter_tag, $include_deleted );
+		$_out		= array();
+
+		foreach( $_buckets AS $bucket ) :
+
+			$_out[$bucket->id] = $bucket->label;
+
+		endforeach;
+
+		return $_out;
 	}
 
 
