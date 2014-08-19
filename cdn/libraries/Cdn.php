@@ -977,7 +977,7 @@ class Cdn
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_create( $object, $bucket, $options = array(), $is_raw = FALSE )
+	public function object_create( $object, $bucket, $options = array(), $is_stream = FALSE )
 	{
 		//	Define variables we'll need
 		$_data = new stdClass();
@@ -989,8 +989,39 @@ class Cdn
 
 		// --------------------------------------------------------------------------
 
+		//	Are we uploading a URL?
+		if ( ! $is_stream && ( substr( $object, 0, 7 ) == 'http://' || substr( $object, 0, 8 ) == 'https://' ) ) :
+
+			if ( ! isset( $options['content-type'] ) ) :
+
+				$_headers					= get_headers( $object, 1 );
+				$options['content-type']	= $_headers['Content-Type'];
+
+				if ( empty( $options['content-type'] ) ) :
+
+					$options['content-type'] = 'application/octet-stream';
+
+				endif;
+
+			endif;
+
+			//	This is a URL, treat as stream
+			$object		= @file_get_contents( $object );
+			$is_stream	= TRUE;
+
+			if ( empty( $object ) ) :
+
+				$this->set_error( lang( 'cdn_error_invalid_url' ) );
+				return FALSE;
+
+			endif;
+
+		endif;
+
+		// --------------------------------------------------------------------------
+
 		//	Fetch the contents of the file
-		if ( ! $is_raw ) :
+		if ( ! $is_stream ) :
 
 			//	Check file exists in $_FILES
 			if ( ! isset( $_FILES[ $object ] ) || $_FILES[ $object ]['size'] == 0 ) :
@@ -1072,10 +1103,8 @@ class Cdn
 
 					// --------------------------------------------------------------------------
 
-					//	Specify the file specifics
-					$_data->name	= empty( $options['filename_display'] ) ? $_cache_file : $options['filename_display'];
-					$_data->file	= DEPLOY_CACHE_DIR . $_cache_file;
-					$_data->mime	= $options['content-type'];
+					//	File mime types
+					$_data->mime = $options['content-type'];
 
 					// --------------------------------------------------------------------------
 
@@ -1089,6 +1118,12 @@ class Cdn
 						$_data->ext = $this->get_ext_from_mime( $_data->mime );
 
 					endif;
+
+					// --------------------------------------------------------------------------
+
+					//	Specify the file specifics
+					$_data->name	= empty( $options['filename_display'] ) ? $_cache_file . '.' . $_data->ext : $options['filename_display'];
+					$_data->file	= DEPLOY_CACHE_DIR . $_cache_file;
 
 				else :
 
@@ -1682,10 +1717,10 @@ class Cdn
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_replace( $object, $bucket, $replace_with, $options = array(), $is_raw = FALSE )
+	public function object_replace( $object, $bucket, $replace_with, $options = array(), $is_stream = FALSE )
 	{
 		//	Firstly, attempt the upload
-		$_upload = $this->object_create( $replace_with, $bucket, $options, $is_raw );
+		$_upload = $this->object_create( $replace_with, $bucket, $options, $is_stream );
 
 		// --------------------------------------------------------------------------
 
@@ -2630,11 +2665,11 @@ class Cdn
 		$mimes	= $this->_get_mime_mappings();
 		$_ext	= FALSE;
 
-		foreach ( $mimes AS $ext => $mime ) :
+		foreach ( $mimes AS $ext => $_mime ) :
 
-			if ( is_array( $mime ) ) :
+			if ( is_array( $_mime ) ) :
 
-				foreach( $mime AS $submime ) :
+				foreach( $_mime AS $submime ) :
 
 					if ( $submime == $mime ) :
 
@@ -2653,7 +2688,7 @@ class Cdn
 
 			else :
 
-				if ( $mime == $mime ) :
+				if ( $_mime == $mime ) :
 
 					$_ext = $ext;
 					break;
