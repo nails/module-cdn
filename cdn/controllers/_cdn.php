@@ -109,7 +109,7 @@ class NAILS_CDN_Controller extends NAILS_Controller
 		$this->_cache_headers_set			= TRUE;
 		$this->_cache_headers_max_age		= APP_CDN_CACHE_MAX_AGE;
 		$this->_cache_headers_last_modified	= $last_modified;
-		$this->_cache_headers_expires		= time() + APP_CDN_CACHE_MAX_AGE;
+		$this->_cache_headers_expires		= time() + $this->_cache_headers_max_age;
 		$this->_cache_headers_file			= $file;
 		$this->_cache_headers_hit			= $hit ? 'HIT' : 'MISS';
 
