@@ -53,7 +53,7 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
 		//	Determine dynamic values
 		$this->_width		= $this->uri->segment( 3, 100 );
 		$this->_height		= $this->uri->segment( 4, 100 );
-		$this->_sex			= $this->uri->segment( 5, 'man' );
+		$this->_sex			= strtolower( $this->uri->segment( 5, 'man' ) );
 
 		//	Set a unique filename (but one which is constant if requested twice, i.e
 		//	no random values)
