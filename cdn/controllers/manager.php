@@ -239,7 +239,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> uploads are not available right now.' );
 			redirect( $_return );
-			return;
 
 		endif;
 
@@ -287,7 +286,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> file deletions are not available right now.' );
 			redirect( $_return );
-			return;
 
 		endif;
 
@@ -300,7 +298,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> invalid object.' );
 			redirect( $_return );
-			return;
 
 		endif;
 
@@ -310,7 +307,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> invalid object.' );
 			redirect( $_return );
-			return;
 
 		endif;
 
@@ -353,7 +349,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> file restorations are not available right now.' );
 			redirect( $_return );
-			return;
 
 		endif;
 
@@ -366,7 +361,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> invalid object.' );
 			redirect( $_return );
-			return;
 
 		endif;
 
@@ -376,7 +370,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> invalid object.' );
 			redirect( $_return );
-			return;
 
 		endif;
 
