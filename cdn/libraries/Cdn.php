@@ -2306,12 +2306,50 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function bucket_list( $bucket, $filter_tag = FALSE )
+	public function bucket_list( $bucket, $filter_tag = NULL, $sort_on = NULL, $sort_order = NULL )
 	{
 		//	Filtering by tag?
 		if ( $filter_tag ) :
 
 			$this->db->join( NAILS_DB_PREFIX . 'cdn_object_tag ft', 'ft.object_id = o.id AND ft.tag_id = ' . $filter_tag );
+
+		endif;
+
+		// --------------------------------------------------------------------------
+
+		//	Sorting?
+		if ( $sort_on ) :
+
+			$_sort_order = strtoupper( $sort_order ) == 'ASC' ? 'ASC' : 'DESC';
+
+			switch( $sort_on ) :
+
+				case 'filename' :
+
+					$this->db->order_by( 'o.filename_display', $_sort_order );
+
+				break;
+
+				case 'filesize' :
+
+					$this->db->order_by( 'o.filesize', $_sort_order );
+
+				break;
+
+				case 'created' :
+
+					$this->db->order_by( 'o.created', $_sort_order );
+
+				break;
+
+				case 'type' :
+				case 'mime' :
+
+					$this->db->order_by( 'o.mime', $_sort_order );
+
+				break;
+
+			endswitch;
 
 		endif;
 
