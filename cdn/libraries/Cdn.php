@@ -9,14 +9,13 @@
 
 class Cdn
 {
+	//	Class traits
+	use NAILS_COMMON_TRAIT_ERROR_HANDLING;
+	use NAILS_COMMON_TRAIT_CACHING;
 
 	private $_ci;
 	private $_cdn;
 	private $db;
-	private $_errors;
-	private $_cache_values;
-	private $_cache_keys;
-	private $_cache_method;
 
 	// --------------------------------------------------------------------------
 
@@ -30,18 +29,8 @@ class Cdn
 	 **/
 	public function __construct( $options = NULL )
 	{
-		$this->_ci		=& get_instance();
-		$this->db		=& get_instance()->db;
-		$this->_errors	= array();
-
-		// --------------------------------------------------------------------------
-
-		//	Set the cache method
-		//	TODO: check for availability of things like memcached
-
-		$this->_cache_values	= array();
-		$this->_cache_keys		= array();
-		$this->_cache_method	= 'LOCAL';
+		$this->_ci	=& get_instance();
+		$this->db	=& get_instance()->db;
 
 		// --------------------------------------------------------------------------
 
@@ -56,7 +45,7 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Load the storage driver
-		$_class = $this->_include_driver( );
+		$_class = $this->_include_driver();
 		$this->_cdn = new $_class( $options );
 	}
 
@@ -122,158 +111,13 @@ class Cdn
 	// --------------------------------------------------------------------------
 
 
-	/*	! CACHE METHODS */
-
-
-	// --------------------------------------------------------------------------
-
-
 	/**
-	 * Provides models with the an easy interface for saving data to a cache.
-	 *
-	 * @access	protected
-	 * @param string $key The key for the cached item
-	 * @param mixed $value The data to be cached
-	 * @return	array
-	 **/
-	protected function _set_cache( $key, $value )
+	 * Need a public route to the _set_error() method (for the driver)
+	 * @param string $error the error message
+	 */
+	public function set_error( $error )
 	{
-		if ( ! $key )
-			return FALSE;
-
-		// --------------------------------------------------------------------------
-
-		//	Prep the key, the key should have a prefix unique to this model
-		$_prefix = $this->_cache_prefix();
-
-		// --------------------------------------------------------------------------
-
-		switch ( $this->_cache_method ) :
-
-			case 'LOCAL' :
-
-				$this->_cache_values[md5( $_prefix . $key )] = serialize( $value );
-				$this->_cache_keys[]	= $key;
-
-			break;
-
-			// --------------------------------------------------------------------------
-
-			case 'MEMCACHED' :
-
-				//	TODO
-
-			break;
-
-		endswitch;
-
-		// --------------------------------------------------------------------------
-
-		return TRUE;
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	/**
-	 * Lookup a cache item
-	 *
-	 * @access	protected
-	 * @param	string	$key	The key to fetch
-	 * @return	mixed
-	 **/
-	protected function _get_cache( $key )
-	{
-		if ( ! $key )
-			return FALSE;
-
-		// --------------------------------------------------------------------------
-
-		//	Prep the key, the key should have a prefix unique to this model
-		$_prefix = $this->_cache_prefix();
-
-		// --------------------------------------------------------------------------
-
-		switch ( $this->_cache_method ) :
-
-			case 'LOCAL' :
-
-				if ( isset( $this->_cache_values[md5( $_prefix . $key )] ) ) :
-
-					return unserialize( $this->_cache_values[md5( $_prefix . $key )] );
-
-				else :
-
-					return FALSE;
-
-				endif;
-
-			break;
-
-			// --------------------------------------------------------------------------
-
-			case 'MEMCACHED' :
-
-				//	TODO
-
-			break;
-
-		endswitch;
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	/**
-	 * Unset a cache item
-	 *
-	 * @access	protected
-	 * @param	string	$key	The key to fetch
-	 * @return	boolean
-	 **/
-	protected function _unset_cache( $key )
-	{
-		if ( ! $key )
-			return FALSE;
-
-		// --------------------------------------------------------------------------
-
-		//	Prep the key, the key should have a prefix unique to this model
-		$_prefix = $this->_cache_prefix();
-
-		// --------------------------------------------------------------------------
-
-		switch ( $this->_cache_method ) :
-
-			case 'LOCAL' :
-
-				unset( $this->_cache_values[md5( $_prefix . $key )] );
-
-				$_key = array_search( $key, $this->_cache_keys );
-
-				if ( $_key !== FALSE ) :
-
-					unset( $this->_cache_keys[$_key] );
-
-				endif;
-
-			break;
-
-			// --------------------------------------------------------------------------
-
-			case 'MEMCACHED' :
-
-				//	TODO
-
-			break;
-
-		endswitch;
-
-		// --------------------------------------------------------------------------
-
-		return TRUE;
+		return $this->_set_error( $error );
 	}
 
 
@@ -346,59 +190,6 @@ class Cdn
 	// --------------------------------------------------------------------------
 
 
-	/*	! ERROR METHODS */
-
-
-	// --------------------------------------------------------------------------
-
-
-	/**
-	 * Retrieves the error array
-	 *
-	 * @access	public
-	 * @return	array
-	 **/
-	public function get_errors()
-	{
-		return $this->_errors;
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	/**
-	 * Returns the last error
-	 *
-	 * @access	public
-	 * @return	string
-	 **/
-	public function last_error()
-	{
-		return end( $this->_errors );
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	/**
-	 * Adds an error message; not protected like model _set_error because the
-	 * driver needs to be able to call it.
-	 *
-	 * @access	public
-	 * @param	array	$error	The error message to add
-	 * @return	void
-	 **/
-	public function set_error( $error )
-	{
-		$this->_errors[] = $error;
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
 	/**
 	 * Catches shortcut calls
 	 *
@@ -465,8 +256,11 @@ class Cdn
 		//	Facilitate pagination
 		if ( NULL !== $page ) :
 
-			//	Adjust the page variable, reduce by one so that the offset is calculated
-			//	correctly. Make sure we don't go into negative numbers
+			/**
+			 * Adjust the page variable, reduce by one so that the offset is calculated
+			 * correctly. Make sure we don't go into negative numbers
+			 */
+
 			$page--;
 			$page = $page < 0 ? 0 : $page;
 
@@ -523,8 +317,11 @@ class Cdn
 		//	Facilitate pagination
 		if ( NULL !== $page ) :
 
-			//	Adjust the page variable, reduce by one so that the offset is calculated
-			//	correctly. Make sure we don't go into negative numbers
+			/**
+			 * Adjust the page variable, reduce by one so that the offset is calculated
+			 * correctly. Make sure we don't go into negative numbers
+			 */
+
 			$page--;
 			$page = $page < 0 ? 0 : $page;
 
@@ -778,8 +575,10 @@ class Cdn
 
 				if ( is_array( $data[$where_type] ) ) :
 
-					//	If it's a single dimensional array then just bung that into
-					//	the db->where(). If not, loop it and parse.
+					/**
+					 * If it's a single dimensional array then just bung that into
+					 * the db->where(). If not, loop it and parse.
+					 */
 
 					$_first = reset( $data[$where_type] );
 
@@ -831,8 +630,10 @@ class Cdn
 
 		// --------------------------------------------------------------------------
 
-		//	Handle Likes
-		//	TODO
+		/**
+		 * Handle Likes
+		 * TODO
+		 */
 
 		// --------------------------------------------------------------------------
 
@@ -849,7 +650,7 @@ class Cdn
 			 *   direction to sort in
 			 * - If $data['sort'] is a multidimensional array then loop each element and test as above.
 			 *
-			 **/
+			 */
 
 
 			if ( is_string( $data['sort'] ) ) :
@@ -1024,7 +825,7 @@ class Cdn
 		if ( ! $is_stream ) :
 
 			//	Check file exists in $_FILES
-			if ( ! isset( $_FILES[ $object ] ) || $_FILES[ $object ]['size'] == 0 ) :
+			if ( ! isset( $_FILES[ $object ] ) ) :
 
 				//	If it's not in $_FILES does that file exist on the file system?
 				if ( ! is_file( $object ) ) :
@@ -1044,23 +845,66 @@ class Cdn
 
 			else :
 
-				//	It's in $_FILES
-				$_data->file	= $_FILES[ $object ]['tmp_name'];
-				$_data->name	= empty( $options['filename_display'] ) ? $_FILES[ $object ]['name'] : $options['filename_display'];
+				//	It's in $_FILES, check the upload was successfull
+				if ( $_FILES[$object]['error'] == UPLOAD_ERR_OK ) :
 
-				//	Determine the supplied extension
-				$_data->ext	= substr( strrchr( $_FILES[ $object ]['name'], '.' ), 1 );
+					$_data->file	= $_FILES[ $object ]['tmp_name'];
+					$_data->name	= empty( $options['filename_display'] ) ? $_FILES[ $object ]['name'] : $options['filename_display'];
+
+					//	Determine the supplied extension
+					$_data->ext	= substr( strrchr( $_FILES[ $object ]['name'], '.' ), 1 );
+
+				else :
+
+					//	Upload was aborted, I wonder why?
+					switch( $_FILES[$object]['error'] ) :
+
+						case UPLOAD_ERR_INI_SIZE :
+
+							$_max_file_size = function_exists( 'ini_get' ) ? ini_get( 'upload_max_filesize' ) : NULL;
+
+							if ( ! is_null( $_max_file_size ) ) :
+
+								$_max_file_size = return_bytes( $_max_file_size );
+								$_max_file_size = format_bytes( $_max_file_size );
+
+								$_error = lang( 'cdn_upload_err_ini_size', $_max_file_size );
+
+							else :
+
+								$_error = lang( 'cdn_upload_err_ini_size_unknown' );
+
+							endif;
+
+						break;
+						case UPLOAD_ERR_FORM_SIZE :		$_error = lang( 'cdn_upload_err_form_size' );	break;
+						case UPLOAD_ERR_PARTIAL :		$_error = lang( 'cdn_upload_err_partial' );		break;
+						case UPLOAD_ERR_NO_FILE :		$_error = lang( 'cdn_upload_err_no_file' );		break;
+						case UPLOAD_ERR_NO_TMP_DIR :	$_error = lang( 'cdn_upload_err_no_tmp_dir' );	break;
+						case UPLOAD_ERR_CANT_WRITE :	$_error = lang( 'cdn_upload_err_cant_write' );	break;
+						case UPLOAD_ERR_EXTENSION :		$_error = lang( 'cdn_upload_err_extension' );	break;
+						default:						$_error = lang( 'cdn_upload_err_unknown' );		break;
+
+					endswitch;
+
+					$this->set_error( $_error );
+					return FALSE;
+
+				endif;
 
 			endif;
 
 			// --------------------------------------------------------------------------
 
-			//	Specify the file specifics
-
-			//	Content-type; using finfo because the $_FILES variable can't be trusted
-			//	(uploads from Uploadify always report as application/octet-stream;
-			//	stupid flash. Unless, of course, the content-type has beens et explicityly
-			//	by the developer
+			/**
+			 * Specify the file specifics
+			 * ==========================
+			 *
+			 * Content-type; using finfo because the $_FILES variable can't be trusted
+			 * (uploads from Uploadify always report as application/octet-stream;
+			 * stupid flash. Unless, of course, the content-type has been set explicityly
+			 * by the developer
+			 */
 
 			if ( isset( $options['content-type'] ) ) :
 
@@ -1083,8 +927,10 @@ class Cdn
 
 		else :
 
-			//	We've been given a data stream, use that. If no content-type has been set
-			//	then fall over - we need to know what we're dealing with
+			/**
+			 * We've been given a data stream, use that. If no content-type has been set
+			 * then fall over - we need to know what we're dealing with.
+			 */
 
 			if ( ! isset( $options['content-type'] ) ) :
 
@@ -1353,8 +1199,10 @@ class Cdn
 
 		// --------------------------------------------------------------------------
 
-		//	If a certain filename has been specified then send that to the CDN (this
-		//	will overwrite any existing file so use with caution)
+		/**
+		 * If a certain filename has been specified then send that to the CDN (this
+		 * will overwrite any existing file so use with caution).
+		 */
 
 		if ( isset( $options['filename'] ) && $options['filename'] == 'USE_ORIGINAL' ) :
 
@@ -2219,8 +2067,11 @@ class Cdn
 
 		$_bucket = $this->get_buckets( $list_bucket, $filter_tag, TRUE );
 
-		if ( ! $_bucket )
+		if ( ! $_bucket ) :
+
 			return FALSE;
+
+		endif;
 
 		return $_bucket[0];
 	}
@@ -3320,7 +3171,7 @@ class Cdn
 		endif;
 
 		//	Hash
-		$_token[]	= md5( serialize( $_token ) . APP_PRIVATE_KEY );
+		$_token[] = md5( serialize( $_token ) . APP_PRIVATE_KEY );
 
 		//	Encrypt and return
 		return get_instance()->encrypt->encode( implode( '|', $_token ), APP_PRIVATE_KEY );
@@ -3331,7 +3182,7 @@ class Cdn
 
 
 	/**
-	 * Verifies an aPI upload token
+	 * Verifies an API upload token
 	 *
 	 * @access	public
 	 * @return	string
@@ -3465,8 +3316,7 @@ class Cdn
 	{
 		$_out = array( 'orphans' => array(), 'elapsed_time' => 0 );
 
-		//	Time how long this takes
-		//	Start timer
+		//	Time how long this takes; start timer
 		$this->_ci->benchmark->mark( 'orphan_search_start' );
 
 		$this->db->select( 'o.id, o.filename, o.filename_display, o.mime, o.filesize, b.slug bucket_slug, b.label bucket' );
@@ -3576,9 +3426,11 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			//	Can we write a small image to the bucket? Or a PDf, whatever the bucket
-			//	will accept. Do these in order of filesize, we want to be dealing with as
-			//	small a file as possible.
+			/**
+			 * Can we write a small image to the bucket? Or a PDf, whatever the bucket
+			 * will accept. Do these in order of filesize, we want to be dealing with as
+			 * small a file as possible.
+			 */
 
 			$_file			= array();
 			$_file['txt']	= NAILS_COMMON_PATH . 'assets/tests/cdn/txt.txt';
@@ -3759,5 +3611,5 @@ class Cdn
 	}
 }
 
-/* End of file cdn.php */
-/* Location: ./libraries/cdn.php */
+/* End of file Cdn.php */
+/* Location: ./module-cdn/cdn/libraries/Cdn.php */
