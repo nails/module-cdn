@@ -12,6 +12,7 @@ class Cdn
 	//	Class traits
 	use NAILS_COMMON_TRAIT_ERROR_HANDLING;
 	use NAILS_COMMON_TRAIT_CACHING;
+	use NAILS_COMMON_TRAIT_GETCOUNT_COMMON;
 
 	private $_ci;
 	private $_cdn;
@@ -249,7 +250,7 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Apply common items; pass $data
-		$this->_getcount_objects_common( $data, $_caller );
+		$this->_getcount_common( $data, $_caller );
 
 		// --------------------------------------------------------------------------
 
@@ -310,7 +311,7 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Apply common items; pass $data
-		$this->_getcount_objects_common( $data, $_caller );
+		$this->_getcount_common( $data, $_caller );
 
 		// --------------------------------------------------------------------------
 
@@ -515,13 +516,13 @@ class Cdn
 	 * Counts all objects
 	 *
 	 * @access public
-	 * @param mixed $data any data to pass to _getcount_objects_common()
+	 * @param mixed $data any data to pass to _getcount_common()
 	 * @return int
 	 **/
 	public function count_all_objects( $data = array() )
 	{
 		//	Apply common items
-		$this->_getcount_objects_common( $data, 'COUNT_ALL_OBJECTS' );
+		$this->_getcount_common( $data, 'COUNT_ALL_OBJECTS' );
 
 		// --------------------------------------------------------------------------
 
@@ -536,218 +537,17 @@ class Cdn
 	 * Counts all objects
 	 *
 	 * @access public
-	 * @param mixed $data any data to pass to _getcount_objects_common()
+	 * @param mixed $data any data to pass to _getcount_common()
 	 * @return int
 	 **/
 	public function count_all_objects_from_trash( $data = array() )
 	{
 		//	Apply common items
-		$this->_getcount_objects_common( $data, 'COUNT_ALL_OBJECTS_FROM_TRASH' );
+		$this->_getcount_common( $data, 'COUNT_ALL_OBJECTS_FROM_TRASH' );
 
 		// --------------------------------------------------------------------------
 
 		return $this->db->count_all_results( NAILS_DB_PREFIX . 'cdn_object_trash o'  );
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	/**
-	 * Applies common conditionals
-	 *
-	 * This method applies the conditionals which are common across the get_*()
-	 * methods and the count() method.
-	 *
-	 * @access public
-	 * @param string $data Data passed from the calling method
-	 * @param string $_caller The name of the calling method
-	 * @return void
-	 **/
-	protected function _getcount_objects_common( $data = array(), $_caller = NULL )
-	{
-		//	Handle wheres
-		$_wheres = array( 'where', 'where_in', 'or_where_in', 'where_not_in', 'or_where_not_in' );
-
-		foreach ( $_wheres AS $where_type ) :
-
-			if ( ! empty( $data[$where_type] ) ) :
-
-				if ( is_array( $data[$where_type] ) ) :
-
-					/**
-					 * If it's a single dimensional array then just bung that into
-					 * the db->where(). If not, loop it and parse.
-					 */
-
-					$_first = reset( $data[$where_type] );
-
-					if ( is_string( $_first ) ) :
-
-						$this->db->$where_type( $data[$where_type] );
-
-					else :
-
-						foreach( $data[$where_type] AS $where ) :
-
-							//	Work out column
-							$_column = ! empty( $where['column'] ) ? $where['column'] : NULL;
-							if ( $_column === NULL ) :
-
-								$_column = ! empty( $where[0] ) && is_string( $where[0] ) ? $where[0] : NULL;
-
-							endif;
-
-							//	Work out value
-							$_value = isset( $where['value'] ) ? $where['value'] : NULL;
-							if ( $_value === NULL ) :
-
-								$_value = ! empty( $where[1] ) ? $where[1] : NULL;
-
-							endif;
-
-							$_escape = isset( $where['escape'] ) ? (bool) $where['escape'] : TRUE;
-
-							if ( $_column ) :
-
-								$this->db->$where_type( $_column, $_value, $_escape );
-
-							endif;
-
-						endforeach;
-
-					endif;
-
-				elseif ( is_string( $data[$where_type] ) ) :
-
-					$this->db->$where_type( $data[$where_type] );
-
-				endif;
-
-			endif;
-
-		endforeach;
-
-		// --------------------------------------------------------------------------
-
-		/**
-		 * Handle Likes
-		 * TODO
-		 */
-
-		// --------------------------------------------------------------------------
-
-		//	Handle sorting
-		if ( ! empty( $data['sort'] ) ) :
-
-			/**
-			 * How we handle sorting
-			 * =====================
-			 *
-			 * - If $data['sort'] is a string assume it's the field to sort on, use the default order
-			 * - If $data['sort'] is a single dimension array then assume the first element (or the element
-			 *   named 'column') is the column; and the second element (or the element named 'order') is the
-			 *   direction to sort in
-			 * - If $data['sort'] is a multidimensional array then loop each element and test as above.
-			 *
-			 */
-
-
-			if ( is_string( $data['sort'] ) ) :
-
-				//	String
-				$this->db->order_by( $data['sort'] );
-
-			elseif( is_array( $data['sort'] ) ) :
-
-				$_first = reset( $data['sort'] );
-
-				if ( is_string( $_first ) ) :
-
-					//	Single dimension array
-					$_sort = $this->_getcount_objects_common_parse_sort( $data['sort'] );
-
-					if ( ! empty( $_sort['column'] ) ) :
-
-						$this->db->order_by( $_sort['column'], $_sort['order'] );
-
-					endif;
-
-				else :
-
-					//	Multi dimension array
-					foreach( $data['sort'] AS $sort ) :
-
-						$_sort = $this->_getcount_objects_common_parse_sort( $sort );
-
-						if ( ! empty( $_sort['column'] ) ) :
-
-							$this->db->order_by( $_sort['column'], $_sort['order'] );
-
-						endif;
-
-					endforeach;
-
-				endif;
-
-			endif;
-
-		endif;
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	/**
-	 * Parses the sort field which may be passed to the get_all methods
-	 *
-	 * @access	protected
-	 * @return	array
-	 **/
-	protected function _getcount_objects_common_parse_sort( $sort )
-	{
-		$_out = array( 'column' => NULL, 'order' => NULL );
-
-		// --------------------------------------------------------------------------
-
-		if ( is_string( $sort ) ) :
-
-			$_out['column'] = $sort;
-			return $_out;
-
-		elseif ( isset( $sort['column'] ) ) :
-
-			$_out['column'] = $sort['column'];
-
-		else :
-
-			//	Take the first element
-			$_out['column'] = reset( $sort );
-			$_out['column'] = is_string( $_out['column'] ) ? $_out['column'] : NULL;
-
-		endif;
-
-		if ( $_out['column'] ) :
-
-			//	Determine order
-			if ( isset( $sort['order'] ) ) :
-
-				$_out['order'] = $sort['order'];
-
-			elseif( count( $sort ) > 1 ) :
-
-				//	Take the last element
-				$_out['order'] = end( $sort );
-				$_out['order'] = is_string( $_out['order'] ) ? $_out['order'] : NULL;
-
-			endif;
-
-		endif;
-
-		// --------------------------------------------------------------------------
-
-		return $_out;
 	}
 
 
