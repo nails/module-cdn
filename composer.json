@@ -34,7 +34,7 @@
 		"nailsapp/common": "dev-develop",
 		"nailsapp/module-curl": "dev-develop",
 		"aws/aws-sdk-php": "~2.4.5",
-		"masterexploder/phpthumb": "v2.0",
+		"masterexploder/phpthumb": "dev-master",
 		"sybio/gif-creator": "~1.0.0",
 		"sybio/gif-frame-extractor": "~1.0.0"
 	}
