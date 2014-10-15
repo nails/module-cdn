@@ -7,7 +7,7 @@
 *
 */
 
-class Local_CDN
+class Local_CDN implements Cdn_driver
 {
 
 	private $cdn;
@@ -111,6 +111,12 @@ class Local_CDN
 	// --------------------------------------------------------------------------
 
 
+	/**
+	 * Determines whether an object exists or not
+	 * @param  string $filename The object's filename
+	 * @param  string $bucket   The bucket's slug
+	 * @return boolean
+	 */
 	public function object_exists( $filename, $bucket )
 	{
 		return is_file( DEPLOY_CDN_PATH . $bucket . '/' . $filename );
@@ -122,11 +128,10 @@ class Local_CDN
 
 	/**
 	 * Destroys (permenantly deletes) an object
-	 *
-	 * @access	public
-	 * @param	none
-	 * @return	void
-	 **/
+	 * @param  string $object The object's filename
+	 * @param  string $bucket The bucket's slug
+	 * @return boolean
+	 */
 	public function object_destroy( $object, $bucket )
 	{
 		$_file		= urldecode( $object );
@@ -159,6 +164,32 @@ class Local_CDN
 	// --------------------------------------------------------------------------
 
 
+	/**
+	 * Returns a local path for an object
+	 * @param  string $bucket   The bucket's slug
+	 * @param  string $filename The filename
+	 * @return mixed            string on success, FALSE on failure
+	 */
+	public function object_local_path( $bucket, $filename )
+	{
+		$_path = DEPLOY_CDN_PATH . $bucket . '/' . $filename;
+
+		if ( is_file( $_path ) ) :
+
+			return $_path;
+
+		else :
+
+			$this->cdn->set_error( 'Could not find a valid local path for object ' . $bucket . '/' . $filename );
+			return FALSE;
+
+		endif;
+	}
+
+
+	// --------------------------------------------------------------------------
+
+
 	/*	! BUCKET METHODS */
 
 
@@ -167,9 +198,7 @@ class Local_CDN
 
 	/**
 	 * Creates a new bucket
-	 *
-	 * @access	public
-	 * @param	string
+	 * @param  string $bucket The bucket's slug
 	 * @return	boolean
 	 **/
 	public function bucket_create( $bucket )
@@ -207,6 +236,11 @@ class Local_CDN
 	// --------------------------------------------------------------------------
 
 
+	/**
+	 * Deletes an existing bucket
+	 * @param  string $bucket The bucket's slug
+	 * @return boolean
+	 */
 	public function bucket_destroy( $bucket )
 	{
 		if ( rmdir( DEPLOY_CDN_PATH . $bucket ) ) :

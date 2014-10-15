@@ -146,7 +146,7 @@ class NAILS_Serve extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Fetch source
-		$_usefile = $this->_fetch_sourcefile( $this->_bucket, $this->_object );
+		$_usefile = $this->cdn->object_local_path( $this->_bucket, $this->_object );
 
 		if ( ! $_usefile ) :
 

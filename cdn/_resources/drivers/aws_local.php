@@ -10,10 +10,9 @@
 //	Namespace malarky
 use Aws\S3\S3Client;
 
-class Aws_local_CDN
+class Aws_local_CDN implements Cdn_driver
 {
 	private $cdn;
-	public $errors;
 	private $_bucket_url;
 	private $_bucket;
 	private $_s3;
@@ -32,10 +31,7 @@ class Aws_local_CDN
 	public function __construct( $options = NULL )
 	{
 		//	Shortcut to CDN Library (mainly for setting errors)
-		$this->cdn		=& get_instance()->cdn;
-
-		//	Define error array
-		$this->errors	= array();
+		$this->cdn =& get_instance()->cdn;
 
 		// --------------------------------------------------------------------------
 
@@ -44,10 +40,12 @@ class Aws_local_CDN
 
 		// --------------------------------------------------------------------------
 
-		//	Check all the constants are defined properly
-		//	DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID
-		//	DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET
-		//	DEPLOY_CDN_DRIVER_AWS_S3_BUCKET
+		/**
+		 * Check all the constants are defined properly
+		 * DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID
+		 * DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET
+		 * DEPLOY_CDN_DRIVER_AWS_S3_BUCKET
+		 */
 
 		if ( ! defined( 'DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID' ) ) :
 
@@ -195,6 +193,56 @@ class Aws_local_CDN
 			$this->cdn->set_error( 'AWS-SDK EXCEPTION: ' . get_class( $e ) . ': ' . $e->getMessage() );
 			return FALSE;
 		}
+	}
+
+
+	// --------------------------------------------------------------------------
+
+
+	/**
+	 * Returns a local path for an object
+	 * @param  string $bucket   The bucket's slug
+	 * @param  string $filename The filename
+	 * @return mixed            string on success, FALSE on failure
+	 */
+	public function object_local_path( $bucket, $filename )
+	{
+		//	Do we have the original sourcefile?
+		$_filename	= strtolower( substr( $filename, 0, strrpos( $filename, '.' ) ) );
+		$_extension	= strtolower( substr( $filename, strrpos( $filename, '.' ) ) );
+		$_srcfile	= DEPLOY_CACHE_DIR . $bucket . '-' . $_filename . '-SRC' . $_extension;
+
+		//	Check filesystem for sourcefile
+		if ( file_exists( $_srcfile ) ) :
+
+			//	Yup, it's there, so use it
+			return $_srcfile;
+
+		else :
+
+			//	Doesn't exist, attempt to fetch from S3
+			try
+			{
+				$_result = $this->_s3->getObject(array(
+					'Bucket'	=> $this->_bucket,
+					'Key'		=> $bucket . '/' . $filename,
+					'SaveAs'	=> $_srcfile
+				));
+
+				return $_srcfile;
+			}
+			catch ( \Aws\S3\Exception\S3Exception $e )
+			{
+				//	Clean up
+				@unlink( $save_as );
+
+				//	Note the error
+				$this->cdn->set_error( 'AWS-SDK EXCEPTION: ' . get_class( $e ) . ': ' . $e->getMessage() );
+
+				return FALSE;
+			}
+
+		endif;
 	}
 
 
@@ -612,35 +660,6 @@ class Aws_local_CDN
 		endif;
 
 		return $url;
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	public function fetch_from_s3( $bucket, $object, $save_as )
-	{
-		//	Now attempt to save the S3 Object
-		try
-		{
-			$_result = $this->_s3->getObject(array(
-				'Bucket'	=> $this->_bucket,
-				'Key'		=> $bucket . '/' . $object,
-				'SaveAs'	=> $save_as
-			));
-
-			return TRUE;
-		}
-		catch ( \Aws\S3\Exception\S3Exception $e )
-		{
-			//	Clean up
-			@unlink( $save_as );
-
-			//	Note the error
-			$this->cdn->set_error( 'AWS-SDK EXCEPTION: ' . get_class( $e ) . ': ' . $e->getMessage() );
-
-			return FALSE;
-		}
 	}
 }
 

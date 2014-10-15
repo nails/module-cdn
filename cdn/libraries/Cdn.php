@@ -86,6 +86,8 @@ class Cdn
 	 **/
 	protected function _include_driver()
 	{
+		include_once NAILS_PATH . 'module-cdn/cdn/_resources/drivers/_driver.php';
+
 		switch ( strtoupper( APP_CDN_DRIVER ) ) :
 
 			case 'AWS_LOCAL' :
@@ -1587,6 +1589,46 @@ class Cdn
 		else :
 
 			$this->db->update( NAILS_DB_PREFIX . 'cdn_object o' );
+
+		endif;
+	}
+
+
+	// --------------------------------------------------------------------------
+
+
+	/**
+	 * Returns a local path for a bucket & object
+	 * @param  string $bucket_slug The bucket's slug
+	 * @param  string $filename    the object's filename
+	 * @return mixed               string on success, FALSE on failure
+	 */
+	public function object_local_path( $bucket_slug, $filename )
+	{
+		return $this->_cdn->object_local_path( $bucket_slug, $filename );
+	}
+
+
+	// --------------------------------------------------------------------------
+
+
+	/**
+	 * Returns a local path for an object ID
+	 * @param  int   $object_id The object's ID
+	 * @return mixed            string on success, FALSE on failure
+	 */
+	public function object_local_path_by_id( $object_id )
+	{
+		$_object = $this->get_object( $object_id );
+
+		if ( $_object ) :
+
+			return $this->object_local_path( $_object->bucket->slug, $_object->filename );
+
+		else :
+
+			$this->_set_error( 'Invalid Object ID' );
+			return FALSE;
 
 		endif;
 	}

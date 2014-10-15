@@ -121,28 +121,32 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			//	version in the cache bucket.
 
 			//	Fetch the file to use
-			$_usefile = $this->_fetch_sourcefile( $this->_bucket, $this->_object );
+			$_usefile = $this->cdn->object_local_path( $this->_bucket, $this->_object );
 
 			if ( ! $_usefile ) :
 
-				log_message( 'error', 'CDN: ' . $_cropmethod . ': No sourcefile was returned.' );
+				log_message( 'error', 'CDN: ' . $_cropmethod . ': No local path was returned.' );
 				return $this->_bad_src( $this->_width, $this->_height );
 
 			elseif( ! filesize( $_usefile ) ) :
 
-				//	Hmm, empty, delete it and try one mroe time
+				/**
+				 * Hmm, empty, delete it and try one more time
+				 * TODO: work out the reason why we do this
+				 */
+
 				@unlink( $_usefile );
 
-				$_usefile = $this->_fetch_sourcefile( $this->_bucket, $this->_object );
+				$_usefile = $this->cdn->object_local_path( $this->_bucket, $this->_object );
 
 				if ( ! $_usefile ) :
 
-					log_message( 'error', 'CDN: ' . $_cropmethod . ': No sourcefile was returned, second attempt.' );
+					log_message( 'error', 'CDN: ' . $_cropmethod . ': No local path was returned, second attempt.' );
 					return $this->_bad_src( $this->_width, $this->_height );
 
 				elseif( ! filesize( $_usefile ) ) :
 
-					log_message( 'error', 'CDN: ' . $_cropmethod . ': sourcefile exists, but has a zero filesize.' );
+					log_message( 'error', 'CDN: ' . $_cropmethod . ': local path exists, but has a zero filesize.' );
 					return $this->_bad_src( $this->_width, $this->_height );
 
 				endif;

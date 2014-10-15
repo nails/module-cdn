@@ -77,7 +77,7 @@ class NAILS_Zip extends NAILS_CDN_Controller
 					foreach ( $_objects AS $obj ) :
 
 						$_temp				= new stdClass();
-						$_temp->path		= $this->_fetch_sourcefile( $obj->bucket->slug, $obj->filename );
+						$_temp->path		= $this->cdn->object_local_path( $obj->bucket->slug, $obj->filename );
 						$_temp->filename	= $obj->filename_display;
 						$_temp->bucket		= $obj->bucket->label;
 
