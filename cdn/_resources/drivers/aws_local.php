@@ -164,6 +164,22 @@ class Aws_local_CDN implements Cdn_driver
 
 
 	/**
+	 * Determines whether an object exists or not
+	 * @param  string $filename The object's filename
+	 * @param  string $bucket   The bucket's slug
+	 * @return boolean
+	 */
+	public function object_exists( $filename, $bucket )
+	{
+		return $this->_s3->doesObjectExist($bucket, $filename);
+	}
+
+
+
+	// --------------------------------------------------------------------------
+
+
+	/**
 	 * Destroys (permenantly deletes) an object
 	 *
 	 * @access	public
