@@ -247,7 +247,14 @@ class NAILS_CDN_Controller extends NAILS_Controller
 		// --------------------------------------------------------------------------
 
 		//	Create the icon
-		$_icon		= @imagecreatefrompng( $this->_cdn_root . '_resources/img/fail.png' );
+		if ($this->retina) {
+
+			$_icon	= @imagecreatefrompng( $this->_cdn_root . '_resources/img/fail@2x.png' );
+
+		} else {
+
+			$_icon	= @imagecreatefrompng( $this->_cdn_root . '_resources/img/fail.png' );
+		}
 		$_icon_w	= imagesx( $_icon );
 		$_icon_h	= imagesy( $_icon );
 

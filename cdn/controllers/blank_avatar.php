@@ -25,6 +25,8 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
 	protected $_width;
 	protected $_height;
 	protected $_sex;
+	protected $retina;
+	protected $retinaMultiplier;
 	protected $_cache_file;
 
 
@@ -51,14 +53,36 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Determine dynamic values
-		$this->_width		= $this->uri->segment( 3, 100 );
-		$this->_height		= $this->uri->segment( 4, 100 );
-		$this->_sex			= strtolower( $this->uri->segment( 5, 'man' ) );
+		$this->_width			= $this->uri->segment(3, 100);
+		$this->_height			= $this->uri->segment(4, 100);
+		$this->_sex				= strtolower( $this->uri->segment(5, 'man'));
+        $this->retina           = false;
+        $this->retinaMultiplier = 1;
 
-		//	Set a unique filename (but one which is constant if requested twice, i.e
-		//	no random values)
+		// --------------------------------------------------------------------------
 
-		$this->_cache_file	= 'blank_avatar-' . $this->_width . 'x' . $this->_height . '-' . $this->_sex . '.png';
+        //	Test for Retina
+        if (preg_match('/(.+)@2x/', $this->_sex, $matches)) {
+
+            $this->retina           = true;
+            $this->retinaMultiplier = 2;
+            $this->_sex				= $matches[1];
+        }
+
+        // --------------------------------------------------------------------------
+
+        /**
+		 * Set a unique filename (but one which is constant if requested twice, i.e
+		 * no random values)
+		 */
+
+		$width	= $this->_width * $this->retinaMultiplier;
+		$height	= $this->_height * $this->retinaMultiplier;
+
+		$this->_cache_file  = 'blank_avatar';
+		$this->_cache_file .= '-' . $width . 'x' . $height;
+		$this->_cache_file .= '-' . $this->_sex;
+		$this->_cache_file .= '.png';
 	}
 
 
@@ -130,6 +154,9 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
 
 			endswitch;
 
+			$width	= $this->_width * $this->retinaMultiplier;
+			$height	= $this->_height * $this->retinaMultiplier;
+
 			if ( file_exists( $_src ) ) :
 
 				//	Object exists, time for manipulation fun times :>
@@ -141,7 +168,7 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
 
 				//	Perform the resize
 				$PHPThumb = new PHPThumb\GD( $_src, $_options );
-				$PHPThumb->adaptiveResize( $this->_width, $this->_height );
+				$PHPThumb->adaptiveResize( $width, $height );
 
 				// --------------------------------------------------------------------------
 
@@ -162,7 +189,7 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
 
 				//	This object does not exist.
 				log_message( 'error', 'CDN: Blank Avatar: File not found; ' . $_src );
-				return $this->_bad_src( $this->_width, $this->_height );
+				return $this->_bad_src( $width, $height );
 
 			endif;
 
