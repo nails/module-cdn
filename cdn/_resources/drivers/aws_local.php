@@ -1,4 +1,4 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
 
 /**
 * Name:			CDN
@@ -28,7 +28,7 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	none
 	 * @return	void
 	 **/
-	public function __construct( $options = NULL )
+	public function __construct($options = NULL)
 	{
 		//	Shortcut to CDN Library (mainly for setting errors)
 		$this->cdn =& get_instance()->cdn;
@@ -36,7 +36,7 @@ class Aws_local_CDN implements Cdn_driver
 		// --------------------------------------------------------------------------
 
 		//	Load langfile
-		get_instance()->lang->load( 'cdn/cdn_driver_aws_local' );
+		get_instance()->lang->load('cdn/cdn_driver_aws_local');
 
 		// --------------------------------------------------------------------------
 
@@ -47,24 +47,24 @@ class Aws_local_CDN implements Cdn_driver
 		 * DEPLOY_CDN_DRIVER_AWS_S3_BUCKET
 		 */
 
-		if ( ! defined( 'DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID' ) ) :
+		if (!defined('DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID')) :
 
 			//	TODO: Specify correct lang
-			show_error( lang( 'cdn_error_not_configured' ) );
+			show_error(lang('cdn_error_not_configured'));
 
 		endif;
 
-		if ( ! defined( 'DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET' ) ) :
+		if (!defined('DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET')) :
 
 			//	TODO: Specify correct lang
-			show_error( lang( 'cdn_error_not_configured' ) );
+			show_error(lang('cdn_error_not_configured'));
 
 		endif;
 
-		if ( ! defined( 'DEPLOY_CDN_DRIVER_AWS_S3_BUCKET' ) ) :
+		if (!defined('DEPLOY_CDN_DRIVER_AWS_S3_BUCKET')) :
 
 			//	TODO: Specify correct lang
-			show_error( lang( 'cdn_error_not_configured' ) );
+			show_error(lang('cdn_error_not_configured'));
 
 		endif;
 
@@ -104,17 +104,17 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_create( $data )
+	public function object_create($data)
 	{
-		$_bucket		= ! empty( $data->bucket->slug )	? $data->bucket->slug	: '';
-		$_filename_orig	= ! empty( $data->filename )		? $data->filename		: '';
+		$_bucket		= ! empty($data->bucket->slug)	? $data->bucket->slug	: '';
+		$_filename_orig	= ! empty($data->filename)		? $data->filename		: '';
 
-		$_filename	= strtolower( substr( $_filename_orig, 0, strrpos( $_filename_orig, '.' ) ) );
-		$_extension	= strtolower( substr( $_filename_orig, strrpos( $_filename_orig, '.' ) ) );
+		$_filename	= strtolower(substr($_filename_orig, 0, strrpos($_filename_orig, '.')));
+		$_extension	= strtolower(substr($_filename_orig, strrpos($_filename_orig, '.')));
 
-		$_source	= ! empty( $data->file )			? $data->file			: '';
-		$_mime		= ! empty( $data->mime )			? $data->mime			: '';
-		$_name		= ! empty( $data->name )			? $data->name			: 'file' . $_extension;
+		$_source	= ! empty($data->file)			? $data->file			: '';
+		$_mime		= ! empty($data->mime)			? $data->mime			: '';
+		$_name		= ! empty($data->name)			? $data->name			: 'file' . $_extension;
 
 		// --------------------------------------------------------------------------
 
@@ -139,22 +139,22 @@ class Aws_local_CDN implements Cdn_driver
 					'CopySource'			=> $this->_bucket . '/' . $_bucket . '/' . $_filename . $_extension,
 					'Key'					=> $_bucket . '/' . $_filename . '-download' . $_extension,
 					'ContentType'			=> 'application/octet-stream',
-					'ContentDisposition'	=> 'attachment; filename="' . str_replace( '"', '', $_name ) . '" ',
+					'ContentDisposition'	=> 'attachment; filename="' . str_replace('"', '', $_name) . '" ',
 					'MetadataDirective'		=> 'REPLACE',
 					'ACL'					=> 'public-read'
 				));
 
 				return TRUE;
 			}
-			catch( Exception $e )
+			catch(Exception $e)
 			{
-				$this->cdn->set_error( 'AWS-SDK EXCEPTION: ' . get_class( $e ) . ': ' . $e->getMessage() );
+				$this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());
 				return FALSE;
 			}
 		}
-		catch ( Exception $e )
+		catch (Exception $e)
 		{
-			$this->cdn->set_error( 'AWS-SDK EXCEPTION: ' . get_class( $e ) . ': ' . $e->getMessage() );
+			$this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());
 			return FALSE;
 		}
 	}
@@ -169,7 +169,7 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param  string $bucket   The bucket's slug
 	 * @return boolean
 	 */
-	public function object_exists( $filename, $bucket )
+	public function object_exists($filename, $bucket)
 	{
 		return $this->_s3->doesObjectExist($bucket, $filename);
 	}
@@ -186,27 +186,27 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_destroy( $object, $bucket )
+	public function object_destroy($object, $bucket)
 	{
 		try
 		{
 
-			$_filename	= strtolower( substr( $object, 0, strrpos( $object, '.' ) ) );
-			$_extension	= strtolower( substr( $object, strrpos( $object, '.' ) ) );
+			$_filename	= strtolower(substr($object, 0, strrpos($object, '.')));
+			$_extension	= strtolower(substr($object, strrpos($object, '.')));
 
 			$_options				= array();
 			$_options['Bucket']		= $this->_bucket;
 			$_options['Objects']	= array();
-			$_options['Objects'][]	= array( 'Key' => $bucket . '/' . $_filename . $_extension );
-			$_options['Objects'][]	= array( 'Key' => $bucket . '/' . $_filename . '-download' . $_extension );
+			$_options['Objects'][]	= array('Key' => $bucket . '/' . $_filename . $_extension);
+			$_options['Objects'][]	= array('Key' => $bucket . '/' . $_filename . '-download' . $_extension);
 
-			$_result = $this->_s3->deleteObjects( $_options );
+			$_result = $this->_s3->deleteObjects($_options);
 
 			return TRUE;
 		}
-		catch ( Exception $e )
+		catch (Exception $e)
 		{
-			$this->cdn->set_error( 'AWS-SDK EXCEPTION: ' . get_class( $e ) . ': ' . $e->getMessage() );
+			$this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());
 			return FALSE;
 		}
 	}
@@ -221,15 +221,15 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param  string $filename The filename
 	 * @return mixed            string on success, FALSE on failure
 	 */
-	public function object_local_path( $bucket, $filename )
+	public function object_local_path($bucket, $filename)
 	{
 		//	Do we have the original sourcefile?
-		$_filename	= strtolower( substr( $filename, 0, strrpos( $filename, '.' ) ) );
-		$_extension	= strtolower( substr( $filename, strrpos( $filename, '.' ) ) );
+		$_filename	= strtolower(substr($filename, 0, strrpos($filename, '.')));
+		$_extension	= strtolower(substr($filename, strrpos($filename, '.')));
 		$_srcfile	= DEPLOY_CACHE_DIR . $bucket . '-' . $_filename . '-SRC' . $_extension;
 
 		//	Check filesystem for sourcefile
-		if ( file_exists( $_srcfile ) ) :
+		if (file_exists($_srcfile)) :
 
 			//	Yup, it's there, so use it
 			return $_srcfile;
@@ -247,13 +247,13 @@ class Aws_local_CDN implements Cdn_driver
 
 				return $_srcfile;
 			}
-			catch ( \Aws\S3\Exception\S3Exception $e )
+			catch (\Aws\S3\Exception\S3Exception $e)
 			{
 				//	Clean up
-				@unlink( $save_as );
+				@unlink($save_as);
 
 				//	Note the error
-				$this->cdn->set_error( 'AWS-SDK EXCEPTION: ' . get_class( $e ) . ': ' . $e->getMessage() );
+				$this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());
 
 				return FALSE;
 			}
@@ -278,10 +278,10 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function bucket_create( $bucket )
+	public function bucket_create($bucket)
 	{
 		//	Attempt to create a 'folder' object on S3
-		if ( ! $this->_s3->doesObjectExist( $this->_bucket, $bucket . '/' ) ) :
+		if (!$this->_s3->doesObjectExist($this->_bucket, $bucket . '/')) :
 
 			try
 			{
@@ -293,9 +293,9 @@ class Aws_local_CDN implements Cdn_driver
 
 				return TRUE;
 			}
-			catch ( Exception $e )
+			catch (Exception $e)
 			{
-				$this->cdn->set_error( 'AWS-SDK ERROR: ' . $e->getMessage() );
+				$this->cdn->set_error('AWS-SDK ERROR: ' . $e->getMessage());
 				return FALSE;
 			}
 
@@ -311,17 +311,17 @@ class Aws_local_CDN implements Cdn_driver
 	// --------------------------------------------------------------------------
 
 
-	public function bucket_destroy( $bucket )
+	public function bucket_destroy($bucket)
 	{
 		try
 		{
-			$_result = $this->_s3->deleteMatchingObjects( $this->_bucket, $bucket . '/' );
+			$_result = $this->_s3->deleteMatchingObjects($this->_bucket, $bucket . '/');
 
 			return TRUE;
 		}
-		catch ( Exception $e )
+		catch (Exception $e)
 		{
-			$this->cdn->set_error( 'AWS-SDK ERROR: ' . $e->getMessage() );
+			$this->cdn->set_error('AWS-SDK ERROR: ' . $e->getMessage());
 			return FALSE;
 		}
 	}
@@ -344,20 +344,20 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	string	$object	The filename of the object
 	 * @return	string
 	 **/
-	public function url_serve( $object, $bucket, $force_download )
+	public function url_serve($object, $bucket, $force_download)
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING;
 		$_out .= $bucket . '/';
 
-		if ( $force_download ) :
+		if ($force_download) :
 
 			//	If we're forcing the download we need to reference a slightly different file
 			//	On upload two instances were created, the "normal" streaming type one and another
 			//	with the appropriate content-types set so that the browser downloads as oppossed
 			//	to renders it
 
-			$_filename	= strtolower( substr( $object, 0, strrpos( $object, '.' ) ) );
-			$_extension	= strtolower( substr( $object, strrpos( $object, '.' ) ) );
+			$_filename	= strtolower(substr($object, 0, strrpos($object, '.')));
+			$_extension	= strtolower(substr($object, strrpos($object, '.')));
 
 			$_out .= $_filename;
 			$_out .= '-download';
@@ -370,7 +370,7 @@ class Aws_local_CDN implements Cdn_driver
 
 		endif;
 
-		return $this->_url_make_secure( $_out, FALSE );
+		return $this->_url_make_secure($_out, FALSE);
 	}
 
 
@@ -384,12 +384,12 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	none
 	 * @return	string
 	 **/
-	public function url_serve_scheme( $force_download )
+	public function url_serve_scheme($force_download)
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING;
 		$_out .= '{{bucket}}/';
 
-		if ( $force_download ) :
+		if ($force_download) :
 
 			//	If we're forcing the download we need to reference a slightly different file
 			//	On upload two instances were created, the "normal" streaming type one and another
@@ -405,7 +405,7 @@ class Aws_local_CDN implements Cdn_driver
 
 		endif;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -420,10 +420,10 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	string	$object	The filename of the object
 	 * @return	string
 	 **/
-	public function url_serve_zipped( $object_ids, $hash, $filename )
+	public function url_serve_zipped($object_ids, $hash, $filename)
 	{
-		$filename = $filename ? '/' . urlencode( $filename ) : '';
-		return $this->_url_make_secure( DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/zip/' . $object_ids . '/' . $hash . $filename );
+		$filename = $filename ? '/' . urlencode($filename) : '';
+		return $this->_url_make_secure(DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/zip/' . $object_ids . '/' . $hash . $filename);
 	}
 
 
@@ -439,7 +439,7 @@ class Aws_local_CDN implements Cdn_driver
 	 **/
 	public function url_serve_zipped_scheme()
 	{
-		return $this->_url_make_secure( DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/zip/{{ids}}/{{hash}}/{{filename}}' );
+		return $this->_url_make_secure(DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/zip/{{ids}}/{{hash}}/{{filename}}');
 	}
 
 
@@ -456,14 +456,14 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	string	$height	The height of the thumbnail
 	 * @return	string
 	 **/
-	public function url_thumb( $object, $bucket, $width, $height )
+	public function url_thumb($object, $bucket, $width, $height)
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/thumb/';
 		$_out .= $width . '/' . $height . '/';
 		$_out .= $bucket . '/';
 		$_out .= $object;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -481,7 +481,7 @@ class Aws_local_CDN implements Cdn_driver
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/thumb/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -498,14 +498,14 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	string	$height	The height of the scaled image
 	 * @return	string
 	 **/
-	public function url_scale( $object, $bucket, $width, $height )
+	public function url_scale($object, $bucket, $width, $height)
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/scale/';
 		$_out .= $width . '/' . $height . '/';
 		$_out .= $bucket . '/';
 		$_out .= $object;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -523,7 +523,7 @@ class Aws_local_CDN implements Cdn_driver
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/scale/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -539,12 +539,12 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	int		border	The width of the border round the placeholder
 	 * @return	string
 	 **/
-	public function url_placeholder( $width = 100, $height = 100, $border = 0 )
+	public function url_placeholder($width = 100, $height = 100, $border = 0)
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/placeholder/';
 		$_out .= $width . '/' . $height . '/' . $border;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -562,7 +562,7 @@ class Aws_local_CDN implements Cdn_driver
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/placeholder/{{width}}/{{height}}/{{border}}';
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -570,7 +570,7 @@ class Aws_local_CDN implements Cdn_driver
 
 
 	/**
-	 * Generates the correct URL for using the placeholder utility
+	 * Generates the correct URL for a blank avatar
 	 *
 	 * @access	public
 	 * @param	int		$width	The width of the placeholder
@@ -578,12 +578,12 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	int		border	The width of the border round the placeholder
 	 * @return	string
 	 **/
-	public function url_blank_avatar( $width = 100, $height = 100, $sex = 'male' )
+	public function url_blank_avatar($width = 100, $height = 100, $sex = 'male')
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/blank_avatar/';
 		$_out .= $width . '/' . $height . '/' . $sex;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -601,7 +601,7 @@ class Aws_local_CDN implements Cdn_driver
 	{
 		$_out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/blank_avatar/{{width}}/{{height}}/{{sex}}';
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -617,18 +617,18 @@ class Aws_local_CDN implements Cdn_driver
 	 * @param	string	$expires	The length of time the URL should be valid for, in seconds
 	 * @return	string
 	 **/
-	public function url_expiring( $object, $bucket, $expires )
+	public function url_expiring($object, $bucket, $expires)
 	{
-		dumpanddie( 'TODO: If cloudfront is configured, then generate a secure url and pass pack, if not serve through the processing mechanism. Maybe.' );
+		dumpanddie('TODO: If cloudfront is configured, then generate a secure url and pass pack, if not serve through the processing mechanism. Maybe.');
 
 		//	Hash the expirey time
-		$_hash = get_instance()->encrypt->encode( $bucket . '|' . $object . '|' . $expires . '|' . time() . '|' . md5( time() . $bucket . $object . $expires . APP_PRIVATE_KEY ), APP_PRIVATE_KEY );
-		$_hash = urlencode( $_hash );
+		$_hash = get_instance()->encrypt->encode($bucket . '|' . $object . '|' . $expires . '|' . time() . '|' . md5(time() . $bucket . $object . $expires . APP_PRIVATE_KEY), APP_PRIVATE_KEY);
+		$_hash = urlencode($_hash);
 
 		$_out  = 'cdn/serve?token=' . $_hash;
-		$_out  = site_url( $_out );
+		$_out  = site_url($_out);
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -649,27 +649,27 @@ class Aws_local_CDN implements Cdn_driver
 
 		// --------------------------------------------------------------------------
 
-		$_out = site_url( 'cdn/serve?token={{token}}' );
+		$_out = site_url('cdn/serve?token={{token}}');
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
 	// --------------------------------------------------------------------------
 
 
-	protected function _url_make_secure( $url, $is_processing = TRUE )
+	protected function _url_make_secure($url, $is_processing = TRUE)
 	{
-		if ( page_is_secure() ) :
+		if (page_is_secure()) :
 
 			//	Make the URL secure
-			if ( $is_processing ) :
+			if ($is_processing) :
 
-				$url = str_replace( DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING, DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING_SECURE, $url );
+				$url = str_replace(DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING, DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING_SECURE, $url);
 
 			else :
 
-				$url = str_replace( DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING, DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING_SECURE, $url );
+				$url = str_replace(DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING, DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_SERVING_SECURE, $url);
 
 			endif;
 

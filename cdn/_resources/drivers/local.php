@@ -1,4 +1,4 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
 
 /**
 * Name:			CDN
@@ -24,7 +24,7 @@ class Local_CDN implements Cdn_driver
 	 * @param	none
 	 * @return	void
 	 **/
-	public function __construct( $options = NULL )
+	public function __construct($options = NULL)
 	{
 		//	Shortcut to CDN
 		$this->cdn		=& get_instance()->cdn;
@@ -33,7 +33,7 @@ class Local_CDN implements Cdn_driver
 		// --------------------------------------------------------------------------
 
 		//	Load langfile
-		get_instance()->lang->load( 'cdn/cdn_driver_local' );
+		get_instance()->lang->load('cdn/cdn_driver_local');
 	}
 
 
@@ -53,22 +53,22 @@ class Local_CDN implements Cdn_driver
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_create( $data )
+	public function object_create($data)
 	{
-		$_bucket	= ! empty( $data->bucket->slug )	? $data->bucket->slug	: '';
-		$_filename	= ! empty( $data->filename )		? $data->filename		: '';
-		$_source	= ! empty( $data->file )			? $data->file			: '';
+		$_bucket	= ! empty($data->bucket->slug)	? $data->bucket->slug	: '';
+		$_filename	= ! empty($data->filename)		? $data->filename		: '';
+		$_source	= ! empty($data->file)			? $data->file			: '';
 
 		// --------------------------------------------------------------------------
 
 		//	Check directory exists
-		if ( ! is_dir( DEPLOY_CDN_PATH . $_bucket ) ) :
+		if (!is_dir(DEPLOY_CDN_PATH . $_bucket)) :
 
 			//	Hmm, not writeable, can we create it?
-			if ( ! @mkdir( DEPLOY_CDN_PATH . $_bucket ) ) :
+			if (!@mkdir(DEPLOY_CDN_PATH . $_bucket)) :
 
 				//	Nope, failed to create the directory - we iz gonna have problems if we continue, innit.
-				$this->cdn->set_error( lang( 'cdn_error_target_write_fail_mkdir', DEPLOY_CDN_PATH . $_bucket ) );
+				$this->cdn->set_error(lang('cdn_error_target_write_fail_mkdir', DEPLOY_CDN_PATH . $_bucket));
 				return FALSE;
 
 			endif;
@@ -78,9 +78,9 @@ class Local_CDN implements Cdn_driver
 		// --------------------------------------------------------------------------
 
 		//	Check bucket is writeable
-		if ( ! is_really_writable( DEPLOY_CDN_PATH . $_bucket ) ) :
+		if (!is_really_writable(DEPLOY_CDN_PATH . $_bucket)) :
 
-			$this->cdn->set_error( lang( 'cdn_error_target_write_fail', DEPLOY_CDN_PATH . $_bucket ) );
+			$this->cdn->set_error(lang('cdn_error_target_write_fail', DEPLOY_CDN_PATH . $_bucket));
 			return FALSE;
 
 		endif;
@@ -90,18 +90,18 @@ class Local_CDN implements Cdn_driver
 		//	Move the file
 		$_dest = DEPLOY_CDN_PATH . $_bucket . '/' . $_filename;
 
-		if ( @move_uploaded_file( $_source, $_dest ) ) :
+		if (@move_uploaded_file($_source, $_dest)) :
 
 			return TRUE;
 
 		//	Hmm, failed to move, try copying it.
-		elseif( @copy( $_source, $_dest ) ) :
+		elseif(@copy($_source, $_dest)) :
 
 			return TRUE;
 
 		else :
 
-			$this->cdn->set_error( lang( 'cdn_error_couldnotmove' ) );
+			$this->cdn->set_error(lang('cdn_error_couldnotmove'));
 			return FALSE;
 
 		endif;
@@ -117,9 +117,9 @@ class Local_CDN implements Cdn_driver
 	 * @param  string $bucket   The bucket's slug
 	 * @return boolean
 	 */
-	public function object_exists( $filename, $bucket )
+	public function object_exists($filename, $bucket)
 	{
-		return is_file( DEPLOY_CDN_PATH . $bucket . '/' . $filename );
+		return is_file(DEPLOY_CDN_PATH . $bucket . '/' . $filename);
 	}
 
 
@@ -132,14 +132,14 @@ class Local_CDN implements Cdn_driver
 	 * @param  string $bucket The bucket's slug
 	 * @return boolean
 	 */
-	public function object_destroy( $object, $bucket )
+	public function object_destroy($object, $bucket)
 	{
-		$_file		= urldecode( $object );
-		$_bucket	= urldecode( $bucket );
+		$_file		= urldecode($object);
+		$_bucket	= urldecode($bucket);
 
-		if ( file_exists( DEPLOY_CDN_PATH . $bucket . '/' . $_file ) ) :
+		if (file_exists(DEPLOY_CDN_PATH . $bucket . '/' . $_file)) :
 
-			if ( @unlink( DEPLOY_CDN_PATH . $bucket . '/' . $_file ) ) :
+			if (@unlink(DEPLOY_CDN_PATH . $bucket . '/' . $_file)) :
 
 				//	TODO: Delete Cache items
 
@@ -147,14 +147,14 @@ class Local_CDN implements Cdn_driver
 
 			else :
 
-				$this->cdn->set_error( lang( 'cdn_error_delete' ) );
+				$this->cdn->set_error(lang('cdn_error_delete'));
 				return FALSE;
 
 			endif;
 
 		else :
 
-			$this->cdn->set_error( lang( 'cdn_error_delete_nofile' ) );
+			$this->cdn->set_error(lang('cdn_error_delete_nofile'));
 			return FALSE;
 
 		endif;
@@ -170,17 +170,17 @@ class Local_CDN implements Cdn_driver
 	 * @param  string $filename The filename
 	 * @return mixed            string on success, FALSE on failure
 	 */
-	public function object_local_path( $bucket, $filename )
+	public function object_local_path($bucket, $filename)
 	{
 		$_path = DEPLOY_CDN_PATH . $bucket . '/' . $filename;
 
-		if ( is_file( $_path ) ) :
+		if (is_file($_path)) :
 
 			return $_path;
 
 		else :
 
-			$this->cdn->set_error( 'Could not find a valid local path for object ' . $bucket . '/' . $filename );
+			$this->cdn->set_error('Could not find a valid local path for object ' . $bucket . '/' . $filename);
 			return FALSE;
 
 		endif;
@@ -201,10 +201,10 @@ class Local_CDN implements Cdn_driver
 	 * @param  string $bucket The bucket's slug
 	 * @return	boolean
 	 **/
-	public function bucket_create( $bucket )
+	public function bucket_create($bucket)
 	{
 		$_dir = DEPLOY_CDN_PATH . $bucket;
-		if ( is_dir( $_dir ) && is_writeable( $_dir ) ) :
+		if (is_dir($_dir) && is_writeable($_dir)) :
 
 			return TRUE;
 
@@ -212,19 +212,19 @@ class Local_CDN implements Cdn_driver
 
 		// --------------------------------------------------------------------------
 
-		if ( @mkdir( $_dir ) ) :
+		if (@mkdir($_dir)) :
 
 			return TRUE;
 
 		else :
 
-			if ( get_userobject()->is_superuser() ) :
+			if (get_userobject()->is_superuser()) :
 
-				$this->cdn->set_error( lang( 'cdn_error_bucket_mkdir_su', $_dir ) );
+				$this->cdn->set_error(lang('cdn_error_bucket_mkdir_su', $_dir));
 
 			else :
 
-				$this->cdn->set_error( lang( 'cdn_error_bucket_mkdir' ) );
+				$this->cdn->set_error(lang('cdn_error_bucket_mkdir'));
 
 			endif;
 			return FALSE;
@@ -241,15 +241,15 @@ class Local_CDN implements Cdn_driver
 	 * @param  string $bucket The bucket's slug
 	 * @return boolean
 	 */
-	public function bucket_destroy( $bucket )
+	public function bucket_destroy($bucket)
 	{
-		if ( rmdir( DEPLOY_CDN_PATH . $bucket ) ) :
+		if (rmdir(DEPLOY_CDN_PATH . $bucket)) :
 
 			return TRUE;
 
 		else :
 
-			$this->cdn->set_error( lang( 'cdn_error_bucket_unlink' ) );
+			$this->cdn->set_error(lang('cdn_error_bucket_unlink'));
 			return FALSE;
 
 		endif;
@@ -273,19 +273,19 @@ class Local_CDN implements Cdn_driver
 	 * @param	string	$object	The filename of the object
 	 * @return	string
 	 **/
-	public function url_serve( $object, $bucket, $force_download )
+	public function url_serve($object, $bucket, $force_download)
 	{
 		$_out  = 'cdn/serve/';
 		$_out .= $bucket . '/';
 		$_out .= $object;
 
-		if ( $force_download ) :
+		if ($force_download) :
 
 			$_out .= '?dl=1';
 
 		endif;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -299,17 +299,17 @@ class Local_CDN implements Cdn_driver
 	 * @param	none
 	 * @return	string
 	 **/
-	public function url_serve_scheme( $force_download )
+	public function url_serve_scheme($force_download)
 	{
 		$_out = 'cdn/serve/{{bucket}}/{{filename}}{{extension}}';
 
-		if ( $force_download ) :
+		if ($force_download) :
 
 			$_out .= '?dl=1';
 
 		endif;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -324,10 +324,10 @@ class Local_CDN implements Cdn_driver
 	 * @param	string	$object	The filename of the object
 	 * @return	string
 	 **/
-	public function url_serve_zipped( $object_ids, $hash, $filename )
+	public function url_serve_zipped($object_ids, $hash, $filename)
 	{
-		$filename = $filename ? '/' . urlencode( $filename ) : '';
-		return $this->_url_make_secure( 'cdn/zip/' . $object_ids . '/' . $hash . $filename );
+		$filename = $filename ? '/' . urlencode($filename) : '';
+		return $this->_url_make_secure('cdn/zip/' . $object_ids . '/' . $hash . $filename);
 	}
 
 
@@ -343,7 +343,7 @@ class Local_CDN implements Cdn_driver
 	 **/
 	public function url_serve_zipped_scheme()
 	{
-		return $this->_url_make_secure( 'cdn/zip/{{ids}}/{{hash}}/{{filename}}' );
+		return $this->_url_make_secure('cdn/zip/{{ids}}/{{hash}}/{{filename}}');
 	}
 
 
@@ -360,14 +360,14 @@ class Local_CDN implements Cdn_driver
 	 * @param	string	$height	The height of the thumbnail
 	 * @return	string
 	 **/
-	public function url_thumb( $object, $bucket, $width, $height )
+	public function url_thumb($object, $bucket, $width, $height)
 	{
 		$_out  = 'cdn/thumb/';
 		$_out .= $width . '/' . $height . '/';
 		$_out .= $bucket . '/';
 		$_out .= $object;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -385,7 +385,7 @@ class Local_CDN implements Cdn_driver
 	{
 		$_out = 'cdn/thumb/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -402,14 +402,14 @@ class Local_CDN implements Cdn_driver
 	 * @param	string	$height	The height of the scaled image
 	 * @return	string
 	 **/
-	public function url_scale( $object, $bucket, $width, $height )
+	public function url_scale($object, $bucket, $width, $height)
 	{
 		$_out  = 'cdn/scale/';
 		$_out .= $width . '/' . $height . '/';
 		$_out .= $bucket . '/';
 		$_out .= $object;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -427,7 +427,7 @@ class Local_CDN implements Cdn_driver
 	{
 		$_out = 'cdn/scale/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -443,12 +443,12 @@ class Local_CDN implements Cdn_driver
 	 * @param	int		border	The width of the border round the placeholder
 	 * @return	string
 	 **/
-	public function url_placeholder( $width = 100, $height = 100, $border = 0 )
+	public function url_placeholder($width = 100, $height = 100, $border = 0)
 	{
 		$_out  = 'cdn/placeholder/';
 		$_out .= $width . '/' . $height . '/' . $border;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -466,7 +466,7 @@ class Local_CDN implements Cdn_driver
 	{
 		$_out = 'cdn/placeholder/{{width}}/{{height}}/{{border}}';
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -482,12 +482,12 @@ class Local_CDN implements Cdn_driver
 	 * @param	int		border	The width of the border round the placeholder
 	 * @return	string
 	 **/
-	public function url_blank_avatar( $width = 100, $height = 100, $sex = 'male' )
+	public function url_blank_avatar($userId = null, $width = 100, $height = 100, $sex = 'male')
 	{
 		$_out  = 'cdn/blank_avatar/';
 		$_out .= $width . '/' . $height . '/' . $sex;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -505,7 +505,7 @@ class Local_CDN implements Cdn_driver
 	{
 		$_out = 'cdn/blank_avatar/{{width}}/{{height}}/{{sex}}';
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -521,15 +521,15 @@ class Local_CDN implements Cdn_driver
 	 * @param	string	$expires	The length of time the URL should be valid for, in seconds
 	 * @return	string
 	 **/
-	public function url_expiring( $object, $bucket, $expires )
+	public function url_expiring($object, $bucket, $expires)
 	{
 		//	Hash the expirey time
-		$_hash = get_instance()->encrypt->encode( $bucket . '|' . $object . '|' . $expires . '|' . time() . '|' . md5( time() . $bucket . $object . $expires . APP_PRIVATE_KEY ), APP_PRIVATE_KEY );
-		$_hash = urlencode( $_hash );
+		$_hash = get_instance()->encrypt->encode($bucket . '|' . $object . '|' . $expires . '|' . time() . '|' . md5(time() . $bucket . $object . $expires . APP_PRIVATE_KEY), APP_PRIVATE_KEY);
+		$_hash = urlencode($_hash);
 
 		$_out  = 'cdn/serve?token=' . $_hash;
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
@@ -547,16 +547,16 @@ class Local_CDN implements Cdn_driver
 	{
 		$_out = 'cdn/serve?token={{token}}';
 
-		return $this->_url_make_secure( $_out );
+		return $this->_url_make_secure($_out);
 	}
 
 
 	// --------------------------------------------------------------------------
 
 
-	protected function _url_make_secure( $url )
+	protected function _url_make_secure($url)
 	{
-		return site_url( $url, page_is_secure() );
+		return site_url($url, page_is_secure());
 	}
 }
 
