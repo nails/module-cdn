@@ -482,10 +482,11 @@ class Local_CDN implements Cdn_driver
 	 * @param	int		border	The width of the border round the placeholder
 	 * @return	string
 	 **/
-	public function url_blank_avatar($userId = null, $width = 100, $height = 100, $sex = 'male')
+	public function url_blank_avatar($width = 100, $height = 100, $sex = '')
 	{
 		$_out  = 'cdn/blank_avatar/';
-		$_out .= $width . '/' . $height . '/' . $sex;
+		$_out .= $width . '/' . $height;
+		$_out .= $sex ? '/' . $sex : '';
 
 		return $this->_url_make_secure($_out);
 	}

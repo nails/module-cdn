@@ -2899,7 +2899,7 @@ class Cdn
 	 * @param	mixed	$sex	The gender of the blank avatar to show
 	 * @return	string
 	 **/
-	public function url_blank_avatar($width = 100, $height = 100, $sex = 'unknown')
+	public function url_blank_avatar($width = 100, $height = 100, $sex = '')
 	{
 		return $this->_cdn->url_blank_avatar($width, $height, $sex);
 	}
