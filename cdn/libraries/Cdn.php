@@ -1,4 +1,4 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
 
 /**
 * Name:			CDN
@@ -28,7 +28,7 @@ class Cdn
 	 * @param	none
 	 * @return	void
 	 **/
-	public function __construct( $options = NULL )
+	public function __construct($options = NULL)
 	{
 		$this->_ci	=& get_instance();
 		$this->db	=& get_instance()->db;
@@ -36,18 +36,18 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Load langfile
-		$this->_ci->lang->load( 'cdn/cdn' );
+		$this->_ci->lang->load('cdn/cdn');
 
 		// --------------------------------------------------------------------------
 
 		//	Load the helper
-		$this->_ci->load->helper( 'cdn' );
+		$this->_ci->load->helper('cdn');
 
 		// --------------------------------------------------------------------------
 
 		//	Load the storage driver
 		$_class = $this->_include_driver();
-		$this->_cdn = new $_class( $options );
+		$this->_cdn = new $_class($options);
 	}
 
 
@@ -63,11 +63,11 @@ class Cdn
 	public function __destruct()
 	{
 		//	Clear cache's
-		if ( isset( $this->_cache_keys ) && $this->_cache_keys ) :
+		if (isset($this->_cache_keys) && $this->_cache_keys) :
 
-			foreach ( $this->_cache_keys AS $key ) :
+			foreach ($this->_cache_keys AS $key) :
 
-				$this->_unset_cache( $key );
+				$this->_unset_cache($key);
 
 			endforeach;
 
@@ -88,7 +88,7 @@ class Cdn
 	{
 		include_once NAILS_PATH . 'module-cdn/cdn/_resources/drivers/_driver.php';
 
-		switch ( strtoupper( APP_CDN_DRIVER ) ) :
+		switch (strtoupper(APP_CDN_DRIVER)) :
 
 			case 'AWS_LOCAL' :
 
@@ -118,9 +118,9 @@ class Cdn
 	 * Need a public route to the _set_error() method (for the driver)
 	 * @param string $error the error message
 	 */
-	public function set_error( $error )
+	public function set_error($error)
 	{
-		return $this->_set_error( $error );
+		return $this->_set_error($error);
 	}
 
 
@@ -134,36 +134,36 @@ class Cdn
 	 * @param	object	$object	The object to remove from the cache
 	 * @return	boolean
 	 **/
-	protected function _unset_cache_object( $object, $clear_cachedir = TRUE )
+	protected function _unset_cache_object($object, $clear_cachedir = TRUE)
 	{
-		$this->_unset_cache( 'object-' . $object->id );
-		$this->_unset_cache( 'object-' . $object->filename );
-		$this->_unset_cache( 'object-' . $object->filename . '-' . $object->bucket->id );
-		$this->_unset_cache( 'object-' . $object->filename . '-' . $object->bucket->slug );
+		$this->_unset_cache('object-' . $object->id);
+		$this->_unset_cache('object-' . $object->filename);
+		$this->_unset_cache('object-' . $object->filename . '-' . $object->bucket->id);
+		$this->_unset_cache('object-' . $object->filename . '-' . $object->bucket->slug);
 
 		// --------------------------------------------------------------------------
 
 		//	Clear out any
-		if ( $clear_cachedir ) :
+		if ($clear_cachedir) :
 
 			// Create a handler for the directory
 			$_bucket	= $object->bucket->slug;
 			$_object	= $object->filename;
 
-			$_pattern	= '#^' . $_bucket . '-' . substr( $_object, 0, strrpos( $_object, '.' ) ) . '#';
-			$_fh		= opendir( DEPLOY_CACHE_DIR );
+			$_pattern	= '#^' . $_bucket . '-' . substr($_object, 0, strrpos($_object, '.')) . '#';
+			$_fh		= opendir(DEPLOY_CACHE_DIR);
 
 			// Open directory and walk through the filenames
-			while ( $file = readdir( $_fh ) ) :
+			while ($file = readdir($_fh)) :
 
 				// If file isn't this directory or its parent, add it to the results
-				if ( $file != '.' && $file != '..' ) :
+				if ($file != '.' && $file != '..') :
 
 					// Check with regex that the file format is what we're expecting and not something else
-					if( preg_match( $_pattern, $file ) ) :
+					if(preg_match($_pattern, $file)) :
 
 						// add to our file array for later use
-						@unlink( DEPLOY_CACHE_DIR . $file );
+						@unlink(DEPLOY_CACHE_DIR . $file);
 
 					endif;
 
@@ -199,27 +199,27 @@ class Cdn
 	 * @access	public
 	 * @return	mixed
 	 **/
-	public function __call( $method, $arguments )
+	public function __call($method, $arguments)
 	{
 		//	Shortcut methods
 		$_shortcuts		= array();
 		$_shortcuts['upload'] = 'object_create';
 		$_shortcuts['delete'] = 'object_delete';
 
-		if ( isset( $_shortcuts[$method] ) ) :
+		if (isset($_shortcuts[$method])) :
 
-			return call_user_func_array( array( $this, $_shortcuts[$method] ), $arguments );
+			return call_user_func_array(array($this, $_shortcuts[$method]), $arguments);
 
 		endif;
 
 		//	Test the drive
-		if ( method_exists( $this->_cdn, $method ) ) :
+		if (method_exists($this->_cdn, $method)) :
 
-			return call_user_func_array( array( $this->_cdn, $method ), $arguments );
+			return call_user_func_array(array($this->_cdn, $method), $arguments);
 
 		endif;
 
-		throw new Exception( 'Call to undefined method Cdn::' . $method . '()' );
+		throw new Exception('Call to undefined method Cdn::' . $method . '()');
 	}
 
 
@@ -238,26 +238,26 @@ class Cdn
 	 * @access	public
 	 * @return	array
 	 **/
-	public function get_objects( $page = NULL, $per_page = NULL, $data = array(), $_caller = 'GET_OBJECTS' )
+	public function get_objects($page = NULL, $per_page = NULL, $data = array(), $_caller = 'GET_OBJECTS')
 	{
-		$this->db->select( 'o.id, o.filename, o.filename_display, o.created, o.created_by, o.modified, o.modified_by, o.serves, o.downloads, o.thumbs, o.scales' );
-		$this->db->select( 'o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated' );
-		$this->db->select( 'ue.email, u.first_name, u.last_name, u.profile_img, u.gender' );
-		$this->db->select( 'b.id bucket_id, b.label bucket_label, b.slug bucket_slug' );
+		$this->db->select('o.id, o.filename, o.filename_display, o.created, o.created_by, o.modified, o.modified_by, o.serves, o.downloads, o.thumbs, o.scales');
+		$this->db->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
+		$this->db->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
+		$this->db->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
-		$this->db->join( NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT' );
-		$this->db->join( NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT' );
-		$this->db->join( NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT' );
+		$this->db->join(NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT');
+		$this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT');
+		$this->db->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
 
 		// --------------------------------------------------------------------------
 
 		//	Apply common items; pass $data
-		$this->_getcount_common( $data, $_caller );
+		$this->_getcount_common($data, $_caller);
 
 		// --------------------------------------------------------------------------
 
 		//	Facilitate pagination
-		if ( NULL !== $page ) :
+		if (NULL !== $page) :
 
 			/**
 			 * Adjust the page variable, reduce by one so that the offset is calculated
@@ -271,18 +271,18 @@ class Cdn
 			$_per_page	= NULL == $per_page ? 50 : (int) $per_page;
 			$_offset	= $page * $per_page;
 
-			$this->db->limit( $per_page, $_offset );
+			$this->db->limit($per_page, $_offset);
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
-		$_objects = $this->db->get( NAILS_DB_PREFIX . 'cdn_object o' )->result();
+		$_objects = $this->db->get(NAILS_DB_PREFIX . 'cdn_object o')->result();
 
-		for ( $i = 0; $i < count( $_objects ); $i++ ) :
+		for ($i = 0; $i < count($_objects); $i++) :
 
 			//	Format the object, make it pretty
-			$this->_format_object( $_objects[$i] );
+			$this->_format_object($_objects[$i]);
 
 		endfor;
 
@@ -299,26 +299,26 @@ class Cdn
 	 * @access	public
 	 * @return	array
 	 **/
-	public function get_objects_from_trash( $page = NULL, $per_page = NULL, $data = array(), $_caller = 'GET_OBJECTS_FROM_TRASH' )
+	public function get_objects_from_trash($page = NULL, $per_page = NULL, $data = array(), $_caller = 'GET_OBJECTS_FROM_TRASH')
 	{
-		$this->db->select( 'o.id, o.filename, o.filename_display, o.created, o.created_by, o.modified, o.modified_by, o.serves, o.downloads, o.thumbs, o.scales' );
-		$this->db->select( 'o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated' );
-		$this->db->select( 'ue.email, u.first_name, u.last_name, u.profile_img, u.gender' );
-		$this->db->select( 'b.id bucket_id, b.label bucket_label, b.slug bucket_slug' );
+		$this->db->select('o.id, o.filename, o.filename_display, o.created, o.created_by, o.modified, o.modified_by, o.serves, o.downloads, o.thumbs, o.scales');
+		$this->db->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
+		$this->db->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
+		$this->db->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
-		$this->db->join( NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT' );
-		$this->db->join( NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT' );
-		$this->db->join( NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT' );
+		$this->db->join(NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT');
+		$this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT');
+		$this->db->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
 
 		// --------------------------------------------------------------------------
 
 		//	Apply common items; pass $data
-		$this->_getcount_common( $data, $_caller );
+		$this->_getcount_common($data, $_caller);
 
 		// --------------------------------------------------------------------------
 
 		//	Facilitate pagination
-		if ( NULL !== $page ) :
+		if (NULL !== $page) :
 
 			/**
 			 * Adjust the page variable, reduce by one so that the offset is calculated
@@ -332,18 +332,18 @@ class Cdn
 			$_per_page	= NULL == $per_page ? 50 : (int) $per_page;
 			$_offset	= $page * $per_page;
 
-			$this->db->limit( $per_page, $_offset );
+			$this->db->limit($per_page, $_offset);
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
-		$_objects = $this->db->get( NAILS_DB_PREFIX . 'cdn_object_trash o' )->result();
+		$_objects = $this->db->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->result();
 
-		for ( $i = 0; $i < count( $_objects ); $i++ ) :
+		for ($i = 0; $i < count($_objects); $i++) :
 
 			//	Format the object, make it pretty
-			$this->_format_object( $_objects[$i] );
+			$this->_format_object($_objects[$i]);
 
 		endfor;
 
@@ -361,15 +361,15 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function get_object( $object, $bucket = NULL, $data = array() )
+	public function get_object($object, $bucket = NULL, $data = array())
 	{
-		if ( is_numeric( $object ) ) :
+		if (is_numeric($object)) :
 
 			//	Check the cache
 			$_cache_key	= 'object-' . $object;
-			$_cache		= $this->_get_cache( $_cache_key );
+			$_cache		= $this->_get_cache($_cache_key);
 
-			if ( $_cache ) :
+			if ($_cache) :
 
 				return $_cache;
 
@@ -377,16 +377,16 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			$this->db->where( 'o.id', $object );
+			$this->db->where('o.id', $object);
 
 		else :
 
 			//	Check the cache
 			$_cache_key	 = 'object-' . $object;
 			$_cache_key .= $bucket ? '-' . $bucket : '';
-			$_cache		 = $this->_get_cache( $_cache_key );
+			$_cache		 = $this->_get_cache($_cache_key);
 
-			if ( $_cache ) :
+			if ($_cache) :
 
 				return $_cache;
 
@@ -394,17 +394,17 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			$this->db->where( 'o.filename', $object );
+			$this->db->where('o.filename', $object);
 
-			if ( $bucket ) :
+			if ($bucket) :
 
-				if ( is_numeric( $bucket ) ) :
+				if (is_numeric($bucket)) :
 
-					$this->db->where( 'b.id', $bucket );
+					$this->db->where('b.id', $bucket);
 
 				else :
 
-					$this->db->where( 'b.slug', $bucket );
+					$this->db->where('b.slug', $bucket);
 
 				endif;
 
@@ -412,9 +412,9 @@ class Cdn
 
 		endif;
 
-		$_objects = $this->get_objects( NULL, NULL, $data, 'GET_OBJECT' );
+		$_objects = $this->get_objects(NULL, NULL, $data, 'GET_OBJECT');
 
-		if ( ! $_objects ) :
+		if (!$_objects) :
 
 			return FALSE;
 
@@ -423,7 +423,7 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Cache the object
-		$this->_set_cache( $_cache_key, $_objects[0] );
+		$this->_set_cache($_cache_key, $_objects[0]);
 
 		// --------------------------------------------------------------------------
 
@@ -441,15 +441,15 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function get_object_from_trash( $object, $bucket = NULL, $data = array() )
+	public function get_object_from_trash($object, $bucket = NULL, $data = array())
 	{
-		if ( is_numeric( $object ) ) :
+		if (is_numeric($object)) :
 
 			//	Check the cache
 			$_cache_key	= 'object-trash-' . $object;
-			$_cache		= $this->_get_cache( $_cache_key );
+			$_cache		= $this->_get_cache($_cache_key);
 
-			if ( $_cache ) :
+			if ($_cache) :
 
 				return $_cache;
 
@@ -457,16 +457,16 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			$this->db->where( 'o.id', $object );
+			$this->db->where('o.id', $object);
 
 		else :
 
 			//	Check the cache
 			$_cache_key	 = 'object-trash-' . $object;
 			$_cache_key .= $bucket ? '-' . $bucket : '';
-			$_cache		 = $this->_get_cache( $_cache_key );
+			$_cache		 = $this->_get_cache($_cache_key);
 
-			if ( $_cache ) :
+			if ($_cache) :
 
 				return $_cache;
 
@@ -474,17 +474,17 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			$this->db->where( 'o.filename', $object );
+			$this->db->where('o.filename', $object);
 
-			if ( $bucket ) :
+			if ($bucket) :
 
-				if ( is_numeric( $bucket ) ) :
+				if (is_numeric($bucket)) :
 
-					$this->db->where( 'b.id', $bucket );
+					$this->db->where('b.id', $bucket);
 
 				else :
 
-					$this->db->where( 'b.slug', $bucket );
+					$this->db->where('b.slug', $bucket);
 
 				endif;
 
@@ -492,9 +492,9 @@ class Cdn
 
 		endif;
 
-		$_objects = $this->get_objects_from_trash( NULL, NULL, $data, 'GET_OBJECT_FROM_TRASH' );
+		$_objects = $this->get_objects_from_trash(NULL, NULL, $data, 'GET_OBJECT_FROM_TRASH');
 
-		if ( ! $_objects ) :
+		if (!$_objects) :
 
 			return FALSE;
 
@@ -503,7 +503,7 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Cache the object
-		$this->_set_cache( $_cache_key, $_objects[0] );
+		$this->_set_cache($_cache_key, $_objects[0]);
 
 		// --------------------------------------------------------------------------
 
@@ -521,14 +521,14 @@ class Cdn
 	 * @param mixed $data any data to pass to _getcount_common()
 	 * @return int
 	 **/
-	public function count_all_objects( $data = array() )
+	public function count_all_objects($data = array())
 	{
 		//	Apply common items
-		$this->_getcount_common( $data, 'COUNT_ALL_OBJECTS' );
+		$this->_getcount_common($data, 'COUNT_ALL_OBJECTS');
 
 		// --------------------------------------------------------------------------
 
-		return $this->db->count_all_results( NAILS_DB_PREFIX . 'cdn_object o'  );
+		return $this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_object o' );
 	}
 
 
@@ -542,14 +542,14 @@ class Cdn
 	 * @param mixed $data any data to pass to _getcount_common()
 	 * @return int
 	 **/
-	public function count_all_objects_from_trash( $data = array() )
+	public function count_all_objects_from_trash($data = array())
 	{
 		//	Apply common items
-		$this->_getcount_common( $data, 'COUNT_ALL_OBJECTS_FROM_TRASH' );
+		$this->_getcount_common($data, 'COUNT_ALL_OBJECTS_FROM_TRASH');
 
 		// --------------------------------------------------------------------------
 
-		return $this->db->count_all_results( NAILS_DB_PREFIX . 'cdn_object_trash o'  );
+		return $this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_object_trash o' );
 	}
 
 
@@ -563,10 +563,10 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function get_objects_for_user( $user_id, $page = NULL, $per_page = NULL, $data = array(), $_caller = 'GET_OBJECTS_FOR_USER' )
+	public function get_objects_for_user($user_id, $page = NULL, $per_page = NULL, $data = array(), $_caller = 'GET_OBJECTS_FOR_USER')
 	{
-		$this->db->where( 'o.created_by', $user_id );
-		return $this->get_objects( $page, $per_page, $data, $_caller );
+		$this->db->where('o.created_by', $user_id);
+		return $this->get_objects($page, $per_page, $data, $_caller);
 	}
 
 
@@ -580,7 +580,7 @@ class Cdn
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_create( $object, $bucket, $options = array(), $is_stream = FALSE )
+	public function object_create($object, $bucket, $options = array(), $is_stream = FALSE)
 	{
 		//	Define variables we'll need
 		$_data = new stdClass();
@@ -593,14 +593,14 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Are we uploading a URL?
-		if ( ! $is_stream && ( substr( $object, 0, 7 ) == 'http://' || substr( $object, 0, 8 ) == 'https://' ) ) :
+		if (!$is_stream && (substr($object, 0, 7) == 'http://' || substr($object, 0, 8) == 'https://')) :
 
-			if ( ! isset( $options['content-type'] ) ) :
+			if (!isset($options['content-type'])) :
 
-				$_headers					= get_headers( $object, 1 );
+				$_headers					= get_headers($object, 1);
 				$options['content-type']	= $_headers['Content-Type'];
 
-				if ( empty( $options['content-type'] ) ) :
+				if (empty($options['content-type'])) :
 
 					$options['content-type'] = 'application/octet-stream';
 
@@ -609,12 +609,12 @@ class Cdn
 			endif;
 
 			//	This is a URL, treat as stream
-			$object		= @file_get_contents( $object );
+			$object		= @file_get_contents($object);
 			$is_stream	= TRUE;
 
-			if ( empty( $object ) ) :
+			if (empty($object)) :
 
-				$this->set_error( lang( 'cdn_error_invalid_url' ) );
+				$this->set_error(lang('cdn_error_invalid_url'));
 				return FALSE;
 
 			endif;
@@ -624,72 +624,72 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Fetch the contents of the file
-		if ( ! $is_stream ) :
+		if (!$is_stream) :
 
 			//	Check file exists in $_FILES
-			if ( ! isset( $_FILES[ $object ] ) ) :
+			if (!isset($_FILES[ $object ])) :
 
 				//	If it's not in $_FILES does that file exist on the file system?
-				if ( ! is_file( $object ) ) :
+				if (!is_file($object)) :
 
-					$this->set_error( lang( 'cdn_error_no_file' ) );
+					$this->set_error(lang('cdn_error_no_file'));
 					return FALSE;
 
 				else :
 
 					$_data->file	= $object;
-					$_data->name	= empty( $options['filename_display'] ) ? basename( $object ) : $options['filename_display'];
+					$_data->name	= empty($options['filename_display']) ? basename($object) : $options['filename_display'];
 
 					//	Determine the extension
-					$_data->ext = substr( strrchr( $_data->file, '.' ), 1 );
+					$_data->ext = substr(strrchr($_data->file, '.'), 1);
 
 				endif;
 
 			else :
 
 				//	It's in $_FILES, check the upload was successfull
-				if ( $_FILES[$object]['error'] == UPLOAD_ERR_OK ) :
+				if ($_FILES[$object]['error'] == UPLOAD_ERR_OK) :
 
 					$_data->file	= $_FILES[ $object ]['tmp_name'];
-					$_data->name	= empty( $options['filename_display'] ) ? $_FILES[ $object ]['name'] : $options['filename_display'];
+					$_data->name	= empty($options['filename_display']) ? $_FILES[ $object ]['name'] : $options['filename_display'];
 
 					//	Determine the supplied extension
-					$_data->ext	= substr( strrchr( $_FILES[ $object ]['name'], '.' ), 1 );
+					$_data->ext	= substr(strrchr($_FILES[ $object ]['name'], '.'), 1);
 
 				else :
 
 					//	Upload was aborted, I wonder why?
-					switch( $_FILES[$object]['error'] ) :
+					switch($_FILES[$object]['error']) :
 
 						case UPLOAD_ERR_INI_SIZE :
 
-							$_max_file_size = function_exists( 'ini_get' ) ? ini_get( 'upload_max_filesize' ) : NULL;
+							$_max_file_size = function_exists('ini_get') ? ini_get('upload_max_filesize') : NULL;
 
-							if ( ! is_null( $_max_file_size ) ) :
+							if (!is_null($_max_file_size)) :
 
-								$_max_file_size = return_bytes( $_max_file_size );
-								$_max_file_size = format_bytes( $_max_file_size );
+								$_max_file_size = return_bytes($_max_file_size);
+								$_max_file_size = format_bytes($_max_file_size);
 
-								$_error = lang( 'cdn_upload_err_ini_size', $_max_file_size );
+								$_error = lang('cdn_upload_err_ini_size', $_max_file_size);
 
 							else :
 
-								$_error = lang( 'cdn_upload_err_ini_size_unknown' );
+								$_error = lang('cdn_upload_err_ini_size_unknown');
 
 							endif;
 
 						break;
-						case UPLOAD_ERR_FORM_SIZE :		$_error = lang( 'cdn_upload_err_form_size' );	break;
-						case UPLOAD_ERR_PARTIAL :		$_error = lang( 'cdn_upload_err_partial' );		break;
-						case UPLOAD_ERR_NO_FILE :		$_error = lang( 'cdn_upload_err_no_file' );		break;
-						case UPLOAD_ERR_NO_TMP_DIR :	$_error = lang( 'cdn_upload_err_no_tmp_dir' );	break;
-						case UPLOAD_ERR_CANT_WRITE :	$_error = lang( 'cdn_upload_err_cant_write' );	break;
-						case UPLOAD_ERR_EXTENSION :		$_error = lang( 'cdn_upload_err_extension' );	break;
-						default:						$_error = lang( 'cdn_upload_err_unknown' );		break;
+						case UPLOAD_ERR_FORM_SIZE :		$_error = lang('cdn_upload_err_form_size');	break;
+						case UPLOAD_ERR_PARTIAL :		$_error = lang('cdn_upload_err_partial');		break;
+						case UPLOAD_ERR_NO_FILE :		$_error = lang('cdn_upload_err_no_file');		break;
+						case UPLOAD_ERR_NO_TMP_DIR :	$_error = lang('cdn_upload_err_no_tmp_dir');	break;
+						case UPLOAD_ERR_CANT_WRITE :	$_error = lang('cdn_upload_err_cant_write');	break;
+						case UPLOAD_ERR_EXTENSION :		$_error = lang('cdn_upload_err_extension');	break;
+						default:						$_error = lang('cdn_upload_err_unknown');		break;
 
 					endswitch;
 
-					$this->set_error( $_error );
+					$this->set_error($_error);
 					return FALSE;
 
 				endif;
@@ -708,22 +708,22 @@ class Cdn
 			 * by the developer
 			 */
 
-			if ( isset( $options['content-type'] ) ) :
+			if (isset($options['content-type'])) :
 
 				$_data->mime = $options['content-type'];
 
 			else :
 
-				$_data->mime = $this->get_mime_from_file( $_data->file );
+				$_data->mime = $this->get_mime_from_file($_data->file);
 
 			endif;
 
 			// --------------------------------------------------------------------------
 
 			//	If no extension, then guess it
-			if ( empty( $_data->ext ) ) :
+			if (empty($_data->ext)) :
 
-				$_data->ext = $this->get_ext_from_mime( $_data->mime );
+				$_data->ext = $this->get_ext_from_mime($_data->mime);
 
 			endif;
 
@@ -734,20 +734,20 @@ class Cdn
 			 * then fall over - we need to know what we're dealing with.
 			 */
 
-			if ( ! isset( $options['content-type'] ) ) :
+			if (!isset($options['content-type'])) :
 
-				$this->set_error( lang( 'cdn_stream_content_type' ) );
+				$this->set_error(lang('cdn_stream_content_type'));
 				return FALSE;
 
 			else :
 
 				//	Write the file to the cache temporarily
-				if ( is_writeable( DEPLOY_CACHE_DIR ) ) :
+				if (is_writeable(DEPLOY_CACHE_DIR)) :
 
-					$_cache_file = sha1( microtime() . rand( 0 ,999 ) . active_user( 'id' ) );
-					$_fp = fopen( DEPLOY_CACHE_DIR . $_cache_file, 'w' );
-					fwrite( $_fp, $object );
-					fclose( $_fp );
+					$_cache_file = sha1(microtime() . rand(0 ,999) . active_user('id'));
+					$_fp = fopen(DEPLOY_CACHE_DIR . $_cache_file, 'w');
+					fwrite($_fp, $object);
+					fclose($_fp);
 
 					// --------------------------------------------------------------------------
 
@@ -757,25 +757,25 @@ class Cdn
 					// --------------------------------------------------------------------------
 
 					//	If an extension has been supplied use that, if not detect from mime type
-					if ( ! empty( $options['extension'] ) ) :
+					if (!empty($options['extension'])) :
 
 						$_data->ext = $options['extension'];
 
 					else :
 
-						$_data->ext = $this->get_ext_from_mime( $_data->mime );
+						$_data->ext = $this->get_ext_from_mime($_data->mime);
 
 					endif;
 
 					// --------------------------------------------------------------------------
 
 					//	Specify the file specifics
-					$_data->name	= empty( $options['filename_display'] ) ? $_cache_file . '.' . $_data->ext : $options['filename_display'];
+					$_data->name	= empty($options['filename_display']) ? $_cache_file . '.' . $_data->ext : $options['filename_display'];
 					$_data->file	= DEPLOY_CACHE_DIR . $_cache_file;
 
 				else :
 
-					$this->set_error( lang( 'cdn_error_cache_write_fail' ) );
+					$this->set_error(lang('cdn_error_cache_write_fail'));
 					return FALSE;
 
 				endif;
@@ -787,9 +787,9 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Valid extension for mime type?
-		if ( ! $this->valid_ext_for_mime( $_data->ext, $_data->mime ) ) :
+		if (!$this->valid_ext_for_mime($_data->ext, $_data->mime)) :
 
-			$this->set_error( lang( 'cdn_error_bad_extension_mime', $_data->ext ) );
+			$this->set_error(lang('cdn_error_bad_extension_mime', $_data->ext));
 			return FALSE;
 
 		endif;
@@ -797,9 +797,9 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Test and set the bucket, if it doesn't exist, create it
-		if ( is_numeric( $bucket ) || is_string( $bucket ) ) :
+		if (is_numeric($bucket) || is_string($bucket)) :
 
-			$_bucket = $this->get_bucket( $bucket );
+			$_bucket = $this->get_bucket($bucket);
 
 		else :
 
@@ -807,11 +807,11 @@ class Cdn
 
 		endif;
 
-		if ( ! $_bucket ) :
+		if (!$_bucket) :
 
-			if ( $this->bucket_create( $bucket ) ) :
+			if ($this->bucket_create($bucket)) :
 
-				$_bucket = $this->get_bucket( $bucket );
+				$_bucket = $this->get_bucket($bucket);
 
 				$_data->bucket			= new stdClass();
 				$_data->bucket->id		= $_bucket->id;
@@ -834,21 +834,21 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Is this an acceptable file? Check against the allowed_types array (if present)
-		if ( $_bucket->allowed_types ) :
+		if ($_bucket->allowed_types) :
 
-			if ( array_search( $_data->ext, $_bucket->allowed_types ) === FALSE ) :
+			if (array_search($_data->ext, $_bucket->allowed_types) === FALSE) :
 
-				if ( count( $_bucket->allowed_types ) > 1 ) :
+				if (count($_bucket->allowed_types) > 1) :
 
-					array_splice( $_bucket->allowed_types, count( $_bucket->allowed_types ) - 1, 0, array( ' and ' ) );
-					$_accepted = implode( ', .', $_bucket->allowed_types );
-					$_accepted = str_replace( ', . and , ', ' and ', $_accepted );
-					$this->set_error(  lang( 'cdn_error_bad_mime_plural', $_accepted ) );
+					array_splice($_bucket->allowed_types, count($_bucket->allowed_types) - 1, 0, array(' and '));
+					$_accepted = implode(', .', $_bucket->allowed_types);
+					$_accepted = str_replace(', . and , ', ' and ', $_accepted);
+					$this->set_error( lang('cdn_error_bad_mime_plural', $_accepted));
 
 				else :
 
-					$_accepted = implode( '', $_bucket->allowed_types );
-					$this->set_error(  lang( 'cdn_error_bad_mime', $_accepted ) );
+					$_accepted = implode('', $_bucket->allowed_types);
+					$this->set_error( lang('cdn_error_bad_mime', $_accepted));
 
 				endif;
 
@@ -861,14 +861,14 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Is the file within the filesize limit?
-		$_data->filesize = filesize( $_data->file );
+		$_data->filesize = filesize($_data->file);
 
-		if ( $_bucket->max_size ) :
+		if ($_bucket->max_size) :
 
-			if ( $_data->filesize > $_bucket->max_size ) :
+			if ($_data->filesize > $_bucket->max_size) :
 
-				$_fs_in_kb = format_bytes( $_bucket->max_size );
-				$this->set_error( lang( 'cdn_error_filesize', $_fs_in_kb ) );
+				$_fs_in_kb = format_bytes($_bucket->max_size);
+				$this->set_error(lang('cdn_error_filesize', $_fs_in_kb));
 				return FALSE;
 
 			endif;
@@ -884,9 +884,9 @@ class Cdn
 		$_images[]	= 'image/png';
 		$_images[]	= 'image/gif';
 
-		if ( array_search( $_data->mime, $_images ) !== FALSE ) :
+		if (array_search($_data->mime, $_images) !== FALSE) :
 
-			list( $_w, $_h ) = @getimagesize( $_file );
+			list($_w, $_h) = @getimagesize($_file);
 
 			$_data->img					= new stdClass();
 			$_data->img->width			= $_w;
@@ -895,15 +895,15 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			if ( $_data->img->width > $_data->img->height ) :
+			if ($_data->img->width > $_data->img->height) :
 
 				$_data->img->orientation = 'LANDSCAPE';
 
-			elseif( $_data->img->width < $_data->img->height ) :
+			elseif($_data->img->width < $_data->img->height) :
 
 				$_data->img->orientation = 'PORTRAIT';
 
-			elseif( $_data->img->width == $_data->img->height ) :
+			elseif($_data->img->width == $_data->img->height) :
 
 				$_data->img->orientation = 'SQUARE';
 
@@ -911,10 +911,10 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			if ( $_data->mime == 'image/gif' ) :
+			if ($_data->mime == 'image/gif') :
 
 				//	Detect animated gif
-				$_data->img->is_animated = $this->_detect_animated_gif( $_data->file );
+				$_data->img->is_animated = $this->_detect_animated_gif($_data->file);
 
 			endif;
 
@@ -923,18 +923,18 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	What about dimension limits? Obviously this only applies to images.
-		if ( isset( $_data->img ) && isset( $options['dimensions'] ) ) :
+		if (isset($_data->img) && isset($options['dimensions'])) :
 
 			//	Fetch info about the file
 			$error = FALSE;
 
 			// --------------------------------------------------------------------------
 
-			if ( isset( $options['dimensions']['max_width'] ) ) :
+			if (isset($options['dimensions']['max_width'])) :
 
-				if ( $_data->img->width > $options['dimensions']['max_width'] ) :
+				if ($_data->img->width > $options['dimensions']['max_width']) :
 
-					$this->set_error( lang( 'cdn_error_maxwidth', $options['dimensions']['max_width'] ) );
+					$this->set_error(lang('cdn_error_maxwidth', $options['dimensions']['max_width']));
 					$error = TRUE;
 
 				endif;
@@ -943,11 +943,11 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			if ( isset( $options['dimensions']['max_height'] ) ) :
+			if (isset($options['dimensions']['max_height'])) :
 
-				if ( $_data->img->height > $options['dimensions']['max_height'] ) :
+				if ($_data->img->height > $options['dimensions']['max_height']) :
 
-					$this->set_error( lang( 'cdn_error_maxheight', $options['dimensions']['max_height'] ) );
+					$this->set_error(lang('cdn_error_maxheight', $options['dimensions']['max_height']));
 					$error = TRUE;
 
 				endif;
@@ -956,11 +956,11 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			if ( isset( $options['dimensions']['min_width'] ) ) :
+			if (isset($options['dimensions']['min_width'])) :
 
-				if ( $_data->img->width < $options['dimensions']['min_width'] ) :
+				if ($_data->img->width < $options['dimensions']['min_width']) :
 
-					$this->set_error( lang( 'cdn_error_minwidth', $options['dimensions']['min_width'] ) );
+					$this->set_error(lang('cdn_error_minwidth', $options['dimensions']['min_width']));
 					$error = TRUE;
 
 				endif;
@@ -969,11 +969,11 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			if ( isset( $options['dimensions']['min_height'] ) ) :
+			if (isset($options['dimensions']['min_height'])) :
 
-				if ( $_data->img->height < $options['dimensions']['min_height'] ) :
+				if ($_data->img->height < $options['dimensions']['min_height']) :
 
-					$this->set_error( lang( 'cdn_error_minheight', $options['dimensions']['min_height'] ) );
+					$this->set_error(lang('cdn_error_minheight', $options['dimensions']['min_height']));
 					$error = TRUE;
 
 				endif;
@@ -982,7 +982,7 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			if ( $error ) :
+			if ($error) :
 
 				return FALSE;
 
@@ -993,7 +993,7 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Has a tag been defined?
-		if ( isset( $options['tag'] ) ) :
+		if (isset($options['tag'])) :
 
 			$_data->tag_id = $options['tag'];
 
@@ -1006,38 +1006,38 @@ class Cdn
 		 * will overwrite any existing file so use with caution).
 		 */
 
-		if ( isset( $options['filename'] ) && $options['filename'] == 'USE_ORIGINAL' ) :
+		if (isset($options['filename']) && $options['filename'] == 'USE_ORIGINAL') :
 
 			$_data->filename =  $_name;
 
-		elseif ( isset( $options['filename'] ) && $options['filename'] ) :
+		elseif (isset($options['filename']) && $options['filename']) :
 
 			$_data->filename = $options['filename'];
 
 		else :
 
 			//	Generate a filename
-			$_data->filename = time() . '_' . md5( active_user( 'id' ) . microtime( TRUE ) . rand( 0, 999 ) ) . '.' . $_data->ext;
+			$_data->filename = time() . '_' . md5(active_user('id') . microtime(TRUE) . rand(0, 999)) . '.' . $_data->ext;
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
-		$_upload = $this->_cdn->object_create( $_data );
+		$_upload = $this->_cdn->object_create($_data);
 
 		// --------------------------------------------------------------------------
 
-		if ( $_upload ) :
+		if ($_upload) :
 
-			$_object = $this->_create_object( $_data, TRUE );
+			$_object = $this->_create_object($_data, TRUE);
 
-			if ( $_object ) :
+			if ($_object) :
 
 				$_status = $_object;
 
 			else :
 
-				$this->_cdn->destroy( $_data->filename, $_data->bucket_slug );
+				$this->_cdn->destroy($_data->filename, $_data->bucket_slug);
 
 				$_status = FALSE;
 
@@ -1052,9 +1052,9 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	If a cachefile was created then we should remove it
-		if ( isset( $_cache_file ) && $_cache_file ) :
+		if (isset($_cache_file) && $_cache_file) :
 
-			@unlink( DEPLOY_CACHE_DIR . $_cache_file );
+			@unlink(DEPLOY_CACHE_DIR . $_cache_file);
 
 		endif;
 
@@ -1073,22 +1073,22 @@ class Cdn
 	 * @access	public
 	 * @return	boolean
 	 **/
-	public function object_delete( $object )
+	public function object_delete($object)
 	{
-		if ( ! $object ) :
+		if (!$object) :
 
-			$this->set_error( lang( 'cdn_error_object_invalid' ) );
+			$this->set_error(lang('cdn_error_object_invalid'));
 			return FALSE;
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
-		$_object = $this->get_object( $object );
+		$_object = $this->get_object($object);
 
-		if ( ! $_object ) :
+		if (!$_object) :
 
-			$this->set_error( lang( 'cdn_error_object_invalid' ) );
+			$this->set_error(lang('cdn_error_object_invalid'));
 			return FALSE;
 
 		endif;
@@ -1115,8 +1115,8 @@ class Cdn
 		$_data['thumbs']			= $_object->thumbs;
 		$_data['scales']			= $_object->scales;
 
-		$this->db->set( $_data );
-		$this->db->set( 'trashed', 'NOW()', FALSE );
+		$this->db->set($_data);
+		$this->db->set('trashed', 'NOW()', FALSE);
 
 		//	Turn off DB Errors
 		$_previous = $this->db->db_debug;
@@ -1126,21 +1126,21 @@ class Cdn
 		$this->db->trans_start();
 
 			//	Create trash object
-			$this->db->insert( NAILS_DB_PREFIX . 'cdn_object_trash' );
+			$this->db->insert(NAILS_DB_PREFIX . 'cdn_object_trash');
 
 			//	Remove original object
-			$this->db->where( 'id', $_object->id );
-			$this->db->delete( NAILS_DB_PREFIX . 'cdn_object' );
+			$this->db->where('id', $_object->id);
+			$this->db->delete(NAILS_DB_PREFIX . 'cdn_object');
 
 		$this->db->trans_complete();
 
 		//	Set DB errors as they were
 		$this->db->db_debug = $_previous;
 
-		if ( $this->db->trans_status() !== FALSE ) :
+		if ($this->db->trans_status() !== FALSE) :
 
 			//	Clear caches
-			$this->_unset_cache_object( $_object );
+			$this->_unset_cache_object($_object);
 
 			// --------------------------------------------------------------------------
 
@@ -1148,7 +1148,7 @@ class Cdn
 
 		else :
 
-			$this->set_error( lang( 'cdn_error_delete' ) );
+			$this->set_error(lang('cdn_error_delete'));
 			return FALSE;
 
 		endif;
@@ -1164,22 +1164,22 @@ class Cdn
 	 * @access	public
 	 * @return	boolean
 	 **/
-	public function object_restore( $object )
+	public function object_restore($object)
 	{
-		if ( ! $object ) :
+		if (!$object) :
 
-			$this->set_error( lang( 'cdn_error_object_invalid' ) );
+			$this->set_error(lang('cdn_error_object_invalid'));
 			return FALSE;
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
-		$_object = $this->get_object_from_trash( $object );
+		$_object = $this->get_object_from_trash($object);
 
-		if ( ! $_object ) :
+		if (!$_object) :
 
-			$this->set_error( lang( 'cdn_error_object_invalid' ) );
+			$this->set_error(lang('cdn_error_object_invalid'));
 			return FALSE;
 
 		endif;
@@ -1204,34 +1204,34 @@ class Cdn
 		$_data['thumbs']			= $_object->thumbs;
 		$_data['scales']			= $_object->scales;
 
-		if ( get_userobject()->is_logged_in() ) :
+		if (get_userobject()->is_logged_in()) :
 
-			$_data['modified_by']	= active_user( 'id' );
+			$_data['modified_by']	= active_user('id');
 
 		endif;
 
-		$this->db->set( $_data );
-		$this->db->set( 'modified', 'NOW()', FALSE );
+		$this->db->set($_data);
+		$this->db->set('modified', 'NOW()', FALSE);
 
 		//	Start transaction
 		$this->db->trans_start();
 
 			//	Restore object
-			$this->db->insert( NAILS_DB_PREFIX . 'cdn_object' );
+			$this->db->insert(NAILS_DB_PREFIX . 'cdn_object');
 
 			//	Remove trash object
-			$this->db->where( 'id', $_object->id );
-			$this->db->delete( NAILS_DB_PREFIX . 'cdn_object_trash' );
+			$this->db->where('id', $_object->id);
+			$this->db->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
 
 		$this->db->trans_complete();
 
-		if ( $this->db->trans_status() !== FALSE ) :
+		if ($this->db->trans_status() !== FALSE) :
 
 			return TRUE;
 
 		else :
 
-			$this->set_error( lang( 'cdn_error_delete' ) );
+			$this->set_error(lang('cdn_error_delete'));
 			return FALSE;
 
 		endif;
@@ -1247,23 +1247,23 @@ class Cdn
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_destroy( $object_id )
+	public function object_destroy($object_id)
 	{
-		if ( ! $object_id ) :
+		if (!$object_id) :
 
-			$this->set_error( lang( 'cdn_error_object_invalid' ) );
+			$this->set_error(lang('cdn_error_object_invalid'));
 			return FALSE;
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
-		$_object = $this->get_object( $object_id );
+		$_object = $this->get_object($object_id);
 
-		if ( $_object ) :
+		if ($_object) :
 
 			//	Delete the object first
-			if ( ! $this->object_delete( $_object->id ) ) :
+			if (!$this->object_delete($_object->id)) :
 
 				return FALSE;
 
@@ -1272,11 +1272,11 @@ class Cdn
 		else :
 
 			//	Object doesn't exist but may exist in the trash
-			$_object = $this->get_object_from_trash( $object_id );
+			$_object = $this->get_object_from_trash($object_id);
 
-			if ( ! $_object ) :
+			if (!$_object) :
 
-				$this->set_error( 'Nothing to destroy.' );
+				$this->set_error('Nothing to destroy.');
 				return FALSE;
 
 			endif;
@@ -1286,18 +1286,18 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Attempt to remove the file
-		if ( $this->_cdn->object_destroy( $_object->filename, $_object->bucket->slug ) ) :
+		if ($this->_cdn->object_destroy($_object->filename, $_object->bucket->slug)) :
 
 			//	Remove the database entries
 			$this->db->trans_begin();
 
-			$this->db->where( 'id', $_object->id );
-			$this->db->delete( NAILS_DB_PREFIX . 'cdn_object' );
+			$this->db->where('id', $_object->id);
+			$this->db->delete(NAILS_DB_PREFIX . 'cdn_object');
 
-			$this->db->where( 'id', $_object->id );
-			$this->db->delete( NAILS_DB_PREFIX . 'cdn_object_trash' );
+			$this->db->where('id', $_object->id);
+			$this->db->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
 
-			if ( $this->db->trans_status() === FALSE ) :
+			if ($this->db->trans_status() === FALSE) :
 
 				$this->db->trans_rollback();
 				return FALSE;
@@ -1311,7 +1311,7 @@ class Cdn
 			// --------------------------------------------------------------------------
 
 			//	Clear the caches
-			$this->_unset_cache_object( $_object );
+			$this->_unset_cache_object($_object);
 
 			return TRUE;
 
@@ -1333,7 +1333,7 @@ class Cdn
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_copy( $source, $object, $bucket, $options = array() )
+	public function object_copy($source, $object, $bucket, $options = array())
 	{
 		//	TODO: Copy object between buckets
 		return FALSE;
@@ -1350,7 +1350,7 @@ class Cdn
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_move( $source, $object, $bucket, $options = array() )
+	public function object_move($source, $object, $bucket, $options = array())
 	{
 		//	TODO: Move object between buckets
 		return FALSE;
@@ -1367,21 +1367,21 @@ class Cdn
 	 * @param	none
 	 * @return	void
 	 **/
-	public function object_replace( $object, $bucket, $replace_with, $options = array(), $is_stream = FALSE )
+	public function object_replace($object, $bucket, $replace_with, $options = array(), $is_stream = FALSE)
 	{
 		//	Firstly, attempt the upload
-		$_upload = $this->object_create( $replace_with, $bucket, $options, $is_stream );
+		$_upload = $this->object_create($replace_with, $bucket, $options, $is_stream);
 
 		// --------------------------------------------------------------------------
 
-		if ( $_upload ) :
+		if ($_upload) :
 
-			$_object = $this->get_object( $object );
+			$_object = $this->get_object($object);
 
-			if ( $_object ) :
+			if ($_object) :
 
 				//	Attempt the delete
-				$this->delete( $_object->id, $bucket );
+				$this->delete($_object->id, $bucket);
 
 			endif;
 
@@ -1407,14 +1407,14 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function object_tag_add( $object_id, $tag_id )
+	public function object_tag_add($object_id, $tag_id)
 	{
 		//	Valid object?
-		$_object = $this->get_object( $object_id );
+		$_object = $this->get_object($object_id);
 
-		if ( ! $_object ) :
+		if (!$_object) :
 
-			$this->set_error( lang( 'cdn_error_object_invalid' ) );
+			$this->set_error(lang('cdn_error_object_invalid'));
 			return FALSE;
 
 		endif;
@@ -1423,12 +1423,12 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Valid tag?
-		$this->db->where( 't.id', $tag_id );
-		$_tag = $this->db->get( NAILS_DB_PREFIX . 'cdn_bucket_tag t' )->row();
+		$this->db->where('t.id', $tag_id);
+		$_tag = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket_tag t')->row();
 
-		if ( ! $_tag ) :
+		if (!$_tag) :
 
-			$this->set_error( lang( 'cdn_error_tag_invalid' ) );
+			$this->set_error(lang('cdn_error_tag_invalid'));
 			return FALSE;
 
 		endif;
@@ -1436,9 +1436,9 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Test if tag has already been applied to the object, if it has gracefully fail
-		$this->db->where( 'object_id', $_object->id );
-		$this->db->where( 'tag_id', $_tag->id );
-		if ( $this->db->count_all_results( NAILS_DB_PREFIX . 'cdn_object_tag' ) ) :
+		$this->db->where('object_id', $_object->id);
+		$this->db->where('tag_id', $_tag->id);
+		if ($this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_object_tag')) :
 
 			return TRUE;
 
@@ -1447,10 +1447,10 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Seems good, add the tag
-		$this->db->set( 'object_id', $_object->id );
-		$this->db->set( 'tag_id', $_tag->id );
-		$this->db->set( 'created', 'NOW()', FALSE );
-		$this->db->insert( NAILS_DB_PREFIX . 'cdn_object_tag' );
+		$this->db->set('object_id', $_object->id);
+		$this->db->set('tag_id', $_tag->id);
+		$this->db->set('created', 'NOW()', FALSE);
+		$this->db->insert(NAILS_DB_PREFIX . 'cdn_object_tag');
 
 		return $this->db->affected_rows() ? TRUE : FALSE;
 	}
@@ -1466,14 +1466,14 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function object_tag_delete( $object_id, $tag_id )
+	public function object_tag_delete($object_id, $tag_id)
 	{
 		//	Valid object?
-		$_object = $this->get_object( $object_id );
+		$_object = $this->get_object($object_id);
 
-		if ( ! $_object ) :
+		if (!$_object) :
 
-			$this->set_error( lang( 'cdn_error_object_invalid' ) );
+			$this->set_error(lang('cdn_error_object_invalid'));
 			return FALSE;
 
 		endif;
@@ -1481,12 +1481,12 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Valid tag?
-		$this->db->where( 't.id', $tag_id );
-		$_tag = $this->db->get( NAILS_DB_PREFIX . 'cdn_bucket_tag t' )->row();
+		$this->db->where('t.id', $tag_id);
+		$_tag = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket_tag t')->row();
 
-		if ( ! $_tag ) :
+		if (!$_tag) :
 
-			$this->set_error( lang( 'cdn_error_tag_invalid' ) );
+			$this->set_error(lang('cdn_error_tag_invalid'));
 			return FALSE;
 
 		endif;
@@ -1494,9 +1494,9 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Seems good, delete the tag
-		$this->db->where( 'object_id', $_object->id );
-		$this->db->where( 'tag_id', $_tag->id );
-		$this->db->delete( NAILS_DB_PREFIX . 'cdn_object_tag' );
+		$this->db->where('object_id', $_object->id);
+		$this->db->where('tag_id', $_tag->id);
+		$this->db->delete(NAILS_DB_PREFIX . 'cdn_object_tag');
 
 		return $this->db->affected_rows() ? TRUE : FALSE;
 	}
@@ -1512,11 +1512,11 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function object_tag_count( $tag_id )
+	public function object_tag_count($tag_id)
 	{
-		$this->db->where( 'ot.tag_id', $tag_id );
-		$this->db->join( NAILS_DB_PREFIX . 'cdn_object o', 'o.id = ot.object_id' );
-		return $this->db->count_all_results( NAILS_DB_PREFIX . 'cdn_object_tag ot' );
+		$this->db->where('ot.tag_id', $tag_id);
+		$this->db->join(NAILS_DB_PREFIX . 'cdn_object o', 'o.id = ot.object_id');
+		return $this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_object_tag ot');
 	}
 
 
@@ -1530,13 +1530,13 @@ class Cdn
 	 * @param	none
 	 * @return	string
 	 **/
-	public function object_increment_count( $action, $object, $bucket = NULL )
+	public function object_increment_count($action, $object, $bucket = NULL)
 	{
-		switch ( strtoupper( $action ) ) :
+		switch (strtoupper($action)) :
 
 			case 'SERVE'	:
 
-				$this->db->set( 'o.serves', 'o.serves+1', FALSE );
+				$this->db->set('o.serves', 'o.serves+1', FALSE);
 
 			break;
 
@@ -1544,7 +1544,7 @@ class Cdn
 
 			case 'DOWNLOAD'	:
 
-				$this->db->set( 'o.downloads', 'o.downloads+1', FALSE );
+				$this->db->set('o.downloads', 'o.downloads+1', FALSE);
 
 			break;
 
@@ -1552,7 +1552,7 @@ class Cdn
 
 			case 'THUMB' :
 
-				$this->db->set( 'o.thumbs', 'o.thumbs+1', FALSE );
+				$this->db->set('o.thumbs', 'o.thumbs+1', FALSE);
 
 			break;
 
@@ -1560,35 +1560,35 @@ class Cdn
 
 			case 'SCALE' :
 
-				$this->db->set( 'o.scales', 'o.scales+1', FALSE );
+				$this->db->set('o.scales', 'o.scales+1', FALSE);
 
 			break;
 
 		endswitch;
 
-		if ( is_numeric( $object ) ) :
+		if (is_numeric($object)) :
 
-			$this->db->where( 'o.id', $object );
+			$this->db->where('o.id', $object);
 
 		else :
 
-			$this->db->where( 'o.filename', $object );
+			$this->db->where('o.filename', $object);
 
 		endif;
 
-		if ( $bucket && is_numeric( $bucket ) ) :
+		if ($bucket && is_numeric($bucket)) :
 
-			$this->db->where( 'o.bucket_id', $bucket );
-			$this->db->update( NAILS_DB_PREFIX . 'cdn_object o' );
+			$this->db->where('o.bucket_id', $bucket);
+			$this->db->update(NAILS_DB_PREFIX . 'cdn_object o');
 
-		elseif ( $bucket ) :
+		elseif ($bucket) :
 
-			$this->db->where( 'b.slug', $bucket );
-			$this->db->update( NAILS_DB_PREFIX . 'cdn_object o JOIN ' . NAILS_DB_PREFIX . 'cdn_bucket b ON b.id = o.bucket_id' );
+			$this->db->where('b.slug', $bucket);
+			$this->db->update(NAILS_DB_PREFIX . 'cdn_object o JOIN ' . NAILS_DB_PREFIX . 'cdn_bucket b ON b.id = o.bucket_id');
 
 		else :
 
-			$this->db->update( NAILS_DB_PREFIX . 'cdn_object o' );
+			$this->db->update(NAILS_DB_PREFIX . 'cdn_object o');
 
 		endif;
 	}
@@ -1603,9 +1603,9 @@ class Cdn
 	 * @param  string $filename    the object's filename
 	 * @return mixed               string on success, FALSE on failure
 	 */
-	public function object_local_path( $bucket_slug, $filename )
+	public function object_local_path($bucket_slug, $filename)
 	{
-		return $this->_cdn->object_local_path( $bucket_slug, $filename );
+		return $this->_cdn->object_local_path($bucket_slug, $filename);
 	}
 
 
@@ -1617,17 +1617,17 @@ class Cdn
 	 * @param  int   $object_id The object's ID
 	 * @return mixed            string on success, FALSE on failure
 	 */
-	public function object_local_path_by_id( $object_id )
+	public function object_local_path_by_id($object_id)
 	{
-		$_object = $this->get_object( $object_id );
+		$_object = $this->get_object($object_id);
 
-		if ( $_object ) :
+		if ($_object) :
 
-			return $this->object_local_path( $_object->bucket->slug, $_object->filename );
+			return $this->object_local_path($_object->bucket->slug, $_object->filename);
 
 		else :
 
-			$this->_set_error( 'Invalid Object ID' );
+			$this->_set_error('Invalid Object ID');
 			return FALSE;
 
 		endif;
@@ -1645,45 +1645,45 @@ class Cdn
 	 * @param	boolean
 	 * @return	string
 	 **/
-	protected function _create_object( $data, $return_object = FALSE )
+	protected function _create_object($data, $return_object = FALSE)
 	{
-		$this->db->set( 'bucket_id',		$data->bucket->id );
-		$this->db->set( 'filename',			$data->filename );
-		$this->db->set( 'filename_display',	$data->name );
-		$this->db->set( 'mime',				$data->mime );
-		$this->db->set( 'filesize',			$data->filesize );
-		$this->db->set( 'created',			'NOW()', FALSE );
-		$this->db->set( 'modified',			'NOW()', FALSE );
+		$this->db->set('bucket_id',		$data->bucket->id);
+		$this->db->set('filename',			$data->filename);
+		$this->db->set('filename_display',	$data->name);
+		$this->db->set('mime',				$data->mime);
+		$this->db->set('filesize',			$data->filesize);
+		$this->db->set('created',			'NOW()', FALSE);
+		$this->db->set('modified',			'NOW()', FALSE);
 
-		if ( get_userobject()->is_logged_in() ) :
+		if (get_userobject()->is_logged_in()) :
 
-			$this->db->set( 'created_by',	active_user( 'id' ) );
-			$this->db->set( 'modified_by',	active_user( 'id' ) );
+			$this->db->set('created_by',	active_user('id'));
+			$this->db->set('modified_by',	active_user('id'));
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
-		if ( isset( $data->img->width ) && isset( $data->img->height ) && isset( $data->img->orientation ) ) :
+		if (isset($data->img->width) && isset($data->img->height) && isset($data->img->orientation)) :
 
-			$this->db->set( 'img_width',		$data->img->width );
-			$this->db->set( 'img_height',		$data->img->height );
-			$this->db->set( 'img_orientation',	$data->img->orientation );
+			$this->db->set('img_width',		$data->img->width);
+			$this->db->set('img_height',		$data->img->height);
+			$this->db->set('img_orientation',	$data->img->orientation);
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
 		//	Check whether file is animated gif
-		if ( $data->mime == 'image/gif' ) :
+		if ($data->mime == 'image/gif') :
 
-			if ( isset( $data->img->is_animated ) ) :
+			if (isset($data->img->is_animated)) :
 
-				$this->db->set( 'is_animated', $data->img->is_animated );
+				$this->db->set('is_animated', $data->img->is_animated);
 
 			else :
 
-				$this->db->set( 'is_animated', FALSE );
+				$this->db->set('is_animated', FALSE);
 
 			endif;
 
@@ -1691,24 +1691,24 @@ class Cdn
 
 		// --------------------------------------------------------------------------
 
-		$this->db->insert( NAILS_DB_PREFIX . 'cdn_object' );
+		$this->db->insert(NAILS_DB_PREFIX . 'cdn_object');
 
 		$_object_id = $this->db->insert_id();
 
-		if ( $this->db->affected_rows() ) :
+		if ($this->db->affected_rows()) :
 
 			//	Add a tag if there's one defined
-			if ( isset( $data->tag_id ) && ! empty( $data->tag_id ) ) :
+			if (isset($data->tag_id) && ! empty($data->tag_id)) :
 
-				$this->db->where( 'id', $data->tag_id );
+				$this->db->where('id', $data->tag_id);
 
-				if ( $this->db->count_all_results( NAILS_DB_PREFIX . 'cdn_bucket_tag' ) ) :
+				if ($this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket_tag')) :
 
-					$this->db->set( 'object_id',	$_object_id );
-					$this->db->set( 'tag_id',		$data->tag_id );
-					$this->db->set( 'created',		'NOW()', FALSE );
+					$this->db->set('object_id',	$_object_id);
+					$this->db->set('tag_id',		$data->tag_id);
+					$this->db->set('created',		'NOW()', FALSE);
 
-					$this->db->insert( NAILS_DB_PREFIX . 'cdn_object_tag' );
+					$this->db->insert(NAILS_DB_PREFIX . 'cdn_object_tag');
 
 				endif;
 
@@ -1716,9 +1716,9 @@ class Cdn
 
 			// --------------------------------------------------------------------------
 
-			if ( $return_object ) :
+			if ($return_object) :
 
-				return $this->get_object( $_object_id );
+				return $this->get_object($_object_id);
 
 			else :
 
@@ -1744,7 +1744,7 @@ class Cdn
 	 * @param	object	$object	The object to format
 	 * @return	void
 	 **/
-	protected function _format_object( &$object )
+	protected function _format_object(&$object)
 	{
 		$object->id				= (int) $object->id;
 		$object->filesize		= (int) $object->filesize;
@@ -1767,12 +1767,12 @@ class Cdn
 		$object->creator->profile_img	= $object->profile_img;
 		$object->creator->gender		= $object->gender;
 
-		unset( $object->created_by );
-		unset( $object->first_name );
-		unset( $object->last_name );
-		unset( $object->email );
-		unset( $object->profile_img );
-		unset( $object->gender );
+		unset($object->created_by);
+		unset($object->first_name);
+		unset($object->last_name);
+		unset($object->email);
+		unset($object->profile_img);
+		unset($object->gender);
 
 		// --------------------------------------------------------------------------
 
@@ -1781,16 +1781,16 @@ class Cdn
 		$object->bucket->label	= $object->bucket_label;
 		$object->bucket->slug	= $object->bucket_slug;
 
-		unset( $object->bucket_id );
-		unset( $object->bucket_label );
-		unset( $object->bucket_slug );
+		unset($object->bucket_id);
+		unset($object->bucket_label);
+		unset($object->bucket_slug);
 
 		// --------------------------------------------------------------------------
 
 		//	Quick flag for detecting images
 		$object->is_img = FALSE;
 
-		switch( $object->mime ) :
+		switch($object->mime) :
 
 			case 'image/jpg' :
 			case 'image/jpeg' :
@@ -1821,43 +1821,43 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function get_buckets( $list_bucket = FALSE, $filter_tag = FALSE, $include_deleted = FALSE )
+	public function get_buckets($list_bucket = FALSE, $filter_tag = FALSE, $include_deleted = FALSE)
 	{
-		$this->db->select( 'b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by,b.modified,b.modified_by' );
-		$this->db->select( 'ue.email, u.first_name, u.last_name, u.profile_img, u.gender' );
-		$this->db->select( '(SELECT COUNT(*) FROM ' . NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) object_count' );
+		$this->db->select('b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by,b.modified,b.modified_by');
+		$this->db->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
+		$this->db->select('(SELECT COUNT(*) FROM ' . NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) object_count');
 
-		$this->db->join( NAILS_DB_PREFIX . 'user u', 'u.id = b.created_by', 'LEFT' );
-		$this->db->join( NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = b.created_by AND ue.is_primary = 1', 'LEFT' );
+		$this->db->join(NAILS_DB_PREFIX . 'user u', 'u.id = b.created_by', 'LEFT');
+		$this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = b.created_by AND ue.is_primary = 1', 'LEFT');
 
-		$this->db->order_by( 'b.label' );
+		$this->db->order_by('b.label');
 
-		$_buckets = $this->db->get( NAILS_DB_PREFIX . 'cdn_bucket b' )->result();
+		$_buckets = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
 
 		// --------------------------------------------------------------------------
 
-		foreach ( $_buckets AS &$bucket ) :
+		foreach ($_buckets AS &$bucket) :
 
 			//	Format bucket object
-			$this->_format_bucket( $bucket );
+			$this->_format_bucket($bucket);
 
 			// --------------------------------------------------------------------------
 
 			//	List contents
-			if ( $list_bucket ) :
+			if ($list_bucket) :
 
-				$bucket->objects = $this->bucket_list( $bucket->id, $filter_tag, $include_deleted );
+				$bucket->objects = $this->bucket_list($bucket->id, $filter_tag, $include_deleted);
 
 			endif;
 
 			// --------------------------------------------------------------------------
 
 			//	Fetch tags & counts
-			$this->db->select( 'bt.id,bt.label,bt.created' );
-			$this->db->select( '(SELECT COUNT(*) FROM ' . NAILS_DB_PREFIX . 'cdn_object_tag ot JOIN ' . NAILS_DB_PREFIX . 'cdn_object o ON o.id = ot.object_id WHERE tag_id = bt.id ) total' );
-			$this->db->order_by( 'bt.label' );
-			$this->db->where( 'bt.bucket_id', $bucket->id );
-			$bucket->tags = $this->db->get( NAILS_DB_PREFIX . 'cdn_bucket_tag bt' )->result();
+			$this->db->select('bt.id,bt.label,bt.created');
+			$this->db->select('(SELECT COUNT(*) FROM ' . NAILS_DB_PREFIX . 'cdn_object_tag ot JOIN ' . NAILS_DB_PREFIX . 'cdn_object o ON o.id = ot.object_id WHERE tag_id = bt.id) total');
+			$this->db->order_by('bt.label');
+			$this->db->where('bt.bucket_id', $bucket->id);
+			$bucket->tags = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket_tag bt')->result();
 
 		endforeach;
 
@@ -1870,12 +1870,12 @@ class Cdn
 	// --------------------------------------------------------------------------
 
 
-	public function get_buckets_flat( $filter_tag = FALSE, $include_deleted = FALSE )
+	public function get_buckets_flat($filter_tag = FALSE, $include_deleted = FALSE)
 	{
-		$_buckets	= $this->get_buckets( FALSE, $filter_tag, $include_deleted );
+		$_buckets	= $this->get_buckets(FALSE, $filter_tag, $include_deleted);
 		$_out		= array();
 
-		foreach( $_buckets AS $bucket ) :
+		foreach($_buckets AS $bucket) :
 
 			$_out[$bucket->id] = $bucket->label;
 
@@ -1895,21 +1895,21 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function get_bucket( $bucket, $list_bucket = FALSE, $filter_tag = FALSE )
+	public function get_bucket($bucket, $list_bucket = FALSE, $filter_tag = FALSE)
 	{
-		if ( is_numeric( $bucket ) ) :
+		if (is_numeric($bucket)) :
 
-			$this->db->where( 'b.id', $bucket );
+			$this->db->where('b.id', $bucket);
 
 		else :
 
-			$this->db->where( 'b.slug', $bucket );
+			$this->db->where('b.slug', $bucket);
 
 		endif;
 
-		$_bucket = $this->get_buckets( $list_bucket, $filter_tag, TRUE );
+		$_bucket = $this->get_buckets($list_bucket, $filter_tag, TRUE);
 
-		if ( ! $_bucket ) :
+		if (!$_bucket) :
 
 			return FALSE;
 
@@ -1929,12 +1929,12 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function bucket_create( $bucket, $label = NULL )
+	public function bucket_create($bucket, $label = NULL)
 	{
 		//	Test if bucket exists, if it does stop, job done.
-		$_bucket = $this->get_bucket( $bucket );
+		$_bucket = $this->get_bucket($bucket);
 
-		if ( $_bucket ) :
+		if ($_bucket) :
 
 			return $_bucket->id;
 
@@ -1942,41 +1942,41 @@ class Cdn
 
 		// --------------------------------------------------------------------------
 
-		$_bucket = $this->_cdn->bucket_create( $bucket );
+		$_bucket = $this->_cdn->bucket_create($bucket);
 
-		if ( $_bucket ) :
+		if ($_bucket) :
 
-			$this->db->set( 'slug', $bucket );
-			if ( ! $label ) :
+			$this->db->set('slug', $bucket);
+			if (!$label) :
 
-				$this->db->set( 'label', ucwords( str_replace( '-', ' ', $bucket ) ) );
+				$this->db->set('label', ucwords(str_replace('-', ' ', $bucket)));
 
 			else :
 
-				$this->db->set( 'label', $label );
+				$this->db->set('label', $label);
 
 			endif;
-			$this->db->set( 'created', 'NOW()', FALSE );
-			$this->db->set( 'modified', 'NOW()', FALSE );
+			$this->db->set('created', 'NOW()', FALSE);
+			$this->db->set('modified', 'NOW()', FALSE);
 
-			if ( get_userobject()->is_logged_in() ) :
+			if (get_userobject()->is_logged_in()) :
 
-				$this->db->set( 'created_by',	active_user( 'id' ) );
-				$this->db->set( 'modified_by',	active_user( 'id' ) );
+				$this->db->set('created_by',	active_user('id'));
+				$this->db->set('modified_by',	active_user('id'));
 
 			endif;
 
-			$this->db->insert( NAILS_DB_PREFIX . 'cdn_bucket' );
+			$this->db->insert(NAILS_DB_PREFIX . 'cdn_bucket');
 
-			if ( $this->db->affected_rows() ) :
+			if ($this->db->affected_rows()) :
 
 				return $this->db->insert_id();
 
 			else :
 
-				$this->_cdn->destroy( $bucket );
+				$this->_cdn->destroy($bucket);
 
-				$this->set_error( lang( 'cdn_error_bucket_insert' ) );
+				$this->set_error(lang('cdn_error_bucket_insert'));
 				return FALSE;
 
 			endif;
@@ -1999,46 +1999,46 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function bucket_list( $bucket, $filter_tag = NULL, $sort_on = NULL, $sort_order = NULL )
+	public function bucket_list($bucket, $filter_tag = NULL, $sort_on = NULL, $sort_order = NULL)
 	{
 		//	Filtering by tag?
-		if ( $filter_tag ) :
+		if ($filter_tag) :
 
-			$this->db->join( NAILS_DB_PREFIX . 'cdn_object_tag ft', 'ft.object_id = o.id AND ft.tag_id = ' . $filter_tag );
+			$this->db->join(NAILS_DB_PREFIX . 'cdn_object_tag ft', 'ft.object_id = o.id AND ft.tag_id = ' . $filter_tag);
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
 		//	Sorting?
-		if ( $sort_on ) :
+		if ($sort_on) :
 
-			$_sort_order = strtoupper( $sort_order ) == 'ASC' ? 'ASC' : 'DESC';
+			$_sort_order = strtoupper($sort_order) == 'ASC' ? 'ASC' : 'DESC';
 
-			switch( $sort_on ) :
+			switch($sort_on) :
 
 				case 'filename' :
 
-					$this->db->order_by( 'o.filename_display', $_sort_order );
+					$this->db->order_by('o.filename_display', $_sort_order);
 
 				break;
 
 				case 'filesize' :
 
-					$this->db->order_by( 'o.filesize', $_sort_order );
+					$this->db->order_by('o.filesize', $_sort_order);
 
 				break;
 
 				case 'created' :
 
-					$this->db->order_by( 'o.created', $_sort_order );
+					$this->db->order_by('o.created', $_sort_order);
 
 				break;
 
 				case 'type' :
 				case 'mime' :
 
-					$this->db->order_by( 'o.mime', $_sort_order );
+					$this->db->order_by('o.mime', $_sort_order);
 
 				break;
 
@@ -2049,13 +2049,13 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Filter by bucket
-		if ( is_numeric( $bucket ) ) :
+		if (is_numeric($bucket)) :
 
-			$this->db->where( 'b.id', $bucket );
+			$this->db->where('b.id', $bucket);
 
 		else :
 
-			$this->db->where( 'b.slug', $bucket );
+			$this->db->where('b.slug', $bucket);
 
 		endif;
 
@@ -2075,13 +2075,13 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function bucket_destroy( $bucket )
+	public function bucket_destroy($bucket)
 	{
-		$_bucket = $this->get_bucket( $bucket, TRUE );
+		$_bucket = $this->get_bucket($bucket, TRUE);
 
-		if ( ! $_bucket ) :
+		if (!$_bucket) :
 
-			$this->set_error( lang( 'cdn_error_bucket_invalid' ) );
+			$this->set_error(lang('cdn_error_bucket_invalid'));
 			return FALSE;
 
 		endif;
@@ -2090,35 +2090,35 @@ class Cdn
 
 		//	Destroy any containing objects
 		$_errors = 0;
-		foreach( $_bucket->objects AS $obj ) :
+		foreach($_bucket->objects AS $obj) :
 
-			if ( ! $this->object_destroy( $obj->id ) ) :
+			if (!$this->object_destroy($obj->id)) :
 
-				$this->set_error( 'Unable to delete object "' . $obj->filename_display . '" (ID:' . $obj->id . ').' );
+				$this->set_error('Unable to delete object "' . $obj->filename_display . '" (ID:' . $obj->id . ').');
 				$_errors++;
 
 			endif;
 
 		endforeach;
 
-		if ( $_errors ) :
+		if ($_errors) :
 
-			$this->set_error( 'Unable to delete bucket, bucket not empty.' );
+			$this->set_error('Unable to delete bucket, bucket not empty.');
 			return FALSE;
 
 		else :
 
 			//	Remove the bucket
-			if ( $this->_cdn->bucket_destroy( $_bucket->slug ) ) :
+			if ($this->_cdn->bucket_destroy($_bucket->slug)) :
 
-				$this->db->where( 'id', $_bucket->id );
-				$this->db->delete( NAILS_DB_PREFIX . 'cdn_bucket' );
+				$this->db->where('id', $_bucket->id);
+				$this->db->delete(NAILS_DB_PREFIX . 'cdn_bucket');
 
 				return TRUE;
 
 			else :
 
-				$this->set_error( 'Unable to remove empty bucket directory.' );
+				$this->set_error('Unable to remove empty bucket directory.');
 				return FALSE;
 
 			endif;
@@ -2137,13 +2137,13 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function bucket_tag_add( $bucket, $label )
+	public function bucket_tag_add($bucket, $label)
 	{
-		$label = trim( $label );
+		$label = trim($label);
 
-		if ( ! $label ) :
+		if (!$label) :
 
-			$this->set_error( lang( 'cdn_error_tag_invalid' ) );
+			$this->set_error(lang('cdn_error_tag_invalid'));
 			return FALSE;
 
 		endif;
@@ -2151,9 +2151,9 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Test bucket
-		if ( is_numeric( $bucket ) || is_string( $bucket ) ) :
+		if (is_numeric($bucket) || is_string($bucket)) :
 
-			$_bucket = $this->get_bucket( $bucket );
+			$_bucket = $this->get_bucket($bucket);
 
 		else :
 
@@ -2161,9 +2161,9 @@ class Cdn
 
 		endif;
 
-		if ( ! $_bucket ) :
+		if (!$_bucket) :
 
-			$this->set_error( lang( 'cdn_error_bucket_invalid' ) );
+			$this->set_error(lang('cdn_error_bucket_invalid'));
 			return FALSE;
 
 		endif;
@@ -2171,11 +2171,11 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Test tag
-		$this->db->where( 'bucket_id', $_bucket->id );
-		$this->db->where( 'label', $label );
-		if ( $this->db->count_all_results( NAILS_DB_PREFIX . 'cdn_bucket_tag' ) ) :
+		$this->db->where('bucket_id', $_bucket->id);
+		$this->db->where('label', $label);
+		if ($this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket_tag')) :
 
-			$this->set_error( lang( 'cdn_error_tag_exists' ) );
+			$this->set_error(lang('cdn_error_tag_exists'));
 			return FALSE;
 
 		endif;
@@ -2183,10 +2183,10 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Seems good, add the tag
-		$this->db->set( 'bucket_id', $_bucket->id );
-		$this->db->set( 'label', $label );
-		$this->db->set( 'created', 'NOW()', FALSE );
-		$this->db->insert( NAILS_DB_PREFIX . 'cdn_bucket_tag' );
+		$this->db->set('bucket_id', $_bucket->id);
+		$this->db->set('label', $label);
+		$this->db->set('created', 'NOW()', FALSE);
+		$this->db->insert(NAILS_DB_PREFIX . 'cdn_bucket_tag');
 
 		return $this->db->affected_rows() ? TRUE : FALSE;
 	}
@@ -2202,12 +2202,12 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function bucket_tag_delete( $bucket, $label )
+	public function bucket_tag_delete($bucket, $label)
 	{
 		//	Test bucket
-		if ( is_numeric( $bucket ) || is_string( $bucket ) ) :
+		if (is_numeric($bucket) || is_string($bucket)) :
 
-			$_bucket = $this->get_bucket( $bucket );
+			$_bucket = $this->get_bucket($bucket);
 
 		else :
 
@@ -2215,9 +2215,9 @@ class Cdn
 
 		endif;
 
-		if ( ! $_bucket ) :
+		if (!$_bucket) :
 
-			$this->set_error( lang( 'cdn_error_bucket_invalid' ) );
+			$this->set_error(lang('cdn_error_bucket_invalid'));
 			return FALSE;
 
 		endif;
@@ -2225,22 +2225,22 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Test tag
-		$this->db->where( 'bucket_id', $_bucket->id );
+		$this->db->where('bucket_id', $_bucket->id);
 
-		if ( is_numeric( $label ) ) :
+		if (is_numeric($label)) :
 
-			$this->db->where( 'id', $label );
+			$this->db->where('id', $label);
 
 		else :
 
-			$this->db->where( 'label', $label );
+			$this->db->where('label', $label);
 
 		endif;
 
 
-		if ( ! $this->db->count_all_results( NAILS_DB_PREFIX . 'cdn_bucket_tag' ) ) :
+		if (!$this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket_tag')) :
 
-			$this->set_error( lang( 'cdn_error_tag_notexist' ) );
+			$this->set_error(lang('cdn_error_tag_notexist'));
 			return FALSE;
 
 		endif;
@@ -2248,19 +2248,19 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Seems good, delete the tag
-		$this->db->where( 'bucket_id', $_bucket->id );
+		$this->db->where('bucket_id', $_bucket->id);
 
-		if ( is_numeric( $label ) ) :
+		if (is_numeric($label)) :
 
-			$this->db->where( 'id', $label );
+			$this->db->where('id', $label);
 
 		else :
 
-			$this->db->where( 'label', $label );
+			$this->db->where('label', $label);
 
 		endif;
 
-		$this->db->delete( NAILS_DB_PREFIX . 'cdn_bucket_tag' );
+		$this->db->delete(NAILS_DB_PREFIX . 'cdn_bucket_tag');
 
 		return $this->db->affected_rows() ? TRUE : FALSE;
 	}
@@ -2276,7 +2276,7 @@ class Cdn
 	 * @param	string
 	 * @return	boolean
 	 **/
-	public function bucket_tag_rename( $bucket, $label, $new_name )
+	public function bucket_tag_rename($bucket, $label, $new_name)
 	{
 		//	TODO: Rename a bucket tag
 		return FALSE;
@@ -2293,12 +2293,12 @@ class Cdn
 	 * @param	object	$bucket	The bucket to format
 	 * @return	void
 	 **/
-	protected function _format_bucket( &$bucket )
+	protected function _format_bucket(&$bucket)
 	{
 		$bucket->id				= (int) $bucket->id;
 		$bucket->object_count	= (int) $bucket->object_count;
 		$bucket->max_size		= (int) $bucket->max_size;
-		$bucket->allowed_types	= array_filter( explode( '|', $bucket->allowed_types ) );
+		$bucket->allowed_types	= array_filter(explode('|', $bucket->allowed_types));
 		$bucket->modified_by	= $bucket->modified_by ? (int) $bucket->modified_by : NULL;
 
 		// --------------------------------------------------------------------------
@@ -2311,12 +2311,12 @@ class Cdn
 		$bucket->creator->profile_img	= $bucket->profile_img;
 		$bucket->creator->gender		= $bucket->gender;
 
-		unset( $bucket->created_by );
-		unset( $bucket->first_name );
-		unset( $bucket->last_name );
-		unset( $bucket->email );
-		unset( $bucket->profile_img );
-		unset( $bucket->gender );
+		unset($bucket->created_by);
+		unset($bucket->first_name);
+		unset($bucket->last_name);
+		unset($bucket->email);
+		unset($bucket->profile_img);
+		unset($bucket->gender);
 	}
 
 
@@ -2331,32 +2331,32 @@ class Cdn
 	 * @param	string $file the path to the file to check
 	 * @return	boolean
 	 **/
-	protected function _detect_animated_gif( $file )
+	protected function _detect_animated_gif($file)
 	{
-		$filecontents	= file_get_contents( $file );
+		$filecontents	= file_get_contents($file);
 		$str_loc		= 0;
 		$count			= 0;
 
-		while ( $count < 2 ) :
+		while ($count < 2) :
 
-			$where1 = strpos( $filecontents, "\x00\x21\xF9\x04", $str_loc );
+			$where1 = strpos($filecontents, "\x00\x21\xF9\x04", $str_loc);
 
-			if ( $where1 === FALSE ) :
+			if ($where1 === FALSE) :
 
 				break;
 
 			else :
 
 				$str_loc	= $where1 + 1;
-				$where2		= strpos( $filecontents, "\x00\x2C", $str_loc );
+				$where2		= strpos($filecontents, "\x00\x2C", $str_loc);
 
-				if ( $where2 === FALSE ) :
+				if ($where2 === FALSE) :
 
 					break;
 
 				else :
 
-					if ( $where1 + 8 == $where2 ) :
+					if ($where1 + 8 == $where2) :
 
 						$count++;
 
@@ -2370,7 +2370,7 @@ class Cdn
 
 		endwhile;
 
-		if ( $count > 1 ) :
+		if ($count > 1) :
 
 			return TRUE;
 
@@ -2391,18 +2391,18 @@ class Cdn
 	 * @access	public
 	 * @return	string
 	 **/
-	public function get_ext_from_mime( $mime )
+	public function get_ext_from_mime($mime)
 	{
 		$mimes	= $this->_get_mime_mappings();
 		$_ext	= FALSE;
 
-		foreach ( $mimes AS $ext => $_mime ) :
+		foreach ($mimes AS $ext => $_mime) :
 
-			if ( is_array( $_mime ) ) :
+			if (is_array($_mime)) :
 
-				foreach( $_mime AS $submime ) :
+				foreach($_mime AS $submime) :
 
-					if ( $submime == $mime ) :
+					if ($submime == $mime) :
 
 						$_ext = $ext;
 						break;
@@ -2411,7 +2411,7 @@ class Cdn
 
 				endforeach;
 
-				if ( $_ext ) :
+				if ($_ext) :
 
 					break;
 
@@ -2419,7 +2419,7 @@ class Cdn
 
 			else :
 
-				if ( $_mime == $mime ) :
+				if ($_mime == $mime) :
 
 					$_ext = $ext;
 					break;
@@ -2433,7 +2433,7 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Being anal here, some extensions *need* to be forced
-		switch ( $_ext ) :
+		switch ($_ext) :
 
 			case 'jpeg' : $_ext = 'jpg';	break;
 
@@ -2453,25 +2453,25 @@ class Cdn
 	 * @param  string $ext The extension to return the mime type for
 	 * @return string
 	 */
-	public function get_mime_from_ext( $ext )
+	public function get_mime_from_ext($ext)
 	{
 		//	Prep $ext, make sure it has no dots
-		$ext = strpos( $ext, '.' ) !== FALSE ? substr( $ext, (int) strrpos( $ext, '.' ) + 1 ) : $ext;
+		$ext = strpos($ext, '.') !== FALSE ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
 
 		$_mimes = $this->_get_mime_mappings();
 
-		foreach ( $_mimes AS $_ext => $mime ) :
+		foreach ($_mimes AS $_ext => $mime) :
 
-			if ( $_ext == $ext ) :
+			if ($_ext == $ext) :
 
-				if ( is_string( $mime ) ) :
+				if (is_string($mime)) :
 
 					$_return = $mime;
 					break;
 
-				elseif ( is_array( $mime ) ) :
+				elseif (is_array($mime)) :
 
-					$_return = reset( $mime );
+					$_return = reset($mime);
 					break;
 
 				endif;
@@ -2494,10 +2494,10 @@ class Cdn
 	 * @access	public
 	 * @return	string
 	 **/
-	public function get_mime_from_file( $object )
+	public function get_mime_from_file($object)
 	{
-		$_fi = finfo_open( FILEINFO_MIME_TYPE );
-		return finfo_file( $_fi, $object );
+		$_fi = finfo_open(FILEINFO_MIME_TYPE);
+		return finfo_file($_fi, $object);
 	}
 
 
@@ -2510,24 +2510,24 @@ class Cdn
 	 * @param  string $mime The mime type to test agains
 	 * @return bool
 	 */
-	public function valid_ext_for_mime( $ext, $mime )
+	public function valid_ext_for_mime($ext, $mime)
 	{
 		$_assocs	= array();
 		$_mimes		= $this->_get_mime_mappings();
 		$_ext		= FALSE;
 
 		//	Prep $ext, make sure it has no dots
-		$ext = strpos( $ext, '.' ) !== FALSE ? substr( $ext, (int) strrpos( $ext, '.' ) + 1 ) : $ext;
+		$ext = strpos($ext, '.') !== FALSE ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
 
-		foreach ( $_mimes AS $_ext => $_mime ) :
+		foreach ($_mimes AS $_ext => $_mime) :
 
-			if ( is_array( $_mime ) ) :
+			if (is_array($_mime)) :
 
-				foreach( $_mime AS $_subext => $_submime ) :
+				foreach($_mime AS $_subext => $_submime) :
 
-					if ( ! isset( $_assocs[strtolower( $_submime )] ) ) :
+					if (!isset($_assocs[strtolower($_submime)])) :
 
-						$_assocs[strtolower( $_submime )] = array();
+						$_assocs[strtolower($_submime)] = array();
 
 					endif;
 
@@ -2535,9 +2535,9 @@ class Cdn
 
 			else :
 
-				if ( ! isset( $_assocs[strtolower( $_mime )] ) ) :
+				if (!isset($_assocs[strtolower($_mime)])) :
 
-					$_assocs[strtolower( $_mime )] = array();
+					$_assocs[strtolower($_mime)] = array();
 
 				endif;
 
@@ -2546,19 +2546,19 @@ class Cdn
 		endforeach;
 
 		//	Now put extensions into the appropriate slots
-		foreach ( $_mimes AS $_ext => $_mime ) :
+		foreach ($_mimes AS $_ext => $_mime) :
 
-			if ( is_array( $_mime ) ) :
+			if (is_array($_mime)) :
 
-				foreach( $_mime AS $_submime ) :
+				foreach($_mime AS $_submime) :
 
-					$_assocs[strtolower( $_submime )][] = $_ext;
+					$_assocs[strtolower($_submime)][] = $_ext;
 
 				endforeach;
 
 			else :
 
-				$_assocs[strtolower( $_mime )][] = $_ext;
+				$_assocs[strtolower($_mime)][] = $_ext;
 
 			endif;
 
@@ -2566,9 +2566,9 @@ class Cdn
 
 		// --------------------------------------------------------------------------
 
-		if ( isset( $_assocs[strtolower( $mime )] ) ) :
+		if (isset($_assocs[strtolower($mime)])) :
 
-			if ( array_search( $ext, $_assocs[strtolower( $mime )] ) !== FALSE ) :
+			if (array_search($ext, $_assocs[strtolower($mime)]) !== FALSE) :
 
 				return TRUE;
 
@@ -2596,9 +2596,9 @@ class Cdn
 	protected function _get_mime_mappings()
 	{
 		$_cache_key = 'mimes';
-		$_cache		= $this->_get_cache( $_cache_key );
+		$_cache		= $this->_get_cache($_cache_key);
 
-		if ( $_cache ) :
+		if ($_cache) :
 
 			return $_cache;
 
@@ -2612,11 +2612,11 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Override/add mimes
-		$mimes['doc'] = array( 'application/msword', 'application/vnd.ms-office' );
+		$mimes['doc'] = array('application/msword', 'application/vnd.ms-office');
 
 		// --------------------------------------------------------------------------
 
-		$this->_set_cache( $_cache_key, $mimes );
+		$this->_set_cache($_cache_key, $mimes);
 
 		// --------------------------------------------------------------------------
 
@@ -2641,11 +2641,11 @@ class Cdn
 	 * @param	string	$object	The filename of the object
 	 * @return	string
 	 **/
-	public function url_serve( $object, $force_download = FALSE )
+	public function url_serve($object, $force_download = FALSE)
 	{
-		$_object = $this->get_object( $object );
+		$_object = $this->get_object($object);
 
-		if ( ! $_object ) :
+		if (!$_object) :
 
 			//	Let the renderer show a bad_src graphic
 			$_object				= new stdClass();
@@ -2655,7 +2655,7 @@ class Cdn
 
 		endif;
 
-		return $this->_cdn->url_serve( $_object->filename, $_object->bucket->slug, $force_download );
+		return $this->_cdn->url_serve($_object->filename, $_object->bucket->slug, $force_download);
 	}
 
 
@@ -2669,9 +2669,9 @@ class Cdn
 	 * @param	none
 	 * @return	string
 	 **/
-	public function url_serve_scheme( $force_download = FALSE )
+	public function url_serve_scheme($force_download = FALSE)
 	{
-		return $this->_cdn->url_serve_scheme( $force_download );
+		return $this->_cdn->url_serve_scheme($force_download);
 	}
 
 
@@ -2685,25 +2685,25 @@ class Cdn
 	 * @param	array $objects An array of the Object IDs which should be zipped together
 	 * @return	string
 	 **/
-	public function url_serve_zipped( $objects, $filename = 'download.zip' )
+	public function url_serve_zipped($objects, $filename = 'download.zip')
 	{
-		$_data		= array( 'where_in' => array( array( 'o.id', $objects ) ) );
-		$_objects	= $this->get_objects( NULL, NULL, $_data );
+		$_data		= array('where_in' => array(array('o.id', $objects)));
+		$_objects	= $this->get_objects(NULL, NULL, $_data);
 
 		$_ids		= array();
 		$_ids_hash	= array();
-		foreach ( $_objects AS $obj ) :
+		foreach ($_objects AS $obj) :
 
 			$_ids[]			= $obj->id;
 			$_ids_hash[]	= $obj->id . $obj->bucket->id;
 
 		endforeach;
 
-		$_ids		= implode( '-', $_ids );
-		$_ids_hash	= implode( '-', $_ids_hash );
-		$_hash		= md5( APP_PRIVATE_KEY . $_ids . $_ids_hash . $filename );
+		$_ids		= implode('-', $_ids);
+		$_ids_hash	= implode('-', $_ids_hash);
+		$_hash		= md5(APP_PRIVATE_KEY . $_ids . $_ids_hash . $filename);
 
-		return $this->_cdn->url_serve_zipped( $_ids, $_hash, $filename );
+		return $this->_cdn->url_serve_zipped($_ids, $_hash, $filename);
 	}
 
 
@@ -2716,31 +2716,31 @@ class Cdn
 	 * @access	public
 	 * @return	boolean
 	 **/
-	public function verify_url_serve_zipped_hash( $hash, $objects, $filename = 'download.zip' )
+	public function verify_url_serve_zipped_hash($hash, $objects, $filename = 'download.zip')
 	{
-		if ( ! is_array( $objects ) ) :
+		if (!is_array($objects)) :
 
-			$objects = explode( '-', $objects );
+			$objects = explode('-', $objects);
 
 		endif;
 
-		$_data		= array( 'where_in' => array( array( 'o.id', $objects ) ) );
-		$_objects	= $this->get_objects( NULL, NULL, $_data );
+		$_data		= array('where_in' => array(array('o.id', $objects)));
+		$_objects	= $this->get_objects(NULL, NULL, $_data);
 
 		$_ids		= array();
 		$_ids_hash	= array();
 
-		foreach ( $_objects AS $obj ) :
+		foreach ($_objects AS $obj) :
 
 			$_ids[]			= $obj->id;
 			$_ids_hash[]	= $obj->id . $obj->bucket->id;
 
 		endforeach;
 
-		$_ids		= implode( '-', $_ids );
-		$_ids_hash	= implode( '-', $_ids_hash );
+		$_ids		= implode('-', $_ids);
+		$_ids_hash	= implode('-', $_ids_hash);
 
-		return md5( APP_PRIVATE_KEY . $_ids . $_ids_hash . $filename ) === $hash ? $_objects : FALSE;
+		return md5(APP_PRIVATE_KEY . $_ids . $_ids_hash . $filename) === $hash ? $_objects : FALSE;
 	}
 
 
@@ -2754,9 +2754,9 @@ class Cdn
 	 * @param	none
 	 * @return	string
 	 **/
-	public function url_serve_zipped_scheme( $filename = NULL )
+	public function url_serve_zipped_scheme($filename = NULL)
 	{
-		return $this->_cdn->url_serve_scheme( $filename );
+		return $this->_cdn->url_serve_scheme($filename);
 	}
 
 
@@ -2772,11 +2772,11 @@ class Cdn
 	 * @param	string	$height	The height of the thumbnail
 	 * @return	string
 	 **/
-	public function url_thumb( $object, $width, $height )
+	public function url_thumb($object, $width, $height)
 	{
-		$_object = $this->get_object( $object );
+		$_object = $this->get_object($object);
 
-		if ( ! $_object ) :
+		if (!$_object) :
 
 			//	Let the renderer show a bad_src graphic
 			$_object				= new stdClass();
@@ -2786,7 +2786,7 @@ class Cdn
 
 		endif;
 
-		return $this->_cdn->url_thumb( $_object->filename, $_object->bucket->slug, $width, $height );
+		return $this->_cdn->url_thumb($_object->filename, $_object->bucket->slug, $width, $height);
 	}
 
 
@@ -2819,11 +2819,11 @@ class Cdn
 	 * @param	string	$height	The height of the scaled image
 	 * @return	string
 	 **/
-	public function url_scale( $object, $width, $height )
+	public function url_scale($object, $width, $height)
 	{
-		$_object = $this->get_object( $object );
+		$_object = $this->get_object($object);
 
-		if ( ! $_object ) :
+		if (!$_object) :
 
 			//	Let the renderer show a bad_src graphic
 			$_object				= new stdClass();
@@ -2833,7 +2833,7 @@ class Cdn
 
 		endif;
 
-		return $this->_cdn->url_scale( $_object->filename, $_object->bucket->slug, $width, $height );
+		return $this->_cdn->url_scale($_object->filename, $_object->bucket->slug, $width, $height);
 	}
 
 
@@ -2865,9 +2865,9 @@ class Cdn
 	 * @param	int		border	The width of the border round the placeholder
 	 * @return	string
 	 **/
-	public function url_placeholder( $width = 100, $height = 100, $border = 0 )
+	public function url_placeholder($width = 100, $height = 100, $border = 0)
 	{
-		return $this->_cdn->url_placeholder( $width, $height, $border );
+		return $this->_cdn->url_placeholder($width, $height, $border);
 	}
 
 
@@ -2899,9 +2899,9 @@ class Cdn
 	 * @param	mixed	$sex	The gender of the blank avatar to show
 	 * @return	string
 	 **/
-	public function url_blank_avatar( $width = 100, $height = 100, $sex = 'unknown' )
+	public function url_blank_avatar($width = 100, $height = 100, $sex = '')
 	{
-		return $this->_cdn->url_blank_avatar( $width, $height, $sex );
+		return $this->_cdn->url_blank_avatar($width, $height, $sex);
 	}
 
 
@@ -2925,6 +2925,90 @@ class Cdn
 
 
 	/**
+	 * Calls the driver's public cdn_blank_avatar_url method
+	 *
+	 * @access	public
+	 * @param	int		$userId	The user's ID
+	 * @param	int		$width	The width of the avatar
+	 * @param	int		$height	The height of the avatar
+	 * @return	string
+	 **/
+	public function url_avatar($userId = null, $width = 100, $height = 100)
+	{
+        if (is_null($userId)) {
+
+            $userId = active_user('id');
+        }
+
+        if (empty($userId)) {
+
+            $avatarUrl = $this->url_blank_avatar($width, $height);
+
+        } else {
+
+            $user = $this->_ci->user_model->get_by_id($userId);
+
+        	if (empty($user)) {
+
+                $avatarUrl = $this->url_blank_avatar($width, $height);
+
+        	} elseif (empty($user->profile_img)) {
+
+                $avatarUrl = $this->url_blank_avatar($width, $height, $user->gender);
+
+            } else {
+
+                $avatarUrl = $this->url_thumb($user->profile_img, $width, $height);
+            }
+        }
+
+        return $avatarUrl;
+	}
+
+
+	// --------------------------------------------------------------------------
+
+
+	/**
+	 * Calls the driver's public cdn_serve_url_scheme method
+	 *
+	 * @access	public
+	 * @param	none
+	 * @return	string
+	 **/
+	public function url_avatar_scheme()
+	{
+        if (is_null($userId)) {
+
+            $userId = active_user('id');
+        }
+
+        if (empty($userId)) {
+
+            $avatarScheme = $this->url_blank_avatar_scheme();
+
+        } else {
+
+            $user = $this->_ci->user_model->get_by_id($userId);
+
+        	if (empty($user->profile_img)) {
+
+                $avatarScheme = $this->url_blank_avatar_scheme();
+
+            } else {
+
+                $avatarScheme = $this->url_thumb_scheme();
+            }
+        }
+
+        return $avatarScheme;
+	}
+
+
+	// --------------------------------------------------------------------------
+
+
+	/**
 	 * Calls the driver's public cdn_expiring_url method
 	 *
 	 * @access	public
@@ -2933,11 +3017,11 @@ class Cdn
 	 * @param	string	$expires	The length of time the URL should be valid for, in seconds
 	 * @return	string
 	 **/
-	public function url_expiring( $object, $expires )
+	public function url_expiring($object, $expires)
 	{
-		$_object = $this->get_object( $object );
+		$_object = $this->get_object($object);
 
-		if ( ! $_object ) :
+		if (!$_object) :
 
 			//	Let the renderer show a bad_src graphic
 			$_object				= new stdClass();
@@ -2947,7 +3031,7 @@ class Cdn
 
 		endif;
 
-		return $this->_cdn->url_expiring( $_object->filename, $_object->bucket->slug, $expires );
+		return $this->_cdn->url_expiring($_object->filename, $_object->bucket->slug, $expires);
 	}
 
 
@@ -2976,19 +3060,19 @@ class Cdn
 	 * @access	public
 	 * @return	string
 	 **/
-	public function generate_api_upload_token( $user_id = NULL, $duration = 7200, $restrict_ip = TRUE )
+	public function generate_api_upload_token($user_id = NULL, $duration = 7200, $restrict_ip = TRUE)
 	{
-		if ( $user_id === NULL ) :
+		if ($user_id === NULL) :
 
-			$user_id = active_user( 'id' );
+			$user_id = active_user('id');
 
 		endif;
 
-		$_user = get_userobject()->get_by_id( $user_id );
+		$_user = get_userobject()->get_by_id($user_id);
 
-		if ( ! $_user ) :
+		if (!$_user) :
 
-			$this->set_error( 'Invalid user ID' );
+			$this->set_error('Invalid user ID');
 			return FALSE;
 
 		endif;
@@ -3002,7 +3086,7 @@ class Cdn
 		$_token[]	= $_user->email;			//	User Email
 		$_token[]	= time() + (int) $duration;	//	Expire time (+2hours)
 
-		if ( $restrict_ip ) :
+		if ($restrict_ip) :
 
 			$_token[]	= get_instance()->input->ip_address();
 
@@ -3013,10 +3097,10 @@ class Cdn
 		endif;
 
 		//	Hash
-		$_token[] = md5( serialize( $_token ) . APP_PRIVATE_KEY );
+		$_token[] = md5(serialize($_token) . APP_PRIVATE_KEY);
 
 		//	Encrypt and return
-		return get_instance()->encrypt->encode( implode( '|', $_token ), APP_PRIVATE_KEY );
+		return get_instance()->encrypt->encode(implode('|', $_token), APP_PRIVATE_KEY);
 	}
 
 
@@ -3029,32 +3113,32 @@ class Cdn
 	 * @access	public
 	 * @return	string
 	 **/
-	public function validate_api_upload_token( $token )
+	public function validate_api_upload_token($token)
 	{
-		$_token = get_instance()->encrypt->decode( $token, APP_PRIVATE_KEY );
+		$_token = get_instance()->encrypt->decode($token, APP_PRIVATE_KEY);
 
-		if ( ! $_token ) :
+		if (!$_token) :
 
 			//	Error #1: Could not decrypot
-			$this->set_error( 'Invalid Token (Error #1)' );
+			$this->set_error('Invalid Token (Error #1)');
 			return FALSE;
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
-		$_token	 = explode( '|', $_token );
+		$_token	 = explode('|', $_token);
 
-		if ( !$_token ) :
+		if (!$_token) :
 
 			//	Error #2: Could not explode
-			$this->set_error( 'Invalid Token (Error #2)' );
+			$this->set_error('Invalid Token (Error #2)');
 			return FALSE;
 
-		elseif ( count( $_token ) != 6 ) :
+		elseif (count($_token) != 6) :
 
 			//	Error #3: Bad count
-			$this->set_error( 'Invalid Token (Error #3)' );
+			$this->set_error('Invalid Token (Error #3)');
 			return FALSE;
 
 		endif;
@@ -3069,12 +3153,12 @@ class Cdn
 
 		//	Check hash
 		$_hash = $_token[5];
-		unset( $_token[5]);
+		unset($_token[5]);
 
-		if ( $_hash != md5( serialize( $_token ) . APP_PRIVATE_KEY ) ) :
+		if ($_hash != md5(serialize($_token) . APP_PRIVATE_KEY)) :
 
 			//	Error #4: Bad hash
-			$this->set_error( 'Invalid Token (Error #4)' );
+			$this->set_error('Invalid Token (Error #4)');
 			return FALSE;
 
 		endif;
@@ -3082,58 +3166,58 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Fetch and check user
-		$_user = get_userobject()->get_by_id( $_token[0] );
+		$_user = get_userobject()->get_by_id($_token[0]);
 
 		//	User exists?
-		if ( ! $_user ) :
+		if (!$_user) :
 
 			//	Error #5: User not found
-			$this->set_error( 'Invalid Token (Error #5)' );
+			$this->set_error('Invalid Token (Error #5)');
 			return FALSE;
 
 		endif;
 
 		//	Valid email?
-		if ( $_user->email != $_token[2] ) :
+		if ($_user->email != $_token[2]) :
 
 			//	Error #6: Invalid Email
-			$this->set_error( 'Invalid Token (Error #6)' );
+			$this->set_error('Invalid Token (Error #6)');
 			return FALSE;
 
 		endif;
 
 		//	Valid password?
-		if ( $_user->password_md5 != $_token[1] ) :
+		if ($_user->password_md5 != $_token[1]) :
 
 			//	Error #7: Invalid password
-			$this->set_error( 'Invalid Token (Error #7)' );
+			$this->set_error('Invalid Token (Error #7)');
 			return FALSE;
 
 		endif;
 
 		//	User suspended?
-		if ( $_user->is_suspended ) :
+		if ($_user->is_suspended) :
 
 			//	Error #8: User suspended
-			$this->set_error( 'Invalid Token (Error #8)' );
+			$this->set_error('Invalid Token (Error #8)');
 			return FALSE;
 
 		endif;
 
 		//	Valid IP?
-		if ( ! $_token[4] && $_token[4] != get_instance()->input->ip_address() ) :
+		if (!$_token[4] && $_token[4] != get_instance()->input->ip_address()) :
 
 			//	Error #9: Invalid IP
-			$this->set_error( 'Invalid Token (Error #9)' );
+			$this->set_error('Invalid Token (Error #9)');
 			return FALSE;
 
 		endif;
 
 		//	Expired?
-		if ( $_token[3] < time() ) :
+		if ($_token[3] < time()) :
 
 			//	Error #10: Token expired
-			$this->set_error( 'Invalid Token (Error #10)' );
+			$this->set_error('Invalid Token (Error #10)');
 			return FALSE;
 
 		endif;
@@ -3156,20 +3240,20 @@ class Cdn
 	 **/
 	public function find_orphaned_objects()
 	{
-		$_out = array( 'orphans' => array(), 'elapsed_time' => 0 );
+		$_out = array('orphans' => array(), 'elapsed_time' => 0);
 
 		//	Time how long this takes; start timer
-		$this->_ci->benchmark->mark( 'orphan_search_start' );
+		$this->_ci->benchmark->mark('orphan_search_start');
 
-		$this->db->select( 'o.id, o.filename, o.filename_display, o.mime, o.filesize, b.slug bucket_slug, b.label bucket' );
-		$this->db->join( NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id' );
-		$this->db->order_by( 'b.label' );
-		$this->db->order_by( 'o.filename_display' );
-		$_orphans = $this->db->get( NAILS_DB_PREFIX . 'cdn_object o' );
+		$this->db->select('o.id, o.filename, o.filename_display, o.mime, o.filesize, b.slug bucket_slug, b.label bucket');
+		$this->db->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
+		$this->db->order_by('b.label');
+		$this->db->order_by('o.filename_display');
+		$_orphans = $this->db->get(NAILS_DB_PREFIX . 'cdn_object o');
 
-		while ( $row = $_orphans->_fetch_object() ) :
+		while ($row = $_orphans->_fetch_object()) :
 
-			if ( ! $this->_cdn->object_exists( $row->filename, $row->bucket_slug ) ) :
+			if (!$this->_cdn->object_exists($row->filename, $row->bucket_slug)) :
 
 				$_out['orphans'][] = $row;
 
@@ -3178,8 +3262,8 @@ class Cdn
 		endwhile;
 
 		//	End timer
-		$this->_ci->benchmark->mark( 'orphan_search_end' );
-		$_out['elapsed_time'] = $this->_ci->benchmark->elapsed_time( 'orphan_search_start', 'orphan_search_end' );
+		$this->_ci->benchmark->mark('orphan_search_end');
+		$_out['elapsed_time'] = $this->_ci->benchmark->elapsed_time('orphan_search_start', 'orphan_search_end');
 
 		return $_out;
 	}
@@ -3213,27 +3297,27 @@ class Cdn
 	{
 		//	If defined, run the pre_test method for the driver
 		$_result = TRUE;
-		if ( method_exists( $this->_cdn, 'pre_test' ) ) :
+		if (method_exists($this->_cdn, 'pre_test')) :
 
-			call_user_func( array( $this->_cdn, 'pre_test' ) );
+			call_user_func(array($this->_cdn, 'pre_test'));
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
 		//	Run tests
-		$this->_ci->load->library( 'curl/curl' );
+		$this->_ci->load->library('curl/curl');
 
 		// --------------------------------------------------------------------------
 
 		//	Create a test bucket
-		$_test_id			= md5( microtime( TRUE ) . uniqid() );
+		$_test_id			= md5(microtime(TRUE) . uniqid());
 		$_test_bucket		= 'test-' . $_test_id;
-		$_test_bucket_id	= $this->bucket_create( $_test_bucket, $_test_bucket );
+		$_test_bucket_id	= $this->bucket_create($_test_bucket, $_test_bucket);
 
-		if ( ! $_test_bucket_id ) :
+		if (!$_test_bucket_id) :
 
-			$this->set_error( 'Failed to create a new bucket.' );
+			$this->set_error('Failed to create a new bucket.');
 
 		endif;
 
@@ -3242,14 +3326,14 @@ class Cdn
 		//	Fetch and test all buckets
 		$_buckets = $this->get_buckets();
 
-		foreach ( $_buckets AS $bucket ) :
+		foreach ($_buckets AS $bucket) :
 
 			//	Can fetch bucket by ID?
-			$_bucket = $this->get_bucket( $bucket->id );
+			$_bucket = $this->get_bucket($bucket->id);
 
-			if( ! $_bucket ) :
+			if(!$_bucket) :
 
-				$this->set_error( 'Unable to fetch bucket by ID; ID: ' . $bucket->id );
+				$this->set_error('Unable to fetch bucket by ID; ID: ' . $bucket->id);
 				continue;
 
 			endif;
@@ -3257,11 +3341,11 @@ class Cdn
 			// --------------------------------------------------------------------------
 
 			//	Can fetch bucket by slug?
-			$_bucket = $this->get_bucket( $bucket->slug );
+			$_bucket = $this->get_bucket($bucket->slug);
 
-			if( ! $_bucket ) :
+			if(!$_bucket) :
 
-				$this->set_error( 'Unable to fetch bucket by slug; slug: ' . $bucket->slug );
+				$this->set_error('Unable to fetch bucket by slug; slug: ' . $bucket->slug);
 				continue;
 
 			endif;
@@ -3279,7 +3363,7 @@ class Cdn
 			$_file['jpg']	= NAILS_COMMON_PATH . 'assets/tests/cdn/jpg.jpg';
 			$_file['pdf']	= NAILS_COMMON_PATH . 'assets/tests/cdn/pdf.pdf';
 
-			if ( empty( $_bucket->allowed_types ) ) :
+			if (empty($_bucket->allowed_types)) :
 
 				//	Not specified, use the txt as it's so tiny
 				$_file = $_file['txt'];
@@ -3287,9 +3371,9 @@ class Cdn
 			else :
 
 				//	find a file we can use
-				foreach( $_file AS $ext => $path ) :
+				foreach($_file AS $ext => $path) :
 
-					if ( array_search( $ext, $_bucket->allowed_types ) !== FALSE ) :
+					if (array_search($ext, $_bucket->allowed_types) !== FALSE) :
 
 						$_file = $path;
 						break;
@@ -3303,18 +3387,18 @@ class Cdn
 			//	Copy this file temporarily to the cache
 			$_cachefile = DEPLOY_CACHE_DIR . 'test-' . $bucket->slug . '-' . $_test_id . '.jpg';
 
-			if ( ! @copy( $_file, $_cachefile ) ) :
+			if (!@copy($_file, $_cachefile)) :
 
-				$this->set_error( 'Unable to create temporary cache file.' );
+				$this->set_error('Unable to create temporary cache file.');
 				continue;
 
 			endif;
 
-			$_upload = $this->object_create( $_cachefile, $_bucket->id );
+			$_upload = $this->object_create($_cachefile, $_bucket->id);
 
-			if ( ! $_upload ) :
+			if (!$_upload) :
 
-				$this->set_error( 'Unable to create a new object in bucket "' . $bucket->id . ' / ' . $bucket->slug . '"' );
+				$this->set_error('Unable to create a new object in bucket "' . $bucket->id . ' / ' . $bucket->slug . '"');
 				continue;
 
 			endif;
@@ -3322,21 +3406,21 @@ class Cdn
 			// --------------------------------------------------------------------------
 
 			//	Can we serve the object?
-			$_url = $this->url_serve( $_upload->id );
+			$_url = $this->url_serve($_upload->id);
 
-			if ( ! $_url ) :
+			if (!$_url) :
 
-				$this->set_error( 'Unable to generate serve URL for uploaded file' );
+				$this->set_error('Unable to generate serve URL for uploaded file');
 				continue;
 
 			endif;
 
-			$_test	= $this->_ci->curl->simple_get( $_url );
-			$_code	= ! empty( $this->_ci->curl->info['http_code'] ) ? $this->_ci->curl->info['http_code'] : '';
+			$_test	= $this->_ci->curl->simple_get($_url);
+			$_code	= ! empty($this->_ci->curl->info['http_code']) ? $this->_ci->curl->info['http_code'] : '';
 
-			if ( ! $_test || $_code != 200 ) :
+			if (!$_test || $_code != 200) :
 
-				$this->set_error( 'Failed to serve object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').<small>' . $_url . '</small>' );
+				$this->set_error('Failed to serve object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').<small>' . $_url . '</small>');
 				continue;
 
 			endif;
@@ -3344,21 +3428,21 @@ class Cdn
 			// --------------------------------------------------------------------------
 
 			//	Can we thumb the object?
-			$_url = $this->url_thumb( $_upload->id, 10, 10 );
+			$_url = $this->url_thumb($_upload->id, 10, 10);
 
-			if ( ! $_url ) :
+			if (!$_url) :
 
-				$this->set_error( 'Unable to generate thumb URL for object.' );
+				$this->set_error('Unable to generate thumb URL for object.');
 				continue;
 
 			endif;
 
-			$_test	= $this->_ci->curl->simple_get( $_url );
-			$_code	= ! empty( $this->_ci->curl->info['http_code'] ) ? $this->_ci->curl->info['http_code'] : '';
+			$_test	= $this->_ci->curl->simple_get($_url);
+			$_code	= ! empty($this->_ci->curl->info['http_code']) ? $this->_ci->curl->info['http_code'] : '';
 
-			if ( ! $_test || $_code != 200 ) :
+			if (!$_test || $_code != 200) :
 
-				$this->set_error( 'Failed to thumb object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').<small>' . $_url . '</small>' );
+				$this->set_error('Failed to thumb object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').<small>' . $_url . '</small>');
 				continue;
 
 			endif;
@@ -3366,21 +3450,21 @@ class Cdn
 			// --------------------------------------------------------------------------
 
 			//	Can we scale the object?
-			$_url = $this->url_scale( $_upload->id, 10, 10 );
+			$_url = $this->url_scale($_upload->id, 10, 10);
 
-			if ( ! $_url ) :
+			if (!$_url) :
 
-				$this->set_error( 'Unable to generate scale URL for object.' );
+				$this->set_error('Unable to generate scale URL for object.');
 				continue;
 
 			endif;
 
-			$_test	= $this->_ci->curl->simple_get( $_url );
-			$_code	= ! empty( $this->_ci->curl->info['http_code'] ) ? $this->_ci->curl->info['http_code'] : '';
+			$_test	= $this->_ci->curl->simple_get($_url);
+			$_code	= ! empty($this->_ci->curl->info['http_code']) ? $this->_ci->curl->info['http_code'] : '';
 
-			if ( ! $_test || $_code != 200 ) :
+			if (!$_test || $_code != 200) :
 
-				$this->set_error( 'Failed to scale object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').<small>' . $_url . '</small>' );
+				$this->set_error('Failed to scale object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').<small>' . $_url . '</small>');
 				continue;
 
 			endif;
@@ -3388,31 +3472,31 @@ class Cdn
 			// --------------------------------------------------------------------------
 
 			//	Can we delete the object?
-			$_test = $this->object_delete( $_upload->id );
+			$_test = $this->object_delete($_upload->id);
 
-			if ( ! $_test ) :
+			if (!$_test) :
 
-				$this->set_error( 'Unable to delete test object (' . $bucket->slug . '/' . $_upload->filename . '; ID: ' . $_upload->id . ').' );
+				$this->set_error('Unable to delete test object (' . $bucket->slug . '/' . $_upload->filename . '; ID: ' . $_upload->id . ').');
 
 			endif;
 
 			// --------------------------------------------------------------------------
 
 			//	Can we destroy the object?
-			$_test = $this->object_destroy( $_upload->id );
+			$_test = $this->object_destroy($_upload->id);
 
-			if ( ! $_test ) :
+			if (!$_test) :
 
-				$this->set_error( 'Unable to destroy test object (' . $bucket->slug . '/' . $_upload->filename . '; ID: ' . $_upload->id . ').' );
+				$this->set_error('Unable to destroy test object (' . $bucket->slug . '/' . $_upload->filename . '; ID: ' . $_upload->id . ').');
 
 			endif;
 
 			// --------------------------------------------------------------------------
 
 			//	Delete the cache files
-			if ( ! @unlink( $_cachefile ) ) :
+			if (!@unlink($_cachefile)) :
 
-				$this->set_error( 'Unable to delete temporary cache file: ' . $_cachefile );
+				$this->set_error('Unable to delete temporary cache file: ' . $_cachefile);
 
 			endif;
 
@@ -3421,27 +3505,27 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Attempt to destroy the test bucket
-		$_test = $this->bucket_destroy( $_test_bucket_id );
+		$_test = $this->bucket_destroy($_test_bucket_id);
 
-		if ( ! $_test ) :
+		if (!$_test) :
 
-			$this->set_error( 'Unable to destroy test bucket: ' . $_test_bucket_id );
+			$this->set_error('Unable to destroy test bucket: ' . $_test_bucket_id);
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
 		//	If defined, run the post_test method fo the driver
-		if ( method_exists( $this->_cdn, 'post_test' ) ) :
+		if (method_exists($this->_cdn, 'post_test')) :
 
-			call_user_func( array( $this->_cdn, 'post_test' ) );
+			call_user_func(array($this->_cdn, 'post_test'));
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
 		//	Any errors?
-		if ( $this->get_errors() ) :
+		if ($this->get_errors()) :
 
 			return FALSE;
 
