@@ -258,6 +258,11 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 
 		$width	= $this->_width * $this->retinaMultiplier;
 		$height	= $this->_height * $this->retinaMultiplier;
+		$ext	= strtoupper(substr($this->_extension, 1));
+
+		if ($ext === 'JPEG') {
+			$ext = 'jpg';
+		}
 
 		try
 		{
@@ -272,7 +277,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			$PHPThumb->{$PHPThumb_method}($width, $height);
 
 			//	Save cache version
-			$PHPThumb->save($this->_cachedir . $this->_cache_file, strtoupper(substr($this->_extension, 1)));
+			$PHPThumb->save($this->_cachedir . $this->_cache_file, $ext);
 
 			//	Flush the buffer
 			ob_end_clean();
