@@ -179,21 +179,6 @@ class Cdn
 
 
 	/**
-	 * Define the cache key prefix
-	 *
-	 * @access	protected
-	 * @return	string
-	 **/
-	protected function _cache_prefix()
-	{
-		return 'CDN_';
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	/**
 	 * Catches shortcut calls
 	 *
 	 * @access	public
@@ -642,6 +627,7 @@ class Cdn
 
 					//	Determine the extension
 					$_data->ext = substr(strrchr($_data->file, '.'), 1);
+					$_data->ext = $this->sanitiseExtension($_data->ext);
 
 				endif;
 
@@ -655,6 +641,7 @@ class Cdn
 
 					//	Determine the supplied extension
 					$_data->ext	= substr(strrchr($_FILES[ $object ]['name'], '.'), 1);
+					$_data->ext = $this->sanitiseExtension($_data->ext);
 
 				else :
 
@@ -760,6 +747,7 @@ class Cdn
 					if (!empty($options['extension'])) :
 
 						$_data->ext = $options['extension'];
+						$_data->ext = $this->sanitiseExtension($_data->ext);
 
 					else :
 
@@ -834,29 +822,23 @@ class Cdn
 		// --------------------------------------------------------------------------
 
 		//	Is this an acceptable file? Check against the allowed_types array (if present)
-		if ($_bucket->allowed_types) :
+		if (!$this->isAllowedExt($_data->ext, $_bucket->allowed_types)) {
 
-			if (array_search($_data->ext, $_bucket->allowed_types) === FALSE) :
+			if (count($_bucket->allowed_types) > 1) {
 
-				if (count($_bucket->allowed_types) > 1) :
+				array_splice($_bucket->allowed_types, count($_bucket->allowed_types) - 1, 0, array(' and '));
+				$accepted = implode(', .', $_bucket->allowed_types);
+				$accepted = str_replace(', . and , ', ' and ', $accepted);
+				$this->set_error( lang('cdn_error_bad_mime_plural', $accepted));
 
-					array_splice($_bucket->allowed_types, count($_bucket->allowed_types) - 1, 0, array(' and '));
-					$_accepted = implode(', .', $_bucket->allowed_types);
-					$_accepted = str_replace(', . and , ', ' and ', $_accepted);
-					$this->set_error( lang('cdn_error_bad_mime_plural', $_accepted));
+			} else {
 
-				else :
+				$accepted = implode('', $_bucket->allowed_types);
+				$this->set_error( lang('cdn_error_bad_mime', $accepted));
+			}
 
-					$_accepted = implode('', $_bucket->allowed_types);
-					$this->set_error( lang('cdn_error_bad_mime', $_accepted));
-
-				endif;
-
-				return FALSE;
-
-			endif;
-
-		endif;
+			return false;
+		}
 
 		// --------------------------------------------------------------------------
 
@@ -869,7 +851,7 @@ class Cdn
 
 				$_fs_in_kb = format_bytes($_bucket->max_size);
 				$this->set_error(lang('cdn_error_filesize', $_fs_in_kb));
-				return FALSE;
+				return false;
 
 			endif;
 
@@ -884,9 +866,9 @@ class Cdn
 		$_images[]	= 'image/png';
 		$_images[]	= 'image/gif';
 
-		if (array_search($_data->mime, $_images) !== FALSE) :
+		if (in_array($_data->mime, $_images)) :
 
-			list($_w, $_h) = @getimagesize($_file);
+			list($_w, $_h) = getimagesize($_data->file);
 
 			$_data->img					= new stdClass();
 			$_data->img->width			= $_w;
@@ -918,75 +900,54 @@ class Cdn
 
 			endif;
 
-		endif;
-
-		// --------------------------------------------------------------------------
-
-		//	What about dimension limits? Obviously this only applies to images.
-		if (isset($_data->img) && isset($options['dimensions'])) :
-
-			//	Fetch info about the file
-			$error = FALSE;
-
 			// --------------------------------------------------------------------------
 
-			if (isset($options['dimensions']['max_width'])) :
+			//	Image dimension limits
+			if (isset($options['dimensions'])) {
 
-				if ($_data->img->width > $options['dimensions']['max_width']) :
+				$error = 0;
 
-					$this->set_error(lang('cdn_error_maxwidth', $options['dimensions']['max_width']));
-					$error = TRUE;
+				if (isset($options['dimensions']['max_width'])) {
 
-				endif;
+					if ($_data->img->width > $options['dimensions']['max_width']) {
 
-			endif;
+						$this->set_error(lang('cdn_error_maxwidth', $options['dimensions']['max_width']));
+						$error++;
+					}
+				}
 
-			// --------------------------------------------------------------------------
+				if (isset($options['dimensions']['max_height'])) {
 
-			if (isset($options['dimensions']['max_height'])) :
+					if ($_data->img->height > $options['dimensions']['max_height']) {
 
-				if ($_data->img->height > $options['dimensions']['max_height']) :
+						$this->set_error(lang('cdn_error_maxheight', $options['dimensions']['max_height']));
+						$error++;
+					}
+				}
 
-					$this->set_error(lang('cdn_error_maxheight', $options['dimensions']['max_height']));
-					$error = TRUE;
+				if (isset($options['dimensions']['min_width'])) {
 
-				endif;
+					if ($_data->img->width < $options['dimensions']['min_width']) {
 
-			endif;
+						$this->set_error(lang('cdn_error_minwidth', $options['dimensions']['min_width']));
+						$error++;
+					}
+				}
 
-			// --------------------------------------------------------------------------
+				if (isset($options['dimensions']['min_height'])) {
 
-			if (isset($options['dimensions']['min_width'])) :
+					if ($_data->img->height < $options['dimensions']['min_height']) {
 
-				if ($_data->img->width < $options['dimensions']['min_width']) :
+						$this->set_error(lang('cdn_error_minheight', $options['dimensions']['min_height']));
+						$error++;
+					}
+				}
 
-					$this->set_error(lang('cdn_error_minwidth', $options['dimensions']['min_width']));
-					$error = TRUE;
+				if ($error > 0) {
 
-				endif;
-
-			endif;
-
-			// --------------------------------------------------------------------------
-
-			if (isset($options['dimensions']['min_height'])) :
-
-				if ($_data->img->height < $options['dimensions']['min_height']) :
-
-					$this->set_error(lang('cdn_error_minheight', $options['dimensions']['min_height']));
-					$error = TRUE;
-
-				endif;
-
-			endif;
-
-			// --------------------------------------------------------------------------
-
-			if ($error) :
-
-				return FALSE;
-
-			endif;
+					return false;
+				}
+			}
 
 		endif;
 
@@ -1008,7 +969,7 @@ class Cdn
 
 		if (isset($options['filename']) && $options['filename'] == 'USE_ORIGINAL') :
 
-			$_data->filename =  $_name;
+			$_data->filename = $_name;
 
 		elseif (isset($options['filename']) && $options['filename']) :
 
@@ -2298,8 +2259,15 @@ class Cdn
 		$bucket->id				= (int) $bucket->id;
 		$bucket->object_count	= (int) $bucket->object_count;
 		$bucket->max_size		= (int) $bucket->max_size;
-		$bucket->allowed_types	= array_filter(explode('|', $bucket->allowed_types));
 		$bucket->modified_by	= $bucket->modified_by ? (int) $bucket->modified_by : NULL;
+
+		// --------------------------------------------------------------------------
+
+		$bucket->allowed_types = explode('|', $bucket->allowed_types);
+		$bucket->allowed_types = (array) $bucket->allowed_types;
+		$bucket->allowed_types = array_map(array($this, 'sanitiseExtension'), $bucket->allowed_types);
+		$bucket->allowed_types = array_unique($bucket->allowed_types);
+		$bucket->allowed_types = array_values($bucket->allowed_types);
 
 		// --------------------------------------------------------------------------
 
@@ -2393,55 +2361,38 @@ class Cdn
 	 **/
 	public function get_ext_from_mime($mime)
 	{
-		$mimes	= $this->_get_mime_mappings();
-		$_ext	= FALSE;
+		$mimes = $this->_get_mime_mappings();
+		$out   = false;
 
-		foreach ($mimes AS $ext => $_mime) :
+		foreach ($mimes as $ext => $_mime) {
 
-			if (is_array($_mime)) :
+			if (is_array($_mime)) {
 
-				foreach($_mime AS $submime) :
+				foreach($_mime as $submime) {
 
-					if ($submime == $mime) :
+					if ($submime == $mime) {
 
-						$_ext = $ext;
+						$out = $ext;
 						break;
+					}
+				}
 
-					endif;
-
-				endforeach;
-
-				if ($_ext) :
+				if ($out) {
 
 					break;
+				}
 
-				endif;
+			} else {
 
-			else :
+				if ($_mime == $mime) {
 
-				if ($_mime == $mime) :
-
-					$_ext = $ext;
+					$out = $ext;
 					break;
+				}
+			}
+		}
 
-				endif;
-
-			endif;
-
-		endforeach;
-
-		// --------------------------------------------------------------------------
-
-		//	Being anal here, some extensions *need* to be forced
-		switch ($_ext) :
-
-			case 'jpeg' : $_ext = 'jpg';	break;
-
-		endswitch;
-
-		// --------------------------------------------------------------------------
-
-		return $_ext;
+		return $this->sanitiseExtension($out);
 	}
 
 
@@ -2457,6 +2408,7 @@ class Cdn
 	{
 		//	Prep $ext, make sure it has no dots
 		$ext = strpos($ext, '.') !== FALSE ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
+		$ext = $this->sanitiseExtension($ext);
 
 		$_mimes = $this->_get_mime_mappings();
 
@@ -3353,7 +3305,7 @@ class Cdn
 			// --------------------------------------------------------------------------
 
 			/**
-			 * Can we write a small image to the bucket? Or a PDf, whatever the bucket
+			 * Can we write a small image to the bucket? Or a PDF, whatever the bucket
 			 * will accept. Do these in order of filesize, we want to be dealing with as
 			 * small a file as possible.
 			 */
@@ -3363,26 +3315,23 @@ class Cdn
 			$_file['jpg']	= NAILS_COMMON_PATH . 'assets/tests/cdn/jpg.jpg';
 			$_file['pdf']	= NAILS_COMMON_PATH . 'assets/tests/cdn/pdf.pdf';
 
-			if (empty($_bucket->allowed_types)) :
+			if (empty($_bucket->allowed_types)) {
 
 				//	Not specified, use the txt as it's so tiny
 				$_file = $_file['txt'];
 
-			else :
+			} else {
 
-				//	find a file we can use
-				foreach($_file AS $ext => $path) :
+				//	Find a file we can use
+				foreach($_file as $ext => $path) {
 
-					if (array_search($ext, $_bucket->allowed_types) !== FALSE) :
+					if ($this->isAllowedExt($ext, $_bucket->allowed_types)) {
 
 						$_file = $path;
 						break;
-
-					endif;
-
-				endforeach;
-
-			endif;
+					}
+				}
+			}
 
 			//	Copy this file temporarily to the cache
 			$_cachefile = DEPLOY_CACHE_DIR . 'test-' . $bucket->slug . '-' . $_test_id . '.jpg';
@@ -3534,6 +3483,70 @@ class Cdn
 			return TRUE;
 
 		endif;
+	}
+
+	// --------------------------------------------------------------------------
+
+
+	/**
+	 * Determines whether a supplied extension is valid for a given array of acceptable extensions
+	 * @param  string  $extension  The extension to test
+	 * @param  array   $allowedExt An array of valid extensions
+	 * @return boolean
+	 */
+	protected function isAllowedExt($extension, $allowedExt)
+	{
+		$allowedExt = array_filter($allowedExt);
+
+		if (empty($allowedExt)) {
+
+			$out = true;
+
+		} else {
+
+			//	Sanitise and map common extensions
+			$extension = $this->sanitiseExtension($extension);
+
+			//	Sanitize allowed types
+			$allowedExt = (array) $allowedExt;
+			$allowedExt = array_map(array($this, 'sanitiseExtension'), $allowedExt);
+			$allowedExt = array_unique($allowedExt);
+			$allowedExt = array_values($allowedExt);
+
+			//	Search
+			$out = in_array($extension, $allowedExt);
+		}
+
+		return $out;
+	}
+
+
+	// --------------------------------------------------------------------------
+
+
+	/**
+	 * Maps variants of an extension to a definitive one, for consistency. Can be
+	 * overloaded by the developer tosatisfy any OCD tendancies with regards file
+	 * extensions
+	 * @param  string $ext The extension to map
+	 * @return string
+	 */
+	public function sanitiseExtension($ext)
+	{
+		//	Lower case and trim it
+		$ext = trim(strtolower($ext));
+
+		//	Perform mapping
+		switch($ext) {
+
+			case 'jpeg':
+
+				$ext = 'jpg';
+				break;
+		}
+
+		//	And spit it back
+		return $ext;
 	}
 }
 
