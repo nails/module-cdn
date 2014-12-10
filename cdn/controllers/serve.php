@@ -42,28 +42,28 @@ class NAILS_Serve extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Work out some variables
-		$_token = $this->input->get( 'token' );
+		$_token = $this->input->get('token');
 
-		if ( $_token )  :
+		if ($_token)  :
 
 			//	Encrypted token/expiring URL
-			$_token = $this->encrypt->decode( $_token, APP_PRIVATE_KEY );
-			$_token = explode( '|', $_token );
+			$_token = $this->encrypt->decode($_token, APP_PRIVATE_KEY);
+			$_token = explode('|', $_token);
 
-			if ( count( $_token ) == 5 ) :
+			if (count($_token) == 5) :
 
 				$this->_bad_token	= FALSE;
 
 				//	Seems to be ok, but verify the different parts
-				list( $_bucket, $_object, $_expires, $_time, $_hash ) = $_token;
+				list($_bucket, $object, $_expires, $_time, $_hash) = $_token;
 
-				if ( md5( $_time . $_bucket . $_object . $_expires . APP_PRIVATE_KEY ) == $_hash ) :
+				if (md5($_time . $_bucket . $object . $_expires . APP_PRIVATE_KEY) == $_hash) :
 
 					//	Hash validates, URL expired?
-					if ( time() <= ( $_time + $_expires ) ) :
+					if (time() <= ($_time + $_expires)) :
 
 						$this->_bucket		= $_bucket;
-						$this->_object		= $_object;
+						$this->_object		= $object;
 						$this->_bad_token	= FALSE;
 
 					else :
@@ -87,8 +87,8 @@ class NAILS_Serve extends NAILS_CDN_Controller
 		else :
 
 			$this->_bad_token	= FALSE;
-			$this->_bucket		= $this->uri->segment( 3 );
-			$this->_object		= urldecode( $this->uri->segment( 4 ) );
+			$this->_bucket		= $this->uri->segment(3);
+			$this->_object		= urldecode($this->uri->segment(4));
 
 		endif;
 	}
@@ -100,41 +100,59 @@ class NAILS_Serve extends NAILS_CDN_Controller
 	public function index()
 	{
 		//	Check if there was a bad token
-		if ( $this->_bad_token ) :
+		if ($this->_bad_token) :
 
-			log_message( 'error', 'CDN: Serve: Bad Token' );
-			return $this->_bad_src( lang( 'cdn_error_serve_bad_token' ) );
+			log_message('error', 'CDN: Serve: Bad Token');
+			return $this->_bad_src(lang('cdn_error_serve_bad_token'));
 
 		endif;
 
 		// --------------------------------------------------------------------------
 
 		//	Look up the object in the DB
-		$_object = $this->cdn->get_object( $this->_object, $this->_bucket );
+		$object = $this->cdn->get_object($this->_object, $this->_bucket);
 
-		if ( ! $this->_object ) :
+		if (!$object) {
 
-			log_message( 'error', 'CDN: Serve: Object not defined' );
-			return $this->_bad_src( lang( 'cdn_error_serve_object_not_defined' ) );
+			/**
+			 * If trashed=1 GET param is set and user is a logged in admin with
+			 * can_browse_trash permission then have a look in the trash
+			 */
 
-		endif;
+			if ($this->input->get('trashed') && user_has_permission('admin.cdnadmin:0.can_browse_trash')) {
+
+				$object = $this->cdn->get_object_from_trash($this->_object, $this->_bucket);
+
+				if (!$object) {
+
+					//	Cool, guess it really doesn't exist
+					log_message('error', 'CDN: Serve: Object not defined');
+					return $this->_bad_src(lang('cdn_error_serve_object_not_defined'));
+				}
+
+			} else {
+
+				log_message('error', 'CDN: Serve: Object not defined');
+				return $this->_bad_src(lang('cdn_error_serve_object_not_defined'));
+			}
+		}
 
 		// --------------------------------------------------------------------------
 
 		//	Check the request headers; avoid hitting the disk at all if possible. If the Etag
 		//	matches then send a Not-Modified header and terminate execution.
 
-		if ( $this->_serve_not_modified( $this->_bucket . $this->_object ) ) :
+		if ($this->_serve_not_modified($this->_bucket . $this->_object)) :
 
-			if ( $_object ) :
+			if ($object) :
 
-				if ( $this->input->get( 'dl' ) ) :
+				if ($this->input->get('dl')) :
 
-					$this->cdn->object_increment_count( 'DOWNLOAD', $_object->id );
+					$this->cdn->object_increment_count('DOWNLOAD', $object->id);
 
 				else :
 
-					$this->cdn->object_increment_count( 'SERVE', $_object->id );
+					$this->cdn->object_increment_count('SERVE', $object->id);
 
 				endif;
 
@@ -146,19 +164,19 @@ class NAILS_Serve extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Fetch source
-		$_usefile = $this->cdn->object_local_path( $this->_bucket, $this->_object );
+		$_usefile = $this->cdn->object_local_path($this->_bucket, $this->_object);
 
-		if ( ! $_usefile ) :
+		if (!$_usefile) :
 
-			log_message( 'error', 'CDN: Serve: File does not exist' );
+			log_message('error', 'CDN: Serve: File does not exist');
 
-			if ( $this->user_model->is_superuser() ) :
+			if ($this->user_model->is_superuser()) :
 
-				return $this->_bad_src( lang( 'cdn_error_serve_file_not_found' ) . ': ' . $_usefile );
+				return $this->_bad_src(lang('cdn_error_serve_file_not_found') . ': ' . $_usefile);
 
 			else :
 
-				return $this->_bad_src( lang( 'cdn_error_serve_file_not_found' ) );
+				return $this->_bad_src(lang('cdn_error_serve_file_not_found'));
 
 			endif;
 
@@ -167,42 +185,42 @@ class NAILS_Serve extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Determine headers to send. Are we forcing the download?
-		if ( $this->input->get( 'dl' ) ) :
+		if ($this->input->get('dl')) :
 
-			header( 'Content-Description: File Transfer', TRUE );
-			header( 'Content-Type: application/octet-stream', TRUE );
-			header( 'Content-Transfer-Encoding: binary', TRUE );
-			header( 'Expires: 0', TRUE );
-			header( 'Cache-Control: must-revalidate', TRUE );
-			header( 'Pragma: public', TRUE );
+			header('Content-Description: File Transfer', TRUE);
+			header('Content-Type: application/octet-stream', TRUE);
+			header('Content-Transfer-Encoding: binary', TRUE);
+			header('Expires: 0', TRUE);
+			header('Cache-Control: must-revalidate', TRUE);
+			header('Pragma: public', TRUE);
 
 			//	If the object is known about, add some extra headers
-			if ( $_object ) :
+			if ($object) :
 
-				header( 'Content-Disposition: attachment; filename="' . $_object->filename_display . '"', TRUE );
-				header( 'Content-Length: ' . $_object->filesize, TRUE );
+				header('Content-Disposition: attachment; filename="' . $object->filename_display . '"', TRUE);
+				header('Content-Length: ' . $object->filesize, TRUE);
 
 			else :
 
-				header( 'Content-Disposition: attachment; filename="' . $this->_object . '"', TRUE );
+				header('Content-Disposition: attachment; filename="' . $this->_object . '"', TRUE);
 
 			endif;
 
 		else :
 
 			//	Determine headers to send
-			$_finfo = new finfo( FILEINFO_MIME_TYPE ); // return mime type ala mimetype extension
-			header( 'Content-type: ' . $_finfo->file($_usefile ), TRUE );
+			$_finfo = new finfo(FILEINFO_MIME_TYPE); // return mime type ala mimetype extension
+			header('Content-type: ' . $_finfo->file($_usefile), TRUE);
 
-			$_stats = stat( $_usefile );
-			$this->_set_cache_headers( $_stats[9], $this->_bucket . $this->_object, FALSE );
+			$_stats = stat($_usefile);
+			$this->_set_cache_headers($_stats[9], $this->_bucket . $this->_object, FALSE);
 
 			// --------------------------------------------------------------------------
 
 			//	If the object is known about, add some extra headers
-			if ( $_object ) :
+			if ($object) :
 
-				header( 'Content-Length: ' . $_object->filesize, TRUE );
+				header('Content-Length: ' . $object->filesize, TRUE);
 
 			endif;
 
@@ -211,20 +229,20 @@ class NAILS_Serve extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Send the contents of the file to the browser
-		echo file_get_contents( $_usefile );
+		echo file_get_contents($_usefile);
 
 		// --------------------------------------------------------------------------
 
 		//	Bump the counter
-		if ( $_object ) :
+		if ($object) :
 
-			if ( $this->input->get( 'dl' ) ) :
+			if ($this->input->get('dl')) :
 
-				$this->cdn->object_increment_count( 'DOWNLOAD', $_object->id );
+				$this->cdn->object_increment_count('DOWNLOAD', $object->id);
 
 			else :
 
-				$this->cdn->object_increment_count( 'SERVE', $_object->id );
+				$this->cdn->object_increment_count('SERVE', $object->id);
 
 			endif;
 
@@ -243,29 +261,29 @@ class NAILS_Serve extends NAILS_CDN_Controller
 	// --------------------------------------------------------------------------
 
 
-	protected function _bad_src( $error = NULL )
+	protected function _bad_src($error = NULL)
 	{
-		header( 'Cache-Control: no-cache, must-revalidate', TRUE );
-		header( 'Expires: Mon, 26 Jul 1997 05:00:00 GMT', TRUE );
-		header( 'Content-type: application/json', TRUE );
-		header( $this->input->server( 'SERVER_PROTOCOL' ) . ' 400 Bad Request', TRUE, 400 );
+		header('Cache-Control: no-cache, must-revalidate', TRUE);
+		header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', TRUE);
+		header('Content-type: application/json', TRUE);
+		header($this->input->server('SERVER_PROTOCOL') . ' 400 Bad Request', TRUE, 400);
 
 		// --------------------------------------------------------------------------
 
 		$_out = array(
 
 			'status'	=> 400,
-			'message'	=> lang( 'cdn_error_serve_invalid_request' )
+			'message'	=> lang('cdn_error_serve_invalid_request')
 
 		);
 
-		if ( $error ) :
+		if ($error) :
 
 			$_out['error'] = $error;
 
 		endif;
 
-		echo json_encode( $_out );
+		echo json_encode($_out);
 
 		// --------------------------------------------------------------------------
 
@@ -314,7 +332,7 @@ class NAILS_Serve extends NAILS_CDN_Controller
  *
  **/
 
-if ( ! defined( 'NAILS_ALLOW_EXTENSION_SERVE' ) ) :
+if (!defined('NAILS_ALLOW_EXTENSION_SERVE')) :
 
 	class Serve extends NAILS_Serve
 	{

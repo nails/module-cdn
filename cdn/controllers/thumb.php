@@ -78,12 +78,12 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 	 * @access	public
 	 * @return	void
 	 **/
-	public function index( $crop_method = 'THUMB' )
+	public function index($crop_method = 'THUMB')
 	{
 		//	Sanitize the crop method
-		$_cropmethod = strtoupper( $crop_method );
+		$_cropmethod = strtoupper($crop_method);
 
-		switch ( $_cropmethod ) :
+		switch ($_cropmethod) :
 
 			case 'SCALE'	:	$_phpthumb_method = 'resize';			break;
 			case 'THUMB'	:
@@ -106,9 +106,9 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	We must have a bucket, object and extension in order to work with this
-		if ( ! $this->_bucket || ! $this->_object || ! $this->_extension ) :
+		if (!$this->_bucket || !$this->_object || !$this->_extension) :
 
-			log_message( 'error', 'CDN: ' . $_cropmethod . ': Missing _bucket, _object or _extension' );
+			log_message('error', 'CDN: ' . $_cropmethod . ': Missing _bucket, _object or _extension');
 			return $this->_bad_src();
 
 		endif;
@@ -118,12 +118,45 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		//	Check the request headers; avoid hitting the disk at all if possible. If the Etag
 		//	matches then send a Not-Modified header and terminate execution.
 
-		if ( $this->_serve_not_modified( $this->_cache_file ) ) :
+		if ($this->_serve_not_modified($this->_cache_file)) :
 
-			$this->cdn->object_increment_count( $_cropmethod, $this->_object, $this->_bucket );
+			$this->cdn->object_increment_count($_cropmethod, $this->_object, $this->_bucket);
 			return;
 
 		endif;
+
+		// --------------------------------------------------------------------------
+
+		$object = $this->cdn->get_object($this->_object, $this->_bucket);
+
+		if (!$object) {
+
+			/**
+			 * If trashed=1 GET param is set and user is a logged in admin with
+			 * can_browse_trash permission then have a look in the trash
+			 */
+
+			if ($this->input->get('trashed') && user_has_permission('admin.cdnadmin:0.can_browse_trash')) {
+
+				$object = $this->cdn->get_object_from_trash($this->_object, $this->_bucket);
+
+				if (!$object) {
+
+					//	Cool, guess it really doesn't exist
+					$width	= $this->_width * $this->retinaMultiplier;
+					$height	= $this->_height * $this->retinaMultiplier;
+
+					return $this->_bad_src($width, $height);
+				}
+
+			} else {
+
+				$width	= $this->_width * $this->retinaMultiplier;
+				$height	= $this->_height * $this->retinaMultiplier;
+
+				return $this->_bad_src($width, $height);
+			}
+		}
 
 		// --------------------------------------------------------------------------
 
@@ -133,10 +166,10 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		 * it has.
 		 */
 
-		if ( file_exists( $this->_cachedir . $this->_cache_file ) ) :
+		if (file_exists($this->_cachedir . $this->_cache_file)) :
 
-			$this->cdn->object_increment_count( $_cropmethod, $this->_object, $this->_bucket );
-			$this->_serve_from_cache( $this->_cache_file );
+			$this->cdn->object_increment_count($_cropmethod, $this->_object, $this->_bucket);
+			$this->_serve_from_cache($this->_cache_file);
 
 		else :
 
@@ -146,7 +179,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			 */
 
 			//	Fetch the file to use
-			$_usefile = $this->cdn->object_local_path( $this->_bucket, $this->_object );
+			$_usefile = $this->cdn->object_local_path($this->_bucket, $this->_object);
 
 			if (!$_usefile) :
 
@@ -164,22 +197,22 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 				 * TODO: work out the reason why we do this
 				 */
 
-				@unlink( $_usefile );
+				@unlink($_usefile);
 
-				$_usefile = $this->cdn->object_local_path( $this->_bucket, $this->_object );
+				$_usefile = $this->cdn->object_local_path($this->_bucket, $this->_object);
 
-				if ( ! $_usefile ) :
+				if (!$_usefile) :
 
-					log_message( 'error', 'CDN: ' . $_cropmethod . ': No local path was returned, second attempt.' );
+					log_message('error', 'CDN: ' . $_cropmethod . ': No local path was returned, second attempt.');
 
 					$width	= $this->_width * $this->retinaMultiplier;
 					$height	= $this->_height * $this->retinaMultiplier;
 
 					return $this->_bad_src($width, $height);
 
-				elseif( ! filesize( $_usefile ) ) :
+				elseif(!filesize($_usefile)) :
 
-					log_message( 'error', 'CDN: ' . $_cropmethod . ': local path exists, but has a zero filesize.' );
+					log_message('error', 'CDN: ' . $_cropmethod . ': local path exists, but has a zero filesize.');
 
 					$width	= $this->_width * $this->retinaMultiplier;
 					$height	= $this->_height * $this->retinaMultiplier;
@@ -198,26 +231,13 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			 * frame, resize, then recompile. Otherwise, just resize
 			 */
 
-			$_object = $this->cdn->get_object( $this->_object, $this->_bucket );
-
-			if ( ! $_object ) :
-
-				$width	= $this->_width * $this->retinaMultiplier;
-				$height	= $this->_height * $this->retinaMultiplier;
-
-				return $this->_bad_src($width, $height);
-
-			endif;
-
-			// --------------------------------------------------------------------------
-
 			//	Set the appropriate cache headers
-			$this->_set_cache_headers( time(), $this->_cache_file, FALSE );
+			$this->_set_cache_headers(time(), $this->_cache_file, FALSE);
 
 			// --------------------------------------------------------------------------
 
 			//	Handle the actual resize
-			if ($_object->is_animated) {
+			if ($object->is_animated) {
 
 				$this->_resize_animated($_usefile, $_phpthumb_method);
 
@@ -229,7 +249,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			// --------------------------------------------------------------------------
 
 			//	Bump the counter
-			$this->cdn->object_increment_count( $_cropmethod, $_object->id );
+			$this->cdn->object_increment_count($_cropmethod, $object->id);
 
 		endif;
 	}
@@ -238,7 +258,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 	// --------------------------------------------------------------------------
 
 
-	private function _resize( $usefile, $PHPThumb_method )
+	private function _resize($usefile, $PHPThumb_method)
 	{
 		//	Set some PHPThumb options
 		$_options					= array();
@@ -300,16 +320,16 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		$this->_serve_from_cache($this->_cache_file, false);
 
 		//	Switch error reporting back how it was
-		error_reporting( $_old_errors );
+		error_reporting($_old_errors);
 	}
 
 
 	// --------------------------------------------------------------------------
 
 
-	private function _resize_animated( $usefile, $PHPThumb_method )
+	private function _resize_animated($usefile, $PHPThumb_method)
 	{
-		$_hash			= md5( microtime( TRUE ) . uniqid() ) . uniqid();
+		$_hash			= md5(microtime(TRUE) . uniqid()) . uniqid();
 		$_frames		= array();
 		$_cachefiles	= array();
 		$_durations		= array();
@@ -321,10 +341,10 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Extract all the frames, resize them and save to the cache
-		$_gfe->extract( $usefile );
+		$_gfe->extract($usefile);
 
 		$_i = 0;
-		foreach ( $_gfe->getFrames() as $frame ) :
+		foreach ($_gfe->getFrames() as $frame) :
 
 			//	Define the filename
 			$_filename		= $_hash . '-' . $_i . '.gif';
@@ -345,15 +365,15 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			// --------------------------------------------------------------------------
 
 			//	Perform the resize; first save the original frame to disk
-			imagegif( $frame['image'], $this->_cachedir . $_temp_filename );
+			imagegif($frame['image'], $this->_cachedir . $_temp_filename);
 
-			$PHPThumb = new PHPThumb\GD( $this->_cachedir . $_temp_filename, $_options );
+			$PHPThumb = new PHPThumb\GD($this->_cachedir . $_temp_filename, $_options);
 			$PHPThumb->{$PHPThumb_method}($width, $height);
 
 			// --------------------------------------------------------------------------
 
 			//	Save cache version
-			$PHPThumb->save( $this->_cachedir . $_filename , strtoupper( substr( $this->_extension, 1 ) ) );
+			$PHPThumb->save($this->_cachedir . $_filename , strtoupper(substr($this->_extension, 1)));
 
 		endforeach;
 
@@ -364,33 +384,33 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		 * View here: https://github.com/Sybio/GifFrameExtractor/issues/3
 		 */
 
-		$_gc->create( $_frames, $_durations, 0 );
+		$_gc->create($_frames, $_durations, 0);
 		$_data = $_gc->getGif();
 
 		// --------------------------------------------------------------------------
 
 		//	Output to browser
-		header( 'Content-Type: image/gif', TRUE );
+		header('Content-Type: image/gif', TRUE);
 		echo $_data;
 
 		// --------------------------------------------------------------------------
 
 		//	Save to cache
-		$this->load->helper( 'file' );
-		write_file( $this->_cachedir . $this->_cache_file, $_data );
+		$this->load->helper('file');
+		write_file($this->_cachedir . $this->_cache_file, $_data);
 
 		// --------------------------------------------------------------------------
 
 		//	Remove cache frames
-		foreach ( $_frames as $frame ) :
+		foreach ($_frames as $frame) :
 
-			@unlink( $frame );
+			@unlink($frame);
 
 		endforeach;
 
-		foreach ( $_cachefiles as $frame ) :
+		foreach ($_cachefiles as $frame) :
 
-			@unlink( $frame );
+			@unlink($frame);
 
 		endforeach;
 
@@ -443,7 +463,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
  *
  **/
 
-if ( ! defined( 'NAILS_ALLOW_EXTENSION_THUMB' ) ) :
+if (!defined('NAILS_ALLOW_EXTENSION_THUMB')) :
 
 	class Thumb extends NAILS_Thumb
 	{
