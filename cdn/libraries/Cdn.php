@@ -155,20 +155,23 @@ class Cdn
 
 			// Create a handler for the directory
 			$pattern = '#^' . $bucketSlug . '-' . substr($objectFilename, 0, strrpos($objectFilename, '.')) . '#';
-			$fh      = opendir(DEPLOY_CACHE_DIR);
+			$fh      = @opendir(DEPLOY_CACHE_DIR);
 
-			// Open directory and walk through the filenames
-			while ($file = readdir($fh)) {
+			if ($fh !== false ) {
 
-				// If file isn't this directory or its parent, add it to the results
-				if ($file != '.' && $file != '..') {
+				// Open directory and walk through the filenames
+				while ($file = readdir($fh)) {
 
-					// Check with regex that the file format is what we're expecting and not something else
-					if (preg_match($pattern, $file)) {
+					// If file isn't this directory or its parent, add it to the results
+					if ($file != '.' && $file != '..') {
 
-						// DESTROY!
-						@unlink(DEPLOY_CACHE_DIR . $file);
+						// Check with regex that the file format is what we're expecting and not something else
+						if (preg_match($pattern, $file)) {
 
+							// DESTROY!
+							@unlink(DEPLOY_CACHE_DIR . $file);
+
+						}
 					}
 				}
 			}
