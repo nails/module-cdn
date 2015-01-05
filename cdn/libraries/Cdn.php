@@ -86,7 +86,7 @@ class Cdn
 	 **/
 	protected function _include_driver()
 	{
-		include_once NAILS_PATH . 'module-cdn/cdn/_resources/drivers/_driver.php';
+		include_once NAILS_PATH . 'module-cdn/cdn/interfaces/driver.php';
 
 		switch (strtoupper(APP_CDN_DRIVER)) :
 
