@@ -190,8 +190,8 @@ class Aws_local_CDN implements Cdn_driver
     public function object_local_path($bucket, $filename)
     {
         //  Do we have the original sourcefile?
-        $filename  = strtolower(substr($filename, 0, strrpos($filename, '.')));
         $extension = strtolower(substr($filename, strrpos($filename, '.')));
+        $filename  = strtolower(substr($filename, 0, strrpos($filename, '.')));
         $srcFile   = DEPLOY_CACHE_DIR . $bucket . '-' . $filename . '-SRC' . $extension;
 
         //  Check filesystem for sourcefile
@@ -207,7 +207,7 @@ class Aws_local_CDN implements Cdn_driver
 
                 $result = $this->s3->getObject(array(
                     'Bucket' => $this->bucket,
-                    'Key'    => $bucket . '/' . $filename,
+                    'Key'    => $bucket . '/' . $filename . $extension,
                     'SaveAs' => $srcFile
                 ));
 
