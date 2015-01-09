@@ -216,7 +216,7 @@ class Aws_local_CDN implements Cdn_driver
             } catch (\Aws\S3\Exception\S3Exception $e) {
 
                 //  Clean up
-                @unlink($save_as);
+                @unlink($srcFile);
 
                 //  Note the error
                 $this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());

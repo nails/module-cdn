@@ -169,6 +169,7 @@ class NAILS_Serve extends NAILS_CDN_Controller
 		if (!$_usefile) :
 
 			log_message('error', 'CDN: Serve: File does not exist');
+			log_message('error', 'CDN: Serve: ' . $this->cdn->last_error());
 
 			if ($this->user_model->is_superuser()) :
 

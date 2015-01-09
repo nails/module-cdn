@@ -184,6 +184,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			if (!$_usefile) :
 
 				log_message('error', 'CDN: ' . $_cropmethod . ': No local path was returned.');
+				log_message('error', 'CDN: ' . $_cropmethod . ': ' . $this->cdn->last_error());
 
 				$width	= $this->_width * $this->retinaMultiplier;
 				$height	= $this->_height * $this->retinaMultiplier;
@@ -194,7 +195,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 
 				/**
 				 * Hmm, empty, delete it and try one more time
-				 * TODO: work out the reason why we do this
+				 * @TODO: work out the reason why we do this
 				 */
 
 				@unlink($_usefile);
@@ -204,6 +205,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 				if (!$_usefile) :
 
 					log_message('error', 'CDN: ' . $_cropmethod . ': No local path was returned, second attempt.');
+					log_message('error', 'CDN: ' . $_cropmethod . ': ' . $this->cdn->last_error());
 
 					$width	= $this->_width * $this->retinaMultiplier;
 					$height	= $this->_height * $this->retinaMultiplier;
