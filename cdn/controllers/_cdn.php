@@ -1,4 +1,14 @@
-<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
+
+/**
+ * This class provides some common CDN controller functionality
+ *
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Controller
+ * @author      Nails Dev Team
+ * @link
+ */
 
 class NAILS_CDN_Controller extends NAILS_Controller
 {
