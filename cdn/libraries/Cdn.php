@@ -1858,7 +1858,7 @@ class Cdn
 		$_buckets	= $this->get_buckets(false, $filter_tag, $include_deleted);
 		$_out		= array();
 
-		foreach($_buckets AS $bucket) :
+		foreach ($_buckets AS $bucket) :
 
 			$_out[$bucket->id] = $bucket->label;
 
@@ -2073,7 +2073,7 @@ class Cdn
 
 		//	Destroy any containing objects
 		$_errors = 0;
-		foreach($_bucket->objects AS $obj) :
+		foreach ($_bucket->objects AS $obj) :
 
 			if (!$this->object_destroy($obj->id)) :
 
@@ -2390,7 +2390,7 @@ class Cdn
 
 			if (is_array($_mime)) {
 
-				foreach($_mime as $submime) {
+				foreach ($_mime as $submime) {
 
 					if ($submime == $mime) {
 
@@ -2497,7 +2497,7 @@ class Cdn
 
 			if (is_array($_mime)) :
 
-				foreach($_mime AS $_subext => $_submime) :
+				foreach ($_mime AS $_subext => $_submime) :
 
 					if (!isset($_assocs[strtolower($_submime)])) :
 
@@ -2524,7 +2524,7 @@ class Cdn
 
 			if (is_array($_mime)) :
 
-				foreach($_mime AS $_submime) :
+				foreach ($_mime AS $_submime) :
 
 					$_assocs[strtolower($_submime)][] = $_ext;
 
@@ -3423,7 +3423,7 @@ class Cdn
 			} else {
 
 				//	Find a file we can use
-				foreach($_file as $ext => $path) {
+				foreach ($_file as $ext => $path) {
 
 					if ($this->isAllowedExt($ext, $_bucket->allowed_types)) {
 

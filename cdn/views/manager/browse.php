@@ -138,7 +138,7 @@
 
 										// --------------------------------------------------------------------------
 
-										foreach( $bucket->tags AS $tag ) :
+										foreach ( $bucket->tags AS $tag ) :
 
 											//	Item is selected?
 											$_selected = $this->input->get( 'filter-tag' ) == $tag->id ? 'selected' : '';
