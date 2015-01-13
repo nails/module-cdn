@@ -36,7 +36,7 @@
 		<!--	JS GLOBALS	-->
 		<script type="text/javascript">
 			var ENVIRONMENT		= '<?=ENVIRONMENT?>';
-			window.SITE_URL		= '<?=site_url( '', page_is_secure() )?>';
+			window.SITE_URL		= '<?=site_url( '', isPageSecure() )?>';
 			window.NAILS_ASSETS_URL	= '<?=NAILS_ASSETS_URL?>';
 			window.NAILS_LANG	= {};
 		</script>
@@ -126,7 +126,7 @@
 										$_selected	= ! $this->input->get( 'filter-tag' ) ? 'selected' : '';
 
 										//	Build the URI for this item
-										$_uri = site_url( uri_string(), page_is_secure() );
+										$_uri = site_url( uri_string(), isPageSecure() );
 										$_uri .= $_query ? '?' . http_build_query( $_query ) : '';
 
 										echo '<li class="tag ' . $_selected . '">';
@@ -145,10 +145,10 @@
 
 											//	Build the URIs for this item
 											$_query['filter-tag'] = $tag->id;
-											$_uri = site_url( uri_string(), page_is_secure() );
+											$_uri = site_url( uri_string(), isPageSecure() );
 											$_uri .= $_query ? '?' . http_build_query( $_query ) : '';
 
-											$_uri_delete = site_url( 'cdn/manager/delete_tag/' . $tag->id . $_query_string, page_is_secure() );
+											$_uri_delete = site_url( 'cdn/manager/delete_tag/' . $tag->id . $_query_string, isPageSecure() );
 
 											echo '<li class="tag droppable ' . $_selected . '" data-id="' . $tag->id . '">';
 												echo '<a href="' . $_uri_delete .'" class="confirm delete-tag" data-title="Are you sure?" data-body="If you continue this tag will be deleted. No files will be removed.\n\nContinue?"></a>';
@@ -163,7 +163,7 @@
 										// --------------------------------------------------------------------------
 
 										echo '<li class="new-tag">';
-										echo form_open( site_url( 'cdn/manager/new_tag' . $_query_string, page_is_secure() ) );
+										echo form_open( site_url( 'cdn/manager/new_tag' . $_query_string, isPageSecure() ) );
 										echo form_input( 'label', '', 'placeholder="New Tag"' );
 										echo form_submit( 'submit', 'Add', 'class="awesome small green"' );
 										echo form_close();
@@ -175,7 +175,7 @@
 							<li class="toolbar">
 								<?php
 
-									echo form_open_multipart( site_url( 'cdn/manager/upload' . $_query_string, page_is_secure() ) );
+									echo form_open_multipart( site_url( 'cdn/manager/upload' . $_query_string, isPageSecure() ) );
 									echo form_hidden( 'tag-id', $this->input->get( 'filter-tag' ) );
 									echo form_submit( 'submit', 'Upload', 'class="awesome green"' );
 									echo form_upload( 'userfile' );
@@ -228,7 +228,7 @@
 
 										//	Build the URI for this item
 										$_query['filter-view'] = 'thumb';
-										$_uri = site_url( uri_string(), page_is_secure() );
+										$_uri = site_url( uri_string(), isPageSecure() );
 										$_uri .= $_query ? '?' . http_build_query( $_query ) : '';
 
 										echo anchor( $_uri, 'Thumbnails', 'class="thumbnail ' . $_selected . '"' );
@@ -241,7 +241,7 @@
 
 										//	Build the URI for this item
 										$_query['filter-view'] = 'list';
-										$_uri = site_url( uri_string(), page_is_secure() );
+										$_uri = site_url( uri_string(), isPageSecure() );
 										$_uri .= $_query ? '?' . http_build_query( $_query ) : '';
 
 										echo anchor( $_uri, 'List', 'class="list ' . $_selected . '"' );
@@ -253,7 +253,7 @@
 
 										//	Build the URI for this item
 										$_query['filter-view'] = 'detail';
-										$_uri = site_url( uri_string(), page_is_secure() );
+										$_uri = site_url( uri_string(), isPageSecure() );
 										$_uri .= $_query ? '?' . http_build_query( $_query ) : '';
 
 										echo anchor( $_uri, 'Details', 'class="detail ' . $_selected . '"' );

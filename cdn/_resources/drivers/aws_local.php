@@ -575,7 +575,7 @@ class Aws_local_CDN implements Cdn_driver
      */
     protected function urlMakeSecure($url, $isProcessing = true)
     {
-        if (page_is_secure()) {
+        if (isPageSecure()) {
 
             //  Make the URL secure
             if ($isProcessing) {

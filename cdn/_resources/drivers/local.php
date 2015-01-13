@@ -452,6 +452,6 @@ class Local_CDN implements Cdn_driver
      */
     protected function urlMakeSecure($url)
     {
-        return site_url($url, page_is_secure());
+        return site_url($url, isPageSecure());
     }
 }

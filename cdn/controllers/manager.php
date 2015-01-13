@@ -34,7 +34,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 		// --------------------------------------------------------------------------
 
 		//	Module enabled?
-		if ( ! module_is_enabled( 'cdn' ) ) :
+		if ( ! isModuleEnabled( 'cdn' ) ) :
 
 			show_404();
 
@@ -229,7 +229,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 	public function upload()
 	{
 		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', page_is_secure() );
+		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
 		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
 
 		// --------------------------------------------------------------------------
@@ -276,7 +276,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 	public function delete()
 	{
 		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', page_is_secure() );
+		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
 		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
 
 		// --------------------------------------------------------------------------
@@ -317,7 +317,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
 		if ( $_delete ) :
 
-			$_url = site_url( 'cdn/manager/restore/' . $this->uri->segment( 4 ) . '?' . $this->input->server( 'QUERY_STRING' ), page_is_secure() );
+			$_url = site_url( 'cdn/manager/restore/' . $this->uri->segment( 4 ) . '?' . $this->input->server( 'QUERY_STRING' ), isPageSecure() );
 			$this->session->set_flashdata( 'success', '<strong>Success!</strong> File deleted successfully! <a href="' . $_url . '">Undo?</a>' );
 			$this->session->set_flashdata( 'deleted', TRUE );
 
@@ -339,7 +339,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 	public function restore()
 	{
 		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', page_is_secure() );
+		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
 		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
 
 		// --------------------------------------------------------------------------
@@ -400,7 +400,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 	public function new_tag()
 	{
 		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', page_is_secure() );
+		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
 		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
 
 		// --------------------------------------------------------------------------
@@ -429,7 +429,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 	public function delete_tag()
 	{
 		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', page_is_secure() );
+		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
 		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
 
 		// --------------------------------------------------------------------------
