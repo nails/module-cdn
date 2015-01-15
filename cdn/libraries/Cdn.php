@@ -65,7 +65,7 @@ class Cdn
 		//	Clear cache's
 		if (isset($this->_cache_keys) && $this->_cache_keys) :
 
-			foreach ($this->_cache_keys AS $key) :
+			foreach ($this->_cache_keys as $key) :
 
 				$this->_unset_cache($key);
 
@@ -1858,7 +1858,7 @@ class Cdn
 		$_buckets	= $this->get_buckets(false, $filter_tag, $include_deleted);
 		$_out		= array();
 
-		foreach ($_buckets AS $bucket) :
+		foreach ($_buckets as $bucket) :
 
 			$_out[$bucket->id] = $bucket->label;
 
@@ -2073,7 +2073,7 @@ class Cdn
 
 		//	Destroy any containing objects
 		$_errors = 0;
-		foreach ($_bucket->objects AS $obj) :
+		foreach ($_bucket->objects as $obj) :
 
 			if (!$this->object_destroy($obj->id)) :
 
@@ -2434,7 +2434,7 @@ class Cdn
 
 		$_mimes = $this->_get_mime_mappings();
 
-		foreach ($_mimes AS $_ext => $mime) :
+		foreach ($_mimes as $_ext => $mime) :
 
 			if ($_ext == $ext) :
 
@@ -2493,11 +2493,11 @@ class Cdn
 		//	Prep $ext, make sure it has no dots
 		$ext = strpos($ext, '.') !== false ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
 
-		foreach ($_mimes AS $_ext => $_mime) :
+		foreach ($_mimes as $_ext => $_mime) :
 
 			if (is_array($_mime)) :
 
-				foreach ($_mime AS $_subext => $_submime) :
+				foreach ($_mime as $_subext => $_submime) :
 
 					if (!isset($_assocs[strtolower($_submime)])) :
 
@@ -2520,11 +2520,11 @@ class Cdn
 		endforeach;
 
 		//	Now put extensions into the appropriate slots
-		foreach ($_mimes AS $_ext => $_mime) :
+		foreach ($_mimes as $_ext => $_mime) :
 
 			if (is_array($_mime)) :
 
-				foreach ($_mime AS $_submime) :
+				foreach ($_mime as $_submime) :
 
 					$_assocs[strtolower($_submime)][] = $_ext;
 
@@ -2691,7 +2691,7 @@ class Cdn
 
 		$_ids		= array();
 		$_ids_hash	= array();
-		foreach ($_objects AS $obj) :
+		foreach ($_objects as $obj) :
 
 			$_ids[]			= $obj->id;
 			$_ids_hash[]	= $obj->id . $obj->bucket->id;
@@ -2729,7 +2729,7 @@ class Cdn
 		$_ids		= array();
 		$_ids_hash	= array();
 
-		foreach ($_objects AS $obj) :
+		foreach ($_objects as $obj) :
 
 			$_ids[]			= $obj->id;
 			$_ids_hash[]	= $obj->id . $obj->bucket->id;
@@ -3378,7 +3378,7 @@ class Cdn
 		//	Fetch and test all buckets
 		$_buckets = $this->get_buckets();
 
-		foreach ($_buckets AS $bucket) :
+		foreach ($_buckets as $bucket) :
 
 			//	Can fetch bucket by ID?
 			$_bucket = $this->get_bucket($bucket->id);
@@ -3678,7 +3678,7 @@ class Cdn
 			return false;
 		}
 
-		foreach ($purgeIds AS $objectId) {
+		foreach ($purgeIds as $objectId) {
 
 			$this->db->select('o.id,o.filename,b.id bucket_id,b.slug bucket_slug');
 			$this->db->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');

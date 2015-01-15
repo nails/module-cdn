@@ -138,7 +138,7 @@
 
 										// --------------------------------------------------------------------------
 
-										foreach ( $bucket->tags AS $tag ) :
+										foreach ( $bucket->tags as $tag ) :
 
 											//	Item is selected?
 											$_selected = $this->input->get( 'filter-tag' ) == $tag->id ? 'selected' : '';
@@ -194,7 +194,7 @@
 
 									if ( $this->input->get( 'filter-tag' ) ) :
 
-										foreach ( $bucket->tags AS $tag ) :
+										foreach ( $bucket->tags as $tag ) :
 
 											if ( $tag->id == $this->input->get( 'filter-tag' ) ) :
 
@@ -293,7 +293,7 @@
 
 									// --------------------------------------------------------------------------
 
-									foreach ( $bucket->objects AS $object ) :
+									foreach ( $bucket->objects as $object ) :
 
 										switch ( $_filter_view ) :
 

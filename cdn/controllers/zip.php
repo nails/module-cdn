@@ -74,7 +74,7 @@ class NAILS_Zip extends NAILS_CDN_Controller
 					$_use_buckets	= FALSE;
 					$_prev_bucket	= '';
 
-					foreach ( $_objects AS $obj ) :
+					foreach ( $_objects as $obj ) :
 
 						$_temp				= new stdClass();
 						$_temp->path		= $this->cdn->object_local_path( $obj->bucket->slug, $obj->filename );
@@ -104,7 +104,7 @@ class NAILS_Zip extends NAILS_CDN_Controller
 					$this->load->library( 'zip' );
 
 					//	Save to the zip
-					foreach ( $_usefiles AS $file ) :
+					foreach ( $_usefiles as $file ) :
 
 						$_name = $_use_buckets ? $file->bucket . '/' . $file->filename : $file->filename;
 						$this->zip->add_data( $_name, file_get_contents( $file->path ) );
