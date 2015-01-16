@@ -1819,7 +1819,7 @@ class Cdn
 
 		// --------------------------------------------------------------------------
 
-		foreach ($_buckets AS &$bucket) :
+		foreach ($_buckets as &$bucket) :
 
 			//	Format bucket object
 			$this->_format_bucket($bucket);

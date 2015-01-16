@@ -1,460 +1,438 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
-/**
- * Name:		Media [Manager]
- *
- * Description:	This controller handles managing media
- *
- **/
-
-/**
- * OVERLOADING NAILS' CDN MODULE
- *
- * Note the name of this class; done like this to allow apps to extend this class.
- * Read full explanation at the bottom of this file.
- *
- **/
-
-//	Include _cdn.php; executes common functionality
+//  Include _cdn.php; executes common functionality
 require_once '_cdn.php';
+
+/**
+ * This class provides the CDN manager, a one stop shop for managing objects in buckets
+ *
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Controller
+ * @author      Nails Dev Team
+ * @link
+ */
 
 class NAILS_Manager extends NAILS_CDN_Controller
 {
-	/**
-	 * Construct the class; set defaults
-	 *
-	 * @access	public
-	 * @return	void
-	 *
-	 **/
-	public function __construct()
-	{
-		parent::__construct();
+    /**
+     * Construct the manage, check user is permitted to browse this bucket, etc
+     */
+    public function __construct()
+    {
+        parent::__construct();
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	Module enabled?
-		if ( ! isModuleEnabled( 'cdn' ) ) :
+        //  Module enabled?
+        if (!isModuleEnabled('cdn')) {
 
-			show_404();
+            show_404();
+        }
 
-		endif;
+        // --------------------------------------------------------------------------
 
-		// --------------------------------------------------------------------------
+        //  Determine if browsing/uploading is permitted
+        $this->data['enabled'] = $this->user_model->is_logged_in() ? true : false;
+        $this->data['enabled'] = true;
 
-		//	Determine if browsing/uploading is permitted
-		$this->data['enabled'] = $this->user_model->is_logged_in() ? TRUE : FALSE;
-		$this->data['enabled'] = TRUE;
+        // --------------------------------------------------------------------------
 
-		// --------------------------------------------------------------------------
+        //  Load CDN library
+        $this->load->library('cdn/cdn');
 
-		//	Load CDN library
-		$this->load->library( 'cdn/cdn' );
+        // --------------------------------------------------------------------------
 
-		// --------------------------------------------------------------------------
+        if ($this->data['enabled']) {
 
-		if ( $this->data['enabled'] ) :
+            /**
+             * Define the directory, if a bucket has been specified use that, if not
+             * then use the user's upload directory
+             */
 
-			//	Define the directory, if a bucket has been specified use that, if not
-			//	then use the user's upload directory
+            if ($this->input->get('bucket') && $this->input->get('hash')) {
 
-			if ( $this->input->get( 'bucket' ) && $this->input->get( 'hash' ) ) :
+                /**
+                 * Decrypt the bucket and cross reference with the hash. Doing this so
+                 * that users can't casually specify a bucket and upload willy nilly.
+                 */
 
-				//	Decrypt the bucket and cross reference with the hash. Doing this so
-				//	That users can't casually specify a bucket and upload willy nilly.
+                $_bucket = $this->input->get('bucket');
+                $_hash   = $this->input->get('hash');
 
-				$_bucket	= $this->input->get( 'bucket' );
-				$_hash		= $this->input->get( 'hash' );
+                $_decrypted = $this->encrypt->decode($_bucket, APP_PRIVATE_KEY);
 
-				$_decrypted	= $this->encrypt->decode( $_bucket, APP_PRIVATE_KEY );
+                if ($_decrypted) {
 
-				if ( $_decrypted ) :
+                    $_bucket = explode('|', $_decrypted);
 
-					$_bucket = explode( '|', $_decrypted );
+                    if ($_bucket[0] && isset($_bucket[1])) {
 
-					if ( $_bucket[0] && isset( $_bucket[1] ) ) :
+                        //  Bucket and nonce set, cross-check
+                        if (md5($_bucket[0] . '|' . $_bucket[1] . '|' . APP_PRIVATE_KEY) === $_hash) {
 
-						//	Bucket and nonce set, cross-check
-						if ( md5( $_bucket[0] . '|' . $_bucket[1] . '|' . APP_PRIVATE_KEY ) === $_hash ) :
+                            $this->data['bucket'] = $this->cdn->get_bucket(
+                                $_bucket[0],
+                                true,
+                                $this->input->get('filter-tag')
+                            );
 
-							$this->data['bucket'] = $this->cdn->get_bucket( $_bucket[0], TRUE, $this->input->get( 'filter-tag' ) );
+                            if ($this->data['bucket']) {
 
-							if ( $this->data['bucket'] ) :
+                                $_test_ok = true;
 
-								$_test_ok = TRUE;
+                            } else {
 
-							else :
+                                //  Bucket doesn't exist - attempt to create it
+                                if ($this->cdn->bucket_create($_bucket[0])) {
 
-								//	Bucket doesn't exist - attempt to create it
-								if ( $this->cdn->bucket_create( $_bucket[0] ) ) :
+                                    $_test_ok = true;
+                                    $this->data['bucket'] = $this->cdn->get_bucket(
+                                        $_bucket[0],
+                                        true,
+                                        $this->input->get('filter-tag')
+                                    );
 
-									$_test_ok = TRUE;
-									$this->data['bucket'] = $this->cdn->get_bucket( $_bucket[0], TRUE, $this->input->get( 'filter-tag' ) );
+                                } else {
 
-								else :
+                                    $_test_ok  = false;
+                                    $_error    = 'Bucket <strong>"' . $_bucket[0] . '"</strong> does not exist';
+                                    $_error   .= '<small>Additionally, the following error occured while attempting ';
+                                    $_error   .= 'to create the bucket:<br />' . $this->cdn->last_error() . '</small>';
+                                }
+                            }
 
-									$_test_ok	= FALSE;
-									$_error		= 'Bucket <strong>"' . $_bucket[0] . '"</strong> does not exist';
-									$_error		.= '<small>Additionally, the following error occured while attempting to create the bucket:<br />' . $this->cdn->last_error() . '</small>';
+                        } else {
 
-								endif;
+                            $_test_ok = false;
+                            $_error   = 'Could not verify bucket hash';
+                        }
 
-							endif;
+                    } else {
 
-						else :
+                        $_test_ok = false;
+                        $_error   = 'Incomplete bucket hash';
+                    }
 
-							$_test_ok	= FALSE;
-							$_error		= 'Could not verify bucket hash';
+                } else {
 
-						endif;
+                    $_test_ok = false;
+                    $_error   = 'Could not decrypt bucket hash';
+                }
 
-					else :
+                // --------------------------------------------------------------------------
 
-						$_test_ok	= FALSE;
-						$_error		= 'Incomplete bucket hash';
+                if (!$_test_ok) {
 
-					endif;
+                    $this->data['enabled']    = false;
+                    $this->data['bad_bucket'] = $_error;
+                }
 
-				else :
+            } else {
 
-					$_test_ok	= FALSE;
-					$_error		= 'Could not decrypt bucket hash';
+                //  No bucket specified, use the user's upload bucket
+                $_slug  = 'user-' . active_user('id');
+                $_label = 'User Upload Directory';
 
-				endif;
+                // --------------------------------------------------------------------------
 
+                //  Test bucket, if it doesn't exist, create it
+                $this->data['bucket'] = $this->cdn->get_bucket($_slug, true, $this->input->get('filter-tag'));
 
-				// --------------------------------------------------------------------------
+                if (!$this->data['bucket']) {
 
-				if ( ! $_test_ok ) :
+                    $_bucket_id = $this->cdn->bucket_create($_slug, $_label);
 
-					$this->data['enabled']		= FALSE;
-					$this->data['bad_bucket']	= $_error;
+                    if (!$_bucket_id) {
 
-				endif;
+                         $this->data['enabled']    = false;
+                         $this->data['bad_bucket'] = 'Unable to create upload bucket: ' . $this->cdn->last_error();
 
-			else :
+                    } else {
 
-				//	No bucket specified, use the user's upload bucket
-				$_slug	= 'user-' . active_user( 'id' );
-				$_label	= 'User Upload Directory';
+                        $this->data['bucket'] = $this->cdn->get_bucket(
+                            $_bucket_id,
+                            true,
+                            $this->input->get('filter-tag')
+                        );
+                    }
+                }
+            }
+        }
+    }
 
-				// --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
-				//	Test bucket, if it doesn't exist, create it
-				$this->data['bucket'] = $this->cdn->get_bucket( $_slug, TRUE, $this->input->get( 'filter-tag' ) );
+    /**
+     * Renders the media manager
+     * @return void
+     */
+    public function browse()
+    {
+        //  Unload all styles and load just the nails styles
+        $this->asset->clear();
+        $this->asset->load('nails.cdn.manager.css', true);
 
+        //  Fetch files
+        if ($this->data['enabled']) {
 
-				if ( ! $this->data['bucket'] ) :
+            //  Load Bower assets
+            $this->asset->load('jquery/dist/jquery.min.js', 'BOWER');
+            $this->asset->load('fancybox/source/jquery.fancybox.pack.js', 'BOWER');
+            $this->asset->load('fancybox/source/jquery.fancybox.css', 'BOWER');
+            $this->asset->load('jquery.scrollTo/jquery.scrollTo.min.js', 'BOWER');
+            $this->asset->load('tipsy/src/javascripts/jquery.tipsy.js', 'BOWER');
+            $this->asset->load('tipsy/src/stylesheets/tipsy.css', 'BOWER');
+            $this->asset->load('mustache.js/mustache.js', 'BOWER');
+            $this->asset->load('jquery-cookie/jquery.cookie.js', 'BOWER');
 
-					$_bucket_id = $this->cdn->bucket_create( $_slug, $_label );
+            //  Load other assets
+            $this->asset->load('nails.default.min.js', true);
+            $this->asset->load('nails.api.min.js', true);
+            $this->asset->load('nails.cdn.manager.min.js', true);
 
-					if ( ! $_bucket_id ) :
+            //  Load libraries
+            $this->asset->library('jqueryui');
+            //$this->asset->library('uploadify');   //  One day...
 
-						 $this->data['enabled']		= FALSE;
-						 $this->data['bad_bucket']	= 'Unable to create upload bucket: ' . $this->cdn->last_error();
+            // --------------------------------------------------------------------------
 
-					else :
+            $this->load->view('manager/browse', $this->data);
 
-						$this->data['bucket'] = $this->cdn->get_bucket( $_bucket_id, TRUE, $this->input->get( 'filter-tag' ) );
+        } else {
 
-					endif;
+            $this->load->view('manager/disabled', $this->data);
+        }
+    }
 
-				endif;
+    // --------------------------------------------------------------------------
 
-			endif;
+    /**
+     * Upload an object
+     * @return void
+     */
+    public function upload()
+    {
+        //  Returning to...?
+        $_return = site_url('cdn/manager/browse', isPageSecure());
+        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
-		endif;
-	}
+        // --------------------------------------------------------------------------
 
+        //  User is authorised to upload?
+        if (!$this->data['enabled']) {
 
-	// --------------------------------------------------------------------------
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> uploads are not available right now.');
+            redirect($_return);
+        }
 
+        // --------------------------------------------------------------------------
 
-	/**
-	 * Render the media manager
-	 *
-	 * @access	public
-	 * @return	void
-	 **/
-	public function browse()
-	{
-		//	Unload all styles and load just the nails styles
-		$this->asset->clear();
-		$this->asset->load( 'nails.default.css', TRUE );
+        //  Are we in a tag?
+        $_options = array();
+        if ($this->input->get('filter-tag')) {
 
-		//	Fetch files
-		if ( $this->data['enabled'] ) :
+            $_options['tag'] = $this->input->get('filter-tag');
+        }
 
-			//	Load Bower assets
-			$this->asset->load( 'jquery/dist/jquery.min.js',				'BOWER' );
-			$this->asset->load( 'fancybox/source/jquery.fancybox.pack.js',	'BOWER' );
-			$this->asset->load( 'fancybox/source/jquery.fancybox.css',		'BOWER' );
-			$this->asset->load( 'jquery.scrollTo/jquery.scrollTo.min.js',	'BOWER' );
-			$this->asset->load( 'tipsy/src/javascripts/jquery.tipsy.js',	'BOWER' );
-			$this->asset->load( 'tipsy/src/stylesheets/tipsy.css',			'BOWER' );
-			$this->asset->load( 'mustache.js/mustache.js',					'BOWER' );
-			$this->asset->load( 'jquery-cookie/jquery.cookie.js',			'BOWER' );
+        // --------------------------------------------------------------------------
 
-			//	Load other assets
-			$this->asset->load( 'nails.default.min.js',						TRUE );
-			$this->asset->load( 'nails.api.min.js',							TRUE );
-			$this->asset->load( 'nails.cdn.manager.min.js',					TRUE );
-			$this->asset->load( 'nails.cdn.manager.css',					TRUE );
+        //  Upload the file
+        $this->load->library('cdn/cdn');
+        if ($this->cdn->object_create('userfile', $this->data['bucket']->id, $_options)) {
 
-			//	Load libraries
-			$this->asset->library( 'jqueryui' );
-			//$this->asset->library( 'uploadify' );	//	One day...
+            $this->session->set_flashdata('success', '<strong>Success!</strong> File uploaded successfully!');
 
-			// --------------------------------------------------------------------------
+        } else {
 
-			$this->load->view( 'manager/browse', $this->data );
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
+        }
 
-		else :
+        redirect($_return);
+    }
 
-			$this->load->view( 'manager/disabled', $this->data );
+    // --------------------------------------------------------------------------
 
-		endif;
-	}
+    /**
+     * Delete an object
+     * @return void
+     */
+    public function delete()
+    {
+        //  Returning to...?
+        $_return  = site_url('cdn/manager/browse', isPageSecure());
+        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
+        // --------------------------------------------------------------------------
 
-	// --------------------------------------------------------------------------
+        //  User is authorised to delete?
+        if (!$this->data['enabled']) {
 
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> file deletions are not available right now.');
+            redirect($_return);
+        }
 
-	/**
-	 * Upload a file to the user's media store
-	 *
-	 * @access	public
-	 * @return	void
-	 **/
-	public function upload()
-	{
-		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
-		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
+        // --------------------------------------------------------------------------
 
-		// --------------------------------------------------------------------------
+        $this->load->library('cdn/cdn');
 
-		//	User is authorised to upload?
-		if ( ! $this->data['enabled'] ) :
+        //  Fetch the object
+        if (!$this->uri->segment(4)) {
 
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> uploads are not available right now.' );
-			redirect( $_return );
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
+            redirect($_return);
+        }
 
-		endif;
+        $_object = $this->cdn->get_object($this->uri->segment(4));
 
-		// --------------------------------------------------------------------------
+        if (!$_object) {
 
-		//	Are we in a tag?
-		$_options = array();
-		if ( $this->input->get( 'filter-tag' ) ) :
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
+            redirect($_return);
+        }
 
-			$_options['tag'] = $this->input->get( 'filter-tag' );
+        // --------------------------------------------------------------------------
 
-		endif;
-		// --------------------------------------------------------------------------
+        //  Attempt Delete
+        $_delete = $this->cdn->object_delete($_object->id);
 
-		//	Upload the file
-		$this->load->library( 'cdn/cdn' );
-		if ( $this->cdn->object_create( 'userfile', $this->data['bucket']->id, $_options ) ) :
+        if ($_delete) {
 
-			$this->session->set_flashdata( 'success', '<strong>Success!</strong> File uploaded successfully!' );
+            $_url = site_url('cdn/manager/restore/' . $this->uri->segment(4) . '?' . $this->input->server('QUERY_STRING'), isPageSecure());
+            $this->session->set_flashdata('success', '<strong>Success!</strong> File deleted successfully! <a href="' . $_url . '">Undo?</a>');
+            $this->session->set_flashdata('deleted', true);
 
-		else :
+        } else {
 
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> ' . $this->cdn->last_error() );
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
+        }
 
-		endif;
+        // --------------------------------------------------------------------------
 
-		redirect( $_return );
-	}
+        redirect($_return);
+    }
 
+    // --------------------------------------------------------------------------
 
-	// --------------------------------------------------------------------------
+    /**
+     * Restore a deleted object
+     * @return void
+     */
+    public function restore()
+    {
+        //  Returning to...?
+        $_return  = site_url('cdn/manager/browse', isPageSecure());
+        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
+        // --------------------------------------------------------------------------
 
+        //  User is authorised to restore??
+        if (!$this->data['enabled']) {
 
-	public function delete()
-	{
-		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
-		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> file restorations are not available right now.');
+            redirect($_return);
+        }
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	User is authorised to delete?
-		if ( ! $this->data['enabled'] ) :
+        $this->load->library('cdn/cdn');
 
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> file deletions are not available right now.' );
-			redirect( $_return );
+        //  Fetch the object
+        if (!$this->uri->segment(4)) {
 
-		endif;
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
+            redirect($_return);
+        }
 
-		// --------------------------------------------------------------------------
+        $_object = $this->cdn->get_object_from_trash($this->uri->segment(4));
 
-		$this->load->library( 'cdn/cdn' );
+        if (!$_object) {
 
-		//	Fetch the object
-		if ( ! $this->uri->segment( 4 ) ) :
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
+            redirect($_return);
+        }
 
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> invalid object.' );
-			redirect( $_return );
+        // --------------------------------------------------------------------------
 
-		endif;
+        //  Attempt Restore
+        $_restore = $this->cdn->object_restore($_object->id);
 
-		$_object = $this->cdn->get_object( $this->uri->segment( 4 ) );
+        if ($_restore) {
 
-		if ( ! $_object ) :
+            $this->session->set_flashdata('success', '<strong>Success!</strong> File restored successfully!');
 
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> invalid object.' );
-			redirect( $_return );
+        } else {
 
-		endif;
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
+        }
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	Attempt Delete
-		$_delete = $this->cdn->object_delete( $_object->id );
+        redirect($_return);
+    }
 
-		if ( $_delete ) :
+    // --------------------------------------------------------------------------
 
-			$_url = site_url( 'cdn/manager/restore/' . $this->uri->segment( 4 ) . '?' . $this->input->server( 'QUERY_STRING' ), isPageSecure() );
-			$this->session->set_flashdata( 'success', '<strong>Success!</strong> File deleted successfully! <a href="' . $_url . '">Undo?</a>' );
-			$this->session->set_flashdata( 'deleted', TRUE );
+    /**
+     * Add a new bucket tag
+     * @return void
+     */
+    public function new_tag()
+    {
+        //  Returning to...?
+        $_return  = site_url('cdn/manager/browse', isPageSecure());
+        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
-		else :
+        // --------------------------------------------------------------------------
 
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> ' . $this->cdn->last_error() );
+        $_added = $this->cdn->bucket_tag_add($this->data['bucket'], $this->input->post('label'));
 
-		endif;
+        if ($_added) {
 
-		// --------------------------------------------------------------------------
+            $this->session->set_flashdata('success', '<strong>Success!</strong> Tag added successfully!');
 
-		redirect( $_return );
-	}
+        } else {
 
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
+        }
 
-	// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
+        redirect($_return);
+    }
 
-	public function restore()
-	{
-		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
-		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
+    // --------------------------------------------------------------------------
 
-		// --------------------------------------------------------------------------
+    /**
+     * Delete a bucket tag
+     * @return void
+     */
+    public function delete_tag()
+    {
+        //  Returning to...?
+        $_return  = site_url('cdn/manager/browse', isPageSecure());
+        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
-		//	User is authorised to restore??
-		if ( ! $this->data['enabled'] ) :
+        // --------------------------------------------------------------------------
 
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> file restorations are not available right now.' );
-			redirect( $_return );
+        $_deleted = $this->cdn->bucket_tag_delete($this->data['bucket'], $this->uri->segment(4));
 
-		endif;
+        if ($_deleted) {
 
-		// --------------------------------------------------------------------------
+            $this->session->set_flashdata('success', '<strong>Success!</strong> Tag deleted successfully!');
 
-		$this->load->library( 'cdn/cdn' );
+        } else {
 
-		//	Fetch the object
-		if ( ! $this->uri->segment( 4 ) ) :
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
+        }
 
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> invalid object.' );
-			redirect( $_return );
+        // --------------------------------------------------------------------------
 
-		endif;
-
-		$_object = $this->cdn->get_object_from_trash( $this->uri->segment( 4 ) );
-
-		if ( ! $_object ) :
-
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> invalid object.' );
-			redirect( $_return );
-
-		endif;
-
-		// --------------------------------------------------------------------------
-
-		//	Attempt Restore
-		$_restore = $this->cdn->object_restore( $_object->id );
-
-		if ( $_restore ) :
-
-			$this->session->set_flashdata( 'success', '<strong>Success!</strong> File restored successfully!' );
-
-		else :
-
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> ' . $this->cdn->last_error() );
-
-		endif;
-
-		// --------------------------------------------------------------------------
-
-		redirect( $_return );
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	public function new_tag()
-	{
-		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
-		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
-
-		// --------------------------------------------------------------------------
-
-		$_added = $this->cdn->bucket_tag_add( $this->data['bucket'], $this->input->post( 'label' ) );
-
-		if ( $_added ) :
-
-			$this->session->set_flashdata( 'success', '<strong>Success!</strong> Tag added successfully!' );
-
-		else :
-
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> ' . $this->cdn->last_error() );
-
-		endif;
-
-		// --------------------------------------------------------------------------
-
-		redirect( $_return );
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	public function delete_tag()
-	{
-		//	Returning to...?
-		$_return = site_url( 'cdn/manager/browse', isPageSecure() );
-		$_return .= $this->input->server( 'QUERY_STRING' ) ? '?' . $this->input->server( 'QUERY_STRING' ) : '';
-
-		// --------------------------------------------------------------------------
-
-		$_deleted = $this->cdn->bucket_tag_delete( $this->data['bucket'], $this->uri->segment( 4 ) );
-
-		if ( $_deleted ) :
-
-			$this->session->set_flashdata( 'success', '<strong>Success!</strong> Tag deleted successfully!' );
-
-		else :
-
-			$this->session->set_flashdata( 'error', '<strong>Sorry,</strong> ' . $this->cdn->last_error() );
-
-		endif;
-
-		// --------------------------------------------------------------------------
-
-		redirect( $_return );
-	}
+        redirect($_return);
+    }
 }
 
-
 // --------------------------------------------------------------------------
-
 
 /**
  * OVERLOADING NAILS' CDN MODULE
@@ -480,13 +458,9 @@ class NAILS_Manager extends NAILS_CDN_Controller
  *
  **/
 
-if ( ! defined( 'NAILS_ALLOW_EXTENSION' ) ) :
+if (!defined('NAILS_ALLOW_EXTENSION')) {
 
-	class Manager extends NAILS_Manager
-	{
-	}
-
-endif;
-
-/* End of file manager.php */
-/* Location: ./modules/cdn/controllers/manager.php */
+    class Manager extends NAILS_Manager
+    {
+    }
+}
