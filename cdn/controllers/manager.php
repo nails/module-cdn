@@ -177,14 +177,14 @@ class NAILS_Manager extends NAILS_CDN_Controller
         if ($this->data['enabled']) {
 
             //  Load Bower assets
-            $this->asset->load('jquery/dist/jquery.min.js', 'BOWER');
-            $this->asset->load('fancybox/source/jquery.fancybox.pack.js', 'BOWER');
-            $this->asset->load('fancybox/source/jquery.fancybox.css', 'BOWER');
-            $this->asset->load('jquery.scrollTo/jquery.scrollTo.min.js', 'BOWER');
-            $this->asset->load('tipsy/src/javascripts/jquery.tipsy.js', 'BOWER');
-            $this->asset->load('tipsy/src/stylesheets/tipsy.css', 'BOWER');
-            $this->asset->load('mustache.js/mustache.js', 'BOWER');
-            $this->asset->load('jquery-cookie/jquery.cookie.js', 'BOWER');
+            $this->asset->load('jquery/dist/jquery.min.js', 'NAILS-BOWER');
+            $this->asset->load('fancybox/source/jquery.fancybox.pack.js', 'NAILS-BOWER');
+            $this->asset->load('fancybox/source/jquery.fancybox.css', 'NAILS-BOWER');
+            $this->asset->load('jquery.scrollTo/jquery.scrollTo.min.js', 'NAILS-BOWER');
+            $this->asset->load('tipsy/src/javascripts/jquery.tipsy.js', 'NAILS-BOWER');
+            $this->asset->load('tipsy/src/stylesheets/tipsy.css', 'NAILS-BOWER');
+            $this->asset->load('mustache.js/mustache.js', 'NAILS-BOWER');
+            $this->asset->load('jquery-cookie/jquery.cookie.js', 'NAILS-BOWER');
 
             //  Load other assets
             $this->asset->load('nails.default.min.js', true);
