@@ -657,7 +657,7 @@ class Cdn
 				else :
 
 					//	Upload was aborted, I wonder why?
-					switch($_FILES[$object]['error']) :
+					switch ($_FILES[$object]['error']) :
 
 						case UPLOAD_ERR_INI_SIZE :
 
@@ -1755,7 +1755,7 @@ class Cdn
 		//	Quick flag for detecting images
 		$object->is_img = false;
 
-		switch($object->mime) {
+		switch ($object->mime) {
 
 			case 'image/jpg' :
 			case 'image/jpeg' :
@@ -1998,7 +1998,7 @@ class Cdn
 
 			$_sort_order = strtoupper($sort_order) == 'ASC' ? 'ASC' : 'DESC';
 
-			switch($sort_on) :
+			switch ($sort_on) :
 
 				case 'filename' :
 
@@ -3637,7 +3637,7 @@ class Cdn
 		$ext = trim(strtolower($ext));
 
 		//	Perform mapping
-		switch($ext) {
+		switch ($ext) {
 
 			case 'jpeg':
 

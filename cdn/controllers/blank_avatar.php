@@ -119,7 +119,7 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
 			//	version in the cache bucket.
 
 			//	Which original are we using?
-			switch( $this->_sex ) :
+			switch ( $this->_sex ) :
 
 				case 'female' :
 				case 'woman' :
