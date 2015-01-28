@@ -41,6 +41,7 @@
     {
         "nails" :
         {
+            "moduleName": "cdn",
             "type": "module"
         }
     }
