@@ -989,7 +989,7 @@ class Cdn
 		else :
 
 			//	Generate a filename
-			$_data->filename = time() . '_' . md5(active_user('id') . microtime(true) . rand(0, 999)) . '.' . $_data->ext;
+			$_data->filename = time() . '-' . md5(active_user('id') . microtime(true) . rand(0, 999)) . '.' . $_data->ext;
 
 		endif;
 

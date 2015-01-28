@@ -25,7 +25,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
         // --------------------------------------------------------------------------
 
         //  Module enabled?
-        if (!isModuleEnabled('cdn')) {
+        if (!isModuleEnabled('nailsapp/module-cdn')) {
 
             show_404();
         }
