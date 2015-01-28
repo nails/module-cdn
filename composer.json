@@ -1,41 +1,47 @@
 {
-	"name": "nailsapp/module-cdn",
-	"keywords":
-	[
-		"Nails",
-		"Shed Collective",
-		"CodeIgniter",
-		"CDN Module"
-	],
-	"homepage": "http://nailsapp.co.uk/modules/cdn",
-	"description": "This the \"CDN\" module for Nails.",
-	"license": "MIT",
-	"authors":
-	[
-		{
-			"name": "Pablo de la Pena",
-			"email": "p@shedcollective.org",
-			"homepage": "http://shedcollective.org",
-			"role": "Developer"
-		},
-		{
-			"name": "Gary Duncan",
-			"email": "g@shedcollective.org",
-			"homepage": "http://shedcollective.org",
-			"role": "Developer"
-		}
-	],
-	"support":
-	{
-		"email": "hello@shedcollective.org"
-	},
-	"require":
-	{
-		"nailsapp/common": "dev-develop",
-		"nailsapp/module-curl": "dev-develop",
-		"aws/aws-sdk-php": "~2.4.5",
-		"masterexploder/phpthumb": "dev-master",
-		"sybio/gif-creator": "~1.0.0",
-		"sybio/gif-frame-extractor": "~1.0.0"
-	}
+    "name": "nailsapp/module-cdn",
+    "keywords":
+    [
+        "Nails",
+        "Shed Collective",
+        "CodeIgniter",
+        "CDN Module"
+    ],
+    "homepage": "http://nailsapp.co.uk/modules/cdn",
+    "description": "This is the \"CDN\" module for Nails.",
+    "license": "MIT",
+    "authors":
+    [
+        {
+            "name": "Pablo de la Pena",
+            "email": "p@shedcollective.org",
+            "homepage": "http://shedcollective.org",
+            "role": "Developer"
+        },
+        {
+            "name": "Gary Duncan",
+            "email": "g@shedcollective.org",
+            "homepage": "http://shedcollective.org",
+            "role": "Developer"
+        }
+    ],
+    "support":
+    {
+        "email": "hello@shedcollective.org"
+    },
+    "require":
+    {
+        "nailsapp/module-curl": "dev-develop",
+        "aws/aws-sdk-php": "~2.4.5",
+        "masterexploder/phpthumb": "dev-master",
+        "sybio/gif-creator": "~1.0.0",
+        "sybio/gif-frame-extractor": "~1.0.0"
+    },
+    "extra":
+    {
+        "nails" :
+        {
+            "type": "module"
+        }
+    }
 }
