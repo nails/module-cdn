@@ -12,14 +12,17 @@
 
 class NAILS_CDN_Controller extends NAILS_Controller
 {
-    protected $_cdn_root;
-    protected $_cachedir;
-    protected $_cache_headers_set;
-    protected $_cache_headers_max_age;
-    protected $_cache_headers_last_modified;
-    protected $_cache_headers_expires;
-    protected $_cache_headers_file;
-    protected $_cache_headers_hit;
+    protected $cdnRoot;
+    protected $cdnCacheDir;
+    protected $cdnCacheFile;
+    protected $cdnCacheHeadersSet;
+    protected $cdnCacheHeadersMaxAge;
+    protected $cdnCacheHeadersLastModified;
+    protected $cdnCacheHeadersExpires;
+    protected $cdnCacheHeadersFile;
+    protected $cdnCacheHeadersHit;
+    protected $isRetina;
+    protected $retinaMultiplier;
 
     // --------------------------------------------------------------------------
 
@@ -51,15 +54,18 @@ class NAILS_CDN_Controller extends NAILS_Controller
         // --------------------------------------------------------------------------
 
         //  Define variables
-        $this->_cdn_root = NAILS_PATH . 'module-cdn/cdn/';
-        $this->_cachedir = DEPLOY_CACHE_DIR;
+        $this->cdnRoot     = NAILS_PATH . 'module-cdn/cdn/';
+        $this->cdnCacheDir = DEPLOY_CACHE_DIR;
 
-        $this->_cache_headers_set           = false;
-        $this->_cache_headers_max_age       = APP_CDN_CACHE_MAX_AGE;
-        $this->_cache_headers_last_modified = '';
-        $this->_cache_headers_expires       = '';
-        $this->_cache_headers_file          = '';
-        $this->_cache_headers_hit           = 'MISS';
+        $this->cdnCacheHeadersSet          = false;
+        $this->cdnCacheHeadersMaxAge       = APP_CDN_CACHE_MAX_AGE;
+        $this->cdnCacheHeadersLastModified = '';
+        $this->cdnCacheHeadersExpires      = '';
+        $this->cdnCacheHeadersFile         = '';
+        $this->cdnCacheHeadersHit          = 'MISS';
+
+        $this->isRetina         = false;
+        $this->retinaMultiplier = 1;
 
         // --------------------------------------------------------------------------
 
@@ -80,27 +86,27 @@ class NAILS_CDN_Controller extends NAILS_Controller
      * @param  boolean $hit  Whether or not the request was a cache hit or not
      * @return void
      */
-    protected function _serve_from_cache($file, $hit = true)
+    protected function serveFromCache($file, $hit = true)
     {
         /**
          * Cache object exists, set the appropriate headers and return the
          * contents of the file.
          **/
 
-        $stats = stat($this->_cachedir . $file);
+        $stats = stat($this->cdnCacheDir . $file);
 
         //  Set cache headers
-        $this->_set_cache_headers($stats[9], $file, $hit);
+        $this->setCacheHeaders($stats[9], $file, $hit);
 
         //  Work out content type
-        $mime = $this->cdn->get_mime_from_file($this->_cachedir . $file);
+        $mime = $this->cdn->get_mime_from_file($this->cdnCacheDir . $file);
 
         header('Content-Type: ' . $mime, true);
 
         // --------------------------------------------------------------------------
 
         //  Send the contents of the file to the browser
-        echo file_get_contents($this->_cachedir . $file);
+        echo file_get_contents($this->cdnCacheDir . $file);
 
         /**
          * Kill script, th, th, that's all folks.
@@ -119,23 +125,23 @@ class NAILS_CDN_Controller extends NAILS_Controller
      * @param string  $file         The file we're serving
      * @param booleam $hit          Whether or not the request was a cache hit or not
      */
-    protected function _set_cache_headers($lastModified, $file, $hit)
+    protected function setCacheHeaders($lastModified, $file, $hit)
     {
         //  Set some flags
-        $this->_cache_headers_set           = true;
-        $this->_cache_headers_max_age       = APP_CDN_CACHE_MAX_AGE;
-        $this->_cache_headers_last_modified = $lastModified;
-        $this->_cache_headers_expires       = time() + $this->_cache_headers_max_age;
-        $this->_cache_headers_file          = $file;
-        $this->_cache_headers_hit           = $hit ? 'HIT' : 'MISS';
+        $this->cdnCacheHeadersSet           = true;
+        $this->cdnCacheHeadersMaxAge       = APP_CDN_CACHE_MAX_AGE;
+        $this->cdnCacheHeadersLastModified = $lastModified;
+        $this->cdnCacheHeadersExpires       = time() + $this->cdnCacheHeadersMaxAge;
+        $this->cdnCacheHeadersFile          = $file;
+        $this->cdnCacheHeadersHit           = $hit ? 'HIT' : 'MISS';
 
         // --------------------------------------------------------------------------
 
-        header('Cache-Control: max-age=' . $this->_cache_headers_max_age . ', must-revalidate', true);
-        header('Last-Modified: ' . date('r', $this->_cache_headers_last_modified), true);
-        header('Expires: ' . date('r', $this->_cache_headers_expires), true);
-        header('ETag: "' . md5($this->_cache_headers_file) . '"', true);
-        header('X-CDN-CACHE: ' . $this->_cache_headers_hit, true);
+        header('Cache-Control: max-age=' . $this->cdnCacheHeadersMaxAge . ', must-revalidate', true);
+        header('Last-Modified: ' . date('r', $this->cdnCacheHeadersLastModified), true);
+        header('Expires: ' . date('r', $this->cdnCacheHeadersExpires), true);
+        header('ETag: "' . md5($this->cdnCacheHeadersFile) . '"', true);
+        header('X-CDN-CACHE: ' . $this->cdnCacheHeadersHit, true);
     }
 
     // --------------------------------------------------------------------------
@@ -144,9 +150,9 @@ class NAILS_CDN_Controller extends NAILS_Controller
      * Unset the cache headers of an object
      * @return boolean
      */
-    protected function _unset_cache_headers()
+    protected function unsetCacheHeaders()
     {
-        if (empty($this->_cache_headers_set)) {
+        if (empty($this->cdnCacheHeadersSet)) {
 
             return false;
         }
@@ -180,7 +186,7 @@ class NAILS_CDN_Controller extends NAILS_Controller
      * @param  string $file The file we're sending the headers for
      * @return boolean
      */
-    protected function _serve_not_modified($file)
+    protected function serveNotModified($file)
     {
         if (function_exists('apache_request_headers')) {
 
@@ -253,21 +259,21 @@ class NAILS_CDN_Controller extends NAILS_Controller
      * @param  integer $height The height of the graphic
      * @return void
      */
-    protected function _bad_src($width = 100, $height = 100)
+    protected function serveBadSrc($width = 100, $height = 100)
     {
         //  Make sure this doesn't get cached
-        $this->_unset_cache_headers();
+        $this->unsetCacheHeaders();
 
         // --------------------------------------------------------------------------
 
         //  Create the icon
-        if ($this->retina) {
+        if ($this->isRetina) {
 
-            $icon = @imagecreatefrompng($this->_cdn_root . '_resources/img/fail@2x.png');
+            $icon = @imagecreatefrompng($this->cdnRoot . '_resources/img/fail@2x.png');
 
         } else {
 
-            $icon = @imagecreatefrompng($this->_cdn_root . '_resources/img/fail.png');
+            $icon = @imagecreatefrompng($this->cdnRoot . '_resources/img/fail.png');
         }
         $iconW = imagesx($icon);
         $iconH = imagesy($icon);

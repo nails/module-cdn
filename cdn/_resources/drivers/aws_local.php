@@ -36,19 +36,19 @@ class Aws_local_CDN implements Cdn_driver
 
         if (!defined('DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID')) {
 
-            //  @TODO: Specify correct lang
+            //  @todo: Specify correct lang
             show_error(lang('cdn_error_not_configured'));
         }
 
         if (!defined('DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET')) {
 
-            //  @TODO: Specify correct lang
+            //  @todo: Specify correct lang
             show_error(lang('cdn_error_not_configured'));
         }
 
         if (!defined('DEPLOY_CDN_DRIVER_AWS_S3_BUCKET')) {
 
-            //  @TODO: Specify correct lang
+            //  @todo: Specify correct lang
             show_error(lang('cdn_error_not_configured'));
         }
 
@@ -56,8 +56,8 @@ class Aws_local_CDN implements Cdn_driver
 
         //  Instanciate the AWS PHP SDK
         $this->s3 = S3Client::factory(array(
-            'key'       => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID,
-            'secret'    => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET,
+            'key'    => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_ID,
+            'secret' => DEPLOY_CDN_DRIVER_AWS_IAM_ACCESS_SECRET,
         ));
 
         // --------------------------------------------------------------------------

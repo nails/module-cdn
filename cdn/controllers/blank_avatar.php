@@ -1,214 +1,207 @@
-<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
-/**
- * Name:		Blank Avatar
- * Description:	Generates a blank avatar
- *
- **/
-
-//	Include _cdn.php; executes common functionality
+//  Include _cdn.php; executes common functionality
 require_once '_cdn.php';
 
 /**
- * OVERLOADING NAILS' CDN MODULES
+ * This class handles the "blank avatar" CDN endpoint
  *
- * Note the name of this class; done like this to allow apps to extend this class.
- * Read full explanation at the bottom of this file.
- *
- **/
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Controller
+ * @author      Nails Dev Team
+ * @link
+ */
 
 class NAILS_Blank_avatar extends NAILS_CDN_Controller
 {
-	protected $_fail;
-	protected $_man;
-	protected $_woman;
-	protected $_width;
-	protected $_height;
-	protected $_sex;
-	protected $retina;
-	protected $retinaMultiplier;
-	protected $_cache_file;
+    protected $avatarMale;
+    protected $avatarFemale;
+    protected $width;
+    protected $height;
+    protected $sex;
 
+    // --------------------------------------------------------------------------
 
-	// --------------------------------------------------------------------------
+    /**
+     * Construct the class; set defaults
+     *
+     * @access  public
+     * @return  void
+     *
+     **/
+    public function __construct()
+    {
+        parent::__construct();
 
+        // --------------------------------------------------------------------------
 
-	/**
-	 * Construct the class; set defaults
-	 *
-	 * @access	public
-	 * @return	void
-	 *
-	 **/
-	public function __construct()
-	{
-		parent::__construct();
+        //  'Constant' variables
+        $this->avatarMale   = $this->cdnRoot . '_resources/img/avatarMale.png';
+        $this->avatarFemale = $this->cdnRoot . '_resources/img/avatarFemale.png';
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	'Constant' variables
-		$this->_man			= $this->_cdn_root . '_resources/img/avatar_man.png';
-		$this->_woman		= $this->_cdn_root . '_resources/img/avatar_woman.png';
+        //  Determine dynamic values
+        $this->width  = $this->uri->segment(3, 100);
+        $this->height = $this->uri->segment(4, 100);
+        $this->sex    = strtolower($this->uri->segment(5, 'man'));
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	Determine dynamic values
-		$this->_width			= $this->uri->segment(3, 100);
-		$this->_height			= $this->uri->segment(4, 100);
-		$this->_sex				= strtolower( $this->uri->segment(5, 'man'));
-        $this->retina           = false;
-        $this->retinaMultiplier = 1;
+        /**
+         * Test for Retina - @2x just now, add more options as pixel densities
+         * become higher.
+         */
 
-		// --------------------------------------------------------------------------
+        if (preg_match('/(.+)@2x/', $this->sex, $matches)) {
 
-        //	Test for Retina
-        if (preg_match('/(.+)@2x/', $this->_sex, $matches)) {
-
-            $this->retina           = true;
+            $this->isRetina         = true;
             $this->retinaMultiplier = 2;
-            $this->_sex				= $matches[1];
+            $this->sex              = $matches[1];
         }
 
         // --------------------------------------------------------------------------
 
         /**
-		 * Set a unique filename (but one which is constant if requested twice, i.e
-		 * no random values)
-		 */
+         * Set a unique filename (but one which is constant if requested twice, i.e
+         * no random values)
+         */
 
-		$width	= $this->_width * $this->retinaMultiplier;
-		$height	= $this->_height * $this->retinaMultiplier;
+        $width  = $this->width * $this->retinaMultiplier;
+        $height = $this->height * $this->retinaMultiplier;
 
-		$this->_cache_file  = 'blank_avatar';
-		$this->_cache_file .= '-' . $width . 'x' . $height;
-		$this->_cache_file .= '-' . $this->_sex;
-		$this->_cache_file .= '.png';
-	}
+        $this->cdnCacheFile  = 'blank_avatar';
+        $this->cdnCacheFile .= '-' . $width . 'x' . $height;
+        $this->cdnCacheFile .= '-' . $this->sex;
+        $this->cdnCacheFile .= '.png';
+    }
 
+    // --------------------------------------------------------------------------
 
-	// --------------------------------------------------------------------------
+    /**
+     * Generate the thumbnail
+     * @return  void
+     **/
+    public function index()
+    {
+        /**
+         * Check the request headers; avoid hitting the disk at all if possible. If
+         * the Etag matches then send a Not-Modified header and terminate execution.
+         */
 
+        if ($this->serveNotModified($this->cdnCacheFile)) {
 
-	/**
-	 * Generate the thumbnail
-	 *
-	 * @access	public
-	 * @return	void
-	 **/
-	public function index()
-	{
-		//	Check the request headers; avoid hitting the disk at all if possible. If the Etag
-		//	matches then send a Not-Modified header and terminate execution.
+            return;
+        }
 
-		if ( $this->_serve_not_modified( $this->_cache_file ) )
-			return;
+        // --------------------------------------------------------------------------
 
-		// --------------------------------------------------------------------------
+        /**
+         * The browser does not have a local cache (or it's out of date) check the cache
+         * to see if this image has been processed already; serve it up if it has.
+         */
 
-		//	The browser does not have a local cache (or it's out of date) check the
-		//	cache to see if this image has been processed already; serve it up if
-		//	it has.
+        if (file_exists(DEPLOY_CACHE_DIR . $this->cdnCacheFile)) {
 
-		if ( file_exists( DEPLOY_CACHE_DIR . $this->_cache_file ) ) :
+            $this->serveFromCache($this->cdnCacheFile);
 
-			$this->_serve_from_cache( $this->_cache_file );
+        } else {
 
-		else :
+            /**
+             * Cache object does not exist, fetch the original, process it and save a
+             * version in the cache bucket.
+             */
 
-			//	Cache object does not exist, fetch the original, process it and save a
-			//	version in the cache bucket.
+            //  Which original are we using?
+            switch ($this->sex) {
 
-			//	Which original are we using?
-			switch ( $this->_sex ) :
+                case 'female':
+                case 'woman':
+                case 'f':
+                case 'w':
+                case '2':
 
-				case 'female' :
-				case 'woman' :
-				case 'f' :
-				case 'w' :
-				case '2' :
+                    $src = $this->avatarFemale;
+                    break;
 
-					$_src = $this->_woman;
+                // --------------------------------------------------------------------------
 
-				break;
+                case 'male':
+                case 'man':
+                case 'm':
+                case '1':
 
-				// --------------------------------------------------------------------------
+                    $src = $this->avatarMale;
+                    break;
 
-				case 'male' :
-				case 'man' :
-				case 'm' :
-				case '1' :
+                // --------------------------------------------------------------------------
 
-					$_src = $this->_man;
+                /**
+                 * Fallback to a default avatar
+                 * @todo: Make this avatar gender neutral
+                 */
 
-				break;
+                default:
 
-				// --------------------------------------------------------------------------
+                    $src = $this->avatarMale;
+                    break;
+            }
 
-				//	Fallback to a default avatar
-				//	TODO: Make this avatar gender neutral
-				default :
+            $width  = $this->width * $this->retinaMultiplier;
+            $height = $this->height * $this->retinaMultiplier;
 
-					$_src = $this->_man;
+            if (file_exists($src)) {
 
-				break;
+                //  Object exists, time for manipulation fun times :>
 
-			endswitch;
+                //  Set some PHPThumb options
+                $options             = array();
+                $options['resizeUp'] = true;
 
-			$width	= $this->_width * $this->retinaMultiplier;
-			$height	= $this->_height * $this->retinaMultiplier;
+                // --------------------------------------------------------------------------
 
-			if ( file_exists( $_src ) ) :
+                //  Perform the resize
+                $PHPThumb = new PHPThumb\GD($src, $options);
+                $PHPThumb->adaptiveResize($width, $height);
 
-				//	Object exists, time for manipulation fun times :>
+                // --------------------------------------------------------------------------
 
-				//	Set some PHPThumb options
-				$_options['resizeUp']		= TRUE;
+                //  Set the appropriate cache headers
+                $this->setCacheHeaders(time(), $this->cdnCacheFile, false);
 
-				// --------------------------------------------------------------------------
+                // --------------------------------------------------------------------------
 
-				//	Perform the resize
-				$PHPThumb = new PHPThumb\GD( $_src, $_options );
-				$PHPThumb->adaptiveResize( $width, $height );
+                //  Output the newly rendered file to the browser
+                $PHPThumb->show();
 
-				// --------------------------------------------------------------------------
+                // --------------------------------------------------------------------------
 
-				//	Set the appropriate cache headers
-				$this->_set_cache_headers( time(), $this->_cache_file, FALSE );
+                //  Save local version
+                $PHPThumb->save(DEPLOY_CACHE_DIR . $this->cdnCacheFile);
 
-				// --------------------------------------------------------------------------
+            } else {
 
-				//	Output the newly rendered file to the browser
-				$PHPThumb->show();
+                //  This object does not exist.
+                log_message('error', 'CDN: Blank Avatar: File not found; ' . $src);
+                return $this->serveBadSrc($width, $height);
+            }
+        }
+    }
 
-				// --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
-				//	Save local version
-				$PHPThumb->save( DEPLOY_CACHE_DIR . $this->_cache_file );
-
-			else :
-
-				//	This object does not exist.
-				log_message( 'error', 'CDN: Blank Avatar: File not found; ' . $_src );
-				return $this->_bad_src( $width, $height );
-
-			endif;
-
-		endif;
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	public function _remap()
-	{
-		$this->index();
-	}
+    /**
+     * Map all requests to index();
+     * @return void
+     */
+    public function _remap()
+    {
+        $this->index();
+    }
 }
 
-
 // --------------------------------------------------------------------------
-
 
 /**
  * OVERLOADING NAILS' CDN MODULES
@@ -234,14 +227,9 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
  *
  **/
 
-if ( ! defined( 'NAILS_ALLOW_EXTENSION_BLANK_AVATAR' ) ) :
+if (!defined('NAILS_ALLOW_EXTENSION_BLANK_AVATAR')) {
 
-	class Blank_avatar extends NAILS_Blank_avatar
-	{
-	}
-
-endif;
-
-
-/* End of file blank_avatar.php */
-/* Location: ./modules/cdn/controllers/blank_avatar.php */
+    class Blank_avatar extends NAILS_Blank_avatar
+    {
+    }
+}

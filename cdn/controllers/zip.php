@@ -1,194 +1,185 @@
 <?php
 
-/**
- * Name:		Zip
- *
- * Description:	Serves a zip file containing raw objects
- *
- **/
-
-//	Include _cdn.php; executes common functionality
+//  Include _cdn.php; executes common functionality
 require_once '_cdn.php';
 
 /**
- * OVERLOADING NAILS' CDN MODULES
+ * This class handles the "zip" CDN endpoint
  *
- * Note the name of this class; done like this to allow apps to extend this class.
- * Read full explanation at the bottom of this file.
- *
- **/
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Controller
+ * @author      Nails Dev Team
+ * @link
+ */
 
 class NAILS_Zip extends NAILS_CDN_Controller
 {
-	protected $_cache_file;
+    /**
+     * Serve a zip file containing objects
+     * @return void
+     */
+    public function index()
+    {
+        //  Decode the token
+        $ids      = $this->uri->segment(3);
+        $hash     = $this->uri->segment(4);
+        $filename = urldecode($this->uri->segment(5));
 
+        if ($ids && $hash) {
 
-	// --------------------------------------------------------------------------
+            //  Check the hash
+            $objects = $this->cdn->verify_url_serve_zipped_hash($hash, $ids, $filename);
 
+            if ($objects) {
 
-	public function index()
-	{
-		//	Decode the token
-		$_ids		= $this->uri->segment( 3 );
-		$_hash		= $this->uri->segment( 4 );
-		$_filename	= urldecode( $this->uri->segment( 5 ) );
+                //  Define the cache file
+                $this->cdnCacheFile = 'cdn-zip-' . $hash . '.zip';
 
-		if ( $_ids && $_hash ) :
+                /**
+                 * Check the request headers; avoid hitting the disk at all if possible. If
+                 * the Etag matches then send a Not-Modified header and terminate execution.
+                 */
 
-			//	Check the hash
-			$_objects = $this->cdn->verify_url_serve_zipped_hash( $_hash, $_ids, $_filename );
+                if ($this->serveNotModified($this->cdnCacheFile)) {
 
-			if ( $_objects ) :
+                    return;
+                }
 
-				//	Define the cache file
-				$this->_cache_file = 'cdn-zip-' . $_hash . '.zip';
+                // --------------------------------------------------------------------------
 
-				//	Check the request headers; avoid hitting the disk at all if possible. If the Etag
-				//	matches then send a Not-Modified header and terminate execution.
+                /**
+                 * The browser does not have a local cache (or it's out of date) check the cache
+                 * to see if this image has been processed already; serve it up if it has.
+                 */
 
-				if ( $this->_serve_not_modified( $this->_cache_file ) ) :
+                if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) {
 
-					return;
+                    $this->serveFromCache($this->cdnCacheFile);
 
-				endif;
+                } else {
 
-				// --------------------------------------------------------------------------
+                    /**
+                     * Cache object does not exist, fetch the originals, zip them and save a
+                     * version in the cache bucket..
+                     *
+                     * Fetch the files to use, if any one doesn't exist any more then this zip
+                     * file should fall over.
+                     */
 
-				//	The browser does not have a local cache (or it's out of date) check the
-				//	cache to see if this image has been processed already; serve it up if
-				//	it has.
+                    $usefiles   = array();
+                    $useBuckets = false;
+                    $prevBucket = '';
 
-				if ( file_exists( $this->_cachedir . $this->_cache_file ) ) :
+                    foreach ($objects as $obj) {
 
-					$this->_serve_from_cache( $this->_cache_file );
+                        $temp           = new stdClass();
+                        $temp->path     = $this->cdn->object_local_path($obj->bucket->slug, $obj->filename);
+                        $temp->filename = $obj->filename_display;
+                        $temp->bucket   = $obj->bucket->label;
 
-				else :
+                        if (!$temp->path) {
 
-					//	Cache object does not exist, fetch the originals, zip them and save a
-					//	version in the cache bucket.
+                            return $this->serveBadSrc('Object "' . $obj->filename . '" does not exist');
+                        }
 
-					//	Fetch the files to use, if any one doesn't exist any more then this
-					//	zip file should fall over.
+                        if (!$useBuckets && $prevBucket && $prevBucket !== $obj->bucket->id) {
 
-					$_usefiles		= array();
-					$_use_buckets	= FALSE;
-					$_prev_bucket	= '';
+                            $useBuckets = true;
+                        }
 
-					foreach ( $_objects as $obj ) :
+                        $prevBucket = $obj->bucket->id;
+                        $usefiles[] = $temp;
+                    }
 
-						$_temp				= new stdClass();
-						$_temp->path		= $this->cdn->object_local_path( $obj->bucket->slug, $obj->filename );
-						$_temp->filename	= $obj->filename_display;
-						$_temp->bucket		= $obj->bucket->label;
+                    // --------------------------------------------------------------------------
 
-						if ( ! $_temp->path ) :
+                    //  Time to start Zipping!
+                    $this->load->library('zip');
 
-							return $this->_bad_src();
+                    //  Save to the zip
+                    foreach ($usefiles as $file) {
 
-						endif;
+                        $name = $useBuckets ? $file->bucket . '/' . $file->filename : $file->filename;
+                        $this->zip->add_data($name, file_get_contents($file->path));
+                    }
 
-						if ( ! $_use_buckets && $_prev_bucket && $_prev_bucket !== $obj->bucket->id ) :
+                    //  Save the Zip to the cache directory
+                    $this->zip->archive($this->cdnCacheDir . $this->cdnCacheFile);
 
-							$_use_buckets = TRUE;
+                    // --------------------------------------------------------------------------
 
-						endif;
+                    //  Set the appropriate cache headers
+                    $this->setCacheHeaders(time(), $this->cdnCacheFile, false);
 
-						$_prev_bucket	= $obj->bucket->id;
-						$_usefiles[]	= $_temp;
+                    // --------------------------------------------------------------------------
 
-					endforeach;
+                    //  Output to browser
+                    $this->zip->download($filename);
+                }
 
-					// --------------------------------------------------------------------------
+            } else {
 
-					//	Time to start Zipping!
-					$this->load->library( 'zip' );
+                $this->serveBadSrc('Could not verify token');
+            }
 
-					//	Save to the zip
-					foreach ( $_usefiles as $file ) :
+        } else {
 
-						$_name = $_use_buckets ? $file->bucket . '/' . $file->filename : $file->filename;
-						$this->zip->add_data( $_name, file_get_contents( $file->path ) );
+            $this->serveBadSrc('Missing parameters');
+        }
+    }
 
-					endforeach;
+    // --------------------------------------------------------------------------
 
-					//	Save the Zip to the cache directory
-					$this->zip->archive( $this->_cachedir . $this->_cache_file );
+    /**
+     * Handles bad requests
+     * @param  string $error The error which occurred
+     * @return void
+     */
+    protected function serveBadSrc($error = null)
+    {
+        header('Cache-Control: no-cache, must-revalidate', true);
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
+        header('Content-type: application/json', true);
+        header($this->input->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
 
-					// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-					//	Set the appropriate cache headers
-					$this->_set_cache_headers( time(), $this->_cache_file, FALSE );
+        $out = array(
+            'status'  => 400,
+            'message' => lang('cdn_error_serve_invalid_request')
+        );
 
-					// --------------------------------------------------------------------------
+        if ($error) {
 
-					//	Output to browser
-					$this->zip->download( $_filename );
+            $out['error'] = $error;
+        }
 
-				endif;
+        echo json_encode($out);
 
-			else :
+        // --------------------------------------------------------------------------
 
-				$this->_bad_src();
+        /**
+         * Kill script, th, th, that's all folks. Stop the output class from hijacking
+         * our headers and setting an incorrect Content-Type
+         */
 
-			endif;
+        exit(0);
+    }
 
-		else :
+    // --------------------------------------------------------------------------
 
-			$this->_bad_src();
-
-		endif;
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	protected function _bad_src( $error = NULL )
-	{
-		header( 'Cache-Control: no-cache, must-revalidate', TRUE );
-		header( 'Expires: Mon, 26 Jul 1997 05:00:00 GMT', TRUE );
-		header( 'Content-type: application/json', TRUE );
-		header( $this->input->server( 'SERVER_PROTOCOL' ) . ' 400 Bad Request', TRUE, 400 );
-
-		// --------------------------------------------------------------------------
-
-		$_out = array(
-
-			'status'	=> 400,
-			'message'	=> lang( 'cdn_error_serve_invalid_request' )
-
-		);
-
-		if ( $error ) :
-
-			$_out['error'] = $error;
-
-		endif;
-
-		echo json_encode( $_out );
-
-		// --------------------------------------------------------------------------
-
-		//	Kill script, th, th, that's all folks.
-		//	Stop the output class from hijacking our headers and
-		//	setting an incorrect Content-Type
-
-		exit(0);
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	public function _remap()
-	{
-		$this->index();
-	}
+    /**
+     * Map all requests to index()
+     * @return void
+     */
+    public function _remap()
+    {
+        $this->index();
+    }
 }
 
-
 // --------------------------------------------------------------------------
-
 
 /**
  * OVERLOADING NAILS' CDN MODULES
@@ -214,14 +205,9 @@ class NAILS_Zip extends NAILS_CDN_Controller
  *
  **/
 
-if ( ! defined( 'NAILS_ALLOW_EXTENSION_ZIP' ) ) :
+if (!defined('NAILS_ALLOW_EXTENSION_ZIP')) {
 
-	class Zip extends NAILS_Zip
-	{
-	}
-
-endif;
-
-
-/* End of file zip.php */
-/* Location: ./application/modules/cdn/controllers/zip.php */
+    class Zip extends NAILS_Zip
+    {
+    }
+}

@@ -1,23 +1,17 @@
 <?php
 
-/**
- * Name:		Thumb
- *
- * Description:	Generates a thumbnail of an image
- *
- **/
-
 //	Include _cdn.php; executes common functionality
 require_once '_cdn.php';
 
-
 /**
- * OVERLOADING NAILS' CDN MODULES
+ * This class handles the "thumb" CDN endpoint
  *
- * Note the name of this class; done like this to allow apps to extend this class.
- * Read full explanation at the bottom of this file.
- *
- **/
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Controller
+ * @author      Nails Dev Team
+ * @link
+ */
 
 class NAILS_Thumb extends NAILS_CDN_Controller
 {
@@ -27,8 +21,6 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 	protected $_height;
 	protected $_object;
 	protected $_extension;
-	protected $retina;
-	protected $retinaMultiplier;
 	protected $_cache_file;
 
 
@@ -49,20 +41,22 @@ class NAILS_Thumb extends NAILS_CDN_Controller
         // --------------------------------------------------------------------------
 
         //	Determine dynamic values
-        $this->_width           = $this->uri->segment(3, 100);
-        $this->_height          = $this->uri->segment(4, 100);
-        $this->_bucket          = $this->uri->segment(5);
-        $this->_object          = urldecode($this->uri->segment(6));
-        $this->_extension       = !empty($this->_object) ? strtolower(substr($this->_object, strrpos($this->_object, '.'))) : false;
-        $this->retina           = false;
-        $this->retinaMultiplier = 1;
+        $this->_width     = $this->uri->segment(3, 100);
+        $this->_height    = $this->uri->segment(4, 100);
+        $this->_bucket    = $this->uri->segment(5);
+        $this->_object    = urldecode($this->uri->segment(6));
+        $this->_extension = !empty($this->_object) ? strtolower(substr($this->_object, strrpos($this->_object, '.'))) : false;
 
         // --------------------------------------------------------------------------
 
-        //	Test for Retina
+        /**
+         * Test for Retina - @2x just now, add more options as pixel densities
+         * become higher.
+         */
+
         if (preg_match('/(.+)@2x(\..+)/', $this->_object, $matches)) {
 
-            $this->retina           = true;
+            $this->isRetina         = true;
             $this->retinaMultiplier = 2;
             $this->_object          = $matches[1] . $matches[2];
         }
@@ -97,11 +91,11 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		$width	= $this->_width * $this->retinaMultiplier;
 		$height	= $this->_height * $this->retinaMultiplier;
 
-		$this->_cache_file  = $this->_bucket;
-		$this->_cache_file .= '-' . substr($this->_object, 0, strrpos($this->_object, '.'));
-		$this->_cache_file .= '-' . $_cropmethod;
-		$this->_cache_file .= '-' . $width . 'x' . $height;
-		$this->_cache_file .= $this->_extension;
+		$this->cdnCacheFile  = $this->_bucket;
+		$this->cdnCacheFile .= '-' . substr($this->_object, 0, strrpos($this->_object, '.'));
+		$this->cdnCacheFile .= '-' . $_cropmethod;
+		$this->cdnCacheFile .= '-' . $width . 'x' . $height;
+		$this->cdnCacheFile .= $this->_extension;
 
 		// --------------------------------------------------------------------------
 
@@ -109,7 +103,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		if (!$this->_bucket || !$this->_object || !$this->_extension) :
 
 			log_message('error', 'CDN: ' . $_cropmethod . ': Missing _bucket, _object or _extension');
-			return $this->_bad_src();
+			return $this->serveBadSrc();
 
 		endif;
 
@@ -118,7 +112,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		//	Check the request headers; avoid hitting the disk at all if possible. If the Etag
 		//	matches then send a Not-Modified header and terminate execution.
 
-		if ($this->_serve_not_modified($this->_cache_file)) :
+		if ($this->serveNotModified($this->cdnCacheFile)) :
 
 			$this->cdn->object_increment_count($_cropmethod, $this->_object, $this->_bucket);
 			return;
@@ -146,7 +140,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 					$width	= $this->_width * $this->retinaMultiplier;
 					$height	= $this->_height * $this->retinaMultiplier;
 
-					return $this->_bad_src($width, $height);
+					return $this->serveBadSrc($width, $height);
 				}
 
 			} else {
@@ -154,7 +148,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 				$width	= $this->_width * $this->retinaMultiplier;
 				$height	= $this->_height * $this->retinaMultiplier;
 
-				return $this->_bad_src($width, $height);
+				return $this->serveBadSrc($width, $height);
 			}
 		}
 
@@ -166,10 +160,10 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		 * it has.
 		 */
 
-		if (file_exists($this->_cachedir . $this->_cache_file)) :
+		if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) :
 
 			$this->cdn->object_increment_count($_cropmethod, $this->_object, $this->_bucket);
-			$this->_serve_from_cache($this->_cache_file);
+			$this->serveFromCache($this->cdnCacheFile);
 
 		else :
 
@@ -189,7 +183,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 				$width	= $this->_width * $this->retinaMultiplier;
 				$height	= $this->_height * $this->retinaMultiplier;
 
-				return $this->_bad_src($width, $height);
+				return $this->serveBadSrc($width, $height);
 
 			elseif(!filesize($_usefile)) :
 
@@ -210,7 +204,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 					$width	= $this->_width * $this->retinaMultiplier;
 					$height	= $this->_height * $this->retinaMultiplier;
 
-					return $this->_bad_src($width, $height);
+					return $this->serveBadSrc($width, $height);
 
 				elseif(!filesize($_usefile)) :
 
@@ -219,7 +213,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 					$width	= $this->_width * $this->retinaMultiplier;
 					$height	= $this->_height * $this->retinaMultiplier;
 
-					return $this->_bad_src($width, $height);
+					return $this->serveBadSrc($width, $height);
 
 				endif;
 
@@ -234,7 +228,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			 */
 
 			//	Set the appropriate cache headers
-			$this->_set_cache_headers(time(), $this->_cache_file, FALSE);
+			$this->setCacheHeaders(time(), $this->cdnCacheFile, FALSE);
 
 			// --------------------------------------------------------------------------
 
@@ -272,7 +266,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 		/**
 		 * Perform the resize
 		 * Turn errors off, if something bad happens we want to
-		 * output the _bad_src image and log the issue.
+		 * output the serveBadSrc image and log the issue.
 		 */
 
 		$_old_errors = error_reporting();
@@ -299,7 +293,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			$PHPThumb->{$PHPThumb_method}($width, $height);
 
 			//	Save cache version
-			$PHPThumb->save($this->_cachedir . $this->_cache_file, $ext);
+			$PHPThumb->save($this->cdnCacheDir . $this->cdnCacheFile, $ext);
 
 			//	Flush the buffer
 			ob_end_clean();
@@ -316,10 +310,10 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			ob_end_clean();
 
 			//	Bad SRC
-			return $this->_bad_src($width, $height);
+			return $this->serveBadSrc($width, $height);
 		}
 
-		$this->_serve_from_cache($this->_cache_file, false);
+		$this->serveFromCache($this->cdnCacheFile, false);
 
 		//	Switch error reporting back how it was
 		error_reporting($_old_errors);
@@ -354,8 +348,8 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			$_i++;
 
 			//	Set these for recompiling
-			$_frames[]		= $this->_cachedir . $_filename;
-			$_cachefiles[]	= $this->_cachedir . $_temp_filename;
+			$_frames[]		= $this->cdnCacheDir . $_filename;
+			$_cachefiles[]	= $this->cdnCacheDir . $_temp_filename;
 			$_durations[]	= $frame['duration'];
 
 			// --------------------------------------------------------------------------
@@ -367,15 +361,15 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 			// --------------------------------------------------------------------------
 
 			//	Perform the resize; first save the original frame to disk
-			imagegif($frame['image'], $this->_cachedir . $_temp_filename);
+			imagegif($frame['image'], $this->cdnCacheDir . $_temp_filename);
 
-			$PHPThumb = new PHPThumb\GD($this->_cachedir . $_temp_filename, $_options);
+			$PHPThumb = new PHPThumb\GD($this->cdnCacheDir . $_temp_filename, $_options);
 			$PHPThumb->{$PHPThumb_method}($width, $height);
 
 			// --------------------------------------------------------------------------
 
 			//	Save cache version
-			$PHPThumb->save($this->_cachedir . $_filename , strtoupper(substr($this->_extension, 1)));
+			$PHPThumb->save($this->cdnCacheDir . $_filename , strtoupper(substr($this->_extension, 1)));
 
 		endforeach;
 
@@ -399,7 +393,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 
 		//	Save to cache
 		$this->load->helper('file');
-		write_file($this->_cachedir . $this->_cache_file, $_data);
+		write_file($this->cdnCacheDir . $this->cdnCacheFile, $_data);
 
 		// --------------------------------------------------------------------------
 
@@ -472,6 +466,3 @@ if (!defined('NAILS_ALLOW_EXTENSION_THUMB')) :
 	}
 
 endif;
-
-/* End of file thumb.php */
-/* Location: ./modules/cdn/controllers/thumb.php */

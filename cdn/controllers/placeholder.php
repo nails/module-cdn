@@ -1,202 +1,208 @@
-<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
-/**
- * Name:			Placeholder
- *
- * Description:	Generates a placeholder image
- *
- **/
-
-//	Include _cdn.php; executes common functionality
+//  Include _cdn.php; executes common functionality
 require_once '_cdn.php';
 
 /**
- * OVERLOADING NAILS' CDN MODULES
+ * This class handles the "placeholder" CDN endpoint
  *
- * Note the name of this class; done like this to allow apps to extend this class.
- * Read full explanation at the bottom of this file.
- *
- **/
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Controller
+ * @author      Nails Dev Team
+ * @link
+ */
 
 class NAILS_Placeholder extends NAILS_CDN_Controller
 {
-	private $_tile;
-	private $_width;
-	private $_height;
-	private $_border;
-	private $_cache_file;
-	protected $retina;
-	protected $retinaMultiplier;
+    private $tile;
+    private $width;
+    private $height;
+    private $border;
 
-	// --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
-	public function __construct()
-	{
-		parent::__construct();
+    /**
+     * Construct the controller
+     */
+    public function __construct()
+    {
+        parent::__construct();
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	'Constant' variables
-		$this->_tile	= $this->_cdn_root . '_resources/img/placeholder.png';
+        //  'Constant' variables
+        $this->tile = $this->cdnRoot . '_resources/img/placeholder.png';
 
-		//	Determine dynamic values
-		$this->_width	= $this->uri->segment(3, 100);
-		$this->_height	= $this->uri->segment(4, 100);
-		$this->_border	= $this->uri->segment(5, 1);
+        //  Determine dynamic values
+        $this->width  = $this->uri->segment(3, 100);
+        $this->height = $this->uri->segment(4, 100);
+        $this->border = $this->uri->segment(5, 1);
 
-        $this->retina           = false;
-        $this->retinaMultiplier = 1;
+        // --------------------------------------------------------------------------
 
-		// --------------------------------------------------------------------------
+        /**
+         * Test for Retina - @2x just now, add more options as pixel densities become
+         * higher. Multiple tests for the same thing here due to the optional aspect
+         * of the border parameter in the URL.
+         */
 
-        //	Test for Retina
-        if (preg_match('/(.+)@2x/', $this->_border, $matches)) {
+        if (preg_match('/(.+)@2x/', $this->border, $matches)) {
 
-            $this->retina           = true;
+            $this->isRetina         = true;
             $this->retinaMultiplier = 2;
-            $this->_border			= $matches[1];
+            $this->border           = $matches[1];
 
-        } elseif (preg_match('/(.+)@2x/', $this->_height, $matches)) {
+        } elseif (preg_match('/(.+)@2x/', $this->height, $matches)) {
 
-            $this->retina           = true;
+            $this->isRetina         = true;
             $this->retinaMultiplier = 2;
-            $this->_height			= $matches[1];
+            $this->height           = $matches[1];
         }
 
         // --------------------------------------------------------------------------
 
-		//	Apply limits (prevent DOS)
-		$this->_width	= $this->_width > 2000 ? 2000 : $this->_width;
-		$this->_height	= $this->_height > 2000 ? 2000 : $this->_height;
-		$this->_border	= $this->_border > 2000 ? 2000 : $this->_border;
+        //  Apply limits (prevent DOS)
+        $this->width   = $this->width > 2000 ? 2000 : $this->width;
+        $this->height  = $this->height > 2000 ? 2000 : $this->height;
+        $this->border  = $this->border > 2000 ? 2000 : $this->border;
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
         /**
-		 * Set a unique filename (but one which is constant if requested twice, i.e
-		 * no random values)
-		 */
+         * Set a unique filename (but one which is constant if requested twice, i.e
+         * no random values)
+         */
 
-		$width	= $this->_width * $this->retinaMultiplier;
-		$height	= $this->_height * $this->retinaMultiplier;
-		$border	= $this->_border * $this->retinaMultiplier;
+        $width  = $this->width * $this->retinaMultiplier;
+        $height = $this->height * $this->retinaMultiplier;
+        $border = $this->border * $this->retinaMultiplier;
 
-		$this->_cache_file  = 'placeholder';
-		$this->_cache_file .= '-' . $width . 'x' . $height;
-		$this->_cache_file .= '-' . $border;
-		$this->_cache_file .= '.png';
-	}
+        $this->cdnCacheFile  = 'placeholder';
+        $this->cdnCacheFile .= '-' . $width . 'x' . $height;
+        $this->cdnCacheFile .= '-' . $border;
+        $this->cdnCacheFile .= '.png';
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Render a placeholder
+     * @return void
+     */
+    public function index()
+    {
+        /**
+         * Check the request headers; avoid hitting the disk at all if possible.
+         * If the Etag matches then send a Not-Modified header and terminate
+         * execution.
+         */
+
+        if ($this->serveNotModified($this->cdnCacheFile)) {
+            return;
+        }
+
+        // --------------------------------------------------------------------------
+
+        /**
+         * The browser does not have a local cache (or it's out of date) check the
+         * cache directory to see if this image has been processed already; serve
+         * it up if it has.
+         */
+
+        if (file_exists(DEPLOY_CACHE_DIR . $this->cdnCacheFile)) {
+
+            $this->serveFromCache($this->cdnCacheFile);
+
+        } else {
+
+            //  Cache object does not exist, create a new one and cache it
+            $width  = $this->width * $this->retinaMultiplier;
+            $height = $this->height * $this->retinaMultiplier;
+            $border = $this->border * $this->retinaMultiplier;
+
+            //  Get and create the placeholder graphic
+            $tile = imagecreatefrompng($this->tile);
+
+            // --------------------------------------------------------------------------
+
+            //  Create the container
+            $img = imagecreatetruecolor($width, $height);
+
+            // --------------------------------------------------------------------------
+
+            //  Tile the placeholder
+            imagesettile($img, $tile);
+            imagefilledrectangle($img, 0, 0, $width, $height, IMG_COLOR_TILED);
+
+            // --------------------------------------------------------------------------
+
+            //  Draw a border
+            $borderColor = imagecolorallocate($img, 190, 190, 190);
+
+            for ($i = 0; $i < $border; $i++) {
+
+                //  Left
+                imageline($img, 0+$i, 0, 0+$i, $height, $borderColor);
+
+                //  Top
+                imageline($img, 0, 0+$i, $width, 0+$i, $borderColor);
+
+                //  Bottom
+                imageline($img, 0, $height-1-$i, $width, $height-1-$i, $borderColor);
+
+                //  Right
+                imageline($img, $width-1-$i, 0, $width-1-$i, $height, $borderColor);
+
+            }
+
+            // --------------------------------------------------------------------------
+
+            //  Set the appropriate cache headers
+            $this->setCacheHeaders(time(), $this->cdnCacheFile, false);
+
+            // --------------------------------------------------------------------------
+
+            //  Output to browser
+            header('Content-Type: image/png', true);
+            imagepng($img);
+
+            // --------------------------------------------------------------------------
+
+            //  Save local version, make sure cache is writable
+            imagepng($img, DEPLOY_CACHE_DIR . $this->cdnCacheFile);
+
+            // --------------------------------------------------------------------------
+
+            //  Destroy the images to free up resource
+            imagedestroy($tile);
+            imagedestroy($img);
+
+        }
+
+        // --------------------------------------------------------------------------
+
+        //  Kill script, th, th, that's all folks.
+        //  Stop the output class from hijacking our headers and
+        //  setting an incorrect Content-Type
+
+        exit(0);
+    }
 
 
-	// --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
-
-	public function index()
-	{
-		//	Check the request headers; avoid hitting the disk at all if possible. If the Etag
-		//	matches then send a Not-Modified header and terminate execution.
-
-		if ( $this->_serve_not_modified( $this->_cache_file ) )
-			return;
-
-		// --------------------------------------------------------------------------
-
-		//	The browser does not have a local cache (or it's out of date) check the
-		//	cache directory to see if this image has been processed already; serve it up if
-		//	it has.
-
-		if ( file_exists( DEPLOY_CACHE_DIR . $this->_cache_file ) ) :
-
-			$this->_serve_from_cache( $this->_cache_file );
-
-		else :
-
-			//	Cache object does not exist, create a new one and cache it
-			$width	= $this->_width * $this->retinaMultiplier;
-			$height	= $this->_height * $this->retinaMultiplier;
-			$border	= $this->_border * $this->retinaMultiplier;
-
-			//	Get and create the placeholder graphic
-			$_tile	= imagecreatefrompng( $this->_tile );
-
-			// --------------------------------------------------------------------------
-
-			//	Create the container
-			$_img	= imagecreatetruecolor( $width, $height );
-
-			// --------------------------------------------------------------------------
-
-			//	Tile the placeholder
-			imagesettile( $_img, $_tile );
-			imagefilledrectangle( $_img, 0, 0, $width, $height, IMG_COLOR_TILED );
-
-			// --------------------------------------------------------------------------
-
-			//	Draw a border
-			$_border = imagecolorallocate( $_img, 190, 190, 190 );
-
-			for ( $i = 0; $i < $border; $i++ ) :
-
-				//	Left
-				imageline( $_img, 0+$i, 0, 0+$i, $height, $_border );
-
-				//	Top
-				imageline( $_img, 0, 0+$i, $width, 0+$i, $_border );
-
-				//	Bottom
-				imageline( $_img, 0, $height-1-$i, $width, $height-1-$i,  $_border );
-
-				//	Right
-				imageline( $_img, $width-1-$i, 0, $width-1-$i, $height,  $_border );
-
-			endfor;
-
-			// --------------------------------------------------------------------------
-
-			//	Set the appropriate cache headers
-			$this->_set_cache_headers( time(), $this->_cache_file, FALSE );
-
-			// --------------------------------------------------------------------------
-
-			//	Output to browser
-			header( 'Content-Type: image/png', TRUE );
-			imagepng( $_img );
-
-			// --------------------------------------------------------------------------
-
-			//	Save local version, make sure cache is writable
-			imagepng( $_img, DEPLOY_CACHE_DIR . $this->_cache_file );
-
-			// --------------------------------------------------------------------------
-
-			//	Destroy the images to free up resource
-			imagedestroy( $_tile );
-			imagedestroy( $_img );
-
-		endif;
-
-		// --------------------------------------------------------------------------
-
-		//	Kill script, th, th, that's all folks.
-		//	Stop the output class from hijacking our headers and
-		//	setting an incorrect Content-Type
-
-		exit(0);
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	public function _remap()
-	{
-		$this->index();
-	}
+    /**
+     * Map all requests to index()
+     * @return void
+     */
+    public function _remap()
+    {
+        $this->index();
+    }
 }
 
-
 // --------------------------------------------------------------------------
-
 
 /**
  * OVERLOADING NAILS' CDN MODULES
@@ -222,14 +228,9 @@ class NAILS_Placeholder extends NAILS_CDN_Controller
  *
  **/
 
-if ( ! defined( 'NAILS_ALLOW_EXTENSION_PLACEHOLDER' ) ) :
+if (!defined('NAILS_ALLOW_EXTENSION_PLACEHOLDER')) {
 
-	class Placeholder extends NAILS_Placeholder
-	{
-	}
-
-endif;
-
-
-/* End of file placeholder.php */
-/* Location: ./modules/cdn/controllers/placeholder.php */
+    class Placeholder extends NAILS_Placeholder
+    {
+    }
+}

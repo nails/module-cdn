@@ -1,41 +1,32 @@
 <?php
 
-/**
- * Name:		Scale
- *
- * Description:	Generates a scaled version of an image
- *
- **/
-
-//	Include _cdn.php; executes common functionality
+//  Include _cdn.php; executes common functionality
 require_once '_cdn.php';
 require_once 'thumb.php';
 
 /**
- * OVERLOADING NAILS' CDN MODULES
+ * This class handles the "scale" CDN endpoint
  *
- * Note the name of this class; done like this to allow apps to extend this class.
- * Read full explanation at the bottom of this file.
- *
- **/
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Controller
+ * @author      Nails Dev Team
+ * @link
+ */
 
 class NAILS_Scale extends Thumb
 {
-	/**
-	 * Generate the thumbnail
-	 *
-	 * @access	public
-	 * @return	void
-	 **/
-	public function index()
-	{
-		return parent::index( 'SCALE' );
-	}
+    /**
+     * Generate a thumbnail
+     * @return  void
+     **/
+    public function index()
+    {
+        return parent::index('SCALE');
+    }
 }
 
-
 // --------------------------------------------------------------------------
-
 
 /**
  * OVERLOADING NAILS' CDN MODULES
@@ -61,14 +52,9 @@ class NAILS_Scale extends Thumb
  *
  **/
 
-if ( ! defined( 'NAILS_ALLOW_EXTENSION_SCALE' ) ) :
+if (!defined('NAILS_ALLOW_EXTENSION_SCALE')) {
 
-	class Scale extends NAILS_Scale
-	{
-	}
-
-endif;
-
-
-/* End of file scale.php */
-/* Location: ./modules/cdn/controllers/scale.php */
+    class Scale extends NAILS_Scale
+    {
+    }
+}

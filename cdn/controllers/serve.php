@@ -1,308 +1,292 @@
 <?php
 
-/**
- * Name:		Serve
- *
- * Description:	Serves a raw object from the upload directory
- *
- **/
-
-//	Include _cdn.php; executes common functionality
+//  Include _cdn.php; executes common functionality
 require_once '_cdn.php';
 
 /**
- * OVERLOADING NAILS' CDN MODULES
+ * This class handles the "serve" CDN endpoint
  *
- * Note the name of this class; done like this to allow apps to extend this class.
- * Read full explanation at the bottom of this file.
- *
- **/
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Controller
+ * @author      Nails Dev Team
+ * @link
+ */
 
 class NAILS_Serve extends NAILS_CDN_Controller
 {
-	private $_bucket;
-	private $_object;
-	private $_bad_token;
+    private $bucket;
+    private $object;
+    private $badToken;
 
+    // --------------------------------------------------------------------------
 
-	// --------------------------------------------------------------------------
+    /**
+     * Construct the controller
+     * @return  void
+     **/
+    public function __construct()
+    {
+        parent::__construct();
 
+        // --------------------------------------------------------------------------
 
-	/**
-	 * Construct the class; set defaults
-	 *
-	 * @access	public
-	 * @return	void
-	 *
-	 **/
-	public function __construct()
-	{
-		parent::__construct();
+        //  Work out some variables
+        $token = $this->input->get('token');
 
-		// --------------------------------------------------------------------------
+        if ($token) {
 
-		//	Work out some variables
-		$_token = $this->input->get('token');
+            //  Encrypted token/expiring URL
+            $token = $this->encrypt->decode($token, APP_PRIVATE_KEY);
+            $token = explode('|', $token);
 
-		if ($_token)  :
+            if (count($token) == 5) {
 
-			//	Encrypted token/expiring URL
-			$_token = $this->encrypt->decode($_token, APP_PRIVATE_KEY);
-			$_token = explode('|', $_token);
+                $this->badToken   = false;
 
-			if (count($_token) == 5) :
+                //  Seems to be ok, but verify the different parts
+                list($bucket, $object, $expires, $time, $hash) = $token;
 
-				$this->_bad_token	= FALSE;
+                if (md5($time . $bucket . $object . $expires . APP_PRIVATE_KEY) == $hash) {
 
-				//	Seems to be ok, but verify the different parts
-				list($_bucket, $object, $_expires, $_time, $_hash) = $_token;
+                    //  Hash validates, URL expired?
+                    if (time() <= ($time + $expires)) {
 
-				if (md5($_time . $_bucket . $object . $_expires . APP_PRIVATE_KEY) == $_hash) :
+                        $this->bucket   = $bucket;
+                        $this->object   = $object;
+                        $this->badToken = false;
 
-					//	Hash validates, URL expired?
-					if (time() <= ($_time + $_expires)) :
+                    } else {
 
-						$this->_bucket		= $_bucket;
-						$this->_object		= $object;
-						$this->_bad_token	= FALSE;
+                        $this->badToken = true;
+                    }
 
-					else :
+                } else {
 
-						$this->_bad_token	= TRUE;
+                    $this->badToken = true;
+                }
 
-					endif;
+            } else {
 
-				else :
+                $this->badToken = true;
+            }
 
-					$this->_bad_token	= TRUE;
+        } else {
 
-				endif;
+            $this->badToken = false;
+            $this->bucket   = $this->uri->segment(3);
+            $this->object   = urldecode($this->uri->segment(4));
+        }
+    }
 
-			else :
+    // --------------------------------------------------------------------------
 
-				$this->_bad_token	= TRUE;
+    /**
+     * Serve the file
+     * @return void
+     */
+    public function index()
+    {
+        //  Check if there was a bad token
+        if ($this->badToken) {
 
-			endif;
+            log_message('error', 'CDN: Serve: Bad Token');
+            return $this->serveBadSrc(lang('cdn_error_serve_badToken'));
+        }
 
-		else :
+        // --------------------------------------------------------------------------
 
-			$this->_bad_token	= FALSE;
-			$this->_bucket		= $this->uri->segment(3);
-			$this->_object		= urldecode($this->uri->segment(4));
+        //  Look up the object in the DB
+        $object = $this->cdn->get_object($this->object, $this->bucket);
 
-		endif;
-	}
+        if (!$object) {
 
+            /**
+             * If trashed=1 GET param is set and user is a logged in admin with
+             * can_browse_trash permission then have a look in the trash
+             */
 
-	// --------------------------------------------------------------------------
+            if ($this->input->get('trashed') && user_has_permission('admin.cdnadmin:0.can_browse_trash')) {
 
+                $object = $this->cdn->get_object_from_trash($this->object, $this->bucket);
 
-	public function index()
-	{
-		//	Check if there was a bad token
-		if ($this->_bad_token) :
+                if (!$object) {
 
-			log_message('error', 'CDN: Serve: Bad Token');
-			return $this->_bad_src(lang('cdn_error_serve_bad_token'));
+                    //  Cool, guess it really doesn't exist
+                    log_message('error', 'CDN: Serve: Object not defined');
+                    return $this->serveBadSrc(lang('cdn_error_serve_object_not_defined'));
+                }
 
-		endif;
+            } else {
 
-		// --------------------------------------------------------------------------
+                log_message('error', 'CDN: Serve: Object not defined');
+                return $this->serveBadSrc(lang('cdn_error_serve_object_not_defined'));
+            }
+        }
 
-		//	Look up the object in the DB
-		$object = $this->cdn->get_object($this->_object, $this->_bucket);
+        // --------------------------------------------------------------------------
 
-		if (!$object) {
+        /**
+         * Check the request headers; avoid hitting the disk at all if possible. If
+         * the Etag matches then send a Not-Modified header and terminate execution.
+         */
 
-			/**
-			 * If trashed=1 GET param is set and user is a logged in admin with
-			 * can_browse_trash permission then have a look in the trash
-			 */
+        if ($this->serveNotModified($this->bucket . $this->object)) {
 
-			if ($this->input->get('trashed') && user_has_permission('admin.cdnadmin:0.can_browse_trash')) {
+            if ($object) {
 
-				$object = $this->cdn->get_object_from_trash($this->_object, $this->_bucket);
+                if ($this->input->get('dl')) {
 
-				if (!$object) {
+                    $this->cdn->object_increment_count('DOWNLOAD', $object->id);
 
-					//	Cool, guess it really doesn't exist
-					log_message('error', 'CDN: Serve: Object not defined');
-					return $this->_bad_src(lang('cdn_error_serve_object_not_defined'));
-				}
+                } else {
 
-			} else {
+                    $this->cdn->object_increment_count('SERVE', $object->id);
+                }
+            }
 
-				log_message('error', 'CDN: Serve: Object not defined');
-				return $this->_bad_src(lang('cdn_error_serve_object_not_defined'));
-			}
-		}
+            return;
+        }
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	Check the request headers; avoid hitting the disk at all if possible. If the Etag
-		//	matches then send a Not-Modified header and terminate execution.
+        //  Fetch source
+        $usefile = $this->cdn->object_local_path($this->bucket, $this->object);
 
-		if ($this->_serve_not_modified($this->_bucket . $this->_object)) :
+        if (!$usefile) {
 
-			if ($object) :
+            log_message('error', 'CDN: Serve: File does not exist');
+            log_message('error', 'CDN: Serve: ' . $this->cdn->last_error());
 
-				if ($this->input->get('dl')) :
+            if ($this->user_model->is_superuser()) {
 
-					$this->cdn->object_increment_count('DOWNLOAD', $object->id);
+                return $this->serveBadSrc(lang('cdn_error_serve_file_not_found') . ': ' . $usefile);
 
-				else :
+            } else {
 
-					$this->cdn->object_increment_count('SERVE', $object->id);
+                return $this->serveBadSrc(lang('cdn_error_serve_file_not_found'));
+            }
+        }
 
-				endif;
+        // --------------------------------------------------------------------------
 
-			endif;
-			return;
+        //  Determine headers to send. Are we forcing the download?
+        if ($this->input->get('dl')) {
 
-		endif;
+            header('Content-Description: File Transfer', true);
+            header('Content-Type: application/octet-stream', true);
+            header('Content-Transfer-Encoding: binary', true);
+            header('Expires: 0', true);
+            header('Cache-Control: must-revalidate', true);
+            header('Pragma: public', true);
 
-		// --------------------------------------------------------------------------
+            //  If the object is known about, add some extra headers
+            if ($object) {
 
-		//	Fetch source
-		$_usefile = $this->cdn->object_local_path($this->_bucket, $this->_object);
+                header('Content-Disposition: attachment; filename="' . $object->filename_display . '"', true);
+                header('Content-Length: ' . $object->filesize, true);
 
-		if (!$_usefile) :
+            } else {
 
-			log_message('error', 'CDN: Serve: File does not exist');
-			log_message('error', 'CDN: Serve: ' . $this->cdn->last_error());
+                header('Content-Disposition: attachment; filename="' . $this->object . '"', true);
+            }
 
-			if ($this->user_model->is_superuser()) :
+        } else {
 
-				return $this->_bad_src(lang('cdn_error_serve_file_not_found') . ': ' . $_usefile);
+            //  Determine headers to send
+            $finfo = new finfo(FILEINFO_MIME_TYPE); // return mime type ala mimetype extension
+            header('Content-type: ' . $finfo->file($usefile), true);
 
-			else :
+            $stats = stat($usefile);
+            $this->setCacheHeaders($stats[9], $this->bucket . $this->object, false);
 
-				return $this->_bad_src(lang('cdn_error_serve_file_not_found'));
+            // --------------------------------------------------------------------------
 
-			endif;
+            //  If the object is known about, add some extra headers
+            if ($object) {
 
-		endif;
+                header('Content-Length: ' . $object->filesize, true);
+            }
+        }
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	Determine headers to send. Are we forcing the download?
-		if ($this->input->get('dl')) :
+        //  Send the contents of the file to the browser
+        echo file_get_contents($usefile);
 
-			header('Content-Description: File Transfer', TRUE);
-			header('Content-Type: application/octet-stream', TRUE);
-			header('Content-Transfer-Encoding: binary', TRUE);
-			header('Expires: 0', TRUE);
-			header('Cache-Control: must-revalidate', TRUE);
-			header('Pragma: public', TRUE);
+        // --------------------------------------------------------------------------
 
-			//	If the object is known about, add some extra headers
-			if ($object) :
+        //  Bump the counter
+        if ($object) {
 
-				header('Content-Disposition: attachment; filename="' . $object->filename_display . '"', TRUE);
-				header('Content-Length: ' . $object->filesize, TRUE);
+            if ($this->input->get('dl')) {
 
-			else :
+                $this->cdn->object_increment_count('DOWNLOAD', $object->id);
 
-				header('Content-Disposition: attachment; filename="' . $this->_object . '"', TRUE);
+            } else {
 
-			endif;
+                $this->cdn->object_increment_count('SERVE', $object->id);
+            }
+        }
 
-		else :
+        // --------------------------------------------------------------------------
 
-			//	Determine headers to send
-			$_finfo = new finfo(FILEINFO_MIME_TYPE); // return mime type ala mimetype extension
-			header('Content-type: ' . $_finfo->file($_usefile), TRUE);
+        /**
+         * Kill script, th, th, that's all folks. Stop the output class from hijacking
+         * our headers and setting an incorrect Content-Type
+         */
 
-			$_stats = stat($_usefile);
-			$this->_set_cache_headers($_stats[9], $this->_bucket . $this->_object, FALSE);
+        exit(0);
+    }
 
-			// --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
-			//	If the object is known about, add some extra headers
-			if ($object) :
+    /**
+     * Serves a response for bad requests
+     * @param  string $error The error which occurred
+     * @return void
+     */
+    protected function serveBadSrc($error = null)
+    {
+        header('Cache-Control: no-cache, must-revalidate', true);
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
+        header('Content-type: application/json', true);
+        header($this->input->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
 
-				header('Content-Length: ' . $object->filesize, TRUE);
+        // --------------------------------------------------------------------------
 
-			endif;
+        $out = array(
+            'status'  => 400,
+            'message' => lang('cdn_error_serve_invalid_request')
+        );
 
-		endif;
+        if ($error) {
 
-		// --------------------------------------------------------------------------
+            $out['error'] = $error;
+        }
 
-		//	Send the contents of the file to the browser
-		echo file_get_contents($_usefile);
+        echo json_encode($out);
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	Bump the counter
-		if ($object) :
+        /**
+         * Kill script, th, th, that's all folks. Stop the output class from hijacking
+         * our headers and setting an incorrect Content-Type
+         */
 
-			if ($this->input->get('dl')) :
+        exit(0);
+    }
 
-				$this->cdn->object_increment_count('DOWNLOAD', $object->id);
+    // --------------------------------------------------------------------------
 
-			else :
-
-				$this->cdn->object_increment_count('SERVE', $object->id);
-
-			endif;
-
-		endif;
-
-		// --------------------------------------------------------------------------
-
-		//	Kill script, th, th, that's all folks.
-		//	Stop the output class from hijacking our headers and
-		//	setting an incorrect Content-Type
-
-		exit(0);
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	protected function _bad_src($error = NULL)
-	{
-		header('Cache-Control: no-cache, must-revalidate', TRUE);
-		header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', TRUE);
-		header('Content-type: application/json', TRUE);
-		header($this->input->server('SERVER_PROTOCOL') . ' 400 Bad Request', TRUE, 400);
-
-		// --------------------------------------------------------------------------
-
-		$_out = array(
-
-			'status'	=> 400,
-			'message'	=> lang('cdn_error_serve_invalid_request')
-
-		);
-
-		if ($error) :
-
-			$_out['error'] = $error;
-
-		endif;
-
-		echo json_encode($_out);
-
-		// --------------------------------------------------------------------------
-
-		//	Kill script, th, th, that's all folks.
-		//	Stop the output class from hijacking our headers and
-		//	setting an incorrect Content-Type
-
-		exit(0);
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	public function _remap()
-	{
-		$this->index();
-	}
+    /**
+     * Map all requests to index()
+     * @return void
+     */
+    public function _remap()
+    {
+        $this->index();
+    }
 }
 
 
@@ -335,12 +319,8 @@ class NAILS_Serve extends NAILS_CDN_Controller
 
 if (!defined('NAILS_ALLOW_EXTENSION_SERVE')) :
 
-	class Serve extends NAILS_Serve
-	{
-	}
+    class Serve extends NAILS_Serve
+    {
+    }
 
 endif;
-
-
-/* End of file serve.php */
-/* Location: ./modules/cdn/controllers/serve.php */

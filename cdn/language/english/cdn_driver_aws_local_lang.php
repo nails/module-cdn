@@ -1,10 +1,13 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
 /**
-* Name:			CDN Langfile
-*
-* Description:  Language file for Nails AWS_Local CDN driver
-*
-*/
+ * English language strings for the "AWS Local" CDN driver
+ *
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Language
+ * @author      Nails Dev Team
+ * @link
+ */
 
-	$lang['placeholder']		= 'TODO: Move all the appropriate error calls for the aws_local driver into this file';
+$lang['placeholder'] = 'TODO: Move all the appropriate error calls for the aws_local driver into this file';

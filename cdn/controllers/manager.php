@@ -57,93 +57,93 @@ class NAILS_Manager extends NAILS_CDN_Controller
                  * that users can't casually specify a bucket and upload willy nilly.
                  */
 
-                $_bucket = $this->input->get('bucket');
-                $_hash   = $this->input->get('hash');
+                $bucket = $this->input->get('bucket');
+                $hash   = $this->input->get('hash');
 
-                $_decrypted = $this->encrypt->decode($_bucket, APP_PRIVATE_KEY);
+                $decrypted = $this->encrypt->decode($bucket, APP_PRIVATE_KEY);
 
-                if ($_decrypted) {
+                if ($decrypted) {
 
-                    $_bucket = explode('|', $_decrypted);
+                    $bucket = explode('|', $decrypted);
 
-                    if ($_bucket[0] && isset($_bucket[1])) {
+                    if ($bucket[0] && isset($bucket[1])) {
 
                         //  Bucket and nonce set, cross-check
-                        if (md5($_bucket[0] . '|' . $_bucket[1] . '|' . APP_PRIVATE_KEY) === $_hash) {
+                        if (md5($bucket[0] . '|' . $bucket[1] . '|' . APP_PRIVATE_KEY) === $hash) {
 
                             $this->data['bucket'] = $this->cdn->get_bucket(
-                                $_bucket[0],
+                                $bucket[0],
                                 true,
                                 $this->input->get('filter-tag')
                             );
 
                             if ($this->data['bucket']) {
 
-                                $_test_ok = true;
+                                $testOk = true;
 
                             } else {
 
                                 //  Bucket doesn't exist - attempt to create it
-                                if ($this->cdn->bucket_create($_bucket[0])) {
+                                if ($this->cdn->bucket_create($bucket[0])) {
 
-                                    $_test_ok = true;
+                                    $testOk = true;
                                     $this->data['bucket'] = $this->cdn->get_bucket(
-                                        $_bucket[0],
+                                        $bucket[0],
                                         true,
                                         $this->input->get('filter-tag')
                                     );
 
                                 } else {
 
-                                    $_test_ok  = false;
-                                    $_error    = 'Bucket <strong>"' . $_bucket[0] . '"</strong> does not exist';
-                                    $_error   .= '<small>Additionally, the following error occured while attempting ';
-                                    $_error   .= 'to create the bucket:<br />' . $this->cdn->last_error() . '</small>';
+                                    $testOk = false;
+                                    $error   = 'Bucket <strong>"' . $bucket[0] . '"</strong> does not exist';
+                                    $error  .= '<small>Additionally, the following error occured while attempting ';
+                                    $error  .= 'to create the bucket:<br />' . $this->cdn->last_error() . '</small>';
                                 }
                             }
 
                         } else {
 
-                            $_test_ok = false;
-                            $_error   = 'Could not verify bucket hash';
+                            $testOk = false;
+                            $error   = 'Could not verify bucket hash';
                         }
 
                     } else {
 
-                        $_test_ok = false;
-                        $_error   = 'Incomplete bucket hash';
+                        $testOk = false;
+                        $error   = 'Incomplete bucket hash';
                     }
 
                 } else {
 
-                    $_test_ok = false;
-                    $_error   = 'Could not decrypt bucket hash';
+                    $testOk = false;
+                    $error   = 'Could not decrypt bucket hash';
                 }
 
                 // --------------------------------------------------------------------------
 
-                if (!$_test_ok) {
+                if (!$testOk) {
 
                     $this->data['enabled']    = false;
-                    $this->data['bad_bucket'] = $_error;
+                    $this->data['bad_bucket'] = $error;
                 }
 
             } else {
 
                 //  No bucket specified, use the user's upload bucket
-                $_slug  = 'user-' . active_user('id');
-                $_label = 'User Upload Directory';
+                $slug  = 'user-' . active_user('id');
+                $label = 'User Upload Directory';
 
                 // --------------------------------------------------------------------------
 
                 //  Test bucket, if it doesn't exist, create it
-                $this->data['bucket'] = $this->cdn->get_bucket($_slug, true, $this->input->get('filter-tag'));
+                $this->data['bucket'] = $this->cdn->get_bucket($slug, true, $this->input->get('filter-tag'));
 
                 if (!$this->data['bucket']) {
 
-                    $_bucket_id = $this->cdn->bucket_create($_slug, $_label);
+                    $bucket_id = $this->cdn->bucket_create($slug, $label);
 
-                    if (!$_bucket_id) {
+                    if (!$bucket_id) {
 
                          $this->data['enabled']    = false;
                          $this->data['bad_bucket'] = 'Unable to create upload bucket: ' . $this->cdn->last_error();
@@ -151,7 +151,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
                     } else {
 
                         $this->data['bucket'] = $this->cdn->get_bucket(
-                            $_bucket_id,
+                            $bucket_id,
                             true,
                             $this->input->get('filter-tag')
                         );
@@ -214,8 +214,8 @@ class NAILS_Manager extends NAILS_CDN_Controller
     public function upload()
     {
         //  Returning to...?
-        $_return = site_url('cdn/manager/browse', isPageSecure());
-        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
+        $return = site_url('cdn/manager/browse', isPageSecure());
+        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
@@ -223,23 +223,23 @@ class NAILS_Manager extends NAILS_CDN_Controller
         if (!$this->data['enabled']) {
 
             $this->session->set_flashdata('error', '<strong>Sorry,</strong> uploads are not available right now.');
-            redirect($_return);
+            redirect($return);
         }
 
         // --------------------------------------------------------------------------
 
         //  Are we in a tag?
-        $_options = array();
+        $options = array();
         if ($this->input->get('filter-tag')) {
 
-            $_options['tag'] = $this->input->get('filter-tag');
+            $options['tag'] = $this->input->get('filter-tag');
         }
 
         // --------------------------------------------------------------------------
 
         //  Upload the file
         $this->load->library('cdn/cdn');
-        if ($this->cdn->object_create('userfile', $this->data['bucket']->id, $_options)) {
+        if ($this->cdn->object_create('userfile', $this->data['bucket']->id, $options)) {
 
             $this->session->set_flashdata('success', '<strong>Success!</strong> File uploaded successfully!');
 
@@ -248,7 +248,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
             $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
         }
 
-        redirect($_return);
+        redirect($return);
     }
 
     // --------------------------------------------------------------------------
@@ -260,16 +260,18 @@ class NAILS_Manager extends NAILS_CDN_Controller
     public function delete()
     {
         //  Returning to...?
-        $_return  = site_url('cdn/manager/browse', isPageSecure());
-        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
+        $return  = site_url('cdn/manager/browse', isPageSecure());
+        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
         //  User is authorised to delete?
         if (!$this->data['enabled']) {
 
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> file deletions are not available right now.');
-            redirect($_return);
+            $status  = 'error';
+            $message = '<strong>Sorry,</strong> file deletions are not available right now.';
+            $this->session->set_flashdata($status, $message);
+            redirect($return);
         }
 
         // --------------------------------------------------------------------------
@@ -280,26 +282,31 @@ class NAILS_Manager extends NAILS_CDN_Controller
         if (!$this->uri->segment(4)) {
 
             $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
-            redirect($_return);
+            redirect($return);
         }
 
-        $_object = $this->cdn->get_object($this->uri->segment(4));
+        $object = $this->cdn->get_object($this->uri->segment(4));
 
-        if (!$_object) {
+        if (!$object) {
 
             $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
-            redirect($_return);
+            redirect($return);
         }
 
         // --------------------------------------------------------------------------
 
         //  Attempt Delete
-        $_delete = $this->cdn->object_delete($_object->id);
+        $delete = $this->cdn->object_delete($object->id);
 
-        if ($_delete) {
+        if ($delete) {
 
-            $_url = site_url('cdn/manager/restore/' . $this->uri->segment(4) . '?' . $this->input->server('QUERY_STRING'), isPageSecure());
-            $this->session->set_flashdata('success', '<strong>Success!</strong> File deleted successfully! <a href="' . $_url . '">Undo?</a>');
+            $url = 'cdn/manager/restore/' . $this->uri->segment(4) . '?' . $this->input->server('QUERY_STRING');
+            $url = site_url($url, isPageSecure());
+
+            $status  = 'success';
+            $message = '<strong>Success!</strong> File deleted successfully! <a href="' . $url . '">Undo?</a>';
+            $this->session->set_flashdata($status, $message);
+
             $this->session->set_flashdata('deleted', true);
 
         } else {
@@ -309,7 +316,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
         // --------------------------------------------------------------------------
 
-        redirect($_return);
+        redirect($return);
     }
 
     // --------------------------------------------------------------------------
@@ -321,16 +328,18 @@ class NAILS_Manager extends NAILS_CDN_Controller
     public function restore()
     {
         //  Returning to...?
-        $_return  = site_url('cdn/manager/browse', isPageSecure());
-        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
+        $return  = site_url('cdn/manager/browse', isPageSecure());
+        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
         //  User is authorised to restore??
         if (!$this->data['enabled']) {
 
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> file restorations are not available right now.');
-            redirect($_return);
+            $status  = 'error';
+            $message = '<strong>Sorry,</strong> file restorations are not available right now.';
+            $this->session->set_flashdata($status, $message);
+            redirect($return);
         }
 
         // --------------------------------------------------------------------------
@@ -341,23 +350,23 @@ class NAILS_Manager extends NAILS_CDN_Controller
         if (!$this->uri->segment(4)) {
 
             $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
-            redirect($_return);
+            redirect($return);
         }
 
-        $_object = $this->cdn->get_object_from_trash($this->uri->segment(4));
+        $object = $this->cdn->get_object_from_trash($this->uri->segment(4));
 
-        if (!$_object) {
+        if (!$object) {
 
             $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
-            redirect($_return);
+            redirect($return);
         }
 
         // --------------------------------------------------------------------------
 
         //  Attempt Restore
-        $_restore = $this->cdn->object_restore($_object->id);
+        $restore = $this->cdn->object_restore($object->id);
 
-        if ($_restore) {
+        if ($restore) {
 
             $this->session->set_flashdata('success', '<strong>Success!</strong> File restored successfully!');
 
@@ -368,7 +377,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
         // --------------------------------------------------------------------------
 
-        redirect($_return);
+        redirect($return);
     }
 
     // --------------------------------------------------------------------------
@@ -380,14 +389,14 @@ class NAILS_Manager extends NAILS_CDN_Controller
     public function new_tag()
     {
         //  Returning to...?
-        $_return  = site_url('cdn/manager/browse', isPageSecure());
-        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
+        $return  = site_url('cdn/manager/browse', isPageSecure());
+        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
-        $_added = $this->cdn->bucket_tag_add($this->data['bucket'], $this->input->post('label'));
+        $added = $this->cdn->bucket_tag_add($this->data['bucket'], $this->input->post('label'));
 
-        if ($_added) {
+        if ($added) {
 
             $this->session->set_flashdata('success', '<strong>Success!</strong> Tag added successfully!');
 
@@ -398,7 +407,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
         // --------------------------------------------------------------------------
 
-        redirect($_return);
+        redirect($return);
     }
 
     // --------------------------------------------------------------------------
@@ -410,14 +419,14 @@ class NAILS_Manager extends NAILS_CDN_Controller
     public function delete_tag()
     {
         //  Returning to...?
-        $_return  = site_url('cdn/manager/browse', isPageSecure());
-        $_return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
+        $return  = site_url('cdn/manager/browse', isPageSecure());
+        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
-        $_deleted = $this->cdn->bucket_tag_delete($this->data['bucket'], $this->uri->segment(4));
+        $deleted = $this->cdn->bucket_tag_delete($this->data['bucket'], $this->uri->segment(4));
 
-        if ($_deleted) {
+        if ($deleted) {
 
             $this->session->set_flashdata('success', '<strong>Success!</strong> Tag deleted successfully!');
 
@@ -428,7 +437,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
         // --------------------------------------------------------------------------
 
-        redirect($_return);
+        redirect($return);
     }
 }
 
