@@ -14,13 +14,13 @@ namespace Nails\Admin\Cdn;
 
 class Cdn extends \AdminController
 {
-    /**
-     * Announces this controller's navGroupings
+     /**
+     * Announces this controller's navGroups
      * @return stdClass
      */
     public static function announce()
     {
-        $d = new stdClass();
+        $d = new \stdClass();
 
         // --------------------------------------------------------------------------
 
@@ -31,17 +31,17 @@ class Cdn extends \AdminController
         // --------------------------------------------------------------------------
 
         //  Navigation options
-        if (user_has_permission('admin.cdnadmin:0.can_browse_buckets')) {
+        if (userHasPermission('admin.cdnadmin:0.can_browse_buckets')) {
 
             $d->funcs['bucket'] = 'Browse Buckets';
         }
 
-        if (user_has_permission('admin.cdnadmin:0.can_browse_objects')) {
+        if (userHasPermission('admin.cdnadmin:0.can_browse_objects')) {
 
             $d->funcs['object'] = 'Browse Objects';
         }
 
-        if (user_has_permission('admin.cdnadmin:0.can_browse_trash')) {
+        if (userHasPermission('admin.cdnadmin:0.can_browse_trash')) {
 
             $d->funcs['trash'] = 'Browse Trash';
         }
@@ -105,7 +105,7 @@ class Cdn extends \AdminController
      */
     protected function bucketBrowse()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_browse_buckets')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_browse_buckets')) {
 
             unauthorised();
         }
@@ -129,7 +129,7 @@ class Cdn extends \AdminController
      */
     protected function bucketCreate()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_create_buckets')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_create_buckets')) {
 
             unauthorised();
         }
@@ -149,7 +149,7 @@ class Cdn extends \AdminController
      */
     protected function bucketEdit()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_edit_buckets')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_edit_buckets')) {
 
             unauthorised();
         }
@@ -169,7 +169,7 @@ class Cdn extends \AdminController
      */
     protected function bucketDelete()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_delete_buckets')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_delete_buckets')) {
 
             unauthorised();
         }
@@ -200,7 +200,7 @@ class Cdn extends \AdminController
      */
     protected function objectBrowse()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_browse_objects')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_browse_objects')) {
 
             unauthorised();
         }
@@ -229,7 +229,7 @@ class Cdn extends \AdminController
         $this->data['search']     = $_data['search']         = $_search;
 
         //  Define and populate the pagination object
-        $this->data['pagination']             = new stdClass();
+        $this->data['pagination']             = new \stdClass();
         $this->data['pagination']->page       = $_page;
         $this->data['pagination']->per_page   = $_per_page;
         $this->data['pagination']->total_rows = $this->cdn->count_all_objects($_data);
@@ -251,7 +251,7 @@ class Cdn extends \AdminController
      */
     protected function objectCreate()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_create_objects')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_create_objects')) {
 
             unauthorised();
         }
@@ -266,7 +266,7 @@ class Cdn extends \AdminController
 
         // --------------------------------------------------------------------------
 
-        if ($this->input->get('is_fancybox')) {
+        if ($this->input->get('isFancybox')) {
 
             $this->data['headerOverride'] = 'structure/headerBlank';
             $this->data['footerOverride'] = 'structure/headerBlank';
@@ -295,7 +295,7 @@ class Cdn extends \AdminController
      */
     protected function objectEdit()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_edit_objects')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_edit_objects')) {
 
             unauthorised();
         }
@@ -319,7 +319,7 @@ class Cdn extends \AdminController
      */
     protected function objectDelete()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_delete_objects')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_delete_objects')) {
 
             unauthorised();
         }
@@ -363,7 +363,7 @@ class Cdn extends \AdminController
      */
     protected function trashBrowse()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_browse_trash')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_browse_trash')) {
 
             unauthorised();
         }
@@ -392,7 +392,7 @@ class Cdn extends \AdminController
         $this->data['search']     = $_data['search']         = $_search;
 
         //  Define and populate the pagination object
-        $this->data['pagination']             = new stdClass();
+        $this->data['pagination']             = new \stdClass();
         $this->data['pagination']->page       = $_page;
         $this->data['pagination']->per_page   = $_per_page;
         $this->data['pagination']->total_rows = $this->cdn->count_all_objects_from_trash($_data);
@@ -414,7 +414,7 @@ class Cdn extends \AdminController
      */
     protected function trashPurge()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_purge_trash')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
 
             unauthorised();
         }
@@ -482,7 +482,7 @@ class Cdn extends \AdminController
      */
     protected function trashRestore()
     {
-        if (!user_has_permission('admin.cdnadmin:0.can_restore_trash')) {
+        if (!userHasPermission('admin.cdnadmin:0.can_restore_trash')) {
 
             unauthorised();
         }

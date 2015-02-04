@@ -1,7 +1,7 @@
 <div class="group-cdn object create">
 	<?php
 
-		echo $this->input->get( 'is_fancybox' ) ? '<h1>Upload Items</h1>' : '';
+		echo $this->input->get( 'isFancybox' ) ? '<h1>Upload Items</h1>' : '';
 
 	?>
 	<p>

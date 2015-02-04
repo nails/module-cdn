@@ -54,8 +54,8 @@
 
 		echo '<div class="filesize"><strong>Filesize:</strong> ' . format_bytes( $object->filesize ) . '</div>';
 
-		echo '<div class="created"><strong>Created:</strong> ' . user_datetime( $object->created ) . '</div>';
-		echo '<div class="modified"><strong>Modified:</strong> ' . user_datetime( $object->modified ) . '</div>';
+		echo '<div class="created"><strong>Created:</strong> ' . userDatetime( $object->created ) . '</div>';
+		echo '<div class="modified"><strong>Modified:</strong> ' . userDatetime( $object->modified ) . '</div>';
 
 		echo '<div class="actions">';
 

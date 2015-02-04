@@ -49,7 +49,7 @@
 		?>
 	</head>
 	<body>
-		<div class="group-cdn manager <?=$this->input->get( 'is_fancybox' ) ? 'is-fancybox' : ''?>">
+		<div class="group-cdn manager <?=$this->input->get( 'isFancybox' ) ? 'is-fancybox' : ''?>">
 			<div id="mask"></div>
 			<div id="alert" <?= $success || $error || $notice || $message  ? 'style="display:block;"' : ''?>>
 			<?php
@@ -368,15 +368,9 @@
 		<script type="text/javascript">
 		<!--//
 
-			var _nails,_manager;
+			var _manager;
 
 			$(function(){
-
-				//	Initialise NAILS_JS
-				_nails = new NAILS_JS();
-				_nails.init();
-
-				// --------------------------------------------------------------------------
 
 				//	Initialise CDN Manager
 
@@ -391,12 +385,12 @@
 				_manager = new NAILS_CDN_Manager();
 				<?php
 
-					$is_fancybox		= $this->input->get( 'is_fancybox' ) ? 'true' : 'false';
+					$isFancybox		= $this->input->get( 'isFancybox' ) ? 'true' : 'false';
 					$reopen_fancybox	= $this->input->get( 'reopen_fancybox' ) ? $this->input->get( 'reopen_fancybox' ) : '';
 
 					if ( isset( $_GET['CKEditorFuncNum'] ) ) :
 
-						echo '_manager.init( \'ckeditor\', ' . $_GET['CKEditorFuncNum'] . ', _urlscheme, ' . $is_fancybox . ', \'' . $reopen_fancybox . '\' );';
+						echo '_manager.init( \'ckeditor\', ' . $_GET['CKEditorFuncNum'] . ', _urlscheme, ' . $isFancybox . ', \'' . $reopen_fancybox . '\' );';
 
 						if ( $this->input->get( 'deleted' ) ) :
 
@@ -406,7 +400,7 @@
 
 					else :
 
-						echo '_manager.init( \'native\', \'' . $this->input->get( 'callback' ) . '\', {}, ' . $is_fancybox . ', \'' . $reopen_fancybox . '\' );';
+						echo '_manager.init( \'native\', \'' . $this->input->get( 'callback' ) . '\', {}, ' . $isFancybox . ', \'' . $reopen_fancybox . '\' );';
 
 						if ( $this->input->get( 'deleted' ) ) :
 

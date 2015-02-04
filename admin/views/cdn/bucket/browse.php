@@ -11,7 +11,7 @@
         The following items are currently in the CDN trash.
         <?php
 
-            if (user_has_permission('admin.cdnadmin:0.can_purge_trash')) {
+            if (userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
 
                 echo anchor('admin/cdnadmin/bucket/create' . $return, 'Create Bucket', 'style="float:right" class="awesome small green"');
 

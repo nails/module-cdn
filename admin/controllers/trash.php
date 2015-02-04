@@ -14,13 +14,13 @@ namespace Nails\Admin\Cdn;
 
 class Trash extends \AdminController
 {
-   /**
-     * Announces this controller's navGroupings
+    /**
+     * Announces this controller's navGroups
      * @return stdClass
      */
     public static function announce()
     {
-        if (user_has_permission('admin.cdnadmin:0.can_browse_trash')) {
+        if (userHasPermission('admin.cdnadmin:0.can_browse_trash')) {
 
             $navGroup = new \Nails\Admin\Nav('CDN');
             $navGroup->addMethod('Browse Trash');

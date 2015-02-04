@@ -11,7 +11,7 @@
         Browse all items stored in the site's CDN.
         <?php
 
-            if (user_has_permission('admin.cdnadmin:0.can_create_objects')) {
+            if (userHasPermission('admin.cdnadmin:0.can_create_objects')) {
 
                 echo anchor('admin/cdnadmin/object/create' . $return, 'Upload Items', 'class="awesome small green" style="float:right;"');
             }
@@ -78,18 +78,18 @@
                         echo '<td class="bucket">' . $object->bucket->label . '</td>';
                         echo '<td class="mime">' . $object->mime . '</td>';
                         echo '<td class="filename">' . $object->filename_display . '</td>';
-                        $this->load->view('admin/_utilities/table-cell-user',       $object->creator);
-                        $this->load->view('admin/_utilities/table-cell-datetime',   array('datetime' => $object->created));
-                        $this->load->view('admin/_utilities/table-cell-datetime',   array('datetime' => $object->modified));
+                        echo \Nails\Admin\Helper::loadUserCell($object->creator);
+                        echo \Nails\Admin\Helper::loadDatetimeCell($object->created);
+                        echo \Nails\Admin\Helper::loadDatetimeCell($object->modified);
                         echo '<td class="filesize">' . format_bytes($object->filesize) . '</td>';
                         echo '<td class="actions">';
 
-                            if (user_has_permission('admin.cdnadmin:0.can_edit_objects')) {
+                            if (userHasPermission('admin.cdnadmin:0.can_edit_objects')) {
 
                                 echo anchor('admin/cdnadmin/object/edit/' . $object->id . $return, 'Edit', 'class="awesome small"');
                             }
 
-                            if (user_has_permission('admin.cdnadmin:0.can_delete_objects')) {
+                            if (userHasPermission('admin.cdnadmin:0.can_delete_objects')) {
 
                                 echo anchor('admin/cdnadmin/object/delete/' . $object->id . $return, 'Delete', 'data-title="Are you sure?" data-body="Deleting an item will attempt to disconnect it from resources which depend on it. The object will be recoverable but dependencies won\'t." class="confirm awesome small red"');
                             }

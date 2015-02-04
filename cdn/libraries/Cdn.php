@@ -1670,7 +1670,7 @@ class Cdn
     public function get_buckets($list_bucket = false, $filter_tag = false, $include_deleted = false)
     {
         $this->db->select('b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by');
-        $this->db->select('b.modified,b.modified_byue.email, u.first_name, u.last_name, u.profile_img, u.gender');
+        $this->db->select('b.modified,b.modified_by,ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
         $this->db->select('(SELECT COUNT(*) FROM ' . NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) object_count');
 
         $this->db->join(NAILS_DB_PREFIX . 'user u', 'u.id = b.created_by', 'LEFT');
@@ -2378,7 +2378,7 @@ class Cdn
              * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
              */
 
-            if (user_has_permission('admin.cdnadmin{0.can_browse_trash')) {
+            if (userHasPermission('admin.cdnadmin{0.can_browse_trash')) {
 
                 $object = $this->get_object_from_trash($objectId);
 
@@ -2516,7 +2516,7 @@ class Cdn
              * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
              */
 
-            if (user_has_permission('admin.cdnadmin{0.can_browse_trash')) {
+            if (userHasPermission('admin.cdnadmin{0.can_browse_trash')) {
 
                 $object = $this->get_object_from_trash($objectId);
 
@@ -2581,7 +2581,7 @@ class Cdn
              * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
              */
 
-            if (user_has_permission('admin.cdnadmin{0.can_browse_trash')) {
+            if (userHasPermission('admin.cdnadmin{0.can_browse_trash')) {
 
                 $object = $this->get_object_from_trash($objectId);
 

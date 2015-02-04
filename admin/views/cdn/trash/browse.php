@@ -11,7 +11,7 @@
         The following items are currently in the CDN trash.
         <?php
 
-            if (!empty($objects) && user_has_permission('admin.cdnadmin:0.can_purge_trash')) {
+            if (!empty($objects) && userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
 
                 $url = 'admin/cdnadmin/trash/purge' . $return;
                 $title = 'Are you sure?';
@@ -84,11 +84,11 @@
                         echo '<td class="bucket">' . $object->bucket->label . '</td>';
                         echo '<td class="mime">' . $object->mime . '</td>';
                         echo '<td class="filename">' . $object->filename_display . '</td>';
-                        $this->load->view('admin/_utilities/table-cell-user',       $object->creator);
-                        $this->load->view('admin/_utilities/table-cell-datetime',   array('datetime' => $object->created));
-                        $this->load->view('admin/_utilities/table-cell-datetime',   array('datetime' => $object->modified));
-                        $this->load->view('admin/_utilities/table-cell-datetime',   array('datetime' => $object->trashed));
-                        $this->load->view('admin/_utilities/table-cell-user',       $object->trasher);
+                        echo \Nails\Admin\Helper::loadUserCell($object->creator);
+                        echo \Nails\Admin\Helper::loadDatetimeCell($object->created);
+                        echo \Nails\Admin\Helper::loadDatetimeCell($object->modified);
+                        echo \Nails\Admin\Helper::loadDatetimeCell($object->trashed);
+                        echo \Nails\Admin\Helper::loadUserCell($object->trasher);
                         echo '<td class="filesize">' . format_bytes($object->filesize) . '</td>';
                         echo '<td class="actions">';
 
@@ -101,12 +101,12 @@
                                 echo anchor(cdn_serve($object->id), 'View', 'class="awesome small fancybox" data-fancybox-type="iframe"');
                             }
 
-                            if (user_has_permission('admin.cdnadmin:0.can_restore_trash')) {
+                            if (userHasPermission('admin.cdnadmin:0.can_restore_trash')) {
 
                                 echo anchor('admin/cdnadmin/trash/restore/' . $object->id . $return, 'Restore', 'class="awesome small green"');
                             }
 
-                            if (user_has_permission('admin.cdnadmin:0.can_purge_trash')) {
+                            if (userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
 
                                 $ids = 'ids=' . $object->id;
                                 $ids = empty($return) ? '?' . $ids : '&' . $ids;
