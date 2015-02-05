@@ -52,7 +52,7 @@
 
 		echo '<td class="filesize">' . format_bytes( $object->filesize ) . '</td>';
 
-		echo '<td class="modified">' . userDatetime( $object->modified ) . '</td>';
+		echo '<td class="modified">' . toUserDatetime( $object->modified ) . '</td>';
 
 		echo '<td class="actions">';
 
