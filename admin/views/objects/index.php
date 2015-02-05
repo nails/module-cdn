@@ -13,17 +13,16 @@
 
             if (userHasPermission('admin.cdnadmin:0.can_create_objects')) {
 
-                echo anchor('admin/cdnadmin/object/create' . $return, 'Upload Items', 'class="awesome small green" style="float:right;"');
+                echo anchor('admin/cdn/objects/create' . $return, 'Upload Items', 'class="awesome small green" style="float:right;"');
             }
 
         ?>
     </p>
-
     <hr />
-
     <?php
 
-        $this->load->view('admin/_utilities/pagination');
+        echo \Nails\Admin\Helper::loadSearch($search);
+        echo \Nails\Admin\Helper::loadPagination($pagination);
 
     ?>
     <div class="table-responsive">
@@ -86,12 +85,12 @@
 
                             if (userHasPermission('admin.cdnadmin:0.can_edit_objects')) {
 
-                                echo anchor('admin/cdnadmin/object/edit/' . $object->id . $return, 'Edit', 'class="awesome small"');
+                                echo anchor('admin/cdn/objects/edit/' . $object->id . $return, 'Edit', 'class="awesome small"');
                             }
 
                             if (userHasPermission('admin.cdnadmin:0.can_delete_objects')) {
 
-                                echo anchor('admin/cdnadmin/object/delete/' . $object->id . $return, 'Delete', 'data-title="Are you sure?" data-body="Deleting an item will attempt to disconnect it from resources which depend on it. The object will be recoverable but dependencies won\'t." class="confirm awesome small red"');
+                                echo anchor('admin/cdn/objects/delete/' . $object->id . $return, 'Delete', 'data-title="Are you sure?" data-body="Deleting an item will attempt to disconnect it from resources which depend on it. The object will be recoverable but dependencies won\'t." class="confirm awesome small red"');
                             }
 
                             if ($object->is_img) {
@@ -111,7 +110,7 @@
 
                 echo '<tr>';
                     echo '<td colspan="10" class="no-data">';
-                        echo 'No Items found';
+                        echo 'No Objects Found';
                     echo '</td>';
                 echo '</tr>';
 
@@ -121,10 +120,9 @@
         </tbody>
     </table>
     </div>
-
     <?php
 
-        $this->load->view('admin/_utilities/pagination');
+        echo \Nails\Admin\Helper::loadPagination($pagination);
 
     ?>
 </div>

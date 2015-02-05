@@ -189,11 +189,11 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Gets all objects from the database
-     * @param  int    $page    The page of results to return
-     * @param  int    $perPage The number of results per page
-     * @param  array  $data    Data to pass to _getcount_common();
-     * @param  string $_caller The method being called
+     * Returns an array of objects
+     * @param  integer $page    The page to return
+     * @param  integer $perPage The number of items to return per page
+     * @param  array   $data    An array of data to pass to _getcount_common_buckets()
+     * @param  string  $_called An internal flag indicating which method is the parent caller
      * @return array
      */
     public function get_objects($page = null, $perPage = null, $data = array(), $_caller = 'GET_OBJECTS')
@@ -211,7 +211,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Apply common items; pass $data
-        $this->_getcount_common($data, $_caller);
+        $this->_getcount_common_objects($data, $_caller);
 
         // --------------------------------------------------------------------------
 
@@ -248,6 +248,23 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
+    public function _getcount_common_objects($data = array(), $_caller = null)
+    {
+        if (isset($data['keywords'])) {
+
+            if (!isset($data['or_like'])) {
+
+                $data['or_like'] = array();
+            }
+
+            $data['or_like'][] = array('o.filename_display',$data['keywords']);
+        }
+
+        $this->_getcount_common($data, $_caller);
+    }
+
+    // --------------------------------------------------------------------------
+
     /**
      * Retrieves objects from the trash
      * @param  int    $page    The page of results to return
@@ -279,7 +296,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Apply common items; pass $data
-        $this->_getcount_common($data, $_caller);
+        $this->_getcount_common_objects_from_trash($data, $_caller);
 
         // --------------------------------------------------------------------------
 
@@ -316,55 +333,66 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    /**
-     * Returns a single object
-     * @param  mixed  $object The object's ID or filename
-     * @param  string $bucket The bucket's ID or slug
-     * @param  array  $data   Data to pass to _getcount_common()
-     * @return mixed          stdClass on success, false on failure
-     */
-    public function get_object($object, $bucket = null, $data = array())
+    public function _getcount_common_objects_from_trash($data = array(), $_caller = null)
     {
-        if (is_numeric($object)) {
+        if (isset($data['keywords'])) {
 
-            //  Check the cache
-            $cacheKey = 'object-' . $object;
-            $cache     = $this->_get_cache($cacheKey);
+            if (!isset($data['or_like'])) {
 
-            if ($cache) {
-
-                return $cache;
+                $data['or_like'] = array();
             }
 
-            // --------------------------------------------------------------------------
+            $data['or_like'][] = array('o.filename_display',$data['keywords']);
+        }
 
-            $this->db->where('o.id', $object);
+        $this->_getcount_common($data, $_caller);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns a single object
+     * @param  mixed  $objectIdSlug The object's ID or filename
+     * @param  string $bucketIdSlug The bucket's ID or slug
+     * @param  array  $data         Data to pass to _getcount_common_object()
+     * @return mixed                stdClass on success, false on failure
+     */
+    public function get_object($objectIdSlug, $bucketIdSlug = null, $data = array())
+    {
+        //  Check the cache
+        $cacheKey  = 'object-' . $objectIdSlug;
+        $cacheKey .= $bucketIdSlug ? '-' . $bucketIdSlug : '';
+        $cache     = $this->_get_cache($cacheKey);
+
+        if ($cache) {
+
+            return $cache;
+        }
+
+        // --------------------------------------------------------------------------
+
+        if (!isset($data['where'])) {
+
+            $data['where'] = array();
+        }
+
+        if (is_numeric($objectIdSlug)) {
+
+            $data['where'][] = array('o.id', $objectIdSlug);
 
         } else {
 
-            //  Check the cache
-            $cacheKey  = 'object-' . $object;
-            $cacheKey .= $bucket ? '-' . $bucket : '';
-            $cache     = $this->_get_cache($cacheKey);
+            $data['where'][] = array('o.filename', $objectIdSlug);
 
-            if ($cache) {
+            if ($bucketIdSlug) {
 
-                return $cache;
-            }
+                if (is_numeric($bucketIdSlug)) {
 
-            // --------------------------------------------------------------------------
-
-            $this->db->where('o.filename', $object);
-
-            if ($bucket) {
-
-                if (is_numeric($bucket)) {
-
-                    $this->db->where('b.id', $bucket);
+                    $data['where'][] = array('b.id', $bucketIdSlug);
 
                 } else {
 
-                    $this->db->where('b.slug', $bucket);
+                    $data['where'][] = array('b.slug', $bucketIdSlug);
                 }
             }
         }
@@ -1247,12 +1275,6 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Uploads an object and, if successful, deletes the old object
-     * @param   none
-     * @return  void
-     **/
-
-    /**
      * Uploads an object and, if successfull, removes the old object. Note that a new Object ID is created.
      * @param  mixed   $object      The existing object's ID or filename
      * @param  mixed   $bucket      The bucket's ID or slug
@@ -1663,59 +1685,93 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Returns an array of all bucket objects
-     * @param   string
-     * @return  boolean
-     **/
-    public function get_buckets($list_bucket = false, $filter_tag = false, $include_deleted = false)
+     * Returns an array of buckets
+     * @param  integer $page    The page to return
+     * @param  integer $perPage The number of items to return per page
+     * @param  array   $data    An array of data to pass to _getcount_common_buckets()
+     * @param  string  $_called An internal flag indicating which method is the parent caller
+     * @return array
+     */
+    public function get_buckets($page = null, $perPage = null, $data = array(), $_caller = 'GET_BUCKETS')
     {
         $this->db->select('b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by');
         $this->db->select('b.modified,b.modified_by,ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
-        $this->db->select('(SELECT COUNT(*) FROM ' . NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) object_count');
 
         $this->db->join(NAILS_DB_PREFIX . 'user u', 'u.id = b.created_by', 'LEFT');
         $this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = b.created_by AND ue.is_primary = 1', 'LEFT');
 
-        $this->db->order_by('b.label');
-
-        $_buckets = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
+        //  Apply common items; pass $data
+        $this->_getcount_common_buckets($data, $_caller);
 
         // --------------------------------------------------------------------------
 
-        foreach ($_buckets as &$bucket) {
+        //  Facilitate pagination
+        if (!is_null($page)) {
 
-            //  Format bucket object
-            $this->_format_bucket($bucket);
+            /**
+             * Adjust the page variable, reduce by one so that the offset is calculated
+             * correctly. Make sure we don't go into negative numbers
+             */
 
-            // --------------------------------------------------------------------------
+            $page--;
+            $page = $page < 0 ? 0 : $page;
 
-            //  List contents
-            if ($list_bucket) {
+            //  Work out what the offset should be
+            $perPage = is_null($perPage) ? 50 : (int) $perPage;
+            $offset   = $page * $perPage;
 
-                $bucket->objects = $this->bucket_list($bucket->id, $filter_tag, $include_deleted);
-            }
-
-            // --------------------------------------------------------------------------
-
-            //  Fetch tags & counts
-            $this->db->select('bt.id,bt.label,bt.created');
-            $this->db->select('(SELECT COUNT(*) FROM ' . NAILS_DB_PREFIX . 'cdn_object_tag ot JOIN ' . NAILS_DB_PREFIX . 'cdn_object o ON o.id = ot.object_id WHERE tag_id = bt.id) total');
-            $this->db->order_by('bt.label');
-            $this->db->where('bt.bucket_id', $bucket->id);
-            $bucket->tags = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket_tag bt')->result();
+            $this->db->limit($perPage, $offset);
         }
 
         // --------------------------------------------------------------------------
 
-        return $_buckets;
+        $buckets = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
+
+        for ($i = 0; $i < count($buckets); $i++) {
+
+            //  Format the object, make it pretty
+            $this->_format_bucket($buckets[$i]);
+
+        }
+
+        return $buckets;
     }
 
     // --------------------------------------------------------------------------
 
-    public function get_buckets_flat($filter_tag = false, $include_deleted = false)
+    public function _getcount_common_buckets($data = array(), $_caller = null)
     {
-        $_buckets   = $this->get_buckets(false, $filter_tag, $include_deleted);
-        $_out       = array();
+        if (isset($data['keywords'])) {
+
+            if (!isset($data['or_like'])) {
+
+                $data['or_like'] = array();
+            }
+
+            $data['or_like'][] = array('b.label',$data['keywords']);
+        }
+
+        if (!empty($data['includeObjectCount'])) {
+
+            $this->db->select('(SELECT COUNT(*) FROM ' .NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) objectCount');
+        }
+
+        $this->_getcount_common($data, $_caller);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns an array of buckets as a flat array
+     * @param  integer $page    The page to return
+     * @param  integer $perPage The number of items to return per page
+     * @param  array   $data    An array of data to pass to _getcount_common_buckets()
+     * @return array
+     */
+    public function get_buckets_flat($page = null, $perPage = null, $data = array())
+    {
+        $_buckets = $this->get_buckets($page, $perPage, $data, 'GET_BUCKETS_FLAT');
+        $_out     = array();
 
         foreach ($_buckets as $bucket) {
 
@@ -1732,18 +1788,20 @@ class Cdn
      * @param   string
      * @return  boolean
      **/
-    public function get_bucket($bucket, $list_bucket = false, $filter_tag = false)
+    public function get_bucket($bucketIdSlug)
     {
-        if (is_numeric($bucket)) {
+        $data = array('where' => array());
 
-            $this->db->where('b.id', $bucket);
+        if (is_numeric($bucketIdSlug)) {
+
+            $data['where'][] = array('b.id', $bucketIdSlug);
 
         } else {
 
-            $this->db->where('b.slug', $bucket);
+            $data['where'][] = array('b.slug', $bucketIdSlug);
         }
 
-        $bucket = $this->get_buckets($list_bucket, $filter_tag, true);
+        $bucket = $this->get_buckets(null, null, $data, 'GET_BUCKET');
 
         if (!$bucket) {
 
@@ -1751,6 +1809,18 @@ class Cdn
         }
 
         return $bucket[0];
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function count_all_buckets($data = array())
+    {
+        //  Apply common items
+        $this->_getcount_common($data, 'COUNT_ALL_BUCKETS');
+
+        // --------------------------------------------------------------------------
+
+        return $this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket b');
     }
 
     // --------------------------------------------------------------------------
@@ -1823,6 +1893,7 @@ class Cdn
      **/
     public function bucket_list($bucket, $filter_tag = null, $sort_on = null, $sort_order = null)
     {
+        dumpanddie('TODO: bucket_list');
         //  Filtering by tag?
         if ($filter_tag) {
 
@@ -1875,7 +1946,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        return $this->get_objects();
+        return $this->get_objects(null, null, $data);
     }
 
     // --------------------------------------------------------------------------
@@ -2075,10 +2146,10 @@ class Cdn
      **/
     protected function _format_bucket(&$bucket)
     {
-        $bucket->id           = (int) $bucket->id;
-        $bucket->object_count = (int) $bucket->object_count;
-        $bucket->max_size     = (int) $bucket->max_size;
-        $bucket->modified_by  = $bucket->modified_by ? (int) $bucket->modified_by : null;
+        $bucket->id          = (int) $bucket->id;
+        $bucket->objectCount = (int) $bucket->objectCount;
+        $bucket->max_size    = (int) $bucket->max_size;
+        $bucket->modified_by = $bucket->modified_by ? (int) $bucket->modified_by : null;
 
         // --------------------------------------------------------------------------
 

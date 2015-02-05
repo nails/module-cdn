@@ -132,7 +132,7 @@
 										echo '<li class="tag ' . $_selected . '">';
 											echo '<a href="' . $_uri . '" class="tag">';
 												echo 'All My Files';
-												echo '<span class="count">' . $bucket->object_count . '</span>';
+												echo '<span class="count">' . $bucket->objectCount . '</span>';
 											echo '</a>';
 										echo '</li>';
 

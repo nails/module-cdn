@@ -6,14 +6,14 @@
     $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
 
 ?>
-<div class="group-cdn trash browse">
+<div class="group-cdn object browse trash">
     <p>
         The following items are currently in the CDN trash.
         <?php
 
             if (!empty($objects) && userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
 
-                $url = 'admin/cdnadmin/trash/purge' . $return;
+                $url = 'admin/cdn/trash//purge' . $return;
                 $title = 'Are you sure?';
                 $body = 'Emptying the trash will <strong>permanently</strong> delete all items.';
                 echo anchor($url, 'Empty Trash', 'style="float:right" data-title="' . $title . '" data-body="' . $body . '" class="confirm awesome small red"');
@@ -22,12 +22,11 @@
 
         ?>
     </p>
-
     <hr />
-
     <?php
 
-        $this->load->view('admin/_utilities/pagination');
+        echo \Nails\Admin\Helper::loadSearch($search);
+        echo \Nails\Admin\Helper::loadPagination($pagination);
 
     ?>
     <div class="table-responsive">
@@ -103,7 +102,7 @@
 
                             if (userHasPermission('admin.cdnadmin:0.can_restore_trash')) {
 
-                                echo anchor('admin/cdnadmin/trash/restore/' . $object->id . $return, 'Restore', 'class="awesome small green"');
+                                echo anchor('admin/cdn/trash//restore/' . $object->id . $return, 'Restore', 'class="awesome small green"');
                             }
 
                             if (userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
@@ -114,7 +113,7 @@
                                 $title = 'Are you sure?';
                                 $body  = 'You will <strong>permenantly</strong> delete this object. This action cannot be undone.';
 
-                                echo anchor('admin/cdnadmin/trash/purge' . $return . $ids, 'Delete', 'data-title="' . $title . '" data-body="' . $body . '" class="confirm awesome small red"');
+                                echo anchor('admin/cdn/trash//purge' . $return . $ids, 'Delete', 'data-title="' . $title . '" data-body="' . $body . '" class="confirm awesome small red"');
                             }
 
                         echo '</td>';
@@ -125,7 +124,7 @@
 
                 echo '<tr>';
                     echo '<td colspan="12" class="no-data">';
-                        echo 'No Items found';
+                        echo 'No Objects Found';
                     echo '</td>';
                 echo '</tr>';
 
@@ -135,10 +134,9 @@
         </tbody>
     </table>
     </div>
-
     <?php
 
-        $this->load->view('admin/_utilities/pagination');
+        echo \Nails\Admin\Helper::loadPagination($pagination);
 
     ?>
 </div>
