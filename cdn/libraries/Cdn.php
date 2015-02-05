@@ -1460,7 +1460,7 @@ class Cdn
      */
     public function object_local_path($bucketSlug, $filename)
     {
-        return $this->cdnDriver->object_local_path($bucket_slug, $filename);
+        return $this->cdnDriver->object_local_path($bucketSlug, $filename);
     }
 
     // --------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 <?php
 
-//	Include _cdn.php; executes common functionality
+//  Include _cdn.php; executes common functionality
 require_once '_cdn.php';
 
 /**
@@ -15,37 +15,29 @@ require_once '_cdn.php';
 
 class NAILS_Thumb extends NAILS_CDN_Controller
 {
-	protected $_fail;
-	protected $_bucket;
-	protected $_width;
-	protected $_height;
-	protected $_object;
-	protected $_extension;
-	protected $_cache_file;
+    protected $bucket;
+    protected $object;
+    protected $width;
+    protected $height;
+    protected $extension;
 
-
-	// --------------------------------------------------------------------------
-
+    // --------------------------------------------------------------------------
 
     /**
-     * Construct the class; set defaults
-     *
-     * @access    public
-     * @return    void
-     *
-     **/
+     * Construct the controller
+     */
     public function __construct()
     {
         parent::__construct();
 
         // --------------------------------------------------------------------------
 
-        //	Determine dynamic values
-        $this->_width     = $this->uri->segment(3, 100);
-        $this->_height    = $this->uri->segment(4, 100);
-        $this->_bucket    = $this->uri->segment(5);
-        $this->_object    = urldecode($this->uri->segment(6));
-        $this->_extension = !empty($this->_object) ? strtolower(substr($this->_object, strrpos($this->_object, '.'))) : false;
+        //  Determine dynamic values
+        $this->width     = $this->uri->segment(3, 100);
+        $this->height    = $this->uri->segment(4, 100);
+        $this->bucket    = $this->uri->segment(5);
+        $this->object    = urldecode($this->uri->segment(6));
+        $this->extension = !empty($this->object) ? strtolower(substr($this->object, strrpos($this->object, '.'))) : false;
 
         // --------------------------------------------------------------------------
 
@@ -54,381 +46,389 @@ class NAILS_Thumb extends NAILS_CDN_Controller
          * become higher.
          */
 
-        if (preg_match('/(.+)@2x(\..+)/', $this->_object, $matches)) {
+        if (preg_match('/(.+)@2x(\..+)/', $this->object, $matches)) {
 
             $this->isRetina         = true;
             $this->retinaMultiplier = 2;
-            $this->_object          = $matches[1] . $matches[2];
+            $this->object           = $matches[1] . $matches[2];
         }
     }
 
+    // --------------------------------------------------------------------------
 
-	// --------------------------------------------------------------------------
+    /**
+     * Generate the thumbnail
+     * @param  string $cropMethod The crop methiod to use, either SCALE or THUMB
+     * @return void
+     */
+    public function index($cropMethod = 'THUMB')
+    {
+        //  Sanitize the crop method
+        $cropMethod = strtoupper($cropMethod);
 
+        switch ($cropMethod) {
 
-	/**
-	 * Generate the thumbnail
-	 *
-	 * @access	public
-	 * @return	void
-	 **/
-	public function index($crop_method = 'THUMB')
-	{
-		//	Sanitize the crop method
-		$_cropmethod = strtoupper($crop_method);
+            case 'SCALE':
 
-		switch ($_cropmethod) :
+                $phpThumbMethod = 'resize';
+                break;
 
-			case 'SCALE'	:	$_phpthumb_method = 'resize';			break;
-			case 'THUMB'	:
-			default			:	$_phpthumb_method = 'adaptiveResize';	break;
+            case 'THUMB':
+            default:
 
-		endswitch;
+                $phpThumbMethod = 'adaptiveResize';
+                break;
+        }
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	Define the cache file
-		$width	= $this->_width * $this->retinaMultiplier;
-		$height	= $this->_height * $this->retinaMultiplier;
+        //  Define the cache file
+        $width  = $this->width * $this->retinaMultiplier;
+        $height = $this->height * $this->retinaMultiplier;
 
-		$this->cdnCacheFile  = $this->_bucket;
-		$this->cdnCacheFile .= '-' . substr($this->_object, 0, strrpos($this->_object, '.'));
-		$this->cdnCacheFile .= '-' . $_cropmethod;
-		$this->cdnCacheFile .= '-' . $width . 'x' . $height;
-		$this->cdnCacheFile .= $this->_extension;
+        $this->cdnCacheFile  = $this->bucket;
+        $this->cdnCacheFile .= '-' . substr($this->object, 0, strrpos($this->object, '.'));
+        $this->cdnCacheFile .= '-' . $cropMethod;
+        $this->cdnCacheFile .= '-' . $width . 'x' . $height;
+        $this->cdnCacheFile .= $this->extension;
 
-		// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-		//	We must have a bucket, object and extension in order to work with this
-		if (!$this->_bucket || !$this->_object || !$this->_extension) :
+        //  We must have a bucket, object and extension in order to work with this
+        if (!$this->bucket || !$this->object || !$this->extension) {
 
-			log_message('error', 'CDN: ' . $_cropmethod . ': Missing _bucket, _object or _extension');
-			return $this->serveBadSrc();
+            log_message('error', 'CDN: ' . $cropMethod . ': Missing _bucket, _object or _extension');
+            return $this->serveBadSrc();
+        }
 
-		endif;
+        // --------------------------------------------------------------------------
 
-		// --------------------------------------------------------------------------
+        /**
+         * Check the request headers; avoid hitting the disk at all if possible. If the
+         * Etag matches then send a Not-Modified header and terminate execution.
+         */
 
-		//	Check the request headers; avoid hitting the disk at all if possible. If the Etag
-		//	matches then send a Not-Modified header and terminate execution.
+        if ($this->serveNotModified($this->cdnCacheFile)) {
 
-		if ($this->serveNotModified($this->cdnCacheFile)) :
+            $this->cdn->object_increment_count($cropMethod, $this->object, $this->bucket);
+            return;
+        }
 
-			$this->cdn->object_increment_count($_cropmethod, $this->_object, $this->_bucket);
-			return;
+        // --------------------------------------------------------------------------
 
-		endif;
+        $object = $this->cdn->get_object($this->object, $this->bucket);
 
-		// --------------------------------------------------------------------------
+        if (!$object) {
 
-		$object = $this->cdn->get_object($this->_object, $this->_bucket);
+            /**
+             * If trashed=1 GET param is set and user is a logged in admin with
+             * can_browse_trash permission then have a look in the trash
+             */
 
-		if (!$object) {
+            if ($this->input->get('trashed') && userHasPermission('admin.cdnadmin:0.can_browse_trash')) {
 
-			/**
-			 * If trashed=1 GET param is set and user is a logged in admin with
-			 * can_browse_trash permission then have a look in the trash
-			 */
+                $object = $this->cdn->get_object_from_trash($this->object, $this->bucket);
 
-			if ($this->input->get('trashed') && userHasPermission('admin.cdnadmin:0.can_browse_trash')) {
+                if (!$object) {
 
-				$object = $this->cdn->get_object_from_trash($this->_object, $this->_bucket);
+                    //  Cool, guess it really doesn't exist
+                    $width  = $this->width * $this->retinaMultiplier;
+                    $height = $this->height * $this->retinaMultiplier;
 
-				if (!$object) {
+                    return $this->serveBadSrc($width, $height);
+                }
 
-					//	Cool, guess it really doesn't exist
-					$width	= $this->_width * $this->retinaMultiplier;
-					$height	= $this->_height * $this->retinaMultiplier;
+            } else {
 
-					return $this->serveBadSrc($width, $height);
-				}
+                $width  = $this->width * $this->retinaMultiplier;
+                $height = $this->height * $this->retinaMultiplier;
 
-			} else {
+                return $this->serveBadSrc($width, $height);
+            }
+        }
 
-				$width	= $this->_width * $this->retinaMultiplier;
-				$height	= $this->_height * $this->retinaMultiplier;
+        // --------------------------------------------------------------------------
 
-				return $this->serveBadSrc($width, $height);
-			}
-		}
+        /**
+         * The browser does not have a local cache (or it's out of date) check the
+         * cache to see if this image has been processed already; serve it up if
+         * it has.
+         */
 
-		// --------------------------------------------------------------------------
+        if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) {
 
-		/**
-		 * The browser does not have a local cache (or it's out of date) check the
-		 * cache to see if this image has been processed already; serve it up if
-		 * it has.
-		 */
+            $this->cdn->object_increment_count($cropMethod, $this->object, $this->bucket);
+            $this->serveFromCache($this->cdnCacheFile);
 
-		if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) :
+        } else {
 
-			$this->cdn->object_increment_count($_cropmethod, $this->_object, $this->_bucket);
-			$this->serveFromCache($this->cdnCacheFile);
+            /**
+             * Cache object does not exist, fetch the original, process it and save a
+             * version in the cache bucket.
+             */
 
-		else :
+            //  Fetch the file to use
+            $filePath = $this->cdn->object_local_path($this->bucket, $this->object);
 
-			/**
-			 * Cache object does not exist, fetch the original, process it and save a
-			 * version in the cache bucket.
-			 */
+            if (!$filePath) {
 
-			//	Fetch the file to use
-			$_usefile = $this->cdn->object_local_path($this->_bucket, $this->_object);
+                log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned.');
+                log_message('error', 'CDN: ' . $cropMethod . ': ' . $this->cdn->last_error());
 
-			if (!$_usefile) :
+                $width  = $this->width * $this->retinaMultiplier;
+                $height = $this->height * $this->retinaMultiplier;
 
-				log_message('error', 'CDN: ' . $_cropmethod . ': No local path was returned.');
-				log_message('error', 'CDN: ' . $_cropmethod . ': ' . $this->cdn->last_error());
+                return $this->serveBadSrc($width, $height);
 
-				$width	= $this->_width * $this->retinaMultiplier;
-				$height	= $this->_height * $this->retinaMultiplier;
+            } elseif (!filesize($filePath)) {
 
-				return $this->serveBadSrc($width, $height);
+                /**
+                 * Hmm, empty, delete it and try one more time
+                 * @TODO: work out the reason why we do this
+                 */
 
-			elseif(!filesize($_usefile)) :
+                @unlink($filePath);
 
-				/**
-				 * Hmm, empty, delete it and try one more time
-				 * @TODO: work out the reason why we do this
-				 */
+                $filePath = $this->cdn->object_local_path($this->bucket, $this->object);
 
-				@unlink($_usefile);
+                if (!$filePath) {
 
-				$_usefile = $this->cdn->object_local_path($this->_bucket, $this->_object);
+                    log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned, second attempt.');
+                    log_message('error', 'CDN: ' . $cropMethod . ': ' . $this->cdn->last_error());
 
-				if (!$_usefile) :
+                    $width  = $this->width * $this->retinaMultiplier;
+                    $height = $this->height * $this->retinaMultiplier;
 
-					log_message('error', 'CDN: ' . $_cropmethod . ': No local path was returned, second attempt.');
-					log_message('error', 'CDN: ' . $_cropmethod . ': ' . $this->cdn->last_error());
+                    return $this->serveBadSrc($width, $height);
 
-					$width	= $this->_width * $this->retinaMultiplier;
-					$height	= $this->_height * $this->retinaMultiplier;
+                } elseif (!filesize($filePath)) {
 
-					return $this->serveBadSrc($width, $height);
+                    log_message('error', 'CDN: ' . $cropMethod . ': local path exists, but has a zero filesize.');
 
-				elseif(!filesize($_usefile)) :
+                    $width  = $this->width * $this->retinaMultiplier;
+                    $height = $this->height * $this->retinaMultiplier;
 
-					log_message('error', 'CDN: ' . $_cropmethod . ': local path exists, but has a zero filesize.');
+                    return $this->serveBadSrc($width, $height);
+                }
+            }
 
-					$width	= $this->_width * $this->retinaMultiplier;
-					$height	= $this->_height * $this->retinaMultiplier;
+            // --------------------------------------------------------------------------
 
-					return $this->serveBadSrc($width, $height);
+            /**
+             * Time to start Image processing
+             * Are we dealing with an animated Gif? If so handle differently - extract each
+             * frame, resize, then recompile. Otherwise, just resize
+             */
 
-				endif;
+            //  Set the appropriate cache headers
+            $this->setCacheHeaders(time(), $this->cdnCacheFile, false);
 
-			endif;
+            // --------------------------------------------------------------------------
 
-			// --------------------------------------------------------------------------
+            //  Handle the actual resize
+            if ($object->is_animated) {
 
-			/**
-			 * Time to start Image processing
-			 * Are we dealing with an animated Gif? If so handle differently - extract each
-			 * frame, resize, then recompile. Otherwise, just resize
-			 */
+                $this->resizeAnimated($filePath, $phpThumbMethod);
 
-			//	Set the appropriate cache headers
-			$this->setCacheHeaders(time(), $this->cdnCacheFile, FALSE);
+            } else {
 
-			// --------------------------------------------------------------------------
+                $this->resize($filePath, $phpThumbMethod);
+            }
 
-			//	Handle the actual resize
-			if ($object->is_animated) {
+            // --------------------------------------------------------------------------
 
-				$this->_resize_animated($_usefile, $_phpthumb_method);
+            //  Bump the counter
+            $this->cdn->object_increment_count($cropMethod, $object->id);
+        }
+    }
 
-			} else {
+    // --------------------------------------------------------------------------
 
-				$this->_resize($_usefile, $_phpthumb_method);
-			}
+    /**
+     * Resize a static image
+     * @param  string $filePath       The file to resize
+     * @param  string $phpThumbMethod The PHPThumb method to use for resizing
+     * @return void
+     */
+    private function resize($filePath, $phpThumbMethod)
+    {
+        //  Set some PHPThumb options
+        $_options                = array();
+        $_options['resizeUp']    = true;
+        $_options['jpegQuality'] = 80;
 
-			// --------------------------------------------------------------------------
+        // --------------------------------------------------------------------------
 
-			//	Bump the counter
-			$this->cdn->object_increment_count($_cropmethod, $object->id);
+        /**
+         * Perform the resize
+         * Turn errors off, if something bad happens we want to
+         * output the serveBadSrc image and log the issue.
+         */
 
-		endif;
-	}
+        $oldErrorReporting = error_reporting();
+        error_reporting(0);
 
+        $width  = $this->width * $this->retinaMultiplier;
+        $height = $this->height * $this->retinaMultiplier;
+        $ext    = strtoupper(substr($this->extension, 1));
 
-	// --------------------------------------------------------------------------
+        if ($ext === 'JPEG') {
+            $ext = 'jpg';
+        }
 
+        try {
 
-	private function _resize($usefile, $PHPThumb_method)
-	{
-		//	Set some PHPThumb options
-		$_options					= array();
-		$_options['resizeUp']		= true;
-		$_options['jpegQuality']	= 80;
+            /**
+             * Catch any output, don't want anything going to the browser unless
+             * we're sure it's ok
+             */
 
-		// --------------------------------------------------------------------------
+            ob_start();
 
-		/**
-		 * Perform the resize
-		 * Turn errors off, if something bad happens we want to
-		 * output the serveBadSrc image and log the issue.
-		 */
+            $PHPThumb = new PHPThumb\GD($filePath, $_options);
+            $PHPThumb->{$phpThumbMethod}($width, $height);
 
-		$_old_errors = error_reporting();
-		error_reporting(0);
+            //  Save cache version
+            $PHPThumb->save($this->cdnCacheDir . $this->cdnCacheFile, $ext);
 
-		$width	= $this->_width * $this->retinaMultiplier;
-		$height	= $this->_height * $this->retinaMultiplier;
-		$ext	= strtoupper(substr($this->_extension, 1));
+            //  Flush the buffer
+            ob_end_clean();
 
-		if ($ext === 'JPEG') {
-			$ext = 'jpg';
-		}
+        } catch (Exception $e) {
 
-		try
-		{
-			/**
-			 * Catch any output, don't want anything going to the browser unless
-			 * we're sure it's ok
-			 */
+            //  Log the error
+            log_message('error', 'CDN: ' . $phpThumbMethod . ': ' . $e->getMessage());
 
-			ob_start();
+            //  Switch error reporting back how it was
+            error_reporting($oldErrorReporting);
 
-			$PHPThumb = new PHPThumb\GD($usefile, $_options);
-			$PHPThumb->{$PHPThumb_method}($width, $height);
+            //  Flush the buffer
+            ob_end_clean();
 
-			//	Save cache version
-			$PHPThumb->save($this->cdnCacheDir . $this->cdnCacheFile, $ext);
+            //  Bad SRC
+            return $this->serveBadSrc($width, $height);
+        }
 
-			//	Flush the buffer
-			ob_end_clean();
-		}
-		catch(Exception $e)
-		{
-			//	Log the error
-			log_message('error', 'CDN: ' . $PHPThumb_method . ': ' . $e->getMessage());
+        $this->serveFromCache($this->cdnCacheFile, false);
 
-			//	Switch error reporting back how it was
-			error_reporting($_old_errors);
+        //  Switch error reporting back how it was
+        error_reporting($oldErrorReporting);
+    }
 
-			//	Flush the buffer
-			ob_end_clean();
 
-			//	Bad SRC
-			return $this->serveBadSrc($width, $height);
-		}
+    // --------------------------------------------------------------------------
 
-		$this->serveFromCache($this->cdnCacheFile, false);
+    /**
+     * Resize an animated image
+     * @param  string $filePath       The file to resize
+     * @param  string $phpThumbMethod The PHPThumb method to use for resizing
+     * @return void
+     */
+    private function resizeAnimated($filePath, $phpThumbMethod)
+    {
+        $hash       = md5(microtime(true) . uniqid()) . uniqid();
+        $frames     = array();
+        $cacheFiles = array();
+        $durations  = array();
+        $gfe        = new GifFrameExtractor\GifFrameExtractor();
+        $gc         = new GifCreator\GifCreator();
+        $width      = $this->width * $this->retinaMultiplier;
+        $height     = $this->height * $this->retinaMultiplier;
 
-		//	Switch error reporting back how it was
-		error_reporting($_old_errors);
-	}
+        // --------------------------------------------------------------------------
 
+        //  Extract all the frames, resize them and save to the cache
+        $gfe->extract($filePath);
 
-	// --------------------------------------------------------------------------
+        $i = 0;
+        foreach ($gfe->getFrames() as $frame) {
 
+            //  Define the filename
+            $filename     = $hash . '-' . $i . '.gif';
+            $tempFilename = $hash . '-' . $i . '-original.gif';
+            $i++;
 
-	private function _resize_animated($usefile, $PHPThumb_method)
-	{
-		$_hash			= md5(microtime(TRUE) . uniqid()) . uniqid();
-		$_frames		= array();
-		$_cachefiles	= array();
-		$_durations		= array();
-		$_gfe			= new GifFrameExtractor\GifFrameExtractor();
-		$_gc			= new GifCreator\GifCreator();
-		$width			= $this->_width * $this->retinaMultiplier;
-		$height			= $this->_height * $this->retinaMultiplier;
+            //  Set these for recompiling
+            $frames[]     = $this->cdnCacheDir . $filename;
+            $cacheFiles[] = $this->cdnCacheDir . $tempFilename;
+            $durations[]  = $frame['duration'];
 
-		// --------------------------------------------------------------------------
+            // --------------------------------------------------------------------------
 
-		//	Extract all the frames, resize them and save to the cache
-		$_gfe->extract($usefile);
+            //  Set some PHPThumb options
+            $options             = array();
+            $options['resizeUp'] = true;
 
-		$_i = 0;
-		foreach ($_gfe->getFrames() as $frame) :
+            // --------------------------------------------------------------------------
 
-			//	Define the filename
-			$_filename		= $_hash . '-' . $_i . '.gif';
-			$_temp_filename	= $_hash . '-' . $_i . '-original.gif';
-			$_i++;
+            //  Perform the resize; first save the original frame to disk
+            imagegif($frame['image'], $this->cdnCacheDir . $tempFilename);
 
-			//	Set these for recompiling
-			$_frames[]		= $this->cdnCacheDir . $_filename;
-			$_cachefiles[]	= $this->cdnCacheDir . $_temp_filename;
-			$_durations[]	= $frame['duration'];
+            $PHPThumb = new PHPThumb\GD($this->cdnCacheDir . $tempFilename, $_options);
+            $PHPThumb->{$phpThumbMethod}($width, $height);
 
-			// --------------------------------------------------------------------------
+            // --------------------------------------------------------------------------
 
-			//	Set some PHPThumb options
-			$_options					= array();
-			$_options['resizeUp']		= TRUE;
+            //  Save cache version
+            $PHPThumb->save($this->cdnCacheDir . $filename, strtoupper(substr($this->extension, 1)));
+        }
 
-			// --------------------------------------------------------------------------
+        /**
+         * Recompile the resized images back into an animated gif and save to the cache
+         * @TODO: We assume the gif loops infinitely but we should really check.
+         * Issue made on the library's GitHub asking for this feature.
+         * View here: https://github.com/Sybio/GifFrameExtractor/issues/3
+         */
 
-			//	Perform the resize; first save the original frame to disk
-			imagegif($frame['image'], $this->cdnCacheDir . $_temp_filename);
+        $gc->create($frames, $durations, 0);
+        $data = $gc->getGif();
 
-			$PHPThumb = new PHPThumb\GD($this->cdnCacheDir . $_temp_filename, $_options);
-			$PHPThumb->{$PHPThumb_method}($width, $height);
+        // --------------------------------------------------------------------------
 
-			// --------------------------------------------------------------------------
+        //  Output to browser
+        header('Content-Type: image/gif', true);
+        echo $data;
 
-			//	Save cache version
-			$PHPThumb->save($this->cdnCacheDir . $_filename , strtoupper(substr($this->_extension, 1)));
+        // --------------------------------------------------------------------------
 
-		endforeach;
+        //  Save to cache
+        $this->load->helper('file');
+        write_file($this->cdnCacheDir . $this->cdnCacheFile, $data);
 
-		/**
-		 * Recompile the resized images back into an animated gif and save to the cache
-		 * TODO: We assume the gif loops infinitely but we should really check.
-		 * Issue made on the library's GitHub asking for this feature.
-		 * View here: https://github.com/Sybio/GifFrameExtractor/issues/3
-		 */
+        // --------------------------------------------------------------------------
 
-		$_gc->create($_frames, $_durations, 0);
-		$_data = $_gc->getGif();
+        //  Remove cache frames
+        foreach ($frames as $frame) {
 
-		// --------------------------------------------------------------------------
+            @unlink($frame);
+        }
 
-		//	Output to browser
-		header('Content-Type: image/gif', TRUE);
-		echo $_data;
+        foreach ($cacheFiles as $frame) {
 
-		// --------------------------------------------------------------------------
+            @unlink($frame);
+        }
 
-		//	Save to cache
-		$this->load->helper('file');
-		write_file($this->cdnCacheDir . $this->cdnCacheFile, $_data);
+        // --------------------------------------------------------------------------
 
-		// --------------------------------------------------------------------------
+        /**
+         * Kill script, th, th, that's all folks.
+         * Stop the output class from hijacking our headers and
+         * setting an incorrect Content-Type
+         */
 
-		//	Remove cache frames
-		foreach ($_frames as $frame) :
+        exit(0);
+    }
 
-			@unlink($frame);
+    // --------------------------------------------------------------------------
 
-		endforeach;
-
-		foreach ($_cachefiles as $frame) :
-
-			@unlink($frame);
-
-		endforeach;
-
-		// --------------------------------------------------------------------------
-
-		/**
-		 * Kill script, th, th, that's all folks.
-		 * Stop the output class from hijacking our headers and
-		 * setting an incorrect Content-Type
-		 */
-
-		exit(0);
-	}
-
-
-	// --------------------------------------------------------------------------
-
-
-	public function _remap()
-	{
-		$this->index();
-	}
+    /**
+     * Map all requests to index()
+     * @return void
+     */
+    public function _remap()
+    {
+        $this->index();
+    }
 }
 
 
@@ -461,8 +461,8 @@ class NAILS_Thumb extends NAILS_CDN_Controller
 
 if (!defined('NAILS_ALLOW_EXTENSION_THUMB')) :
 
-	class Thumb extends NAILS_Thumb
-	{
-	}
+    class Thumb extends NAILS_Thumb
+    {
+    }
 
 endif;
