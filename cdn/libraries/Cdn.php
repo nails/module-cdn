@@ -25,7 +25,6 @@ class Cdn
 
     /**
      * Construct the library
-     * @return  void
      **/
     public function __construct($options = null)
     {
@@ -71,27 +70,31 @@ class Cdn
 
     /**
      * Loads the appropriate driver
-     * @return  void
+     * @return  string
      **/
     protected function includeDriver()
     {
         include_once NAILS_PATH . 'module-cdn/cdn/interfaces/driver.php';
+
+        $return = '';
 
         switch (strtoupper(APP_CDN_DRIVER)) {
 
             case 'AWS_LOCAL':
 
                 include_once NAILS_PATH . 'module-cdn/cdn/_resources/drivers/aws_local.php';
-                return 'Aws_local_CDN';
+                $return = 'Aws_local_CDN';
                 break;
 
             case 'LOCAL':
             default:
 
                 include_once NAILS_PATH . 'module-cdn/cdn/_resources/drivers/local.php';
-                return 'Local_CDN';
+                $return = 'Local_CDN';
                 break;
         }
+
+        return $return;
     }
 
     // --------------------------------------------------------------------------
@@ -193,7 +196,7 @@ class Cdn
      * @param  integer $page    The page to return
      * @param  integer $perPage The number of items to return per page
      * @param  array   $data    An array of data to pass to _getcount_common_buckets()
-     * @param  string  $_called An internal flag indicating which method is the parent caller
+     * @param  string  $_caller An internal flag indicating which method is the parent caller
      * @return array
      */
     public function get_objects($page = null, $perPage = null, $data = array(), $_caller = 'GET_OBJECTS')
@@ -943,11 +946,7 @@ class Cdn
          * will overwrite any existing file so use with caution).
          */
 
-        if (isset($options['filename']) && $options['filename'] == 'USE_ORIGINAL') {
-
-            $_data->filename = $_name;
-
-        } elseif (isset($options['filename']) && $options['filename']) {
+        if (isset($options['filename']) && $options['filename']) {
 
             $_data->filename = $options['filename'];
 
@@ -1557,7 +1556,7 @@ class Cdn
      * @param  integer $page    The page to return
      * @param  integer $perPage The number of items to return per page
      * @param  array   $data    An array of data to pass to _getcount_common_buckets()
-     * @param  string  $_called An internal flag indicating which method is the parent caller
+     * @param  string  $_caller An internal flag indicating which method is the parent caller
      * @return array
      */
     public function get_buckets($page = null, $perPage = null, $data = array(), $_caller = 'GET_BUCKETS')
@@ -2017,26 +2016,26 @@ class Cdn
         $ext = strpos($ext, '.') !== false ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
         $ext = $this->sanitiseExtension($ext);
 
-        $_mimes = $this->getMimeMappings();
+        $mimes = $this->getMimeMappings();
 
-        foreach ($_mimes as $_ext => $mime) {
+        foreach ($mimes as $_ext => $mime) {
 
             if ($_ext == $ext) {
 
                 if (is_string($mime)) {
 
-                    $_return = $mime;
+                    $return = $mime;
                     break;
 
                 } elseif (is_array($mime)) {
 
-                    $_return = reset($mime);
+                    $return = reset($mime);
                     break;
                 }
             }
         }
 
-        return $_return ? $_return : 'application/octet-stream';
+        return !empty($return) ? $return : 'application/octet-stream';
     }
 
     // --------------------------------------------------------------------------
@@ -2148,6 +2147,11 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Override/add mimes
+        if (!isset($mimes)) {
+
+            $mimes = array();
+        }
+
         $mimes['doc'] = array('application/msword', 'application/vnd.ms-office');
 
         // --------------------------------------------------------------------------
@@ -2524,11 +2528,11 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_serve_url_scheme method
-     * @param   none
-     * @return  string
-     **/
-    public function url_avatar_scheme()
+     * Determines which scheme to use for a user's avatar and returns the appropriate one
+     * @param  integer $userId The User ID to check
+     * @return string
+     */
+    public function url_avatar_scheme($userId = null)
     {
         if (is_null($userId)) {
 
@@ -2559,12 +2563,11 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_expiring_url method
-     * @param   string  $bucket     The bucket which the image resides in
-     * @param   string  $object     The filename of the image we're 'scaling'
-     * @param   string  $expires    The length of time the URL should be valid for, in seconds
-     * @return  string
-     **/
+     * Generates an expiring URL for an object
+     * @param  integer $object  The object's ID
+     * @param  integer $expires The length of time the URL should be valid for, in seconds
+     * @return string
+     */
     public function url_expiring($object, $expires)
     {
         $object = $this->get_object($object);
@@ -2597,19 +2600,22 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Generates an API upload token.
-     * @return  string
-     **/
-    public function generate_api_upload_token($user_id = null, $duration = 7200, $restrict_ip = true)
+     * Generate an API upload token
+     * @param  integer $userId     The user to generate the upload token for
+     * @param  integer $duration   How long the token should be valid for
+     * @param  boolean $restrictIp Whether or not to restrict to a particular IP
+     * @return mixed               String on success, false on failure
+     */
+    public function generate_api_upload_token($userId = null, $duration = 7200, $restrictIp = true)
     {
-        if (is_null($user_id)) {
+        if (is_null($userId)) {
 
-            $user_id = active_user('id');
+            $userId = active_user('id');
         }
 
-        $_user = get_userobject()->get_by_id($user_id);
+        $user = get_userobject()->get_by_id($userId);
 
-        if (!$_user) {
+        if (!$user) {
 
             $this->set_error('Invalid user ID');
             return false;
@@ -2617,40 +2623,40 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
+        $token   = array();
+        $token[] = (int) $user->id;          //  User ID
+        $token[] = $user->password_md5;      //  User Password
+        $token[] = $user->email;             //  User Email
+        $token[] = time() + (int) $duration; //  Expire time (+2hours)
 
-        $_token   = array();
-        $_token[] = (int) $_user->id;         //  User ID
-        $_token[] = $_user->password_md5;     //  User Password
-        $_token[] = $_user->email;            //  User Email
-        $_token[] = time() + (int) $duration; //  Expire time (+2hours)
+        if ($restrictIp) {
 
-        if ($restrict_ip) {
-
-            $_token[]   = get_instance()->input->ip_address();
+            $token[] = get_instance()->input->ip_address();
 
         } else {
 
-            $_token[]   = false;
+            $token[] = false;
         }
 
         //  Hash
-        $_token[] = md5(serialize($_token) . APP_PRIVATE_KEY);
+        $token[] = md5(serialize($token) . APP_PRIVATE_KEY);
 
         //  Encrypt and return
-        return get_instance()->encrypt->encode(implode('|', $_token), APP_PRIVATE_KEY);
+        return get_instance()->encrypt->encode(implode('|', $token), APP_PRIVATE_KEY);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Verifies an API upload token
-     * @return  string
-     **/
+     * Validates an API upload token
+     * @param  string $token The upload token to validate
+     * @return mixed         stdClass (the user object) on success, false on failure
+     */
     public function validate_api_upload_token($token)
     {
-        $_token = get_instance()->encrypt->decode($token, APP_PRIVATE_KEY);
+        $token = get_instance()->encrypt->decode($token, APP_PRIVATE_KEY);
 
-        if (!$_token) {
+        if (!$token) {
 
             //  Error #1: Could not decrypot
             $this->set_error('Invalid Token (Error #1)');
@@ -2659,15 +2665,15 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $_token = explode('|', $_token);
+        $token = explode('|', $token);
 
-        if (!$_token) {
+        if (!$token) {
 
             //  Error #2: Could not explode
             $this->set_error('Invalid Token (Error #2)');
             return false;
 
-        } elseif (count($_token) != 6) {
+        } elseif (count($token) != 6) {
 
             //  Error #3: Bad count
             $this->set_error('Invalid Token (Error #3)');
@@ -2677,16 +2683,16 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Correct data types
-        $_token[0] = (int) $_token[0];
-        $_token[3] = (int) $_token[3];
+        $token[0] = (int) $token[0];
+        $token[3] = (int) $token[3];
 
         // --------------------------------------------------------------------------
 
         //  Check hash
-        $_hash = $_token[5];
-        unset($_token[5]);
+        $hash = $token[5];
+        unset($token[5]);
 
-        if ($_hash != md5(serialize($_token) . APP_PRIVATE_KEY)) {
+        if ($hash != md5(serialize($token) . APP_PRIVATE_KEY)) {
 
             //  Error #4: Bad hash
             $this->set_error('Invalid Token (Error #4)');
@@ -2696,10 +2702,10 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Fetch and check user
-        $_user = get_userobject()->get_by_id($_token[0]);
+        $user = get_userobject()->get_by_id($token[0]);
 
         //  User exists?
-        if (!$_user) {
+        if (!$user) {
 
             //  Error #5: User not found
             $this->set_error('Invalid Token (Error #5)');
@@ -2707,7 +2713,7 @@ class Cdn
         }
 
         //  Valid email?
-        if ($_user->email != $_token[2]) {
+        if ($user->email != $token[2]) {
 
             //  Error #6: Invalid Email
             $this->set_error('Invalid Token (Error #6)');
@@ -2715,7 +2721,7 @@ class Cdn
         }
 
         //  Valid password?
-        if ($_user->password_md5 != $_token[1]) {
+        if ($user->password_md5 != $token[1]) {
 
             //  Error #7: Invalid password
             $this->set_error('Invalid Token (Error #7)');
@@ -2723,7 +2729,7 @@ class Cdn
         }
 
         //  User suspended?
-        if ($_user->is_suspended) {
+        if ($user->is_suspended) {
 
             //  Error #8: User suspended
             $this->set_error('Invalid Token (Error #8)');
@@ -2731,7 +2737,7 @@ class Cdn
         }
 
         //  Valid IP?
-        if (!$_token[4] && $_token[4] != get_instance()->input->ip_address()) {
+        if (!$token[4] && $token[4] != get_instance()->input->ip_address()) {
 
             //  Error #9: Invalid IP
             $this->set_error('Invalid Token (Error #9)');
@@ -2739,7 +2745,7 @@ class Cdn
         }
 
         //  Expired?
-        if ($_token[3] < time()) {
+        if ($token[3] < time()) {
 
             //  Error #10: Token expired
             $this->set_error('Invalid Token (Error #10)');
@@ -2749,7 +2755,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  If we got here then the token is valid
-        return $_user;
+        return $user;
     }
 
     // --------------------------------------------------------------------------
@@ -2807,7 +2813,6 @@ class Cdn
     public function run_tests()
     {
         //  If defined, run the pre_test method for the driver
-        $_result = true;
         if (method_exists($this->cdnDriver, 'pre_test')) {
 
             call_user_func(array($this->cdnDriver, 'pre_test'));
