@@ -1,22 +1,6 @@
-<?php
-
-    parse_str($this->input->server('QUERY_STRING'), $query);
-    $query = array_filter($query);
-    $query = $query ? '?' . http_build_query($query) : '';
-    $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
-
-?>
 <div class="group-cdn object browse">
     <p>
         Browse all items stored in the site's CDN.
-        <?php
-
-            if (userHasPermission('admin.cdnadmin:0.can_create_objects')) {
-
-                echo anchor('admin/cdn/objects/create' . $return, 'Upload Items', 'class="awesome small green" style="float:right;"');
-            }
-
-        ?>
     </p>
     <hr />
     <?php

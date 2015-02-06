@@ -1,26 +1,6 @@
-<?php
-
-    parse_str($this->input->server('QUERY_STRING'), $query);
-    $query = array_filter($query);
-    $query = $query ? '?' . http_build_query($query) : '';
-    $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
-
-?>
 <div class="group-cdn object browse trash">
     <p>
         The following items are currently in the CDN trash.
-        <?php
-
-            if (!empty($objects) && userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
-
-                $url = 'admin/cdn/trash//purge' . $return;
-                $title = 'Are you sure?';
-                $body = 'Emptying the trash will <strong>permanently</strong> delete all items.';
-                echo anchor($url, 'Empty Trash', 'style="float:right" data-title="' . $title . '" data-body="' . $body . '" class="confirm awesome small red"');
-
-            }
-
-        ?>
     </p>
     <hr />
     <?php

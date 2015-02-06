@@ -87,6 +87,25 @@ class Trash extends \AdminController
         $this->data['search']     = \Nails\Admin\Helper::searchObject($sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
         $this->data['pagination'] = \Nails\Admin\Helper::paginationObject($page, $perPage, $totalRows);
 
+        //  Work out the return variable
+        parse_str($this->input->server('QUERY_STRING'), $query);
+        $query = array_filter($query);
+        $query = $query ? '?' . http_build_query($query) : '';
+        $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
+        $this->data['return'] = $return;
+
+        //  Add a header button
+        if (!empty($this->data['objects']) && userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
+
+             \Nails\Admin\Helper::addHeaderButton(
+                'admin/cdn/trash/purge' . $return,
+                'Empty Trash',
+                'red',
+                'Are you sure?',
+                'Emptying the trash will <strong>permanently</strong> delete all items.'
+            );
+        }
+
         // --------------------------------------------------------------------------
 
         \Nails\Admin\Helper::loadView('index');

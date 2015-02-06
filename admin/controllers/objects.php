@@ -107,6 +107,19 @@ class Objects extends \AdminController
         $this->data['search']     = \Nails\Admin\Helper::searchObject($sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
         $this->data['pagination'] = \Nails\Admin\Helper::paginationObject($page, $perPage, $totalRows);
 
+        //  Work out the return variable
+        parse_str($this->input->server('QUERY_STRING'), $query);
+        $query = array_filter($query);
+        $query = $query ? '?' . http_build_query($query) : '';
+        $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
+        $this->data['return'] = $return;
+
+        //  Add a header button
+        if (userHasPermission('admin.cdnadmin:0.can_create_objects')) {
+
+             \Nails\Admin\Helper::addHeaderButton('admin/cdn/objects/create' . $return, 'Upload Items');
+        }
+
         // --------------------------------------------------------------------------
 
         \Nails\Admin\Helper::loadView('index');

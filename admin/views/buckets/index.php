@@ -1,23 +1,6 @@
-<?php
-
-    parse_str($this->input->server('QUERY_STRING'), $query);
-    $query = array_filter($query);
-    $query = $query ? '?' . http_build_query($query) : '';
-    $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
-
-?>
 <div class="group-cdn buckets browse">
     <p>
         The following buckets are available on this site.
-        <?php
-
-            if (userHasPermission('admin.cdnadmin:0.can_create_buckets')) {
-
-                echo anchor('admin/cdn/buckets/create' . $return, 'Create Bucket', 'style="float:right" class="awesome small green"');
-
-            }
-
-        ?>
     </p>
     <hr />
     <?php

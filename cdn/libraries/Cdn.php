@@ -231,7 +231,7 @@ class Cdn
 
             //  Work out what the offset should be
             $perPage = is_null($perPage) ? 50 : (int) $perPage;
-            $offset   = $page * $perPage;
+            $offset  = $page * $perPage;
 
             $this->db->limit($perPage, $offset);
         }
@@ -253,14 +253,14 @@ class Cdn
 
     public function _getcount_common_objects($data = array(), $_caller = null)
     {
-        if (isset($data['keywords'])) {
+        if (!empty($data['keywords'])) {
 
             if (!isset($data['or_like'])) {
 
                 $data['or_like'] = array();
             }
 
-            $data['or_like'][] = array('o.filename_display',$data['keywords']);
+            $data['or_like'][] = array('o.filename_display', $data['keywords']);
         }
 
         $this->_getcount_common($data, $_caller);
@@ -338,7 +338,7 @@ class Cdn
 
     public function _getcount_common_objects_from_trash($data = array(), $_caller = null)
     {
-        if (isset($data['keywords'])) {
+        if (!empty($data['keywords'])) {
 
             if (!isset($data['or_like'])) {
 
@@ -1608,14 +1608,14 @@ class Cdn
 
     public function _getcount_common_buckets($data = array(), $_caller = null)
     {
-        if (isset($data['keywords'])) {
+        if (!empty($data['keywords'])) {
 
             if (!isset($data['or_like'])) {
 
                 $data['or_like'] = array();
             }
 
-            $data['or_like'][] = array('b.label',$data['keywords']);
+            $data['or_like'][] = array('b.label', $data['keywords']);
         }
 
         if (!empty($data['includeObjectCount'])) {
