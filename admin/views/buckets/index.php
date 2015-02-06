@@ -53,6 +53,11 @@
                         echo \Nails\Admin\Helper::loadDatetimeCell($bucket->created);
                         echo '<td class="actions">';
 
+                            if (userHasPermission('admin.cdnadmin:0.can_browse_objects')) {
+
+                                echo anchor('admin/cdn/objects/index?bucketId=' . $bucket->id . $return, 'Browse', 'class="awesome small"');
+                            }
+
                             if (userHasPermission('admin.cdnadmin:0.can_edit_buckets')) {
 
                                 echo anchor('admin/cdn/buckets/edit/' . $bucket->id . $return, 'Edit', 'class="awesome small"');

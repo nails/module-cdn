@@ -71,11 +71,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
                         //  Bucket and nonce set, cross-check
                         if (md5($bucket[0] . '|' . $bucket[1] . '|' . APP_PRIVATE_KEY) === $hash) {
 
-                            $this->data['bucket'] = $this->cdn->get_bucket(
-                                $bucket[0],
-                                true,
-                                $this->input->get('filter-tag')
-                            );
+                            $this->data['bucket'] = $this->cdn->get_bucket($bucket[0]);
 
                             if ($this->data['bucket']) {
 
@@ -87,11 +83,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
                                 if ($this->cdn->bucket_create($bucket[0])) {
 
                                     $testOk = true;
-                                    $this->data['bucket'] = $this->cdn->get_bucket(
-                                        $bucket[0],
-                                        true,
-                                        $this->input->get('filter-tag')
-                                    );
+                                    $this->data['bucket'] = $this->cdn->get_bucket($bucket[0]);
 
                                 } else {
 
@@ -137,7 +129,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
                 // --------------------------------------------------------------------------
 
                 //  Test bucket, if it doesn't exist, create it
-                $this->data['bucket'] = $this->cdn->get_bucket($slug, true, $this->input->get('filter-tag'));
+                $this->data['bucket'] = $this->cdn->get_bucket($slug);
 
                 if (!$this->data['bucket']) {
 
@@ -150,11 +142,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
                     } else {
 
-                        $this->data['bucket'] = $this->cdn->get_bucket(
-                            $bucket_id,
-                            true,
-                            $this->input->get('filter-tag')
-                        );
+                        $this->data['bucket'] = $this->cdn->get_bucket($bucket_id);
                     }
                 }
             }
@@ -185,15 +173,18 @@ class NAILS_Manager extends NAILS_CDN_Controller
             $this->asset->load('tipsy/src/stylesheets/tipsy.css', 'NAILS-BOWER');
             $this->asset->load('mustache.js/mustache.js', 'NAILS-BOWER');
             $this->asset->load('jquery-cookie/jquery.cookie.js', 'NAILS-BOWER');
+            // $this->asset->load('dropzone/downloads/dropzone.min.js', 'NAILS-BOWER');
+            $this->asset->load('fontawesome/css/font-awesome.min.css', 'NAILS-BOWER');
 
             //  Load other assets
             $this->asset->load('nails.default.min.js', true);
             $this->asset->load('nails.api.min.js', true);
             $this->asset->load('nails.cdn.manager.min.js', true);
 
-            //  Load libraries
-            $this->asset->library('jqueryui');
-            //$this->asset->library('uploadify');   //  One day...
+            // --------------------------------------------------------------------------
+
+            //  List the bucket objects
+            $this->data['objects'] = $this->cdn->bucket_list($this->data['bucket']->id);
 
             // --------------------------------------------------------------------------
 
@@ -228,18 +219,9 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
         // --------------------------------------------------------------------------
 
-        //  Are we in a tag?
-        $options = array();
-        if ($this->input->get('filter-tag')) {
-
-            $options['tag'] = $this->input->get('filter-tag');
-        }
-
-        // --------------------------------------------------------------------------
-
         //  Upload the file
         $this->load->library('cdn/cdn');
-        if ($this->cdn->object_create('userfile', $this->data['bucket']->id, $options)) {
+        if ($this->cdn->object_create('userfile', $this->data['bucket']->id)) {
 
             $this->session->set_flashdata('success', '<strong>Success!</strong> File uploaded successfully!');
 
@@ -369,66 +351,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
         if ($restore) {
 
             $this->session->set_flashdata('success', '<strong>Success!</strong> File restored successfully!');
-
-        } else {
-
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
-        }
-
-        // --------------------------------------------------------------------------
-
-        redirect($return);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Add a new bucket tag
-     * @return void
-     */
-    public function new_tag()
-    {
-        //  Returning to...?
-        $return  = site_url('cdn/manager/browse', isPageSecure());
-        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
-
-        // --------------------------------------------------------------------------
-
-        $added = $this->cdn->bucket_tag_add($this->data['bucket'], $this->input->post('label'));
-
-        if ($added) {
-
-            $this->session->set_flashdata('success', '<strong>Success!</strong> Tag added successfully!');
-
-        } else {
-
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
-        }
-
-        // --------------------------------------------------------------------------
-
-        redirect($return);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Delete a bucket tag
-     * @return void
-     */
-    public function delete_tag()
-    {
-        //  Returning to...?
-        $return  = site_url('cdn/manager/browse', isPageSecure());
-        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
-
-        // --------------------------------------------------------------------------
-
-        $deleted = $this->cdn->bucket_tag_delete($this->data['bucket'], $this->uri->segment(4));
-
-        if ($deleted) {
-
-            $this->session->set_flashdata('success', '<strong>Success!</strong> Tag deleted successfully!');
 
         } else {
 

@@ -938,14 +938,6 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        //  Has a tag been defined?
-        if (isset($options['tag'])) {
-
-            $_data->tag_id = $options['tag'];
-        }
-
-        // --------------------------------------------------------------------------
-
         /**
          * If a certain filename has been specified then send that to the CDN (this
          * will overwrite any existing file so use with caution).
@@ -1309,113 +1301,6 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Adds a tag to an object
-     * @param  mixed   $object The object's ID or filename
-     * @param  int     $tagId  the tag's ID
-     * @return boolean
-     */
-    public function object_tag_add($object, $tagId)
-    {
-        //  Valid object?
-        $object = $this->get_object($object);
-
-        if (!$object) {
-
-            $this->set_error(lang('cdn_error_object_invalid'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Valid tag?
-        $this->db->where('t.id', $tagId);
-        $tag = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket_tag t')->row();
-
-        if (!$tag) {
-
-            $this->set_error(lang('cdn_error_tag_invalid'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Test if tag has already been applied to the object, if it has gracefully fail
-        $this->db->where('object_id', $object->id);
-        $this->db->where('tag_id', $tag->id);
-        if ($this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_object_tag')) {
-
-            return true;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Seems good, add the tag
-        $this->db->set('object_id', $object->id);
-        $this->db->set('tag_id', $tag->id);
-        $this->db->set('created', 'NOW()', false);
-        $this->db->insert(NAILS_DB_PREFIX . 'cdn_object_tag');
-
-        return $this->db->affected_rows() ? true : false;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Deletes a tag from an object
-     * @param  mixed   $object The object's ID or filename
-     * @param  int     $tagId  The tag's ID
-     * @return boolean
-     */
-    public function object_tag_delete($object, $tagId)
-    {
-        //  Valid object?
-        $object = $this->get_object($object);
-
-        if (!$object) {
-
-            $this->set_error(lang('cdn_error_object_invalid'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Valid tag?
-        $this->db->where('t.id', $tagId);
-        $tag = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket_tag t')->row();
-
-        if (!$tag) {
-
-            $this->set_error(lang('cdn_error_tag_invalid'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Seems good, delete the tag
-        $this->db->where('object_id', $object->id);
-        $this->db->where('tag_id', $tag->id);
-        $this->db->delete(NAILS_DB_PREFIX . 'cdn_object_tag');
-
-        return $this->db->affected_rows() ? true : false;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Counts the number of objects a tag contains
-     * @param  int $tagId The tag's ID
-     * @return int
-     */
-    public function object_tag_count($tagId)
-    {
-        $this->db->where('ot.tag_id', $tagId);
-        $this->db->join(NAILS_DB_PREFIX . 'cdn_object o', 'o.id = ot.object_id');
-        return $this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_object_tag ot');
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Increments the stats of on object
      * @param  string  $action The stat to increment
      * @param  mixed   $object The object's ID or filename
@@ -1562,23 +1447,6 @@ class Cdn
         $objectId = $this->db->insert_id();
 
         if ($this->db->affected_rows()) {
-
-            //  Add a tag if there's one defined
-            if (isset($data->tag_id) && !empty($data->tag_id)) {
-
-                $this->db->where('id', $data->tag_id);
-
-                if ($this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket_tag')) {
-
-                    $this->db->set('object_id', $objectId);
-                    $this->db->set('tag_id', $data->tag_id);
-                    $this->db->set('created', 'NOW()', false);
-
-                    $this->db->insert(NAILS_DB_PREFIX . 'cdn_object_tag');
-                }
-            }
-
-            // --------------------------------------------------------------------------
 
             if ($return_object) {
 
@@ -1893,15 +1761,7 @@ class Cdn
      **/
     public function bucket_list($bucket, $filter_tag = null, $sort_on = null, $sort_order = null)
     {
-        dumpanddie('TODO: bucket_list');
-        //  Filtering by tag?
-        if ($filter_tag) {
-
-            $this->db->join(NAILS_DB_PREFIX . 'cdn_object_tag ft', 'ft.object_id = o.id AND ft.tag_id = ' . $filter_tag);
-        }
-
-        // --------------------------------------------------------------------------
-
+        $data = array();
         //  Sorting?
         if ($sort_on) {
 
@@ -2005,141 +1865,6 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Adds a tag to a bucket
-     * @param   string
-     * @return  boolean
-     **/
-    public function bucket_tag_add($bucket, $label)
-    {
-        $label = trim($label);
-
-        if (!$label) {
-
-            $this->set_error(lang('cdn_error_tag_invalid'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Test bucket
-        if (is_numeric($bucket) || is_string($bucket)) {
-
-            $_bucket = $this->get_bucket($bucket);
-
-        } else {
-
-            $_bucket = $bucket;
-        }
-
-        if (!$_bucket) {
-
-            $this->set_error(lang('cdn_error_bucket_invalid'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Test tag
-        $this->db->where('bucket_id', $_bucket->id);
-        $this->db->where('label', $label);
-        if ($this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket_tag')) {
-
-            $this->set_error(lang('cdn_error_tag_exists'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Seems good, add the tag
-        $this->db->set('bucket_id', $_bucket->id);
-        $this->db->set('label', $label);
-        $this->db->set('created', 'NOW()', false);
-        $this->db->insert(NAILS_DB_PREFIX . 'cdn_bucket_tag');
-
-        return $this->db->affected_rows() ? true : false;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Deletes a tag from a bucket
-     * @param   string
-     * @return  boolean
-     **/
-    public function bucket_tag_delete($bucket, $label)
-    {
-        //  Test bucket
-        if (is_numeric($bucket) || is_string($bucket)) {
-
-            $_bucket = $this->get_bucket($bucket);
-
-        } else {
-
-            $_bucket = $bucket;
-        }
-
-        if (!$_bucket) {
-
-            $this->set_error(lang('cdn_error_bucket_invalid'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Test tag
-        $this->db->where('bucket_id', $_bucket->id);
-
-        if (is_numeric($label)) {
-
-            $this->db->where('id', $label);
-
-        } else {
-
-            $this->db->where('label', $label);
-        }
-
-
-        if (!$this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket_tag')) {
-
-            $this->set_error(lang('cdn_error_tag_notexist'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Seems good, delete the tag
-        $this->db->where('bucket_id', $_bucket->id);
-
-        if (is_numeric($label)) {
-
-            $this->db->where('id', $label);
-
-        } else {
-
-            $this->db->where('label', $label);
-        }
-
-        $this->db->delete(NAILS_DB_PREFIX . 'cdn_bucket_tag');
-
-        return $this->db->affected_rows() ? true : false;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Renames a bucket tag
-     * @param   string
-     * @return  boolean
-     **/
-    public function bucket_tag_rename($bucket, $label, $new_name)
-    {
-        //  @todo: Rename a bucket tag
-        return false;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Formats a bucket object
      * @param   object  $bucket The bucket to format
      * @return  void
@@ -2147,7 +1872,6 @@ class Cdn
     protected function _format_bucket(&$bucket)
     {
         $bucket->id          = (int) $bucket->id;
-        $bucket->objectCount = (int) $bucket->objectCount;
         $bucket->max_size    = (int) $bucket->max_size;
         $bucket->modified_by = $bucket->modified_by ? (int) $bucket->modified_by : null;
 
@@ -2175,6 +1899,13 @@ class Cdn
         unset($bucket->email);
         unset($bucket->profile_img);
         unset($bucket->gender);
+
+        // --------------------------------------------------------------------------
+
+        if (isset($bucket->objectCount)) {
+
+            $bucket->objectCount = (int) $bucket->objectCount;
+        }
     }
 
     // --------------------------------------------------------------------------

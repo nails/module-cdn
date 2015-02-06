@@ -46,6 +46,16 @@ class Objects extends \AdminController
         //  Set method info
         $this->data['page']->title = 'Browse Objects';
 
+        if ($this->input->get('bucketId')) {
+
+            $bucket = $this->cdn->get_bucket($this->input->get('bucketId'));
+
+            if ($bucket) {
+
+                $this->data['page']->title .= ' &rsaquo; ' . $bucket->label;
+            }
+        }
+
         // --------------------------------------------------------------------------
 
         //  Get pagination and search/sort variables
@@ -77,6 +87,17 @@ class Objects extends \AdminController
             ),
             'keywords' => $keywords
         );
+
+        // --------------------------------------------------------------------------
+
+        if ($this->input->get('bucketId')) {
+
+            $data['where'] = array(
+                array('o.bucket_id', $this->input->get('bucketId'))
+            );
+        }
+
+        // --------------------------------------------------------------------------
 
         //  Get the items for the page
         $totalRows             = $this->cdn->count_all_objects($data);

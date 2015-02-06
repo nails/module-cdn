@@ -95,11 +95,11 @@
 
                             if ($object->is_img) {
 
-                                echo anchor(cdn_serve($object->id), 'View', 'class="awesome small fancybox"');
+                                echo anchor(cdn_serve($object->id), 'View', 'class="awesome small green fancybox"');
 
                             } else {
 
-                                echo anchor(cdn_serve($object->id), 'View', 'class="awesome small fancybox" data-fancybox-type="iframe"');
+                                echo anchor(cdn_serve($object->id), 'View', 'class="awesome small green fancybox" data-fancybox-type="iframe"');
                             }
 
                         echo '</td>';

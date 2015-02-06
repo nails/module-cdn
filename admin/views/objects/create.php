@@ -10,7 +10,7 @@
 	<p class="system-alert success" id="alert-complete" style="display:none;">
 		<strong>Complete!</strong> All files have been uploaded.
 	</p>
-	<fieldset style="margin-top:3em;">
+	<fieldset>
 		<legend>Bucket</legend>
 		<?php
 
