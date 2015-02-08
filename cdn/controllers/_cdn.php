@@ -86,7 +86,7 @@ class NAILS_CDN_Controller extends NAILS_Controller
      * @param  boolean $hit  Whether or not the request was a cache hit or not
      * @return void
      */
-    protected function serveFromCache($file, $hit = true)
+    protected function serveFromCache($file, $hit = true, $setCacheHeaders = true)
     {
         /**
          * Cache object exists, set the appropriate headers and return the
@@ -96,17 +96,23 @@ class NAILS_CDN_Controller extends NAILS_Controller
         $stats = stat($this->cdnCacheDir . $file);
 
         //  Set cache headers
-        $this->setCacheHeaders($stats[9], $file, $hit);
+        if ($setCacheHeaders) {
+
+            $this->setCacheHeaders($stats['mtime'], $file, $hit);
+        }
 
         //  Work out content type
         $mime = $this->cdn->get_mime_from_file($this->cdnCacheDir . $file);
 
         header('Content-Type: ' . $mime, true);
 
+        //  Send Filesize
+        header('Content-Length: ' . $stats['size']);
+
         // --------------------------------------------------------------------------
 
         //  Send the contents of the file to the browser
-        echo file_get_contents($this->cdnCacheDir . $file);
+        echo readFileChunked($this->cdnCacheDir . $file);
 
         /**
          * Kill script, th, th, that's all folks.

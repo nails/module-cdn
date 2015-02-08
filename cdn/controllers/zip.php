@@ -107,15 +107,25 @@ class NAILS_Zip extends NAILS_CDN_Controller
                     //  Save the Zip to the cache directory
                     $this->zip->archive($this->cdnCacheDir . $this->cdnCacheFile);
 
-                    // --------------------------------------------------------------------------
+                    //  Set all the appropriate headers
+                    if (strpos($_SERVER['HTTP_USER_AGENT'], "MSIE") !== false) {
 
-                    //  Set the appropriate cache headers
-                    $this->setCacheHeaders(time(), $this->cdnCacheFile, false);
+                        header('Content-Disposition: attachment; filename="' . $filename . '"');
+                        header('Expires: 0');
+                        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+                        header("Content-Transfer-Encoding: binary");
+                        header('Pragma: public');
 
-                    // --------------------------------------------------------------------------
+                    } else {
 
-                    //  Output to browser
-                    $this->zip->download($filename);
+                        header('Content-Disposition: attachment; filename="' . $filename . '"');
+                        header("Content-Transfer-Encoding: binary");
+                        header('Expires: 0');
+                        header('Pragma: no-cache');
+                    }
+
+                    //  Serve to the people
+                    $this->serveFromCache($this->cdnCacheFile, null, false);
                 }
 
             } else {

@@ -212,7 +212,7 @@ class NAILS_Serve extends NAILS_CDN_Controller
         // --------------------------------------------------------------------------
 
         //  Send the contents of the file to the browser
-        echo file_get_contents($usefile);
+        echo readFileChunked($usefile);
 
         // --------------------------------------------------------------------------
 

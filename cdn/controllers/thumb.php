@@ -364,7 +364,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
             //  Perform the resize; first save the original frame to disk
             imagegif($frame['image'], $this->cdnCacheDir . $tempFilename);
 
-            $PHPThumb = new PHPThumb\GD($this->cdnCacheDir . $tempFilename, $_options);
+            $PHPThumb = new PHPThumb\GD($this->cdnCacheDir . $tempFilename, $options);
             $PHPThumb->{$phpThumbMethod}($width, $height);
 
             // --------------------------------------------------------------------------
