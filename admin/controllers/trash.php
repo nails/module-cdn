@@ -193,15 +193,15 @@ class Trash extends \AdminController
 
             if (!is_null($purgeIds) && count($purgeIds) == 1) {
 
-                $msg = '<strong>Success!</strong> CDN Object was deleted successfully.';
+                $msg = 'CDN Object was deleted successfully.';
 
             } elseif (!is_null($purgeIds) && count($purgeIds) > 1) {
 
-                $msg = '<strong>Success!</strong> CDN Objects were deleted successfully.';
+                $msg = 'CDN Objects were deleted successfully.';
 
             } else {
 
-                $msg = '<strong>Success!</strong> CDN Trash was emptied successfully.';
+                $msg = 'CDN Trash was emptied successfully.';
             }
 
         } else {
@@ -210,15 +210,15 @@ class Trash extends \AdminController
 
             if (!is_null($purgeIds) && count($purgeIds) == 1) {
 
-                $msg = '<strong>Sorry,</strong> CDN Object failed to delete. ' . $this->cdn->last_error();
+                $msg = 'CDN Object failed to delete. ' . $this->cdn->last_error();
 
             } elseif (!is_null($purgeIds) && count($purgeIds) > 1) {
 
-                $msg = '<strong>Sorry,</strong> CDN Objects failed to delete. ' . $this->cdn->last_error();
+                $msg = 'CDN Objects failed to delete. ' . $this->cdn->last_error();
 
             } else {
 
-                $msg = '<strong>Sorry,</strong> CDN Trash failed to empty. ' . $this->cdn->last_error();
+                $msg = 'CDN Trash failed to empty. ' . $this->cdn->last_error();
             }
         }
 
@@ -247,12 +247,12 @@ class Trash extends \AdminController
         if ($this->cdn->object_restore($objectId)) {
 
             $status = 'success';
-            $msg    = '<strong>Success!</strong> CDN Object was restored successfully.';
+            $msg    = 'CDN Object was restored successfully.';
 
         } else {
 
             $status = 'error';
-            $msg    = '<strong>Sorry,</strong> CDN Object failed to restore. ' . $this->cdn->last_error();
+            $msg    = 'CDN Object failed to restore. ' . $this->cdn->last_error();
         }
 
         $this->session->set_flashdata($status, $msg);

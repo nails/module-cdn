@@ -73,7 +73,7 @@ class Utilities extends \AdminController
                     //  Invalid request
                     default:
 
-                        $this->data['error']    = '<strong>Sorry,</strong> invalid search type.';
+                        $this->data['error']    = 'Invalid search type.';
                         break;
                 }
 
@@ -100,14 +100,14 @@ class Utilities extends \AdminController
                         //  Invalid request
                         default:
 
-                            $this->data['error'] = '<strong>Sorry,</strong> invalid result parse selected.'; unset($this->data['orphans']);
+                            $this->data['error'] = 'Invalid result parse selected.'; unset($this->data['orphans']);
                             break;
                     }
                 }
 
             } else {
 
-                $this->data['error'] = '<strong>Sorry,</strong> an error occurred. ' . $error;
+                $this->data['error'] = 'An error occurred. ' . $error;
             }
         }
 

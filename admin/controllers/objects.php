@@ -210,12 +210,12 @@ class Objects extends \AdminController
         if ($this->cdn->object_delete($objectId)) {
 
             $status = 'success';
-            $msg    = '<strong>Success!</strong> CDN Object was deleted successfully.';
+            $msg    = 'CDN Object was deleted successfully.';
 
         } else {
 
             $status = 'error';
-            $msg    = '<strong>Sorry,</strong> CDN Object failed to delete. ' . $this->cdn->last_error();
+            $msg    = 'CDN Object failed to delete. ' . $this->cdn->last_error();
         }
 
         $this->session->set_flashdata($status, $msg);
