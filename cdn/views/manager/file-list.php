@@ -1,65 +1,64 @@
 <?php
 
-	echo '<tr class="file list" data-title="' . $object->filename_display . '" data-id="' . $object->id . '">';
+    echo '<tr class="file list" data-title="' . $object->filename_display . '" data-id="' . $object->id . '">';
+        echo '<td class="filename">';
 
-		echo '<td class="filename">';
+            if ($object->is_img) {
 
-		if ( $object->is_img ) :
-
-			//	Thumbnail
-			echo img( array( 'src' => cdn_thumb( $object->id, 30, 30 ), 'class' => 'icon' ) );
-			$_fancybox_class	= 'cdn-fancybox';
-			$_fancybox_type		= '';
-			$_url				= cdn_serve( $object->id );
-			$_action			= 'View';
-
-
-		elseif ( $object->mime == 'audio/mpeg' ) :
-
-			//	PDF
-			echo '<div class="icon"><span class="fa fa-music" style="font-size:2.2em"></span></div>';
-			$_fancybox_class	= 'cdn-fancybox';
-			$_fancybox_type		= 'iframe';
-			$_url				= cdn_serve( $object->id );
-			$_action			= 'Play';
+                //  Thumbnail
+                echo img(array('src' => cdn_thumb($object->id, 30, 30), 'class' => 'icon'));
+                $fancyboxClass = 'cdn-fancybox';
+                $fancyboxType  = '';
+                $url           = cdn_serve($object->id);
+                $action        = 'View';
 
 
-		elseif ( $object->mime == 'application/pdf' ) :
+            } elseif ($object->mime == 'audio/mpeg') {
 
-			//	PDF
-			echo '<div class="icon"><span class="fa fa-file-o" style="font-size:2.2em"></span></div>';
-			$_fancybox_class	= 'cdn-fancybox';
-			$_fancybox_type		= 'iframe';
-			$_url				= cdn_serve( $object->id );
-			$_action			= 'View';
+                //  Audio/Video
+                echo '<div class="icon"><span class="fa fa-music" style="font-size:2.2em"></span></div>';
+                $fancyboxClass = 'cdn-fancybox';
+                $fancyboxType  = 'iframe';
+                $url           = cdn_serve($object->id);
+                $action        = 'Play';
 
-		else :
 
-			//	Generic file, force download
-			echo '<div class="icon"><span class="fa fa-file-o" style="font-size:2.2em"></span></div>';
-			$_fancybox_class	= '';
-			$_fancybox_type		= '';
-			$_url				= cdn_serve( $object->id, TRUE );
-			$_action			= 'Download';
+            } elseif ($object->mime == 'application/pdf') {
 
-		endif;
+                //  PDF
+                echo '<div class="icon"><span class="fa fa-file-o" style="font-size:2.2em"></span></div>';
+                $fancyboxClass = 'cdn-fancybox';
+                $fancyboxType  = 'iframe';
+                $url           = cdn_serve($object->id);
+                $action        = 'View';
 
-			echo $object->filename_display;
+            } else {
 
-		echo '</td>';
+                //  Generic file, force download
+                echo '<div class="icon"><span class="fa fa-file-o" style="font-size:2.2em"></span></div>';
+                $fancyboxClass = '';
+                $fancyboxType  = '';
+                $url           = cdn_serve($object->id, true);
+                $action        = 'Download';
+            }
 
-		echo '<td class="mime">' . $object->mime . '</td>';
+            echo $object->filename_display;
 
-		echo '<td class="filesize">' . format_bytes( $object->filesize ) . '</td>';
+        echo '</td>';
+        echo '<td class="mime">';
+            echo $object->mime;
+        echo '</td>';
+        echo '<td class="filesize">';
+            echo format_bytes($object->filesize);
+        echo '</td>';
+        echo '<td class="modified">';
+            echo toUserDatetime($object->modified);
+        echo '</td>';
+        echo '<td class="actions">';
 
-		echo '<td class="modified">' . toUserDatetime( $object->modified ) . '</td>';
+            echo '<a href="#" data-fieldid="' . $this->input->get('fieldid') . '" data-id="' . $object->id . '" data-bucket="' . $bucket->slug .'" data-file="' . $object->filename .'" class="awesome green small insert">Insert</a>';
+            echo anchor(site_url('cdn/manager/delete/' . $object->id . '?' . $_SERVER['QUERY_STRING'], isPageSecure()), 'Delete', 'class="awesome red small delete"');
+            echo anchor($url, $action, 'data-fancybox-title="' . $object->filename_display . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' awesome small"');
 
-		echo '<td class="actions">';
-
-			echo '<a href="#" data-fieldid="' . $this->input->get( 'fieldid' ) . '" data-id="' . $object->id . '" data-bucket="' . $bucket->slug .'" data-file="' . $object->filename .'" class="awesome green small insert">Insert</a>';
-			echo anchor( site_url( 'cdn/manager/delete/' . $object->id . '?' . $_SERVER['QUERY_STRING'], isPageSecure() ), 'Delete', 'class="awesome red small delete"' );
-			echo anchor( $_url, $_action, 'data-fancybox-title="' . $object->filename_display . '" data-fancybox-type="' . $_fancybox_type . '" class="' . $_fancybox_class . ' awesome small"' );
-
-		echo '</td>';
-
-	echo '</tr>';
+        echo '</td>';
+    echo '</tr>';

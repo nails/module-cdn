@@ -117,7 +117,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
                 if (!$testOk) {
 
                     $this->data['enabled']    = false;
-                    $this->data['bad_bucket'] = $error;
+                    $this->data['badBucket'] = $error;
                 }
 
             } else {
@@ -138,7 +138,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
                     if (!$bucket_id) {
 
                          $this->data['enabled']    = false;
-                         $this->data['bad_bucket'] = 'Unable to create upload bucket: ' . $this->cdn->last_error();
+                         $this->data['badBucket'] = 'Unable to create upload bucket: ' . $this->cdn->last_error();
 
                     } else {
 

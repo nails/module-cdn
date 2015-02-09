@@ -1,61 +1,70 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>Media Manager</title>
-		<meta charset="utf-8">
-		<style type="text/css">
+    <head>
+        <title>Media Manager</title>
+        <meta charset="utf-8">
+        <style type="text/css">
 
-			html,body
-			{
-				height:100%;
-			}
+            html,body
+            {
+                height:100%;
+            }
 
-		</style>
-		<!--	JS GLOBALS	-->
-		<script type="text/javascript">
-			var ENVIRONMENT		= '<?=ENVIRONMENT?>';
-			window.SITE_URL		= '<?=site_url()?>';
-			window.NAILS_ASSETS_URL	= '<?=NAILS_ASSETS_URL?>';
-			window.NAILS_LANG	= {};
-		</script>
+        </style>
+        <!--    JS GLOBALS  -->
+        <script type="text/javascript">
+            var ENVIRONMENT         = '<?=ENVIRONMENT?>';
+            window.SITE_URL         = '<?=site_url()?>';
+            window.NAILS_ASSETS_URL = '<?=NAILS_ASSETS_URL?>';
+            window.NAILS_LANG       = {};
+        </script>
+        <?php
 
-		<?php
+            $this->asset->output('CSS');
+            $this->asset->output('CSS-INLINE');
 
-			//	Spit out assets
-			$this->asset->output();
+        ?>
+    </head>
+    <body>
+        <div class="group-cdn manager <?=$this->input->get('isFancybox') ? 'is-fancybox' : ''?>">
+            <div id="mask"></div>
+            <div class="browser-outer">
+                <div class="browser-inner">
+                    <div class="disabled">
+                        <h1>Sorry, the media manager is not available.</h1>
+                        <p>You don't have permission to view the media manager at the moment.</p>
+                        <?php
 
-		?>
-	</head>
-	<body>
-		<div class="group-cdn manager <?=$this->input->get( 'isFancybox' ) ? 'is-fancybox' : ''?>">
-			<div id="mask"></div>
-			<div class="browser-outer">
-				<div class="browser-inner">
-					<div class="disabled">
-						<h1>Sorry, the media manager is not available.</h1>
-						<p>You don't have permission to view the media manager at the moment.</p>
-						<?php
+                            if (!$user->is_logged_in()) {
 
-							if ( ! $user->is_logged_in() ) :
+                                echo '<p>';
+                                echo anchor(
+                                    'auth/login?return_to=' . urlencode($_SERVER['REQUEST_URI']),
+                                    lang('action_login'),
+                                    'class="awesome"'
+                                );
+                                echo '</p>';
+                            }
 
-								echo '<p>' . anchor( 'auth/login?return_to=' . urlencode( $_SERVER['REQUEST_URI']), lang( 'action_login' ), 'class="awesome"' ) . '</p>';
+                            // --------------------------------------------------------------------------
 
-							endif;
+                            if (isset($badBucket)) {
 
-							// --------------------------------------------------------------------------
+                                echo '<p class="system-alert error">';
+                                echo $badBucket;
+                                echo '</p>';
+                            }
 
-							if ( isset( $bad_bucket ) ) :
+                        ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
 
-								echo '<p class="system-alert error">';
-								echo $bad_bucket;
-								echo '</p>';
+            $this->asset->output('JS');
+            $this->asset->output('JS-INLINE');
 
-							endif;
-
-						?>
-					</div>
-				</div>
-			</div>
-		</div>
-	</body>
+        ?>
+    </body>
 </html>

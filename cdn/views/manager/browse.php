@@ -277,41 +277,42 @@
         ?>
         <script type="text/javascript">
 
-            var _manager;
+            var manager;
 
             $(function(){
 
                 //  Initialise CDN Manager
-                var _urlscheme          = {};
+                urlScheme              = {};
+                urlScheme.serve        = '<?=$this->cdn->url_serve_scheme()?>';
+                urlScheme.thumb        = '<?=$this->cdn->url_thumb_scheme()?>';
+                urlScheme.scale        = '<?=$this->cdn->url_scale_scheme()?>';
+                urlScheme.placeholder  = '<?=$this->cdn->url_placeholder_scheme()?>';
+                urlScheme.blank_avatar = '<?=$this->cdn->url_blank_avatar_scheme()?>';
 
-                _urlscheme.serve        = '<?=$this->cdn->url_serve_scheme()?>';
-                _urlscheme.thumb        = '<?=$this->cdn->url_thumb_scheme()?>';
-                _urlscheme.scale        = '<?=$this->cdn->url_scale_scheme()?>';
-                _urlscheme.placeholder  = '<?=$this->cdn->url_placeholder_scheme()?>';
-                _urlscheme.blank_avatar = '<?=$this->cdn->url_blank_avatar_scheme()?>';
-
-                _manager = new NAILS_CDN_Manager();
                 <?php
 
                     $isFancybox     = $this->input->get('isFancybox') ? 'true' : 'false';
-                    $reopen_fancybox    = $this->input->get('reopen_fancybox') ? $this->input->get('reopen_fancybox') : '';
+                    $reopenFancybox = $this->input->get('reopenFancybox') ? $this->input->get('reopenFancybox') : '';
 
                     if (isset($_GET['CKEditorFuncNum'])) {
 
-                        echo '_manager.init(\'ckeditor\', ' . $_GET['CKEditorFuncNum'] . ', _urlscheme, ' . $isFancybox . ', \'' . $reopen_fancybox . '\');';
+                        echo 'manager = new NAILS_CDN_Manager("ckeditor", ' . $this->input->get('CKEditorFuncNum') . ', urlScheme, ' . $isFancybox . ', "' . $reopenFancybox . '");';
 
                         if ($this->input->get('deleted')) {
 
-                            echo '_manager._insert_ckeditor(\'\', \'\');';
+                            echo 'manager.insertCkeditor(\'\', \'\');';
                         }
 
                     } else {
 
-                        echo '_manager.init(\'native\', \'' . $this->input->get('callback') . '\', {}, ' . $isFancybox . ', \'' . $reopen_fancybox . '\');';
+                        $callback = json_encode($this->input->get('callback'));
+                        $passback = $this->input->get('passback');
+
+                        echo 'manager = new NAILS_CDN_Manager("native", ' . $callback . ', ' . $passback . ', urlScheme, ' . $isFancybox . ', "' . $reopenFancybox . '");';
 
                         if ($this->input->get('deleted')) {
 
-                            echo '_manager._insert_native(\'\', \'\');';
+                            echo 'manager.insertNative("", "");';
                         }
                     }
 
