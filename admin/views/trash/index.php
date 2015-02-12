@@ -2,7 +2,6 @@
     <p>
         The following items are currently in the CDN trash.
     </p>
-    <hr />
     <?php
 
         echo \Nails\Admin\Helper::loadSearch($search);

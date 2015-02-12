@@ -2,7 +2,6 @@
     <p>
         Browse all items stored in the site's CDN.
     </p>
-    <hr />
     <?php
 
         echo \Nails\Admin\Helper::loadSearch($search);
