@@ -215,11 +215,12 @@ class Local_CDN implements Cdn_driver
      */
 
     /**
-     * Generates the correct URL for serving up a file
-     * @param   string  $bucket The bucket which the image resides in
-     * @param   string  $object The filename of the object
-     * @return  string
-     **/
+     * Generates the correct URL for serving a file
+     * @param  string  $object        The object to serve
+     * @param  string  $bucket        The bucket to serve from
+     * @param  boolean $forceDownload Whether to force a download
+     * @return string
+     */
     public function url_serve($object, $bucket, $forceDownload)
     {
         $out  = 'cdn/serve/';
@@ -411,12 +412,13 @@ class Local_CDN implements Cdn_driver
 
     /**
      * Generates a properly hashed expiring url
-     * @param   string  $bucket     The bucket which the image resides in
-     * @param   string  $object     The object to be served
-     * @param   string  $expires    The length of time the URL should be valid for, in seconds
-     * @return  string
+     * @param  string  $bucket        The bucket which the image resides in
+     * @param  string  $object        The object to be served
+     * @param  string  $expires       The length of time the URL should be valid for, in seconds
+     * @param  boolean $forceDownload Whether to force a download
+     * @return string
      **/
-    public function url_expiring($object, $bucket, $expires)
+    public function url_expiring($object, $bucket, $expires, $forceDownload = false)
     {
         //  Hash the expiry time
         $hash  = $bucket . '|' . $object . '|' . $expires . '|' . time() . '|';
@@ -425,6 +427,11 @@ class Local_CDN implements Cdn_driver
         $hash  = urlencode($hash);
 
         $out  = 'cdn/serve?token=' . $hash;
+
+        if ($forceDownload) {
+
+            $out .= '&dl=1';
+        }
 
         return $this->urlMakeSecure($out);
     }

@@ -2568,7 +2568,7 @@ class Cdn
      * @param  integer $expires The length of time the URL should be valid for, in seconds
      * @return string
      */
-    public function url_expiring($object, $expires)
+    public function url_expiring($object, $expires, $forceDownload = false)
     {
         $object = $this->get_object($object);
 
@@ -2582,7 +2582,7 @@ class Cdn
 
         }
 
-        return $this->cdnDriver->url_expiring($object->filename, $object->bucket->slug, $expires);
+        return $this->cdnDriver->url_expiring($object->filename, $object->bucket->slug, $expires, $forceDownload);
     }
 
     // --------------------------------------------------------------------------
