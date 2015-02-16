@@ -255,12 +255,15 @@ class Cdn
     {
         if (!empty($data['keywords'])) {
 
-            if (!isset($data['or_like'])) {
+            if (empty($data['or_like'])) {
 
                 $data['or_like'] = array();
             }
 
-            $data['or_like'][] = array('o.filename_display', $data['keywords']);
+            $data['or_like'][] = array(
+                'column' => 'o.filename_display',
+                'value'  => $data['keywords']
+            );
         }
 
         $this->_getcount_common($data, $_caller);
@@ -345,7 +348,10 @@ class Cdn
                 $data['or_like'] = array();
             }
 
-            $data['or_like'][] = array('o.filename_display',$data['keywords']);
+            $data['or_like'][] = array(
+                'column' => 'o.filename_display',
+                'value'  => $data['keywords']
+            );
         }
 
         $this->_getcount_common($data, $_caller);
@@ -1610,12 +1616,15 @@ class Cdn
     {
         if (!empty($data['keywords'])) {
 
-            if (!isset($data['or_like'])) {
+            if (empty($data['or_like'])) {
 
                 $data['or_like'] = array();
             }
 
-            $data['or_like'][] = array('b.label', $data['keywords']);
+            $data['or_like'][] = array(
+                'column' => 'b.label',
+                'value'  => $data['keywords']
+            );
         }
 
         if (!empty($data['includeObjectCount'])) {
