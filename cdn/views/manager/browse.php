@@ -41,7 +41,7 @@
         </noscript>
     </head>
     <body>
-        <div class="group-cdn manager <?=$this->input->get('isFancybox') ? 'isFancybox' : ''?>">
+        <div class="group-cdn manager <?=$this->input->get('isModal') ? 'isModal' : ''?>">
             <div id="dropToUpload">
                 <div id="dropzone1"></div>
             </div>
@@ -291,12 +291,12 @@
 
                 <?php
 
-                    $isFancybox     = $this->input->get('isFancybox') ? 'true' : 'false';
+                    $isModal     = $this->input->get('isModal') ? 'true' : 'false';
                     $reopenFancybox = $this->input->get('reopenFancybox') ? $this->input->get('reopenFancybox') : '';
 
                     if (isset($_GET['CKEditorFuncNum'])) {
 
-                        echo 'manager = new NAILS_CDN_Manager("ckeditor", ' . $this->input->get('CKEditorFuncNum') . ', urlScheme, ' . $isFancybox . ', "' . $reopenFancybox . '");';
+                        echo 'manager = new NAILS_CDN_Manager("ckeditor", ' . $this->input->get('CKEditorFuncNum') . ', urlScheme, ' . $isModal . ', "' . $reopenFancybox . '");';
 
                         if ($this->input->get('deleted')) {
 
@@ -308,7 +308,7 @@
                         $callback = json_encode($this->input->get('callback'));
                         $passback = $this->input->get('passback');
 
-                        echo 'manager = new NAILS_CDN_Manager("native", ' . $callback . ', ' . $passback . ', urlScheme, ' . $isFancybox . ', "' . $reopenFancybox . '");';
+                        echo 'manager = new NAILS_CDN_Manager("native", ' . $callback . ', ' . $passback . ', urlScheme, ' . $isModal . ', "' . $reopenFancybox . '");';
 
                         if ($this->input->get('deleted')) {
 

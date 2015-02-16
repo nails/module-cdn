@@ -26,7 +26,7 @@
         ?>
     </head>
     <body>
-        <div class="group-cdn manager <?=$this->input->get('isFancybox') ? 'is-fancybox' : ''?>">
+        <div class="group-cdn manager <?=$this->input->get('isModal') ? 'is-fancybox' : ''?>">
             <div id="mask"></div>
             <div class="browser-outer">
                 <div class="browser-inner">

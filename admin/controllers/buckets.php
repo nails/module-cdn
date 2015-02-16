@@ -67,9 +67,8 @@ class Buckets extends \AdminController
 
         //  Define the $data variable for the queries
         $data = array(
-            'sort'  => array(
-                'column' => $sortOn,
-                'order'  => $sortOrder
+            'sort' => array(
+                array($sortOn, $sortOrder)
             ),
             'keywords' => $keywords,
             'includeObjectCount' => true

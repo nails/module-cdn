@@ -81,9 +81,8 @@ class Objects extends \AdminController
 
         //  Define the $data variable for the queries
         $data = array(
-            'sort'  => array(
-                'column' => $sortOn,
-                'order'  => $sortOrder
+            'sort' => array(
+                array($sortOn, $sortOrder)
             ),
             'keywords' => $keywords
         );
@@ -148,7 +147,7 @@ class Objects extends \AdminController
 
         // --------------------------------------------------------------------------
 
-        if ($this->input->get('isFancybox')) {
+        if ($this->input->get('isModal')) {
 
             $this->data['headerOverride'] = 'structure/headerBlank';
             $this->data['footerOverride'] = 'structure/headerBlank';
