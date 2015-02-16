@@ -46,16 +46,15 @@ class Utilities extends \AdminController
             //  A little form validation
             $type   = $this->input->post('type');
             $parser = $this->input->post('parser');
-            $pass   = true;
+            $error  = '';
 
             if ($type == 'db' && $parser == 'create') {
 
-                $pass   = false;
                 $error  = 'Cannot use "Add to database" results parser when finding orphaned database objects.';
             }
 
 
-            if ($pass) {
+            if (empty($error)) {
 
                 switch ($type) {
 

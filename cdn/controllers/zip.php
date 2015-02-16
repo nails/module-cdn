@@ -146,7 +146,7 @@ class NAILS_Zip extends NAILS_CDN_Controller
      * @param  string $error The error which occurred
      * @return void
      */
-    protected function serveBadSrc($error = null)
+    protected function serveBadSrc($error = '')
     {
         header('Cache-Control: no-cache, must-revalidate', true);
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
@@ -160,7 +160,7 @@ class NAILS_Zip extends NAILS_CDN_Controller
             'message' => lang('cdn_error_serve_invalid_request')
         );
 
-        if ($error) {
+        if (!empty($error)) {
 
             $out['error'] = $error;
         }

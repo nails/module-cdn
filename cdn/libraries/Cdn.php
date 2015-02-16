@@ -76,8 +76,6 @@ class Cdn
     {
         include_once NAILS_PATH . 'module-cdn/cdn/interfaces/driver.php';
 
-        $return = '';
-
         switch (strtoupper(APP_CDN_DRIVER)) {
 
             case 'AWS_LOCAL':
@@ -147,10 +145,10 @@ class Cdn
                     if ($file != '.' && $file != '..') {
 
                         // Check with regex that the file format is what we're expecting and not something else
-                        if (preg_match($pattern, $file)) {
+                        if (preg_match($pattern, $file) && file_exists(DEPLOY_CACHE_DIR . $file)) {
 
                             // DESTROY!
-                            @unlink(DEPLOY_CACHE_DIR . $file);
+                            unlink(DEPLOY_CACHE_DIR . $file);
                         }
                     }
                 }
@@ -238,9 +236,10 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $objects = $this->db->get(NAILS_DB_PREFIX . 'cdn_object o')->result();
+        $objects    = $this->db->get(NAILS_DB_PREFIX . 'cdn_object o')->result();
+        $numObjects = count($objects);
 
-        for ($i = 0; $i < count($objects); $i++) {
+        for ($i = 0; $i < $numObjects; $i++) {
 
             //  Format the object, make it pretty
             $this->_format_object($objects[$i]);
@@ -318,7 +317,7 @@ class Cdn
             $page = $page < 0 ? 0 : $page;
 
             //  Work out what the offset should be
-            $perPage = null == $perPage ? 50 : (int) $perPage;
+            $perPage = is_null($perPage) ? 50 : (int) $perPage;
             $offset  = $page * $perPage;
 
             $this->db->limit($perPage, $offset);
@@ -326,9 +325,10 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $objects = $this->db->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->result();
+        $objects    = $this->db->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->result();
+        $numObjects = count($objects);
 
-        for ($i = 0; $i < count($objects); $i++) {
+        for ($i = 0; $i < $numObjects; $i++) {
 
             //  Format the object, make it pretty
             $this->_format_object($objects[$i]);
@@ -366,7 +366,7 @@ class Cdn
      * @param  array  $data         Data to pass to _getcount_common_object()
      * @return mixed                stdClass on success, false on failure
      */
-    public function get_object($objectIdSlug, $bucketIdSlug = null, $data = array())
+    public function get_object($objectIdSlug, $bucketIdSlug = '', $data = array())
     {
         //  Check the cache
         $cacheKey  = 'object-' . $objectIdSlug;
@@ -393,7 +393,7 @@ class Cdn
 
             $data['where'][] = array('o.filename', $objectIdSlug);
 
-            if ($bucketIdSlug) {
+            if (!empty($bucketIdSlug)) {
 
                 if (is_numeric($bucketIdSlug)) {
 
@@ -408,7 +408,7 @@ class Cdn
 
         $objects = $this->get_objects(null, null, $data, 'GET_OBJECT');
 
-        if (!$objects) {
+        if (empty($objects)) {
 
             return false;
         }
@@ -432,7 +432,7 @@ class Cdn
      * @param  array  $data   Data to pass to _getcount_common()
      * @return mixed          stdClass on success, false on failure
      */
-    public function get_object_from_trash($object, $bucket = null, $data = array())
+    public function get_object_from_trash($object, $bucket = '', $data = array())
     {
         if (is_numeric($object)) {
 
@@ -453,7 +453,7 @@ class Cdn
 
             //  Check the cache
             $cacheKey  = 'object-trash-' . $object;
-            $cacheKey .= $bucket ? '-' . $bucket : '';
+            $cacheKey .= !empty($bucket) ? '-' . $bucket : '';
             $cache     = $this->_get_cache($cacheKey);
 
             if ($cache) {
@@ -465,7 +465,7 @@ class Cdn
 
             $this->db->where('o.filename', $object);
 
-            if ($bucket) {
+            if (!empty($bucket)) {
 
                 if (is_numeric($bucket)) {
 
@@ -480,7 +480,7 @@ class Cdn
 
         $objects = $this->get_objects_from_trash(null, null, $data, 'GET_OBJECT_FROM_TRASH');
 
-        if (!$objects) {
+        if (empty($objects)) {
 
             return false;
         }
@@ -990,9 +990,9 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  If a cachefile was created then we should remove it
-        if (isset($cacheFile) && $cacheFile) {
+        if (!empty($cacheFile) && file_exists($cacheFile)) {
 
-            @unlink(DEPLOY_CACHE_DIR . $cacheFile);
+            unlink(DEPLOY_CACHE_DIR . $cacheFile);
         }
 
         // --------------------------------------------------------------------------
@@ -1598,9 +1598,10 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $buckets = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
+        $buckets    = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
+        $numBuckets = count($buckets);
 
-        for ($i = 0; $i < count($buckets); $i++) {
+        for ($i = 0; $i < $numBuckets; $i++) {
 
             //  Format the object, make it pretty
             $this->_format_bucket($buckets[$i]);
@@ -1679,7 +1680,7 @@ class Cdn
 
         $bucket = $this->get_buckets(null, null, $data, 'GET_BUCKET');
 
-        if (!$bucket) {
+        if (empty($bucket)) {
 
             return false;
         }
@@ -2676,7 +2677,7 @@ class Cdn
 
         $token = explode('|', $token);
 
-        if (!$token) {
+        if (empty($token)) {
 
             //  Error #2: Could not explode
             $this->set_error('Invalid Token (Error #2)');
@@ -3013,7 +3014,7 @@ class Cdn
             // --------------------------------------------------------------------------
 
             //  Delete the cache files
-            if (!@unlink($cachefile)) {
+            if (file_exists($cachefile) && !unlink($cachefile)) {
 
                 $this->set_error('Unable to delete temporary cache file: ' . $cachefile);
             }

@@ -37,7 +37,7 @@ class NAILS_Thumb extends NAILS_CDN_Controller
         $this->height    = $this->uri->segment(4, 100);
         $this->bucket    = $this->uri->segment(5);
         $this->object    = urldecode($this->uri->segment(6));
-        $this->extension = !empty($this->object) ? strtolower(substr($this->object, strrpos($this->object, '.'))) : false;
+        $this->extension = !empty($this->object) ? strtolower(substr($this->object, strrpos($this->object, '.'))) : '';
 
         // --------------------------------------------------------------------------
 
@@ -187,7 +187,10 @@ class NAILS_Thumb extends NAILS_CDN_Controller
                  * @TODO: work out the reason why we do this
                  */
 
-                @unlink($filePath);
+                if (file_exists($filePath)) {
+
+                    unlink($filePath);
+                }
 
                 $filePath = $this->cdn->object_local_path($this->bucket, $this->object);
 
@@ -400,12 +403,18 @@ class NAILS_Thumb extends NAILS_CDN_Controller
         //  Remove cache frames
         foreach ($frames as $frame) {
 
-            @unlink($frame);
+            if (file_exists($frame)) {
+
+                unlink($frame);
+            }
         }
 
         foreach ($cacheFiles as $frame) {
 
-            @unlink($frame);
+            if (file_exists($frame)) {
+
+                unlink($frame);
+            }
         }
 
         // --------------------------------------------------------------------------

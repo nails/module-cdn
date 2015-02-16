@@ -23,8 +23,7 @@ class NAILS_Serve extends NAILS_CDN_Controller
 
     /**
      * Construct the controller
-     * @return  void
-     **/
+     */
     public function __construct()
     {
         parent::__construct();
@@ -246,7 +245,7 @@ class NAILS_Serve extends NAILS_CDN_Controller
      * @param  string $error The error which occurred
      * @return void
      */
-    protected function serveBadSrc($error = null)
+    protected function serveBadSrc($error = '')
     {
         header('Cache-Control: no-cache, must-revalidate', true);
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
@@ -260,7 +259,7 @@ class NAILS_Serve extends NAILS_CDN_Controller
             'message' => lang('cdn_error_serve_invalid_request')
         );
 
-        if ($error) {
+        if (!empty($error)) {
 
             $out['error'] = $error;
         }
@@ -315,7 +314,7 @@ class NAILS_Serve extends NAILS_CDN_Controller
  * before including this PHP file and extend as normal (i.e in the same way as below);
  * the helper won't be declared so we can declare our own one, app specific.
  *
- **/
+ */
 
 if (!defined('NAILS_ALLOW_EXTENSION_SERVE')) :
 

@@ -174,7 +174,6 @@ class Trash extends \AdminController
 
         if ($this->input->get('ids')) {
 
-            $purgeIds = array();
             $purgeIds = explode(',', $this->input->get('ids'));
             $purgeIds = array_filter($purgeIds);
             $purgeIds = array_unique($purgeIds);

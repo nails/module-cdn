@@ -96,7 +96,7 @@ class Aws_local_CDN implements Cdn_driver
 
         try {
 
-            $result = $this->s3->putObject(array(
+            $this->s3->putObject(array(
                 'Bucket'      => $this->bucket,
                 'Key'         => $bucket . '/' . $filename . $extension,
                 'SourceFile'  => $source,
@@ -111,7 +111,7 @@ class Aws_local_CDN implements Cdn_driver
 
             try {
 
-                $result = $this->s3->copyObject(array(
+                $this->s3->copyObject(array(
                     'Bucket'             => $this->bucket,
                     'CopySource'         => $this->bucket . '/' . $bucket . '/' . $filename . $extension,
                     'Key'                => $bucket . '/' . $filename . '-download' . $extension,
@@ -168,7 +168,7 @@ class Aws_local_CDN implements Cdn_driver
             $options['Objects'][] = array('Key' => $bucket . '/' . $filename . $extension);
             $options['Objects'][] = array('Key' => $bucket . '/' . $filename . '-download' . $extension);
 
-            $result = $this->s3->deleteObjects($options);
+            $this->s3->deleteObjects($options);
 
             return true;
 
@@ -205,7 +205,7 @@ class Aws_local_CDN implements Cdn_driver
             //  Doesn't exist, attempt to fetch from S3
             try {
 
-                $result = $this->s3->getObject(array(
+                $this->s3->getObject(array(
                     'Bucket' => $this->bucket,
                     'Key'    => $bucket . '/' . $filename . $extension,
                     'SaveAs' => $srcFile
@@ -216,7 +216,10 @@ class Aws_local_CDN implements Cdn_driver
             } catch (\Aws\S3\Exception\S3Exception $e) {
 
                 //  Clean up
-                @unlink($srcFile);
+                if (file_exists($srcFile)) {
+
+                    unlink($srcFile);
+                }
 
                 //  Note the error
                 $this->cdn->set_error('AWS-SDK EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage());
@@ -242,7 +245,7 @@ class Aws_local_CDN implements Cdn_driver
 
             try {
 
-                $result = $this->s3->putObject(array(
+                $this->s3->putObject(array(
                     'Bucket' => $this->bucket,
                     'Key'    => $bucket . '/',
                     'Body'   => ''
@@ -274,7 +277,7 @@ class Aws_local_CDN implements Cdn_driver
     {
         try {
 
-            $result = $this->s3->deleteMatchingObjects($this->bucket, $bucket . '/');
+            $this->s3->deleteMatchingObjects($this->bucket, $bucket . '/');
 
             return true;
 
@@ -531,11 +534,9 @@ class Aws_local_CDN implements Cdn_driver
     public function url_expiring($object, $bucket, $expires, $forceDownload = false)
     {
         /**
-         * @TODO: If cloudfront is configured, then generate a secure url and pass
+         * @todo: If cloudfront is configured, then generate a secure url and pass
          * back, if not serve through the processing mechanism. Maybe.
          */
-
-        dumpanddie('TODO: See source');
 
         //  Hash the expiry time
         $hash  = $bucket . '|' . $object . '|' . $expires . '|' . time() . '|';
@@ -563,11 +564,6 @@ class Aws_local_CDN implements Cdn_driver
      **/
     public function url_expiring_scheme()
     {
-        //  @TODO: Generate expiring CloudFront URLS
-        return false;
-
-        // --------------------------------------------------------------------------
-
         $out = site_url('cdn/serve?token={{token}}');
 
         return $this->urlMakeSecure($out);

@@ -57,9 +57,8 @@ class NAILS_Manager extends NAILS_CDN_Controller
                  * that users can't casually specify a bucket and upload willy nilly.
                  */
 
-                $bucket = $this->input->get('bucket');
-                $hash   = $this->input->get('hash');
-
+                $bucket    = $this->input->get('bucket');
+                $hash      = $this->input->get('hash');
                 $decrypted = $this->encrypt->decode($bucket, APP_PRIVATE_KEY);
 
                 if ($decrypted) {
@@ -88,35 +87,35 @@ class NAILS_Manager extends NAILS_CDN_Controller
                                 } else {
 
                                     $testOk = false;
-                                    $error   = 'Bucket <strong>"' . $bucket[0] . '"</strong> does not exist';
-                                    $error  .= '<small>Additionally, the following error occured while attempting ';
-                                    $error  .= 'to create the bucket:<br />' . $this->cdn->last_error() . '</small>';
+                                    $error  = 'Bucket <strong>"' . $bucket[0] . '"</strong> does not exist';
+                                    $error .= '<small>Additionally, the following error occured while attempting ';
+                                    $error .= 'to create the bucket:<br />' . $this->cdn->last_error() . '</small>';
                                 }
                             }
 
                         } else {
 
                             $testOk = false;
-                            $error   = 'Could not verify bucket hash';
+                            $error  = 'Could not verify bucket hash';
                         }
 
                     } else {
 
                         $testOk = false;
-                        $error   = 'Incomplete bucket hash';
+                        $error  = 'Incomplete bucket hash';
                     }
 
                 } else {
 
                     $testOk = false;
-                    $error   = 'Could not decrypt bucket hash';
+                    $error  = 'Could not decrypt bucket hash';
                 }
 
                 // --------------------------------------------------------------------------
 
                 if (!$testOk) {
 
-                    $this->data['enabled']    = false;
+                    $this->data['enabled']   = false;
                     $this->data['badBucket'] = $error;
                 }
 

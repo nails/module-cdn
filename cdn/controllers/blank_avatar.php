@@ -25,11 +25,7 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
 
     /**
      * Construct the class; set defaults
-     *
-     * @access  public
-     * @return  void
-     *
-     **/
+     */
     public function __construct()
     {
         parent::__construct();
@@ -82,7 +78,7 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
     /**
      * Generate the thumbnail
      * @return  void
-     **/
+     */
     public function index()
     {
         /**
@@ -225,7 +221,7 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
  * before including this PHP file and extend as normal (i.e in the same way as below);
  * the helper won't be declared so we can declare our own one, app specific.
  *
- **/
+ */
 
 if (!defined('NAILS_ALLOW_EXTENSION_BLANK_AVATAR')) {
 

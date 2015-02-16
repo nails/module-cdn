@@ -216,15 +216,13 @@ class NAILS_CDN_Controller extends NAILS_Controller
 
                 if (preg_match($rxHttp, $key)) {
 
-                    $arhKey   = preg_replace($rxHttp, '', $key);
-                    $rxMatches = array();
+                    $arhKey    = preg_replace($rxHttp, '', $key);
+                    $rxMatches = explode('_', $arhKey);
 
                     /**
                      * Do some nasty string manipulations to restore the original letter case
                      * this should work in most cases
                      **/
-
-                    $rxMatches = explode('_', $arhKey);
 
                     if (count($rxMatches) > 0 && strlen($arhKey) > 2) {
 
