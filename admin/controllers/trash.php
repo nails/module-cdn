@@ -31,6 +31,23 @@ class Trash extends \AdminController
     // --------------------------------------------------------------------------
 
     /**
+     * Returns an array of extra permissions for this controller
+     * @return array
+     */
+    public static function permissions()
+    {
+        $permissions = parent::permissions();
+
+        $permissions['browse']  = 'Can browse trash';
+        $permissions['purge']   = 'Can empty trash';
+        $permissions['restore'] = 'Can restore objects from the trash';
+
+        return $permissions;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Browse the CDN trash
      * @return void
      */

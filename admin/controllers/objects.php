@@ -31,6 +31,24 @@ class Objects extends \AdminController
     // --------------------------------------------------------------------------
 
     /**
+     * Returns an array of extra permissions for this controller
+     * @return array
+     */
+    public static function permissions()
+    {
+        $permissions = parent::permissions();
+
+        $permissions['browse'] = 'Can browse objects';
+        $permissions['create'] = 'Can create objects';
+        $permissions['edit']   = 'Can edit objects';
+        $permissions['delete'] = 'Can delete objects';
+
+        return $permissions;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Browse CDN Objects
      * @return void
      */
