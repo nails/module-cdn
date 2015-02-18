@@ -33,7 +33,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
         // --------------------------------------------------------------------------
 
         //  Determine if browsing/uploading is permitted
-        $this->data['enabled'] = $this->user_model->is_logged_in() ? true : false;
+        $this->data['enabled'] = $this->user_model->isLoggedIn() ? true : false;
         $this->data['enabled'] = true;
 
         // --------------------------------------------------------------------------
@@ -122,7 +122,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
             } else {
 
                 //  No bucket specified, use the user's upload bucket
-                $slug  = 'user-' . active_user('id');
+                $slug  = 'user-' . activeUser('id');
                 $label = 'User Upload Directory';
 
                 // --------------------------------------------------------------------------

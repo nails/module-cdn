@@ -738,7 +738,7 @@ class Cdn
                 //  Write the file to the cache temporarily
                 if (is_writeable(DEPLOY_CACHE_DIR)) {
 
-                    $cacheFile = sha1(microtime() . rand(0, 999) . active_user('id'));
+                    $cacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
                     $fh = fopen(DEPLOY_CACHE_DIR . $cacheFile, 'w');
                     fwrite($fh, $object);
                     fclose($fh);
@@ -959,7 +959,7 @@ class Cdn
         } else {
 
             //  Generate a filename
-            $_data->filename = time() . '-' . md5(active_user('id') . microtime(true) . rand(0, 999)) . '.' . $_data->ext;
+            $_data->filename = time() . '-' . md5(activeUser('id') . microtime(true) . rand(0, 999)) . '.' . $_data->ext;
         }
 
         // --------------------------------------------------------------------------
@@ -1050,9 +1050,9 @@ class Cdn
         $this->db->set($objectData);
         $this->db->set('trashed', 'NOW()', false);
 
-        if ($this->ci->user_model->is_logged_in()) {
+        if ($this->ci->user_model->isLoggedIn()) {
 
-            $this->db->set('trashed_by', active_user('id'));
+            $this->db->set('trashed_by', activeUser('id'));
         }
 
         //  Turn off DB Errors
@@ -1135,9 +1135,9 @@ class Cdn
         $objectData['thumbs']           = $object->thumbs;
         $objectData['scales']           = $object->scales;
 
-        if (get_userobject()->is_logged_in()) {
+        if (get_userobject()->isLoggedIn()) {
 
-            $objectData['modified_by'] = active_user('id');
+            $objectData['modified_by'] = activeUser('id');
         }
 
         $this->db->set($objectData);
@@ -1415,10 +1415,10 @@ class Cdn
         $this->db->set('created', 'NOW()', false);
         $this->db->set('modified', 'NOW()', false);
 
-        if (get_userobject()->is_logged_in()) {
+        if (get_userobject()->isLoggedIn()) {
 
-            $this->db->set('created_by', active_user('id'));
-            $this->db->set('modified_by', active_user('id'));
+            $this->db->set('created_by', activeUser('id'));
+            $this->db->set('modified_by', activeUser('id'));
         }
 
         // --------------------------------------------------------------------------
@@ -1735,10 +1735,10 @@ class Cdn
             $this->db->set('created', 'NOW()', false);
             $this->db->set('modified', 'NOW()', false);
 
-            if (get_userobject()->is_logged_in()) {
+            if (get_userobject()->isLoggedIn()) {
 
-                $this->db->set('created_by', active_user('id'));
-                $this->db->set('modified_by', active_user('id'));
+                $this->db->set('created_by', activeUser('id'));
+                $this->db->set('modified_by', activeUser('id'));
             }
 
             $this->db->insert(NAILS_DB_PREFIX . 'cdn_bucket');
@@ -2507,7 +2507,7 @@ class Cdn
     {
         if (is_null($userId)) {
 
-            $userId = active_user('id');
+            $userId = activeUser('id');
         }
 
         if (empty($userId)) {
@@ -2546,7 +2546,7 @@ class Cdn
     {
         if (is_null($userId)) {
 
-            $userId = active_user('id');
+            $userId = activeUser('id');
         }
 
         if (empty($userId)) {
@@ -2620,7 +2620,7 @@ class Cdn
     {
         if (is_null($userId)) {
 
-            $userId = active_user('id');
+            $userId = activeUser('id');
         }
 
         $user = get_userobject()->get_by_id($userId);

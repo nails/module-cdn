@@ -35,7 +35,7 @@
                         <p>You don't have permission to view the media manager at the moment.</p>
                         <?php
 
-                            if (!$user->is_logged_in()) {
+                            if (!$user->isLoggedIn()) {
 
                                 echo '<p>';
                                 echo anchor(
