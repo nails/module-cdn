@@ -21,9 +21,28 @@ class Utilities extends \AdminController
     public static function announce()
     {
         $navGroup = new \Nails\Admin\Nav('Utilities');
-        $navGroup->addMethod('CDN: Find orphaned objects');
+
+        if (userHasPermission('admin:cdn:utilities:findOrphan')) {
+
+            $navGroup->addMethod('CDN: Find orphaned objects');
+        }
 
         return $navGroup;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns an array of permissions which can be configured for the user
+     * @return array
+     */
+    public static function permissions()
+    {
+        $permissions = parent::permissions();
+
+        $permissions['findOrphan'] = 'Can find orphans';
+
+        return $permissions;
     }
 
     // --------------------------------------------------------------------------
@@ -34,6 +53,13 @@ class Utilities extends \AdminController
      */
     public function index()
     {
+        if (userHasPermission('admin:cdn:utilities:findOrphan')) {
+
+            unauthorised();
+        }
+
+        // --------------------------------------------------------------------------
+
         if ($this->input->is_cli_request()) {
 
             return $this->indexCli();

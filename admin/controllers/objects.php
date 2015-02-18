@@ -165,14 +165,6 @@ class Objects extends \AdminController
 
         // --------------------------------------------------------------------------
 
-        if ($this->input->get('isModal')) {
-
-            $this->data['headerOverride'] = 'structure/headerBlank';
-            $this->data['footerOverride'] = 'structure/headerBlank';
-        }
-
-        // --------------------------------------------------------------------------
-
         $this->asset->load('nails.admin.cdn.upload.min.js', 'NAILS');
         $this->asset->load('dropzone/downloads/css/dropzone.css', 'NAILS-BOWER');
         $this->asset->load('dropzone/downloads/css/basic.css', 'NAILS-BOWER');
