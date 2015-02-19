@@ -20,10 +20,10 @@ class Trash extends \AdminController
      */
     public static function announce()
     {
-        if (userHasPermission('admin.cdnadmin:0.can_browse_trash')) {
+        if (userHasPermission('admin:cdn:trash:browse')) {
 
-            $navGroup = new \Nails\Admin\Nav('CDN');
-            $navGroup->addMethod('Browse Trash');
+            $navGroup = new \Nails\Admin\Nav('CDN', 'fa-cloud-upload');
+            $navGroup->addAction('Browse Trash');
             return $navGroup;
         }
     }
@@ -53,7 +53,7 @@ class Trash extends \AdminController
      */
     public function index()
     {
-        if (!userHasPermission('admin.cdnadmin:0.can_browse_trash')) {
+        if (!userHasPermission('admin:cdn:trash:browse')) {
 
             unauthorised();
         }
@@ -111,7 +111,7 @@ class Trash extends \AdminController
         $this->data['return'] = $return;
 
         //  Add a header button
-        if (!empty($this->data['objects']) && userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
+        if (!empty($this->data['objects']) && userHasPermission('admin:cdn:trash:purge')) {
 
              \Nails\Admin\Helper::addHeaderButton(
                 'admin/cdn/trash/purge' . $return,
@@ -131,7 +131,7 @@ class Trash extends \AdminController
 
     public function index2()
     {
-        if (!userHasPermission('admin.cdnadmin:0.can_browse_trash')) {
+        if (!userHasPermission('admin:cdn:trash:browse')) {
 
             unauthorised();
         }
@@ -182,7 +182,7 @@ class Trash extends \AdminController
      */
     public function purge()
     {
-        if (!userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
+        if (!userHasPermission('admin:cdn:trash:purge')) {
 
             unauthorised();
         }
@@ -249,7 +249,7 @@ class Trash extends \AdminController
      */
     public function restore()
     {
-        if (!userHasPermission('admin.cdnadmin:0.can_restore_trash')) {
+        if (!userHasPermission('admin:cdn:trash:restore')) {
 
             unauthorised();
         }

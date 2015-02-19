@@ -66,12 +66,12 @@
                             echo '<td class="filesize">' . format_bytes($object->filesize) . '</td>';
                             echo '<td class="actions">';
 
-                                if (userHasPermission('admin.cdnadmin:0.can_edit_objects')) {
+                                if (userHasPermission('admin:cdn:objects:edit')) {
 
                                     echo anchor('admin/cdn/objects/edit/' . $object->id . $return, 'Edit', 'class="awesome small"');
                                 }
 
-                                if (userHasPermission('admin.cdnadmin:0.can_delete_objects')) {
+                                if (userHasPermission('admin:cdn:objects:delete')) {
 
                                     echo anchor('admin/cdn/objects/delete/' . $object->id . $return, 'Delete', 'data-title="Are you sure?" data-body="Deleting an item will attempt to disconnect it from resources which depend on it. The object will be recoverable but dependencies won\'t." class="confirm awesome small red"');
                                 }

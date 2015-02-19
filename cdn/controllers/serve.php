@@ -105,7 +105,7 @@ class NAILS_Serve extends NAILS_CDN_Controller
              * can_browse_trash permission then have a look in the trash
              */
 
-            if ($this->input->get('trashed') && userHasPermission('admin.cdnadmin:0.can_browse_trash')) {
+            if ($this->input->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
 
                 $object = $this->cdn->get_object_from_trash($this->object, $this->bucket);
 

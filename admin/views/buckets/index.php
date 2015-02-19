@@ -35,17 +35,17 @@
                             echo \Nails\Admin\Helper::loadDatetimeCell($bucket->created);
                             echo '<td class="actions">';
 
-                                if (userHasPermission('admin.cdnadmin:0.can_browse_objects')) {
+                                if (userHasPermission('admin:cdn:objects:browse')) {
 
                                     echo anchor('admin/cdn/objects/index?bucketId=' . $bucket->id . $return, 'Browse', 'class="awesome small"');
                                 }
 
-                                if (userHasPermission('admin.cdnadmin:0.can_edit_buckets')) {
+                                if (userHasPermission('admin:cdn:buckets:edit')) {
 
                                     echo anchor('admin/cdn/buckets/edit/' . $bucket->id . $return, 'Edit', 'class="awesome small"');
                                 }
 
-                                if (userHasPermission('admin.cdnadmin:0.can_delete_objects')) {
+                                if (userHasPermission('admin:cdn:buckets:delete')) {
 
                                     echo anchor('admin/cdn/buckets/delete/' . $bucket->id . $return, 'Delete', 'data-title="Are you sure?" data-body="All objects contained within a bucket will be orphaned. This cannot be undone." class="confirm awesome small red"');
                                 }

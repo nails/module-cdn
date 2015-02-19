@@ -2194,17 +2194,17 @@ class Cdn
              * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
              */
 
-            if (userHasPermission('admin.cdnadmin{0.can_browse_trash')) {
+            if (userHasPermission('admin:cdn:trash:browse')) {
 
                 $object = $this->get_object_from_trash($objectId);
 
                 if (!$object) {
 
                     //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
-                    $object                 = new stdClass();
-                    $object->filename       = '';
-                    $object->bucket         = new stdClass();
-                    $object->bucket->slug   = '';
+                    $object               = new stdClass();
+                    $object->filename     = '';
+                    $object->bucket       = new stdClass();
+                    $object->bucket->slug = '';
 
                 } else {
 
@@ -2214,10 +2214,10 @@ class Cdn
             } else {
 
                 //  Let the renderer show a bad_src graphic
-                $object                 = new stdClass();
-                $object->filename       = '';
-                $object->bucket         = new stdClass();
-                $object->bucket->slug   = '';
+                $object               = new stdClass();
+                $object->filename     = '';
+                $object->bucket       = new stdClass();
+                $object->bucket->slug = '';
             }
         }
 
@@ -2332,7 +2332,7 @@ class Cdn
              * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
              */
 
-            if (userHasPermission('admin.cdnadmin{0.can_browse_trash')) {
+            if (userHasPermission('admin:cdn:trash:browse')) {
 
                 $object = $this->get_object_from_trash($objectId);
 
@@ -2397,7 +2397,7 @@ class Cdn
              * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
              */
 
-            if (userHasPermission('admin.cdnadmin{0.can_browse_trash')) {
+            if (userHasPermission('admin:cdn:trash:browse')) {
 
                 $object = $this->get_object_from_trash($objectId);
 

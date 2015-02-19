@@ -79,12 +79,12 @@
                                     echo anchor(cdn_serve($object->id), 'View', 'class="awesome small fancybox" data-fancybox-type="iframe"');
                                 }
 
-                                if (userHasPermission('admin.cdnadmin:0.can_restore_trash')) {
+                                if (userHasPermission('admin:cdn:trash:restore')) {
 
-                                    echo anchor('admin/cdn/trash//restore/' . $object->id . $return, 'Restore', 'class="awesome small green"');
+                                    echo anchor('admin/cdn/trash/restore/' . $object->id . $return, 'Restore', 'class="awesome small green"');
                                 }
 
-                                if (userHasPermission('admin.cdnadmin:0.can_purge_trash')) {
+                                if (userHasPermission('admin:cdn:trash:purge')) {
 
                                     $ids = 'ids=' . $object->id;
                                     $ids = empty($return) ? '?' . $ids : '&' . $ids;
@@ -92,7 +92,7 @@
                                     $title = 'Are you sure?';
                                     $body  = 'You will <strong>permenantly</strong> delete this object. This action cannot be undone.';
 
-                                    echo anchor('admin/cdn/trash//purge' . $return . $ids, 'Delete', 'data-title="' . $title . '" data-body="' . $body . '" class="confirm awesome small red"');
+                                    echo anchor('admin/cdn/trash/purge' . $return . $ids, 'Delete', 'data-title="' . $title . '" data-body="' . $body . '" class="confirm awesome small red"');
                                 }
 
                             echo '</td>';

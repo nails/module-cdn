@@ -20,10 +20,10 @@ class Buckets extends \AdminController
      */
     public static function announce()
     {
-        if (userHasPermission('admin.cdnadmin:0.can_browse_buckets')) {
+        if (userHasPermission('admin:cdn:buckets:browse')) {
 
-            $navGroup = new \Nails\Admin\Nav('CDN');
-            $navGroup->addMethod('Browse Buckets');
+            $navGroup = new \Nails\Admin\Nav('CDN', 'fa-cloud-upload');
+            $navGroup->addAction('Browse Buckets');
             return $navGroup;
         }
     }
@@ -54,7 +54,7 @@ class Buckets extends \AdminController
      */
     public function index()
     {
-        if (!userHasPermission('admin.cdnadmin:0.can_browse_buckets')) {
+        if (!userHasPermission('admin:cdn:buckets:browse')) {
 
             unauthorised();
         }
@@ -108,7 +108,7 @@ class Buckets extends \AdminController
         $this->data['return'] = $return;
 
         //  Add a header button
-        if (userHasPermission('admin.cdnadmin:0.can_create_buckets')) {
+        if (userHasPermission('admin:cdn:buckets:create')) {
 
              \Nails\Admin\Helper::addHeaderButton('admin/cdn/buckets/create' . $return, 'Create Bucket');
         }
@@ -126,7 +126,7 @@ class Buckets extends \AdminController
      */
     public function create()
     {
-        if (!userHasPermission('admin.cdnadmin:0.can_create_buckets')) {
+        if (!userHasPermission('admin:cdn:buckets:create')) {
 
             unauthorised();
         }
@@ -146,7 +146,7 @@ class Buckets extends \AdminController
      */
     public function edit()
     {
-        if (!userHasPermission('admin.cdnadmin:0.can_edit_buckets')) {
+        if (!userHasPermission('admin:cdn:buckets:edit')) {
 
             unauthorised();
         }
@@ -166,7 +166,7 @@ class Buckets extends \AdminController
      */
     public function delete()
     {
-        if (!userHasPermission('admin.cdnadmin:0.can_delete_buckets')) {
+        if (!userHasPermission('admin:cdn:buckets:delete')) {
 
             unauthorised();
         }

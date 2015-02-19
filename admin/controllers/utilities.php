@@ -20,11 +20,11 @@ class Utilities extends \AdminController
      */
     public static function announce()
     {
-        $navGroup = new \Nails\Admin\Nav('Utilities');
+        $navGroup = new \Nails\Admin\Nav('Utilities', 'fa-sliders');
 
         if (userHasPermission('admin:cdn:utilities:findOrphan')) {
 
-            $navGroup->addMethod('CDN: Find orphaned objects');
+            $navGroup->addAction('CDN: Find orphaned objects');
         }
 
         return $navGroup;
