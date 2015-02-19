@@ -1135,7 +1135,7 @@ class Cdn
         $objectData['thumbs']           = $object->thumbs;
         $objectData['scales']           = $object->scales;
 
-        if (get_userobject()->isLoggedIn()) {
+        if (getUserObject()->isLoggedIn()) {
 
             $objectData['modified_by'] = activeUser('id');
         }
@@ -1415,7 +1415,7 @@ class Cdn
         $this->db->set('created', 'NOW()', false);
         $this->db->set('modified', 'NOW()', false);
 
-        if (get_userobject()->isLoggedIn()) {
+        if (getUserObject()->isLoggedIn()) {
 
             $this->db->set('created_by', activeUser('id'));
             $this->db->set('modified_by', activeUser('id'));
@@ -1735,7 +1735,7 @@ class Cdn
             $this->db->set('created', 'NOW()', false);
             $this->db->set('modified', 'NOW()', false);
 
-            if (get_userobject()->isLoggedIn()) {
+            if (getUserObject()->isLoggedIn()) {
 
                 $this->db->set('created_by', activeUser('id'));
                 $this->db->set('modified_by', activeUser('id'));
@@ -2623,7 +2623,7 @@ class Cdn
             $userId = activeUser('id');
         }
 
-        $user = get_userobject()->get_by_id($userId);
+        $user = getUserObject()->get_by_id($userId);
 
         if (!$user) {
 
@@ -2712,7 +2712,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Fetch and check user
-        $user = get_userobject()->get_by_id($token[0]);
+        $user = getUserObject()->get_by_id($token[0]);
 
         //  User exists?
         if (!$user) {

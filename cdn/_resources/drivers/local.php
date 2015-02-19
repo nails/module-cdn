@@ -177,7 +177,7 @@ class Local_CDN implements Cdn_driver
 
         } else {
 
-            if (get_userobject()->isSuperuser()) {
+            if (getUserObject()->isSuperuser()) {
 
                 $this->cdn->set_error(lang('cdn_error_bucket_mkdir_su', $dir));
 

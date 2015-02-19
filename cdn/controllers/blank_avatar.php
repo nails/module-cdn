@@ -35,13 +35,14 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
         //  'Constant' variables
         $this->avatarMale   = $this->cdnRoot . '_resources/img/avatarMale.png';
         $this->avatarFemale = $this->cdnRoot . '_resources/img/avatarFemale.png';
+        $this->avatarNeutral = $this->cdnRoot . '_resources/img/avatarNeutral.png';
 
         // --------------------------------------------------------------------------
 
         //  Determine dynamic values
         $this->width  = $this->uri->segment(3, 100);
         $this->height = $this->uri->segment(4, 100);
-        $this->sex    = strtolower($this->uri->segment(5, 'man'));
+        $this->sex    = strtolower($this->uri->segment(5, 'neutral'));
 
         // --------------------------------------------------------------------------
 
@@ -98,7 +99,7 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
          * to see if this image has been processed already; serve it up if it has.
          */
 
-        if (file_exists(DEPLOY_CACHE_DIR . $this->cdnCacheFile)) {
+        if (1==0 && file_exists(DEPLOY_CACHE_DIR . $this->cdnCacheFile)) {
 
             $this->serveFromCache($this->cdnCacheFile);
 
@@ -116,31 +117,21 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
                 case 'woman':
                 case 'f':
                 case 'w':
-                case '2':
 
                     $src = $this->avatarFemale;
                     break;
 
-                // --------------------------------------------------------------------------
-
                 case 'male':
                 case 'man':
                 case 'm':
-                case '1':
 
                     $src = $this->avatarMale;
                     break;
 
-                // --------------------------------------------------------------------------
-
-                /**
-                 * Fallback to a default avatar
-                 * @todo: Make this avatar gender neutral
-                 */
-
+                case 'neutral':
                 default:
 
-                    $src = $this->avatarMale;
+                    $src = $this->avatarNeutral;
                     break;
             }
 
@@ -163,18 +154,9 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
 
                 // --------------------------------------------------------------------------
 
-                //  Set the appropriate cache headers
-                $this->setCacheHeaders(time(), $this->cdnCacheFile, false);
-
-                // --------------------------------------------------------------------------
-
-                //  Output the newly rendered file to the browser
-                $PHPThumb->show();
-
-                // --------------------------------------------------------------------------
-
-                //  Save local version
+                //  Save local version and serve
                 $PHPThumb->save(DEPLOY_CACHE_DIR . $this->cdnCacheFile);
+                $this->serveFromCache($this->cdnCacheFile);
 
             } else {
 

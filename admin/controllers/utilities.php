@@ -53,7 +53,7 @@ class Utilities extends \AdminController
      */
     public function index()
     {
-        if (userHasPermission('admin:cdn:utilities:findOrphan')) {
+        if (!userHasPermission('admin:cdn:utilities:findOrphan')) {
 
             unauthorised();
         }
