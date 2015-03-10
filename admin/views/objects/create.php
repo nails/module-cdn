@@ -1,35 +1,29 @@
 <div class="group-cdn object create">
-	<?php
+    <p>
+        Choose which bucket the items you wish to upload should belong to then drag files in (or click the area below).
+    </p>
+    <p class="system-alert success" id="alert-complete" style="display:none;">
+        <strong>Complete!</strong> All files have been uploaded.
+    </p>
+    <fieldset>
+        <legend>Bucket</legend>
+        <?php
 
-		echo $this->input->get( 'isModal' ) ? '<h1>Upload Items</h1>' : '';
+            $field          = array();
+            $field['key']   = 'bucket_id';
+            $field['label'] = 'Bucket';
+            $field['class'] = 'select2';
+            $field['id']    = 'bucket-chooser';
 
-	?>
-	<p>
-		Choose which bucket the items you wish to upload should belong to then drag files in (or click the area below).
-	</p>
-	<p class="system-alert success" id="alert-complete" style="display:none;">
-		<strong>Complete!</strong> All files have been uploaded.
-	</p>
-	<fieldset>
-		<legend>Bucket</legend>
-		<?php
+            $options = array();
+            foreach ($buckets as $bucket) {
 
-			$_field				= array();
-			$_field['key']		= 'bucket_id';
-			$_field['label']	= 'Bucket';
-			$_field['class']	= 'select2';
-			$_field['id']		= 'bucket-chooser';
+                $options[$bucket->slug] = $bucket->label;
+            }
 
-			$_options = array();
-			foreach ( $buckets as $bucket ) :
+            echo form_field_dropdown($field, $options);
 
-				$_options[$bucket->slug] = $bucket->label;
-
-			endforeach;
-
-			echo form_field_dropdown( $_field, $_options );
-
-		?>
-	</fieldset>
-	<div id="dropzone" class="dropzone dz-square"></div>
+        ?>
+    </fieldset>
+    <div id="dropzone" class="dropzone dz-square"></div>
 </div>
