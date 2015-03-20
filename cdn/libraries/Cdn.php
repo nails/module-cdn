@@ -2052,12 +2052,20 @@ class Cdn
 
     /**
      * Gets the mime type of a file on disk
-     * @return  string
-     **/
-    public function get_mime_from_file($object)
+     * @param  string $file The file to analyse
+     * @return string
+     */
+    public function get_mime_from_file($file)
     {
-        $_fi = finfo_open(FILEINFO_MIME_TYPE);
-        return finfo_file($_fi, $object);
+        if (file_exists($file)) {
+
+            $fh = finfo_open(FILEINFO_MIME_TYPE);
+            return finfo_file($fh, $file);
+
+        } else {
+
+            return '';
+        }
     }
 
     // --------------------------------------------------------------------------
