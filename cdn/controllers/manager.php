@@ -24,14 +24,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
         // --------------------------------------------------------------------------
 
-        //  Module enabled?
-        if (!isModuleEnabled('nailsapp/module-cdn')) {
-
-            show_404();
-        }
-
-        // --------------------------------------------------------------------------
-
         //  Determine if browsing/uploading is permitted
         $this->data['enabled'] = $this->user_model->isLoggedIn() ? true : false;
         $this->data['enabled'] = true;
