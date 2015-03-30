@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Api\Cdn;
+namespace Nails\Api\Cdn;
 
 /**
  * Admin API end points: CDN objects
