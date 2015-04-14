@@ -2,8 +2,8 @@
     <p>
         Choose which bucket the items you wish to upload should belong to then drag files in (or click the area below).
     </p>
-    <p class="system-alert success" id="alert-complete" style="display:none;">
-        <strong>Complete!</strong> All files have been uploaded.
+    <p class="system-alert message" id="alert-complete" style="display:none;">
+        <strong>Complete.</strong> All files have been processed; any files which raised an error have been left in the list.
     </p>
     <fieldset>
         <legend>Bucket</legend>
