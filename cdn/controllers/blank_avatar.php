@@ -99,7 +99,7 @@ class NAILS_Blank_avatar extends NAILS_CDN_Controller
          * to see if this image has been processed already; serve it up if it has.
          */
 
-        if (1==0 && file_exists(DEPLOY_CACHE_DIR . $this->cdnCacheFile)) {
+        if (file_exists(DEPLOY_CACHE_DIR . $this->cdnCacheFile)) {
 
             $this->serveFromCache($this->cdnCacheFile);
 
