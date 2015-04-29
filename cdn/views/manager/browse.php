@@ -351,7 +351,6 @@
                     e.preventDefault();
                     e.stopPropagation();
                     counter--;
-                    console.log(counter);
                     if (counter === 0) {
                         $('#dropToUpload').hide();
                     }
