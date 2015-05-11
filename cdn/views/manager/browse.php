@@ -292,11 +292,11 @@
                 <?php
 
                     $isModal     = $this->input->get('isModal') ? 'true' : 'false';
-                    $reopenFancybox = $this->input->get('reopenFancybox') ? $this->input->get('reopenFancybox') : '';
+                    $reopenModal = $this->input->get('reopenModal') ? $this->input->get('reopenModal') : '';
 
                     if (isset($_GET['CKEditorFuncNum'])) {
 
-                        echo 'manager = new NAILS_CDN_Manager("ckeditor", ' . $this->input->get('CKEditorFuncNum') . ', urlScheme, ' . $isModal . ', "' . $reopenFancybox . '");';
+                        echo 'manager = new NAILS_CDN_Manager("ckeditor", ' . $this->input->get('CKEditorFuncNum') . ', null, urlScheme, ' . $isModal . ', "' . $reopenModal . '");';
 
                         if ($this->input->get('deleted')) {
 
@@ -308,7 +308,7 @@
                         $callback = json_encode($this->input->get('callback'));
                         $passback = $this->input->get('passback');
 
-                        echo 'manager = new NAILS_CDN_Manager("native", ' . $callback . ', ' . $passback . ', urlScheme, ' . $isModal . ', "' . $reopenFancybox . '");';
+                        echo 'manager = new NAILS_CDN_Manager("native", ' . $callback . ', ' . $passback . ', urlScheme, ' . $isModal . ', "' . $reopenModal . '");';
 
                         if ($this->input->get('deleted')) {
 
