@@ -57,7 +57,7 @@
                 } else {
 
                     echo '<tr>';
-                        echo '<td colspan="5" class="no-data">';
+                        echo '<td colspan="6" class="no-data">';
                             echo 'No Buckets Found';
                         echo '</td>';
                     echo '</tr>';
