@@ -1,12 +1,6 @@
 {
     "name": "nailsapp/module-cdn",
-    "keywords":
-    [
-        "Nails",
-        "Shed Collective",
-        "CodeIgniter",
-        "CDN Module"
-    ],
+    "keywords": ["Nails", "Shed Collective", "CodeIgniter", "CDN Module"],
     "homepage": "http://nailsapp.co.uk/modules/cdn",
     "description": "This is the \"CDN\" module for Nails.",
     "license": "MIT",
