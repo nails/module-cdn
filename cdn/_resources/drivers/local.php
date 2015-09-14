@@ -5,6 +5,7 @@ class Local_CDN implements Cdn_driver
 
     private $cdn;
     public $errors;
+    protected $sBaseUrl;
 
     // --------------------------------------------------------------------------
 
@@ -19,8 +20,15 @@ class Local_CDN implements Cdn_driver
 
         // --------------------------------------------------------------------------
 
-        //  Load langfile
-        get_instance()->lang->load('cdn/cdn_driver_local');
+        //  Load langfile and dependant helper
+        $oCi =& get_instance();
+        $oCi->lang->load('cdn/cdn_driver_local');
+        $oCi->load->helper('string');
+
+        // --------------------------------------------------------------------------
+
+        $this->sBaseUrl = defined('DEPLOY_CDN_BASE_URL') ? DEPLOY_CDN_BASE_URL : 'cdn';
+        $this->sBaseUrl = addTrailingSlash($this->sBaseUrl);
     }
 
     /**
@@ -223,7 +231,7 @@ class Local_CDN implements Cdn_driver
      */
     public function url_serve($object, $bucket, $forceDownload)
     {
-        $out  = 'cdn/serve/';
+        $out  = $this->sBaseUrl . 'serve/';
         $out .= $bucket . '/';
         $out .= $object;
 
@@ -244,7 +252,7 @@ class Local_CDN implements Cdn_driver
      */
     public function url_serve_scheme($forceDownload)
     {
-        $out = 'cdn/serve/{{bucket}}/{{filename}}{{extension}}';
+        $out = $this->sBaseUrl . 'serve/{{bucket}}/{{filename}}{{extension}}';
 
         if ($forceDownload) {
 
@@ -267,7 +275,7 @@ class Local_CDN implements Cdn_driver
     {
         $filename = $filename ? '/' . urlencode($filename) : '';
 
-        return $this->urlMakeSecure('cdn/zip/' . $objectIds . '/' . $hash . $filename);
+        return $this->urlMakeSecure($this->sBaseUrl . 'zip/' . $objectIds . '/' . $hash . $filename);
     }
 
     // --------------------------------------------------------------------------
@@ -278,7 +286,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_serve_zipped_scheme()
     {
-        return $this->urlMakeSecure('cdn/zip/{{ids}}/{{hash}}/{{filename}}');
+        return $this->urlMakeSecure($this->sBaseUrl . 'zip/{{ids}}/{{hash}}/{{filename}}');
     }
 
     // --------------------------------------------------------------------------
@@ -293,7 +301,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_thumb($object, $bucket, $width, $height)
     {
-        $out  = 'cdn/thumb/';
+        $out  = $this->sBaseUrl . 'thumb/';
         $out .= $width . '/' . $height . '/';
         $out .= $bucket . '/';
         $out .= $object;
@@ -309,7 +317,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_thumb_scheme()
     {
-        $out = 'cdn/thumb/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
+        $out = $this->sBaseUrl . 'thumb/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
         return $this->urlMakeSecure($out);
     }
@@ -326,7 +334,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_scale($object, $bucket, $width, $height)
     {
-        $out  = 'cdn/scale/';
+        $out  = $this->sBaseUrl . 'scale/';
         $out .= $width . '/' . $height . '/';
         $out .= $bucket . '/';
         $out .= $object;
@@ -342,7 +350,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_scale_scheme()
     {
-        $out = 'cdn/scale/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
+        $out = $this->sBaseUrl . 'scale/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
         return $this->urlMakeSecure($out);
     }
@@ -358,7 +366,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_placeholder($width = 100, $height = 100, $border = 0)
     {
-        $out  = 'cdn/placeholder/';
+        $out  = $this->sBaseUrl . 'placeholder/';
         $out .= $width . '/' . $height . '/' . $border;
 
         return $this->urlMakeSecure($out);
@@ -372,7 +380,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_placeholder_scheme()
     {
-        $out = 'cdn/placeholder/{{width}}/{{height}}/{{border}}';
+        $out = $this->sBaseUrl . 'placeholder/{{width}}/{{height}}/{{border}}';
 
         return $this->urlMakeSecure($out);
     }
@@ -388,7 +396,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_blank_avatar($width = 100, $height = 100, $sex = '')
     {
-        $out  = 'cdn/blank_avatar/';
+        $out  = $this->sBaseUrl . 'blank_avatar/';
         $out .= $width . '/' . $height;
         $out .= $sex ? '/' . $sex : '';
 
@@ -403,7 +411,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_blank_avatar_scheme()
     {
-        $out = 'cdn/blank_avatar/{{width}}/{{height}}/{{sex}}';
+        $out = $this->sBaseUrl . 'blank_avatar/{{width}}/{{height}}/{{sex}}';
 
         return $this->urlMakeSecure($out);
     }
@@ -426,7 +434,7 @@ class Local_CDN implements Cdn_driver
         $hash  = get_instance()->encrypt->encode($hash, APP_PRIVATE_KEY);
         $hash  = urlencode($hash);
 
-        $out  = 'cdn/serve?token=' . $hash;
+        $out  = $this->sBaseUrl . 'serve?token=' . $hash;
 
         if ($forceDownload) {
 
@@ -445,7 +453,7 @@ class Local_CDN implements Cdn_driver
      **/
     public function url_expiring_scheme()
     {
-        $out = 'cdn/serve?token={{token}}';
+        $out = $this->sBaseUrl . 'serve?token={{token}}';
 
         return $this->urlMakeSecure($out);
     }
