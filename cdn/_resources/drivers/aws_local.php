@@ -373,7 +373,7 @@ class Aws_local_CDN implements Cdn_driver
     {
         $filename = $filename ? '/' . urlencode($filename) : '';
 
-        $out = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/zip/' . $objectIds . '/' . $hash . $filename;
+        $out = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'zip/' . $objectIds . '/' . $hash . $filename;
 
         return $this->urlMakeSecure($out);
     }
@@ -386,7 +386,7 @@ class Aws_local_CDN implements Cdn_driver
      **/
     public function url_serve_zipped_scheme()
     {
-        $out = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/zip/{{ids}}/{{hash}}/{{filename}}';
+        $out = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'zip/{{ids}}/{{hash}}/{{filename}}';
 
         return $this->urlMakeSecure($out);
     }
@@ -403,7 +403,7 @@ class Aws_local_CDN implements Cdn_driver
      **/
     public function url_thumb($object, $bucket, $width, $height)
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/thumb/';
+        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'thumb/';
         $out .= $width . '/' . $height . '/';
         $out .= $bucket . '/';
         $out .= $object;
@@ -420,7 +420,7 @@ class Aws_local_CDN implements Cdn_driver
     public function url_thumb_scheme()
     {
         $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
-        $out .= 'cdn/thumb/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
+        $out .= 'thumb/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
         return $this->urlMakeSecure($out);
     }
@@ -437,7 +437,7 @@ class Aws_local_CDN implements Cdn_driver
      **/
     public function url_scale($object, $bucket, $width, $height)
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/scale/';
+        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'scale/';
         $out .= $width . '/' . $height . '/';
         $out .= $bucket . '/';
         $out .= $object;
@@ -454,7 +454,7 @@ class Aws_local_CDN implements Cdn_driver
     public function url_scale_scheme()
     {
         $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
-        $out .= 'cdn/scale/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
+        $out .= 'scale/{{width}}/{{height}}/{{bucket}}/{{filename}}{{extension}}';
 
         return $this->urlMakeSecure($out);
     }
@@ -470,7 +470,7 @@ class Aws_local_CDN implements Cdn_driver
      **/
     public function url_placeholder($width = 100, $height = 100, $border = 0)
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/placeholder/';
+        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'placeholder/';
         $out .= $width . '/' . $height . '/' . $border;
 
         return $this->urlMakeSecure($out);
@@ -485,7 +485,7 @@ class Aws_local_CDN implements Cdn_driver
     public function url_placeholder_scheme()
     {
         $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
-        $out .= 'cdn/placeholder/{{width}}/{{height}}/{{border}}';
+        $out .= 'placeholder/{{width}}/{{height}}/{{border}}';
 
         return $this->urlMakeSecure($out);
     }
@@ -501,7 +501,7 @@ class Aws_local_CDN implements Cdn_driver
      **/
     public function url_blank_avatar($width = 100, $height = 100, $sex = 'male')
     {
-        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'cdn/blank_avatar/';
+        $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING . 'blank_avatar/';
         $out .= $width . '/' . $height . '/' . $sex;
 
         return $this->urlMakeSecure($out);
@@ -516,7 +516,7 @@ class Aws_local_CDN implements Cdn_driver
     public function url_blank_avatar_scheme()
     {
         $out  = DEPLOY_CDN_DRIVER_AWS_CLOUDFRONT_URL_PROCESSING;
-        $out .= 'cdn/blank_avatar/{{width}}/{{height}}/{{sex}}';
+        $out .= 'blank_avatar/{{width}}/{{height}}/{{sex}}';
 
         return $this->urlMakeSecure($out);
     }
@@ -544,7 +544,7 @@ class Aws_local_CDN implements Cdn_driver
         $hash  = get_instance()->encrypt->encode($hash, APP_PRIVATE_KEY);
         $hash  = urlencode($hash);
 
-        $out = 'cdn/serve?token=' . $hash;
+        $out = 'serve?token=' . $hash;
 
         if ($forceDownload) {
 
@@ -564,7 +564,7 @@ class Aws_local_CDN implements Cdn_driver
      **/
     public function url_expiring_scheme()
     {
-        $out = site_url('cdn/serve?token={{token}}');
+        $out = site_url('serve?token={{token}}');
 
         return $this->urlMakeSecure($out);
     }
