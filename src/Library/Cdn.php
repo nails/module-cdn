@@ -20,7 +20,7 @@ class Cdn
     use \NAILS_COMMON_TRAIT_GETCOUNT_COMMON;
 
     private $ci;
-    private $cdnDriver;
+    private $oCdnDriver;
     private $db;
 
     // --------------------------------------------------------------------------
@@ -67,7 +67,7 @@ class Cdn
             showFatalError($sSubject, $sMessage);
         }
 
-        $this->cdnDriver = new $sDriverClassName($options);
+        $this->oCdnDriver = new $sDriverClassName($options);
     }
 
     // --------------------------------------------------------------------------
@@ -86,34 +86,6 @@ class Cdn
                 $this->_unset_cache($key);
             }
         }
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Loads the appropriate driver
-     * @return  string
-     **/
-    protected function includeDriver()
-    {
-        // include_once NAILS_PATH . 'module-cdn/cdn/interfaces/driver.php';
-        switch (strtoupper(APP_CDN_DRIVER)) {
-
-            case 'AWS_LOCAL':
-
-                // include_once NAILS_PATH . 'module-cdn/cdn/_resources/drivers/aws_local.php';
-                $return = 'Aws_local_CDN';
-                break;
-
-            case 'LOCAL':
-            default:
-
-                include_once NAILS_PATH . 'module-cdn/cdn/_resources/drivers/local.php';
-                $return = 'Local_CDN';
-                break;
-        }
-
-        return $return;
     }
 
     // --------------------------------------------------------------------------
@@ -198,12 +170,12 @@ class Cdn
         }
 
         //  Test the drive
-        if (method_exists($this->cdnDriver, $method)) {
+        if (method_exists($this->oCdnDriver, $method)) {
 
-            return call_user_func_array(array($this->cdnDriver, $method), $arguments);
+            return call_user_func_array(array($this->oCdnDriver, $method), $arguments);
         }
 
-        throw new Exception('Call to undefined method Cdn::' . $method . '()');
+        throw new \Exception('Call to undefined method Cdn::' . $method . '()');
     }
 
     // --------------------------------------------------------------------------
@@ -985,7 +957,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $upload = $this->cdnDriver->object_create($_data);
+        $upload = $this->oCdnDriver->objectCreate($_data);
 
         // --------------------------------------------------------------------------
 
@@ -999,7 +971,7 @@ class Cdn
 
             } else {
 
-                $this->cdnDriver->destroy($_data->filename, $_data->bucket_slug);
+                $this->oCdnDriver->destroy($_data->filename, $_data->bucket_slug);
                 $status = false;
             }
 
@@ -1227,7 +1199,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Attempt to remove the file
-        if ($this->cdnDriver->object_destroy($object->filename, $object->bucket->slug)) {
+        if ($this->oCdnDriver->objectDestroy($object->filename, $object->bucket->slug)) {
 
             //  Remove the database entries
             $this->db->trans_begin();
@@ -1394,7 +1366,7 @@ class Cdn
      */
     public function object_local_path($bucketSlug, $filename)
     {
-        return $this->cdnDriver->object_local_path($bucketSlug, $filename);
+        return $this->oCdnDriver->objectLocalPath($bucketSlug, $filename);
     }
 
     // --------------------------------------------------------------------------
@@ -1741,7 +1713,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $_bucket = $this->cdnDriver->bucket_create($bucket);
+        $_bucket = $this->oCdnDriver->bucketCreate($bucket);
 
         if ($_bucket) {
 
@@ -1771,7 +1743,7 @@ class Cdn
 
             } else {
 
-                $this->cdnDriver->destroy($bucket);
+                $this->oCdnDriver->destroy($bucket);
 
                 $this->set_error(lang('cdn_error_bucket_insert'));
                 return false;
@@ -1878,7 +1850,7 @@ class Cdn
         } else {
 
             //  Remove the bucket
-            if ($this->cdnDriver->bucket_destroy($_bucket->slug)) {
+            if ($this->oCdnDriver->bucketDestroy($_bucket->slug)) {
 
                 $this->db->where('id', $_bucket->id);
                 $this->db->delete(NAILS_DB_PREFIX . 'cdn_bucket');
@@ -2251,7 +2223,7 @@ class Cdn
             }
         }
 
-        $url = $this->cdnDriver->url_serve($object->filename, $object->bucket->slug, $forceDownload);
+        $url = $this->oCdnDriver->urlServe($object->filename, $object->bucket->slug, $forceDownload);
         $url .= $isTrashed ? '?trashed=1' : '';
 
         return $url;
@@ -2266,7 +2238,7 @@ class Cdn
      **/
     public function url_serve_scheme($force_download = false)
     {
-        return $this->cdnDriver->url_serve_scheme($force_download);
+        return $this->oCdnDriver->urlServeScheme($force_download);
     }
 
     // --------------------------------------------------------------------------
@@ -2294,7 +2266,7 @@ class Cdn
         $_ids_hash = implode('-', $_ids_hash);
         $_hash     = md5(APP_PRIVATE_KEY . $_ids . $_ids_hash . $filename);
 
-        return $this->cdnDriver->url_serve_zipped($_ids, $_hash, $filename);
+        return $this->oCdnDriver->urlServeZipped($_ids, $_hash, $filename);
     }
 
     // --------------------------------------------------------------------------
@@ -2339,19 +2311,19 @@ class Cdn
      **/
     public function url_serve_zipped_scheme($filename = null)
     {
-        return $this->cdnDriver->url_serve_scheme($filename);
+        return $this->oCdnDriver->urlServeScheme($filename);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_thumb_url method
-     * @param   string  $objectId   The ID of the object we're "thumbing"
-     * @param   string  $width      The width of the thumbnail
-     * @param   string  $height     The height of the thumbnail
+     * Calls the driver's public cdn_crop_url method
+     * @param   string  $objectId   The ID of the object we're cropping
+     * @param   string  $width      The width of the crop
+     * @param   string  $height     The height of the crop
      * @return  string
      **/
-    public function url_thumb($objectId, $width, $height)
+    public function url_crop($objectId, $width, $height)
     {
         $isTrashed = false;
         $object    = $this->get_object($objectId);
@@ -2389,7 +2361,7 @@ class Cdn
             }
         }
 
-        $url = $this->cdnDriver->url_thumb($object->filename, $object->bucket->slug, $width, $height);
+        $url = $this->oCdnDriver->urlCrop($object->filename, $object->bucket->slug, $width, $height);
         $url .= $isTrashed ? '?trashed=1' : '';
 
         return $url;
@@ -2398,20 +2370,20 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_thumb_url_scheme method
+     * Calls the driver's public cdn_crop_url_scheme method
      * @param   none
      * @return  string
      **/
-    public function url_thumb_scheme()
+    public function url_crop_scheme()
     {
-        return $this->cdnDriver->url_thumb_scheme();
+        return $this->oCdnDriver->urlCropScheme();
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_thumb_url method
-     * @param   string  $objectId   The ID of the object we're "thumbing"
+     * Calls the driver's public cdn_crop_url method
+     * @param   string  $objectId   The ID of the object we're cropping
      * @param   string  $width      The width of the scaled image
      * @param   string  $height     The height of the scaled image
      * @return  string
@@ -2454,7 +2426,7 @@ class Cdn
             }
         }
 
-        $url = $this->cdnDriver->url_scale($object->filename, $object->bucket->slug, $width, $height);
+        $url = $this->oCdnDriver->urlScale($object->filename, $object->bucket->slug, $width, $height);
         $url .= $isTrashed ? '?trashed=1' : '';
 
         return $url;
@@ -2469,7 +2441,7 @@ class Cdn
      **/
     public function url_scale_scheme()
     {
-        return $this->cdnDriver->url_scale_scheme();
+        return $this->oCdnDriver->urlScaleScheme();
     }
 
     // --------------------------------------------------------------------------
@@ -2483,7 +2455,7 @@ class Cdn
      **/
     public function url_placeholder($width = 100, $height = 100, $border = 0)
     {
-        return $this->cdnDriver->url_placeholder($width, $height, $border);
+        return $this->oCdnDriver->urlPlaceholder($width, $height, $border);
     }
 
     // --------------------------------------------------------------------------
@@ -2495,7 +2467,7 @@ class Cdn
      **/
     public function url_placeholder_scheme()
     {
-        return $this->cdnDriver->url_placeholder_scheme();
+        return $this->oCdnDriver->urlPlaceholderScheme();
     }
 
     // --------------------------------------------------------------------------
@@ -2509,7 +2481,7 @@ class Cdn
      **/
     public function url_blank_avatar($width = 100, $height = 100, $sex = '')
     {
-        return $this->cdnDriver->url_blank_avatar($width, $height, $sex);
+        return $this->oCdnDriver->urlBlankAvatar($width, $height, $sex);
     }
 
     // --------------------------------------------------------------------------
@@ -2521,7 +2493,7 @@ class Cdn
      **/
     public function url_blank_avatar_scheme()
     {
-        return $this->cdnDriver->url_blank_avatar_scheme();
+        return $this->oCdnDriver->urlBlankAvatarScheme();
     }
 
     // --------------------------------------------------------------------------
@@ -2558,7 +2530,7 @@ class Cdn
 
             } else {
 
-                $avatarUrl = $this->url_thumb($user->profile_img, $width, $height);
+                $avatarUrl = $this->url_crop($user->profile_img, $width, $height);
             }
         }
 
@@ -2593,7 +2565,7 @@ class Cdn
 
             } else {
 
-                $avatarScheme = $this->url_thumb_scheme();
+                $avatarScheme = $this->url_crop_scheme();
             }
         }
 
@@ -2622,7 +2594,7 @@ class Cdn
 
         }
 
-        return $this->cdnDriver->url_expiring($object->filename, $object->bucket->slug, $expires, $forceDownload);
+        return $this->oCdnDriver->urlExpiring($object->filename, $object->bucket->slug, $expires, $forceDownload);
     }
 
     // --------------------------------------------------------------------------
@@ -2634,7 +2606,7 @@ class Cdn
      **/
     public function url_expiring_scheme()
     {
-        return $this->cdnDriver->url_expiring_scheme();
+        return $this->oCdnDriver->urlExpiringScheme();
     }
 
     // --------------------------------------------------------------------------
@@ -2820,7 +2792,7 @@ class Cdn
 
         while ($row = $_orphans->_fetch_object()) {
 
-            if (!$this->cdnDriver->object_exists($row->filename, $row->bucket_slug)) {
+            if (!$this->oCdnDriver->objectExists($row->filename, $row->bucket_slug)) {
 
                 $_out['orphans'][] = $row;
             }
@@ -2853,9 +2825,9 @@ class Cdn
     public function run_tests()
     {
         //  If defined, run the pre_test method for the driver
-        if (method_exists($this->cdnDriver, 'pre_test')) {
+        if (method_exists($this->oCdnDriver, 'pre_test')) {
 
-            call_user_func(array($this->cdnDriver, 'pre_test'));
+            call_user_func(array($this->oCdnDriver, 'pre_test'));
         }
 
         // --------------------------------------------------------------------------
@@ -2975,12 +2947,12 @@ class Cdn
 
             // --------------------------------------------------------------------------
 
-            //  Can we thumb the object?
-            $_url = $this->url_thumb($_upload->id, 10, 10);
+            //  Can we crop the object?
+            $_url = $this->url_crop($_upload->id, 10, 10);
 
             if (!$_url) {
 
-                $this->set_error('Unable to generate thumb URL for object.');
+                $this->set_error('Unable to generate crop URL for object.');
                 continue;
             }
 
@@ -2989,7 +2961,7 @@ class Cdn
 
             if (!$_test || $_code != 200) {
 
-                $error  = 'Failed to thumb object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').';
+                $error  = 'Failed to crop object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').';
                 $error .= '<small>' . $_url . '</small>';
                 $this->set_error();
                 continue;
@@ -3063,9 +3035,9 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  If defined, run the post_test method fo the driver
-        if (method_exists($this->cdnDriver, 'post_test')) {
+        if (method_exists($this->oCdnDriver, 'post_test')) {
 
-            call_user_func(array($this->cdnDriver, 'post_test'));
+            call_user_func(array($this->oCdnDriver, 'post_test'));
         }
 
         // --------------------------------------------------------------------------
@@ -3179,7 +3151,7 @@ class Cdn
 
             if (!empty($object)) {
 
-                if ($this->cdnDriver->object_destroy($object->filename, $object->bucket_slug)) {
+                if ($this->oCdnDriver->objectDestroy($object->filename, $object->bucket_slug)) {
 
                     //  Remove the database entries
                     $this->db->where('id', $object->id);
