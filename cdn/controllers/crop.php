@@ -182,6 +182,7 @@ class NAILS_Crop extends NAILS_CDN_Controller
             }
 
             $sCropQuadrant = strtoupper($sCropQuadrant);
+            $this->cropQuadrant = $sCropQuadrant;
 
             /**
              * The default quadrant is C, so leave that blank. This is msotly for backwards compatibility as old
