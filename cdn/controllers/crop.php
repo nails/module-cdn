@@ -20,7 +20,7 @@ class NAILS_Crop extends NAILS_CDN_Controller
     protected $width;
     protected $height;
     protected $extension;
-    protected $cropPos;
+    protected $cropQuadrant;
 
     // --------------------------------------------------------------------------
 
@@ -39,7 +39,6 @@ class NAILS_Crop extends NAILS_CDN_Controller
         $this->bucket    = $this->uri->segment(5);
         $this->object    = urldecode($this->uri->segment(6));
         $this->extension = !empty($this->object) ? strtolower(substr($this->object, strrpos($this->object, '.'))) : '';
-        $this->cropPos   = defined('APP_CDN_CROP_POS') ? APP_CDN_CROP_POS : 'CENTER';
 
         // --------------------------------------------------------------------------
 
@@ -78,13 +77,13 @@ class NAILS_Crop extends NAILS_CDN_Controller
             case 'CROP':
             default:
 
-                $phpCropMethod = 'adaptiveResize';
+                $phpCropMethod = 'adaptiveResizeQuadrant';
                 break;
         }
 
         // --------------------------------------------------------------------------
 
-        //  Define the cache file
+        //  Begin defining the cache file
         $width  = $this->width * $this->retinaMultiplier;
         $height = $this->height * $this->retinaMultiplier;
 
@@ -92,7 +91,6 @@ class NAILS_Crop extends NAILS_CDN_Controller
         $this->cdnCacheFile .= '-' . substr($this->object, 0, strrpos($this->object, '.'));
         $this->cdnCacheFile .= '-' . $cropMethod;
         $this->cdnCacheFile .= '-' . $width . 'x' . $height;
-        $this->cdnCacheFile .= $this->extension;
 
         // --------------------------------------------------------------------------
 
@@ -100,7 +98,7 @@ class NAILS_Crop extends NAILS_CDN_Controller
         if (!$this->bucket || !$this->object || !$this->extension) {
 
             log_message('error', 'CDN: ' . $cropMethod . ': Missing _bucket, _object or _extension');
-            return $this->serveBadSrc();
+            return $this->serveBadSrc($this->width, $this->height);
         }
 
         // --------------------------------------------------------------------------
@@ -110,7 +108,7 @@ class NAILS_Crop extends NAILS_CDN_Controller
          * Etag matches then send a Not-Modified header and terminate execution.
          */
 
-        if ($this->serveNotModified($this->cdnCacheFile)) {
+        if ($this->serveNotModified($this->cdnCacheFile . $this->extension)) {
 
             $this->cdn->object_increment_count($cropMethod, $this->object, $this->bucket);
             return;
@@ -148,6 +146,55 @@ class NAILS_Crop extends NAILS_CDN_Controller
                 return $this->serveBadSrc($width, $height);
             }
         }
+
+        // --------------------------------------------------------------------------
+
+        //  Only images
+        if (empty($object->is_img)) {
+
+            $width  = $this->width * $this->retinaMultiplier;
+            $height = $this->height * $this->retinaMultiplier;
+
+            return $this->serveBadSrc($width, $height, 'Not an image');
+        }
+
+        // --------------------------------------------------------------------------
+
+        //  Take a note of the image's orientation, and work out the quadrant accordingly
+        if ($phpCropMethod == 'adaptiveResizeQuadrant') {
+
+            switch ($object->img_orientation) {
+
+                case 'PORTRAIT':
+
+                    $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_PORTRAIT') ? APP_CDN_CROP_QUADRANT_PORTRAIT : 'C';
+                    break;
+
+                case 'LANDSCAPE':
+
+                    $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_LANDSCAPE') ? APP_CDN_CROP_QUADRANT_LANDSCAPE : 'C';
+                    break;
+
+                default:
+
+                    $sCropQuadrant = 'C';
+                    break;
+            }
+
+            $sCropQuadrant = strtoupper($sCropQuadrant);
+
+            /**
+             * The default quadrant is C, so leave that blank. This is msotly for backwards compatibility as old
+             * caches will have images which are cropped from the center, but not got `-C` in the cache filename.
+             */
+            if ($sCropQuadrant != 'C') {
+
+                $this->cdnCacheFile .= '-' . $sCropQuadrant;
+            }
+        }
+
+        //  Finally, bang the extension on the end
+        $this->cdnCacheFile .= $this->extension;
 
         // --------------------------------------------------------------------------
 
@@ -290,8 +337,16 @@ class NAILS_Crop extends NAILS_CDN_Controller
 
             ob_start();
 
-            $PHPThumb = new PHPThumb\GD($filePath, $_options);
-            $PHPThumb->{$phpCropMethod}($width, $height);
+            $PHPThumb = new \PHPThumb\GD($filePath, $_options);
+
+            //  Prepare the parameters and call the method
+            $aParams = array(
+                $width,
+                $height,
+                $this->cropQuadrant
+            );
+
+            call_user_func_array(array($PHPThumb, $phpCropMethod), $aParams);
 
             //  Save cache version
             $PHPThumb->save($this->cdnCacheDir . $this->cdnCacheFile, $ext);
@@ -369,8 +424,16 @@ class NAILS_Crop extends NAILS_CDN_Controller
             //  Perform the resize; first save the original frame to disk
             imagegif($frame['image'], $this->cdnCacheDir . $tempFilename);
 
-            $PHPThumb = new PHPThumb\GD($this->cdnCacheDir . $tempFilename, $options);
-            $PHPThumb->{$phpCropMethod}($width, $height);
+            $PHPThumb = new \PHPThumb\GD($this->cdnCacheDir . $tempFilename, $options);
+
+            //  Prepare the parameters and call the method
+            $aParams = array(
+                $iWidth,
+                $iHeight,
+                $this->cropQuadrant
+            );
+
+            call_user_func_array(array($PHPThumb, $phpCropMethod), $aParams);
 
             // --------------------------------------------------------------------------
 
@@ -380,7 +443,7 @@ class NAILS_Crop extends NAILS_CDN_Controller
 
         /**
          * Recompile the resized images back into an animated gif and save to the cache
-         * @TODO: We assume the gif loops infinitely but we should really check.
+         * @todo: We assume the gif loops infinitely but we should really check.
          * Issue made on the library's GitHub asking for this feature.
          * View here: https://github.com/Sybio/GifFrameExtractor/issues/3
          */
