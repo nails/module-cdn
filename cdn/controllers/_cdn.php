@@ -245,7 +245,7 @@ class NAILS_CDN_Controller extends NAILS_Controller
      * @param  integer $height The height of the graphic
      * @return void
      */
-    protected function serveBadSrc($width = 100, $height = 100)
+    protected function serveBadSrc($width = 100, $height = 100, $sError = '')
     {
         //  Make sure this doesn't get cached
         $this->unsetCacheHeaders();
@@ -277,6 +277,15 @@ class NAILS_CDN_Controller extends NAILS_Controller
         $centerX = ($width / 2) - ($iconW / 2);
         $centerY = ($height / 2) - ($iconH / 2);
         imagecopymerge($bg, $icon, $centerX, $centerY, 0, 0, $iconW, $iconH, 100);
+
+        // --------------------------------------------------------------------------
+
+        //  Write the error on the bottom
+        if (!empty($sError)) {
+
+            $textcolor = imagecolorallocate($bg, 0, 0, 0);
+            imagestring($bg, 1, 5, $height - 15, 'ERROR: ' . $sError, $textcolor);
+        }
 
         // --------------------------------------------------------------------------
 
