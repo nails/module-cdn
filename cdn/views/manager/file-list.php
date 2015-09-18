@@ -6,10 +6,10 @@
             if ($object->is_img) {
 
                 //  Thumbnail
-                echo img(array('src' => cdn_thumb($object->id, 30, 30), 'class' => 'icon'));
+                echo img(array('src' => cdnCrop($object->id, 30, 30), 'class' => 'icon'));
                 $fancyboxClass = 'cdn-fancybox';
                 $fancyboxType  = '';
-                $url           = cdn_serve($object->id);
+                $url           = cdnServe($object->id);
                 $action        = 'View';
 
 
@@ -19,7 +19,7 @@
                 echo '<div class="icon"><span class="fa fa-music" style="font-size:2.2em"></span></div>';
                 $fancyboxClass = 'cdn-fancybox';
                 $fancyboxType  = 'iframe';
-                $url           = cdn_serve($object->id);
+                $url           = cdnServe($object->id);
                 $action        = 'Play';
 
 
@@ -29,7 +29,7 @@
                 echo '<div class="icon"><span class="fa fa-file-o" style="font-size:2.2em"></span></div>';
                 $fancyboxClass = 'cdn-fancybox';
                 $fancyboxType  = 'iframe';
-                $url           = cdn_serve($object->id);
+                $url           = cdnServe($object->id);
                 $action        = 'View';
 
             } else {
@@ -38,7 +38,7 @@
                 echo '<div class="icon"><span class="fa fa-file-o" style="font-size:2.2em"></span></div>';
                 $fancyboxClass = '';
                 $fancyboxType  = '';
-                $url           = cdn_serve($object->id, true);
+                $url           = cdnServe($object->id, true);
                 $action        = 'Download';
             }
 

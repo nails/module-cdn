@@ -1,6 +1,8 @@
 <?php
 
-interface Cdn_driver
+namespace Nails\Cdn\Interfaces;
+
+interface Driver
 {
     //  Object methods
     public function object_create($data);

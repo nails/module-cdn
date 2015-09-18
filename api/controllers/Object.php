@@ -125,7 +125,7 @@ class Object extends \ApiController
                                         $w = isset($dimensions[0]) ? $dimensions[0] : '';
                                         $h = isset($dimensions[1]) ? $dimensions[1] : '';
 
-                                        $out['object_url'][] = cdn_thumb($upload->id, $w, $h);
+                                        $out['object_url'][] = cdnCrop($upload->id, $w, $h);
                                     }
 
                                     $out['object_id']  = $upload->id;
@@ -144,7 +144,7 @@ class Object extends \ApiController
                                         $w = isset($dimensions[0]) ? $dimensions[0] : '';
                                         $h = isset($dimensions[1]) ? $dimensions[1] : '';
 
-                                        $out['object_url'][] = cdn_scale($upload->id, $w, $h);
+                                        $out['object_url'][] = cdnScale($upload->id, $w, $h);
                                     }
 
                                     $out['object_id']  = $upload->id;
@@ -154,14 +154,14 @@ class Object extends \ApiController
                                 case 'DOWNLOAD':
                                 case 'SERVE_DOWNLOAD':
 
-                                    $out['object_url'] = cdn_serve($upload->id, true);
+                                    $out['object_url'] = cdnServe($upload->id, true);
                                     $out['object_id']  = $upload->id;
                                     break;
 
                                 case 'SERVE':
                                 default:
 
-                                    $out['object_url'] = cdn_serve($upload->id);
+                                    $out['object_url'] = cdnServe($upload->id);
                                     $out['object_id']  = $upload->id;
                                     break;
                             }
@@ -169,7 +169,7 @@ class Object extends \ApiController
                         } else {
 
                             //  Unknow, return the serve URL & ID
-                            $out['object_url'] = cdn_serve($upload->id);
+                            $out['object_url'] = cdnServe($upload->id);
                             $out['object_id']  = $upload->id;
                         }
                         break;

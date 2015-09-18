@@ -7,10 +7,10 @@
         if ($object->is_img) {
 
             //  Thumbnail
-            echo img(cdn_scale($object->id, 150, 175));
+            echo img(cdnScale($object->id, 150, 175));
             $fancyboxClass = 'cdn-fancybox';
             $fancyboxType  = '';
-            $url           = cdn_serve($object->id);
+            $url           = cdnServe($object->id);
             $action        = 'View';
 
 
@@ -20,7 +20,7 @@
             echo '<span class="fa fa-music" style="font-size:5em"></span>';
             $fancyboxClass = 'cdn-fancybox';
             $fancyboxType  = 'iframe';
-            $url           = cdn_serve($object->id);
+            $url           = cdnServe($object->id);
             $action        = 'Play';
 
         } elseif ($object->mime == 'application/pdf') {
@@ -29,7 +29,7 @@
             echo '<span class="fa fa-file-o" style="font-size:5em"></span>';
             $fancyboxClass = 'cdn-fancybox';
             $fancyboxType  = 'iframe';
-            $url           = cdn_serve($object->id);
+            $url           = cdnServe($object->id);
             $action        = 'View';
 
         } else {
@@ -38,7 +38,7 @@
             echo '<span class="fa fa-file-o" style="font-size:5em"></span>';
             $fancyboxClass = '';
             $fancyboxType  = '';
-            $url           = cdn_serve($object->id, true);
+            $url           = cdnServe($object->id, true);
             $action        = 'Download';
         }
 

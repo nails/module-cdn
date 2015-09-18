@@ -2,7 +2,7 @@
 
 //  Include _cdn.php; executes common functionality
 require_once '_cdn.php';
-require_once 'thumb.php';
+require_once 'crop.php';
 
 /**
  * This class handles the "scale" CDN endpoint
@@ -14,7 +14,7 @@ require_once 'thumb.php';
  * @link
  */
 
-class NAILS_Scale extends Thumb
+class NAILS_Scale extends Crop
 {
     /**
      * Generate a thumbnail

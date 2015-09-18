@@ -41,7 +41,7 @@
                                     case 'image/jpeg' :
                                     case 'image/gif' :
 
-                                        echo anchor(cdn_serve($object->id), img(cdn_scale($object->id, 64, 64)), 'class="fancybox"');
+                                        echo anchor(cdnServe($object->id), img(cdnScale($object->id, 64, 64)), 'class="fancybox"');
                                         break;
 
                                     case 'audio/mpeg' :
@@ -78,11 +78,11 @@
 
                                 if ($object->is_img) {
 
-                                    echo anchor(cdn_serve($object->id), 'View', 'class="awesome small green fancybox"');
+                                    echo anchor(cdnServe($object->id), 'View', 'class="awesome small green fancybox"');
 
                                 } else {
 
-                                    echo anchor(cdn_serve($object->id), 'View', 'class="awesome small green fancybox" data-fancybox-type="iframe"');
+                                    echo anchor(cdnServe($object->id), 'View', 'class="awesome small green fancybox" data-fancybox-type="iframe"');
                                 }
 
                             echo '</td>';
