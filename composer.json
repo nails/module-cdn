@@ -33,7 +33,6 @@
     {
         "nailsapp/module-curl": "dev-develop",
         "nailsapp/driver-cdn-local": "dev-develop",
-        "aws/aws-sdk-php": "~2.4.5",
         "sybio/gif-creator": "~1.0.0",
         "sybio/gif-frame-extractor": "~1.0.0",
         "masterexploder/phpthumb": "dev-master"
