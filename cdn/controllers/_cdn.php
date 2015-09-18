@@ -35,24 +35,6 @@ class NAILS_CDN_Controller extends NAILS_Controller
 
         // --------------------------------------------------------------------------
 
-        //  Sanity checks; driver specific
-        switch (APP_CDN_DRIVER) {
-
-            case 'AWS_LOCAL':
-
-                //  @TODO: Sanity checks, if any.
-                break;
-
-            case 'LOCAL':
-
-                //  @TODO: Sanity checks, if any.
-                break;
-        }
-
-        //  TODO: Sanity checks: common
-
-        // --------------------------------------------------------------------------
-
         //  Define variables
         $this->cdnRoot     = NAILS_PATH . 'module-cdn/cdn/';
         $this->cdnCacheDir = DEPLOY_CACHE_DIR;
