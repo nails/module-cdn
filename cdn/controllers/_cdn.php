@@ -39,14 +39,21 @@ class NAILS_CDN_Controller extends NAILS_Controller
         $this->cdnRoot     = NAILS_PATH . 'module-cdn/cdn/';
         $this->cdnCacheDir = DEPLOY_CACHE_DIR;
 
-        $this->cdnCacheHeadersSet          = false;
-        $this->cdnCacheHeadersMaxAge       = APP_CDN_CACHE_MAX_AGE;
-        $this->cdnCacheHeadersLastModified = '';
-        $this->cdnCacheHeadersExpires      = '';
-        $this->cdnCacheHeadersFile         = '';
-        $this->cdnCacheHeadersHit          = 'MISS';
+        $this->cdnCacheHeadersSet = false;
 
-        $this->isRetina         = false;
+        /**
+         * Define how long CDN items should be cached for, this is a maximum age in seconds
+         * According to http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html this shouldn't be
+         * more than 1 year.
+         */
+
+        $this->cdnCacheHeadersMaxAge = defined('APP_CDN_CACHE_MAX_AGE') ? APP_CDN_CACHE_MAX_AGE : 31536000;
+        $this->cdnCacheHeadersLastModified = '';
+        $this->cdnCacheHeadersExpires = '';
+        $this->cdnCacheHeadersFile = '';
+        $this->cdnCacheHeadersHit = 'MISS';
+
+        $this->isRetina = false;
         $this->retinaMultiplier = 1;
 
         // --------------------------------------------------------------------------
@@ -117,7 +124,7 @@ class NAILS_CDN_Controller extends NAILS_Controller
     {
         //  Set some flags
         $this->cdnCacheHeadersSet           = true;
-        $this->cdnCacheHeadersMaxAge       = APP_CDN_CACHE_MAX_AGE;
+        $this->cdnCacheHeadersMaxAge       = $this->cdnCacheHeadersMaxAge;
         $this->cdnCacheHeadersLastModified = $lastModified;
         $this->cdnCacheHeadersExpires       = time() + $this->cdnCacheHeadersMaxAge;
         $this->cdnCacheHeadersFile          = $file;
