@@ -14,14 +14,15 @@ namespace Nails\Cdn\Library;
 
 class Cdn
 {
-    //  Class traits
-    use \NAILS_COMMON_TRAIT_ERROR_HANDLING;
-    use \NAILS_COMMON_TRAIT_CACHING;
-    use \NAILS_COMMON_TRAIT_GETCOUNT_COMMON;
+    use \Nails\Common\Traits\ErrorHandling;
+    use \Nails\Common\Traits\Caching;
+    use \Nails\Common\Traits\GetCountCommon;
 
-    private $ci;
+    // --------------------------------------------------------------------------
+
+    private $oCi;
+    private $oDb;
     private $oCdnDriver;
-    private $db;
 
     // --------------------------------------------------------------------------
 
@@ -30,18 +31,13 @@ class Cdn
      **/
     public function __construct($options = null)
     {
-        $this->ci  =& get_instance();
-        $this->db  =& get_instance()->db;
+        $this->oCi =& get_instance();
+        $this->oDb =& \Nails\Factory::service('Database');
 
         // --------------------------------------------------------------------------
 
         //  Load langfile
-        $this->ci->lang->load('cdn/cdn');
-
-        // --------------------------------------------------------------------------
-
-        //  Load the helper
-        $this->ci->load->helper('cdn');
+        $this->oCi->lang->load('cdn/cdn');
 
         // --------------------------------------------------------------------------
 
@@ -192,15 +188,15 @@ class Cdn
      */
     public function get_objects($page = null, $perPage = null, $data = array(), $_caller = 'GET_OBJECTS')
     {
-        $this->db->select('o.id, o.filename, o.filename_display, o.created, o.created_by, o.modified, o.modified_by');
-        $this->db->Select('o.serves, o.downloads, o.thumbs, o.scales');
-        $this->db->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
-        $this->db->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
-        $this->db->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
+        $this->oDb->select('o.id, o.filename, o.filename_display, o.created, o.created_by, o.modified, o.modified_by');
+        $this->oDb->Select('o.serves, o.downloads, o.thumbs, o.scales');
+        $this->oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
+        $this->oDb->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
+        $this->oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
-        $this->db->join(NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT');
-        $this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT');
-        $this->db->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
 
         // --------------------------------------------------------------------------
 
@@ -224,12 +220,12 @@ class Cdn
             $perPage = is_null($perPage) ? 50 : (int) $perPage;
             $offset  = $page * $perPage;
 
-            $this->db->limit($perPage, $offset);
+            $this->oDb->limit($perPage, $offset);
         }
 
         // --------------------------------------------------------------------------
 
-        $objects    = $this->db->get(NAILS_DB_PREFIX . 'cdn_object o')->result();
+        $objects    = $this->oDb->get(NAILS_DB_PREFIX . 'cdn_object o')->result();
         $numObjects = count($objects);
 
         for ($i = 0; $i < $numObjects; $i++) {
@@ -273,23 +269,23 @@ class Cdn
      */
     public function get_objects_from_trash($page = null, $perPage = null, $data = array(), $_caller = 'GET_OBJECTS_FROM_TRASH')
     {
-        $this->db->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.created, o.created_by');
-        $this->db->select('o.modified, o.modified_by, o.serves, o.downloads, o.thumbs, o.scales');
-        $this->db->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
-        $this->db->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
-        $this->db->select('uet.email trasher_email, ut.first_name trasher_first_name, ut.last_name trasher_last_name');
-        $this->db->select('ut.profile_img trasher_profile_img, ut.gender trasher_gender');
-        $this->db->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
+        $this->oDb->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.created, o.created_by');
+        $this->oDb->select('o.modified, o.modified_by, o.serves, o.downloads, o.thumbs, o.scales');
+        $this->oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
+        $this->oDb->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
+        $this->oDb->select('uet.email trasher_email, ut.first_name trasher_first_name, ut.last_name trasher_last_name');
+        $this->oDb->select('ut.profile_img trasher_profile_img, ut.gender trasher_gender');
+        $this->oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
         //  Uplaoder
-        $this->db->join(NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT');
-        $this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT');
 
         //  Trasher
-        $this->db->join(NAILS_DB_PREFIX . 'user ut', 'ut.id = o.trashed_by', 'LEFT');
-        $this->db->join(NAILS_DB_PREFIX . 'user_email uet', 'uet.user_id = o.trashed_by AND ue.is_primary = 1', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'user ut', 'ut.id = o.trashed_by', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'user_email uet', 'uet.user_id = o.trashed_by AND ue.is_primary = 1', 'LEFT');
 
-        $this->db->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
 
         // --------------------------------------------------------------------------
 
@@ -313,12 +309,12 @@ class Cdn
             $perPage = is_null($perPage) ? 50 : (int) $perPage;
             $offset  = $page * $perPage;
 
-            $this->db->limit($perPage, $offset);
+            $this->oDb->limit($perPage, $offset);
         }
 
         // --------------------------------------------------------------------------
 
-        $objects    = $this->db->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->result();
+        $objects    = $this->oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->result();
         $numObjects = count($objects);
 
         for ($i = 0; $i < $numObjects; $i++) {
@@ -440,7 +436,7 @@ class Cdn
 
             // --------------------------------------------------------------------------
 
-            $this->db->where('o.id', $object);
+            $this->oDb->where('o.id', $object);
 
         } else {
 
@@ -456,17 +452,17 @@ class Cdn
 
             // --------------------------------------------------------------------------
 
-            $this->db->where('o.filename', $object);
+            $this->oDb->where('o.filename', $object);
 
             if (!empty($bucket)) {
 
                 if (is_numeric($bucket)) {
 
-                    $this->db->where('b.id', $bucket);
+                    $this->oDb->where('b.id', $bucket);
 
                 } else {
 
-                    $this->db->where('b.slug', $bucket);
+                    $this->oDb->where('b.slug', $bucket);
                 }
             }
         }
@@ -502,7 +498,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        return $this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_object o');
+        return $this->oDb->count_all_results(NAILS_DB_PREFIX . 'cdn_object o');
     }
 
     // --------------------------------------------------------------------------
@@ -519,7 +515,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        return $this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_object_trash o');
+        return $this->oDb->count_all_results(NAILS_DB_PREFIX . 'cdn_object_trash o');
     }
 
     // --------------------------------------------------------------------------
@@ -535,7 +531,7 @@ class Cdn
      */
     public function get_objects_for_user($userId, $page = null, $perPage = null, $data = array(), $_caller = 'GET_OBJECTS_FOR_USER')
     {
-        $this->db->where('o.created_by', $userId);
+        $this->oDb->where('o.created_by', $userId);
         return $this->get_objects($page, $perPage, $data, $_caller);
     }
 
@@ -1040,34 +1036,34 @@ class Cdn
         $objectData['thumbs']           = $object->thumbs;
         $objectData['scales']           = $object->scales;
 
-        $this->db->set($objectData);
-        $this->db->set('trashed', 'NOW()', false);
+        $this->oDb->set($objectData);
+        $this->oDb->set('trashed', 'NOW()', false);
 
-        if ($this->ci->user_model->isLoggedIn()) {
+        if ($this->oCi->user_model->isLoggedIn()) {
 
-            $this->db->set('trashed_by', activeUser('id'));
+            $this->oDb->set('trashed_by', activeUser('id'));
         }
 
         //  Turn off DB Errors
-        $previousDebug = $this->db->db_debug;
-        $this->db->db_debug = false;
+        $previousDebug = $this->oDb->db_debug;
+        $this->oDb->db_debug = false;
 
         //  Start transaction
-        $this->db->trans_start();
+        $this->oDb->trans_start();
 
             //  Create trash object
-            $this->db->insert(NAILS_DB_PREFIX . 'cdn_object_trash');
+            $this->oDb->insert(NAILS_DB_PREFIX . 'cdn_object_trash');
 
             //  Remove original object
-            $this->db->where('id', $object->id);
-            $this->db->delete(NAILS_DB_PREFIX . 'cdn_object');
+            $this->oDb->where('id', $object->id);
+            $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object');
 
-        $this->db->trans_complete();
+        $this->oDb->trans_complete();
 
         //  Set DB errors as they were
-        $this->db->db_debug = $previousDebug;
+        $this->oDb->db_debug = $previousDebug;
 
-        if ($this->db->trans_status() !== false) {
+        if ($this->oDb->trans_status() !== false) {
 
             //  Clear caches
             $this->unsetCacheObject($object);
@@ -1133,22 +1129,22 @@ class Cdn
             $objectData['modified_by'] = activeUser('id');
         }
 
-        $this->db->set($objectData);
-        $this->db->set('modified', 'NOW()', false);
+        $this->oDb->set($objectData);
+        $this->oDb->set('modified', 'NOW()', false);
 
         //  Start transaction
-        $this->db->trans_start();
+        $this->oDb->trans_start();
 
         //  Restore object
-        $this->db->insert(NAILS_DB_PREFIX . 'cdn_object');
+        $this->oDb->insert(NAILS_DB_PREFIX . 'cdn_object');
 
         //  Remove trash object
-        $this->db->where('id', $object->id);
-        $this->db->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
+        $this->oDb->where('id', $object->id);
+        $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
 
-        $this->db->trans_complete();
+        $this->oDb->trans_complete();
 
-        if ($this->db->trans_status() !== false) {
+        if ($this->oDb->trans_status() !== false) {
 
             return true;
 
@@ -1202,22 +1198,22 @@ class Cdn
         if ($this->oCdnDriver->objectDestroy($object->filename, $object->bucket->slug)) {
 
             //  Remove the database entries
-            $this->db->trans_begin();
+            $this->oDb->trans_begin();
 
-            $this->db->where('id', $object->id);
-            $this->db->delete(NAILS_DB_PREFIX . 'cdn_object');
+            $this->oDb->where('id', $object->id);
+            $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object');
 
-            $this->db->where('id', $object->id);
-            $this->db->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
+            $this->oDb->where('id', $object->id);
+            $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
 
-            if ($this->db->trans_status() === false) {
+            if ($this->oDb->trans_status() === false) {
 
-                $this->db->trans_rollback();
+                $this->oDb->trans_rollback();
                 return false;
 
             } else {
 
-                $this->db->trans_commit();
+                $this->oDb->trans_commit();
             }
 
             // --------------------------------------------------------------------------
@@ -1311,48 +1307,48 @@ class Cdn
 
             case 'SERVE':
 
-                $this->db->set('o.serves', 'o.serves+1', false);
+                $this->oDb->set('o.serves', 'o.serves+1', false);
                 break;
 
             case 'DOWNLOAD':
 
-                $this->db->set('o.downloads', 'o.downloads+1', false);
+                $this->oDb->set('o.downloads', 'o.downloads+1', false);
                 break;
 
             case 'THUMB':
             case 'CROP':
 
-                $this->db->set('o.thumbs', 'o.thumbs+1', false);
+                $this->oDb->set('o.thumbs', 'o.thumbs+1', false);
                 break;
 
             case 'SCALE':
 
-                $this->db->set('o.scales', 'o.scales+1', false);
+                $this->oDb->set('o.scales', 'o.scales+1', false);
                 break;
         }
 
         if (is_numeric($object)) {
 
-            $this->db->where('o.id', $object);
+            $this->oDb->where('o.id', $object);
 
         } else {
 
-            $this->db->where('o.filename', $object);
+            $this->oDb->where('o.filename', $object);
         }
 
         if ($bucket && is_numeric($bucket)) {
 
-            $this->db->where('o.bucket_id', $bucket);
-            return $this->db->update(NAILS_DB_PREFIX . 'cdn_object o');
+            $this->oDb->where('o.bucket_id', $bucket);
+            return $this->oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
 
         } elseif ($bucket) {
 
-            $this->db->where('b.slug', $bucket);
-            return $this->db->update(NAILS_DB_PREFIX . 'cdn_object o JOIN ' . NAILS_DB_PREFIX . 'cdn_bucket b ON b.id = o.bucket_id');
+            $this->oDb->where('b.slug', $bucket);
+            return $this->oDb->update(NAILS_DB_PREFIX . 'cdn_object o JOIN ' . NAILS_DB_PREFIX . 'cdn_bucket b ON b.id = o.bucket_id');
 
         } else {
 
-            return $this->db->update(NAILS_DB_PREFIX . 'cdn_object o');
+            return $this->oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
         }
     }
 
@@ -1401,27 +1397,27 @@ class Cdn
      */
     protected function createObject($data, $return_object = false)
     {
-        $this->db->set('bucket_id', $data->bucket->id);
-        $this->db->set('filename', $data->filename);
-        $this->db->set('filename_display', $data->name);
-        $this->db->set('mime', $data->mime);
-        $this->db->set('filesize', $data->filesize);
-        $this->db->set('created', 'NOW()', false);
-        $this->db->set('modified', 'NOW()', false);
+        $this->oDb->set('bucket_id', $data->bucket->id);
+        $this->oDb->set('filename', $data->filename);
+        $this->oDb->set('filename_display', $data->name);
+        $this->oDb->set('mime', $data->mime);
+        $this->oDb->set('filesize', $data->filesize);
+        $this->oDb->set('created', 'NOW()', false);
+        $this->oDb->set('modified', 'NOW()', false);
 
         if (getUserObject()->isLoggedIn()) {
 
-            $this->db->set('created_by', activeUser('id'));
-            $this->db->set('modified_by', activeUser('id'));
+            $this->oDb->set('created_by', activeUser('id'));
+            $this->oDb->set('modified_by', activeUser('id'));
         }
 
         // --------------------------------------------------------------------------
 
         if (isset($data->img->width) && isset($data->img->height) && isset($data->img->orientation)) {
 
-            $this->db->set('img_width', $data->img->width);
-            $this->db->set('img_height', $data->img->height);
-            $this->db->set('img_orientation', $data->img->orientation);
+            $this->oDb->set('img_width', $data->img->width);
+            $this->oDb->set('img_height', $data->img->height);
+            $this->oDb->set('img_orientation', $data->img->orientation);
         }
 
         // --------------------------------------------------------------------------
@@ -1431,21 +1427,21 @@ class Cdn
 
             if (isset($data->img->is_animated)) {
 
-                $this->db->set('is_animated', $data->img->is_animated);
+                $this->oDb->set('is_animated', $data->img->is_animated);
 
             } else {
 
-                $this->db->set('is_animated', false);
+                $this->oDb->set('is_animated', false);
             }
         }
 
         // --------------------------------------------------------------------------
 
-        $this->db->insert(NAILS_DB_PREFIX . 'cdn_object');
+        $this->oDb->insert(NAILS_DB_PREFIX . 'cdn_object');
 
-        $objectId = $this->db->insert_id();
+        $objectId = $this->oDb->insert_id();
 
-        if ($this->db->affected_rows()) {
+        if ($this->oDb->affected_rows()) {
 
             if ($return_object) {
 
@@ -1561,11 +1557,11 @@ class Cdn
      */
     public function get_buckets($page = null, $perPage = null, $data = array(), $_caller = 'GET_BUCKETS')
     {
-        $this->db->select('b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by');
-        $this->db->select('b.modified,b.modified_by,ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
+        $this->oDb->select('b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by');
+        $this->oDb->select('b.modified,b.modified_by,ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
 
-        $this->db->join(NAILS_DB_PREFIX . 'user u', 'u.id = b.created_by', 'LEFT');
-        $this->db->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = b.created_by AND ue.is_primary = 1', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'user u', 'u.id = b.created_by', 'LEFT');
+        $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = b.created_by AND ue.is_primary = 1', 'LEFT');
 
         //  Apply common items; pass $data
         $this->_getcount_common_buckets($data, $_caller);
@@ -1587,12 +1583,12 @@ class Cdn
             $perPage = is_null($perPage) ? 50 : (int) $perPage;
             $offset   = $page * $perPage;
 
-            $this->db->limit($perPage, $offset);
+            $this->oDb->limit($perPage, $offset);
         }
 
         // --------------------------------------------------------------------------
 
-        $buckets    = $this->db->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
+        $buckets    = $this->oDb->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
         $numBuckets = count($buckets);
 
         for ($i = 0; $i < $numBuckets; $i++) {
@@ -1624,7 +1620,7 @@ class Cdn
 
         if (!empty($data['includeObjectCount'])) {
 
-            $this->db->select('(SELECT COUNT(*) FROM ' .NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) objectCount');
+            $this->oDb->select('(SELECT COUNT(*) FROM ' .NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) objectCount');
         }
 
         $this->_getcount_common($data, $_caller);
@@ -1691,7 +1687,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        return $this->db->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket b');
+        return $this->oDb->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket b');
     }
 
     // --------------------------------------------------------------------------
@@ -1717,29 +1713,29 @@ class Cdn
 
         if ($_bucket) {
 
-            $this->db->set('slug', $bucket);
+            $this->oDb->set('slug', $bucket);
             if (!$label) {
 
-                $this->db->set('label', ucwords(str_replace('-', ' ', $bucket)));
+                $this->oDb->set('label', ucwords(str_replace('-', ' ', $bucket)));
 
             } else {
 
-                $this->db->set('label', $label);
+                $this->oDb->set('label', $label);
             }
-            $this->db->set('created', 'NOW()', false);
-            $this->db->set('modified', 'NOW()', false);
+            $this->oDb->set('created', 'NOW()', false);
+            $this->oDb->set('modified', 'NOW()', false);
 
             if (getUserObject()->isLoggedIn()) {
 
-                $this->db->set('created_by', activeUser('id'));
-                $this->db->set('modified_by', activeUser('id'));
+                $this->oDb->set('created_by', activeUser('id'));
+                $this->oDb->set('modified_by', activeUser('id'));
             }
 
-            $this->db->insert(NAILS_DB_PREFIX . 'cdn_bucket');
+            $this->oDb->insert(NAILS_DB_PREFIX . 'cdn_bucket');
 
-            if ($this->db->affected_rows()) {
+            if ($this->oDb->affected_rows()) {
 
-                return $this->db->insert_id();
+                return $this->oDb->insert_id();
 
             } else {
 
@@ -1774,23 +1770,23 @@ class Cdn
 
                 case 'filename':
 
-                    $this->db->order_by('o.filename_display', $_sort_order);
+                    $this->oDb->order_by('o.filename_display', $_sort_order);
                     break;
 
                 case 'filesize':
 
-                    $this->db->order_by('o.filesize', $_sort_order);
+                    $this->oDb->order_by('o.filesize', $_sort_order);
                     break;
 
                 case 'created':
 
-                    $this->db->order_by('o.created', $_sort_order);
+                    $this->oDb->order_by('o.created', $_sort_order);
                     break;
 
                 case 'type':
                 case 'mime':
 
-                    $this->db->order_by('o.mime', $_sort_order);
+                    $this->oDb->order_by('o.mime', $_sort_order);
                     break;
             }
         }
@@ -1800,11 +1796,11 @@ class Cdn
         //  Filter by bucket
         if (is_numeric($bucket)) {
 
-            $this->db->where('b.id', $bucket);
+            $this->oDb->where('b.id', $bucket);
 
         } else {
 
-            $this->db->where('b.slug', $bucket);
+            $this->oDb->where('b.slug', $bucket);
         }
 
         // --------------------------------------------------------------------------
@@ -1852,8 +1848,8 @@ class Cdn
             //  Remove the bucket
             if ($this->oCdnDriver->bucketDestroy($_bucket->slug)) {
 
-                $this->db->where('id', $_bucket->id);
-                $this->db->delete(NAILS_DB_PREFIX . 'cdn_bucket');
+                $this->oDb->where('id', $_bucket->id);
+                $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_bucket');
 
                 return true;
 
@@ -2518,7 +2514,7 @@ class Cdn
 
         } else {
 
-            $user = $this->ci->user_model->get_by_id($userId);
+            $user = $this->oCi->user_model->get_by_id($userId);
 
             if (empty($user)) {
 
@@ -2557,7 +2553,7 @@ class Cdn
 
         } else {
 
-            $user = $this->ci->user_model->get_by_id($userId);
+            $user = $this->oCi->user_model->get_by_id($userId);
 
             if (empty($user->profile_img)) {
 
@@ -2781,14 +2777,14 @@ class Cdn
         $_out = array('orphans' => array(), 'elapsed_time' => 0);
 
         //  Time how long this takes; start timer
-        $this->ci->benchmark->mark('orphan_search_start');
+        $this->oCi->benchmark->mark('orphan_search_start');
 
-        $this->db->select('o.id, o.filename, o.filename_display, o.mime, o.filesize');
-        $this->db->select('b.slug bucket_slug, b.label bucket');
-        $this->db->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
-        $this->db->order_by('b.label');
-        $this->db->order_by('o.filename_display');
-        $_orphans = $this->db->get(NAILS_DB_PREFIX . 'cdn_object o');
+        $this->oDb->select('o.id, o.filename, o.filename_display, o.mime, o.filesize');
+        $this->oDb->select('b.slug bucket_slug, b.label bucket');
+        $this->oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
+        $this->oDb->order_by('b.label');
+        $this->oDb->order_by('o.filename_display');
+        $_orphans = $this->oDb->get(NAILS_DB_PREFIX . 'cdn_object o');
 
         while ($row = $_orphans->_fetch_object()) {
 
@@ -2799,8 +2795,8 @@ class Cdn
         }
 
         //  End timer
-        $this->ci->benchmark->mark('orphan_search_end');
-        $_out['elapsed_time'] = $this->ci->benchmark->elapsed_time('orphan_search_start', 'orphan_search_end');
+        $this->oCi->benchmark->mark('orphan_search_end');
+        $_out['elapsed_time'] = $this->oCi->benchmark->elapsed_time('orphan_search_start', 'orphan_search_end');
 
         return $_out;
     }
@@ -2833,7 +2829,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Run tests
-        $this->ci->load->library('curl/curl');
+        $this->oCi->load->library('curl/curl');
 
         // --------------------------------------------------------------------------
 
@@ -2934,8 +2930,8 @@ class Cdn
                 continue;
             }
 
-            $_test  = $this->ci->curl->simple_get($_url);
-            $_code  = !empty($this->ci->curl->info['http_code']) ? $this->ci->curl->info['http_code'] : '';
+            $_test  = $this->oCi->curl->simple_get($_url);
+            $_code  = !empty($this->oCi->curl->info['http_code']) ? $this->oCi->curl->info['http_code'] : '';
 
             if (!$_test || $_code != 200) {
 
@@ -2956,8 +2952,8 @@ class Cdn
                 continue;
             }
 
-            $_test  = $this->ci->curl->simple_get($_url);
-            $_code  = !empty($this->ci->curl->info['http_code']) ? $this->ci->curl->info['http_code'] : '';
+            $_test  = $this->oCi->curl->simple_get($_url);
+            $_code  = !empty($this->oCi->curl->info['http_code']) ? $this->oCi->curl->info['http_code'] : '';
 
             if (!$_test || $_code != 200) {
 
@@ -2978,8 +2974,8 @@ class Cdn
                 continue;
             }
 
-            $_test  = $this->ci->curl->simple_get($_url);
-            $_code  = !empty($this->ci->curl->info['http_code']) ? $this->ci->curl->info['http_code'] : '';
+            $_test  = $this->oCi->curl->simple_get($_url);
+            $_code  = !empty($this->oCi->curl->info['http_code']) ? $this->oCi->curl->info['http_code'] : '';
 
             if (!$_test || $_code != 200) {
 
@@ -3121,8 +3117,8 @@ class Cdn
         //  Get all the ID's we'll be dealing with
         if (is_null($purgeIds)) {
 
-            $this->db->select('id');
-            $result = $this->db->get(NAILS_DB_PREFIX . 'cdn_object_trash');
+            $this->oDb->select('id');
+            $result = $this->oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash');
 
             $purgeIds = array();
             while ($object = $result->_fetch_object()) {
@@ -3144,21 +3140,21 @@ class Cdn
 
         foreach ($purgeIds as $objectId) {
 
-            $this->db->select('o.id,o.filename,b.id bucket_id,b.slug bucket_slug');
-            $this->db->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
-            $this->db->where('o.id', $objectId);
-            $object = $this->db->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->row();
+            $this->oDb->select('o.id,o.filename,b.id bucket_id,b.slug bucket_slug');
+            $this->oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
+            $this->oDb->where('o.id', $objectId);
+            $object = $this->oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->row();
 
             if (!empty($object)) {
 
                 if ($this->oCdnDriver->objectDestroy($object->filename, $object->bucket_slug)) {
 
                     //  Remove the database entries
-                    $this->db->where('id', $object->id);
-                    $this->db->delete(NAILS_DB_PREFIX . 'cdn_object');
+                    $this->oDb->where('id', $object->id);
+                    $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object');
 
-                    $this->db->where('id', $object->id);
-                    $this->db->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
+                    $this->oDb->where('id', $object->id);
+                    $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
 
                     // --------------------------------------------------------------------------
 

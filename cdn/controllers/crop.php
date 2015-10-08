@@ -461,7 +461,7 @@ class NAILS_Crop extends NAILS_CDN_Controller
         // --------------------------------------------------------------------------
 
         //  Save to cache
-        $this->load->helper('file');
+        \Nails\Factory::helper('file');
         write_file($this->cdnCacheDir . $this->cdnCacheFile, $data);
 
         // --------------------------------------------------------------------------
