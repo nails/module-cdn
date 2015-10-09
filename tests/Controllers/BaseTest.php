@@ -1,8 +1,8 @@
 <?php
 
-namespace Nails\Cdn\Library;
+namespace Nails\Cdn\Controllers;
 
-class CdnTest extends \PHPUnit_Framework_TestCase
+class BaseTest extends \PHPUnit_Framework_TestCase
 {
     public function testFoo()
     {

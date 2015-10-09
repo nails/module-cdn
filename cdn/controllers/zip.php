@@ -1,8 +1,5 @@
 <?php
 
-//  Include _cdn.php; executes common functionality
-require_once '_cdn.php';
-
 /**
  * This class handles the "zip" CDN endpoint
  *
@@ -13,7 +10,7 @@ require_once '_cdn.php';
  * @link
  */
 
-class NAILS_Zip extends NAILS_CDN_Controller
+class NAILS_Zip extends \Nails\Cdn\Controllers\Base
 {
     /**
      * Serve a zip file containing objects

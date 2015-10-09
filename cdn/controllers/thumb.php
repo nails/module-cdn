@@ -1,9 +1,5 @@
 <?php
 
-//  Include _cdn.php; executes common functionality
-require_once '_cdn.php';
-require_once 'crop.php';
-
 /**
  * This class handles the "thumb" CDN endpoint
  *
@@ -13,6 +9,8 @@ require_once 'crop.php';
  * @author      Nails Dev Team
  * @link
  */
+
+require_once 'crop.php';
 
 class NAILS_Thumb extends Crop
 {

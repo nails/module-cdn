@@ -10,7 +10,9 @@
  * @link
  */
 
-class NAILS_CDN_Controller extends NAILS_Controller
+namespace Nails\Cdn\Controllers;
+
+class Base extends \NAILS_Controller
 {
     protected $cdnRoot;
     protected $cdnCacheDir;
@@ -64,7 +66,7 @@ class NAILS_CDN_Controller extends NAILS_Controller
         // --------------------------------------------------------------------------
 
         //  Load CDN library
-        $this->load->library('cdn/cdn');
+        $this->cdn = \Nails\Factory::service('Cdn', 'nailsapp/module-cdn');
     }
 
     // --------------------------------------------------------------------------

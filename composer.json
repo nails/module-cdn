@@ -31,6 +31,7 @@
     }],
     "require":
     {
+        "nailsapp/common": "dev-develop",
         "nailsapp/module-curl": "dev-develop",
         "nailsapp/driver-cdn-local": "dev-develop",
         "sybio/gif-creator": "~1.0.0",

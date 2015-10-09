@@ -1,8 +1,5 @@
 <?php
 
-//  Include _cdn.php; executes common functionality
-require_once '_cdn.php';
-
 /**
  * This class provides the CDN manager, a one stop shop for managing objects in buckets
  *
@@ -13,8 +10,12 @@ require_once '_cdn.php';
  * @link
  */
 
-class NAILS_Manager extends NAILS_CDN_Controller
+class NAILS_Manager extends \Nails\Cdn\Controllers\Base
 {
+    protected $oCdn;
+
+    // --------------------------------------------------------------------------
+
     /**
      * Construct the manage, check user is permitted to browse this bucket, etc
      */
@@ -31,7 +32,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
         // --------------------------------------------------------------------------
 
         //  Load CDN library
-        $this->load->library('cdn/cdn');
+        $this->oCdn = \Nails\Factory::service('Cdn', 'nailsapp/module-cdn');
 
         // --------------------------------------------------------------------------
 
@@ -62,7 +63,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
                         //  Bucket and nonce set, cross-check
                         if (md5($bucket[0] . '|' . $bucket[1] . '|' . APP_PRIVATE_KEY) === $hash) {
 
-                            $this->data['bucket'] = $this->cdn->get_bucket($bucket[0]);
+                            $this->data['bucket'] = $this->oCdn->get_bucket($bucket[0]);
 
                             if ($this->data['bucket']) {
 
@@ -71,17 +72,17 @@ class NAILS_Manager extends NAILS_CDN_Controller
                             } else {
 
                                 //  Bucket doesn't exist - attempt to create it
-                                if ($this->cdn->bucket_create($bucket[0])) {
+                                if ($this->oCdn->bucket_create($bucket[0])) {
 
                                     $testOk = true;
-                                    $this->data['bucket'] = $this->cdn->get_bucket($bucket[0]);
+                                    $this->data['bucket'] = $this->oCdn->get_bucket($bucket[0]);
 
                                 } else {
 
                                     $testOk = false;
                                     $error  = 'Bucket <strong>"' . $bucket[0] . '"</strong> does not exist';
                                     $error .= '<small>Additionally, the following error occured while attempting ';
-                                    $error .= 'to create the bucket:<br />' . $this->cdn->last_error() . '</small>';
+                                    $error .= 'to create the bucket:<br />' . $this->oCdn->last_error() . '</small>';
                                 }
                             }
 
@@ -120,20 +121,20 @@ class NAILS_Manager extends NAILS_CDN_Controller
                 // --------------------------------------------------------------------------
 
                 //  Test bucket, if it doesn't exist, create it
-                $this->data['bucket'] = $this->cdn->get_bucket($slug);
+                $this->data['bucket'] = $this->oCdn->get_bucket($slug);
 
                 if (!$this->data['bucket']) {
 
-                    $bucket_id = $this->cdn->bucket_create($slug, $label);
+                    $bucket_id = $this->oCdn->bucket_create($slug, $label);
 
                     if (!$bucket_id) {
 
                          $this->data['enabled']    = false;
-                         $this->data['badBucket'] = 'Unable to create upload bucket: ' . $this->cdn->last_error();
+                         $this->data['badBucket'] = 'Unable to create upload bucket: ' . $this->oCdn->last_error();
 
                     } else {
 
-                        $this->data['bucket'] = $this->cdn->get_bucket($bucket_id);
+                        $this->data['bucket'] = $this->oCdn->get_bucket($bucket_id);
                     }
                 }
             }
@@ -175,7 +176,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
             // --------------------------------------------------------------------------
 
             //  List the bucket objects
-            $this->data['objects'] = $this->cdn->bucket_list($this->data['bucket']->id);
+            $this->data['objects'] = $this->oCdn->bucket_list($this->data['bucket']->id);
 
             // --------------------------------------------------------------------------
 
@@ -211,14 +212,13 @@ class NAILS_Manager extends NAILS_CDN_Controller
         // --------------------------------------------------------------------------
 
         //  Upload the file
-        $this->load->library('cdn/cdn');
-        if ($this->cdn->object_create('userfile', $this->data['bucket']->id)) {
+        if ($this->oCdn->object_create('userfile', $this->data['bucket']->id)) {
 
             $this->session->set_flashdata('success', '<strong>Success!</strong> File uploaded successfully!');
 
         } else {
 
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->last_error());
         }
 
         redirect($return);
@@ -249,8 +249,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
         // --------------------------------------------------------------------------
 
-        $this->load->library('cdn/cdn');
-
         //  Fetch the object
         if (!$this->uri->segment(4)) {
 
@@ -258,7 +256,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
             redirect($return);
         }
 
-        $object = $this->cdn->get_object($this->uri->segment(4));
+        $object = $this->oCdn->get_object($this->uri->segment(4));
 
         if (!$object) {
 
@@ -269,7 +267,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
         // --------------------------------------------------------------------------
 
         //  Attempt Delete
-        $delete = $this->cdn->object_delete($object->id);
+        $delete = $this->oCdn->object_delete($object->id);
 
         if ($delete) {
 
@@ -278,13 +276,13 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
             $status  = 'success';
             $message = '<strong>Success!</strong> File deleted successfully! <a href="' . $url . '">Undo?</a>';
-            $this->session->set_flashdata($status, $message);
 
+            $this->session->set_flashdata($status, $message);
             $this->session->set_flashdata('deleted', true);
 
         } else {
 
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->last_error());
         }
 
         // --------------------------------------------------------------------------
@@ -317,8 +315,6 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
         // --------------------------------------------------------------------------
 
-        $this->load->library('cdn/cdn');
-
         //  Fetch the object
         if (!$this->uri->segment(4)) {
 
@@ -326,7 +322,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
             redirect($return);
         }
 
-        $object = $this->cdn->get_object_from_trash($this->uri->segment(4));
+        $object = $this->oCdn->get_object_from_trash($this->uri->segment(4));
 
         if (!$object) {
 
@@ -337,7 +333,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
         // --------------------------------------------------------------------------
 
         //  Attempt Restore
-        $restore = $this->cdn->object_restore($object->id);
+        $restore = $this->oCdn->object_restore($object->id);
 
         if ($restore) {
 
@@ -345,7 +341,7 @@ class NAILS_Manager extends NAILS_CDN_Controller
 
         } else {
 
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->cdn->last_error());
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->last_error());
         }
 
         // --------------------------------------------------------------------------

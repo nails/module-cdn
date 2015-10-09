@@ -1,8 +1,5 @@
 <?php
 
-//  Include _cdn.php; executes common functionality
-require_once '_cdn.php';
-
 /**
  * This class handles the "blank avatar" CDN endpoint
  *
@@ -13,7 +10,7 @@ require_once '_cdn.php';
  * @link
  */
 
-class NAILS_Blank_avatar extends NAILS_CDN_Controller
+class NAILS_Blank_avatar extends \Nails\Cdn\Controllers\Base
 {
     protected $avatarMale;
     protected $avatarFemale;

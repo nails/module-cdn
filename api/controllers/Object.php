@@ -14,17 +14,21 @@ namespace Nails\Api\Cdn;
 
 class Object extends \ApiController
 {
-	/**
-	 * Construct the controller
-	 */
-	public function __construct()
-	{
-		parent::__construct();
+    private $oCdn;
 
-		$this->load->library('cdn/cdn');
-	}
+    // --------------------------------------------------------------------------
 
-	// --------------------------------------------------------------------------
+    /**
+     * Construct the controller
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->oCdn = \Nails\Factory::service('Cdn', 'nailsapp/module-cdn');
+    }
+
+    // --------------------------------------------------------------------------
 
     /**
      * Upload a new object to the CDN
@@ -49,12 +53,12 @@ class Object extends \ApiController
                 $token = $this->input->get_request_header('X-cdn-token');
             }
 
-            $user = $this->cdn->validate_api_upload_token($token);
+            $user = $this->oCdn->validate_api_upload_token($token);
 
             if (!$user) {
 
                 $out['status'] = 400;
-                $out['error']  = $this->cdn->last_error();
+                $out['error']  = $this->oCdn->last_error();
 
                 return $out;
 
@@ -86,7 +90,7 @@ class Object extends \ApiController
         // --------------------------------------------------------------------------
 
         //  Attempt upload
-        $upload = $this->cdn->object_create('upload', $bucket);
+        $upload = $this->oCdn->object_create('upload', $bucket);
 
         if ($upload) {
 
@@ -190,7 +194,7 @@ class Object extends \ApiController
         } else {
 
             $out['status'] = 400;
-            $out['error']  = $this->cdn->last_error();
+            $out['error']  = $this->oCdn->last_error();
         }
 
         // --------------------------------------------------------------------------
@@ -224,12 +228,12 @@ class Object extends \ApiController
         // --------------------------------------------------------------------------
 
         $objectId = $this->input->post('object_id');
-        $delete   = $this->cdn->object_delete($objectId);
+        $delete   = $this->oCdn->object_delete($objectId);
 
         if (!$delete) {
 
             $out['status'] = 400;
-            $out['error']  = $this->cdn->last_error();
+            $out['error']  = $this->oCdn->last_error();
         }
 
         return $out;

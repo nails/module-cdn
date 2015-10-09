@@ -1,8 +1,5 @@
 <?php
 
-//  Include _cdn.php; executes common functionality
-require_once '_cdn.php';
-
 /**
  * This class handles the "crop" CDN endpoint
  *
@@ -13,7 +10,7 @@ require_once '_cdn.php';
  * @link
  */
 
-class NAILS_Crop extends NAILS_CDN_Controller
+class NAILS_Crop extends \Nails\Cdn\Controllers\Base
 {
     protected $bucket;
     protected $object;
