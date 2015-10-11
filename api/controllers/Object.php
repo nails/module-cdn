@@ -12,7 +12,7 @@ namespace Nails\Api\Cdn;
  * @link
  */
 
-class Object extends \ApiController
+class Object extends \Nails\Api\Controllers\Base
 {
     private $oCdn;
 

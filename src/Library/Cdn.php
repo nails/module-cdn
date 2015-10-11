@@ -29,7 +29,7 @@ class Cdn
     /**
      * Construct the library
      **/
-    public function __construct($options = null)
+    public function __construct()
     {
         $this->oCi =& get_instance();
         $this->oDb =& \Nails\Factory::service('Database');
@@ -63,7 +63,7 @@ class Cdn
             showFatalError($sSubject, $sMessage);
         }
 
-        $this->oCdnDriver = new $sDriverClassName($options);
+        $this->oCdnDriver = new $sDriverClassName($this);
     }
 
     // --------------------------------------------------------------------------
