@@ -21,9 +21,9 @@ class Object extends \Nails\Api\Controllers\Base
     /**
      * Construct the controller
      */
-    public function __construct()
+    public function __construct($apiRouter)
     {
-        parent::__construct();
+        parent::__construct($apiRouter);
 
         $this->oCdn = \Nails\Factory::service('Cdn', 'nailsapp/module-cdn');
     }
