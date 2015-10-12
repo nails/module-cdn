@@ -2828,11 +2828,6 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        //  Run tests
-        $this->oCi->load->library('curl/curl');
-
-        // --------------------------------------------------------------------------
-
         //  Create a test bucket
         $_test_id        = md5(microtime(true) . uniqid());
         $_test_bucket    = 'test-' . $_test_id;
@@ -2930,13 +2925,13 @@ class Cdn
                 continue;
             }
 
-            $_test  = $this->oCi->curl->simple_get($_url);
-            $_code  = !empty($this->oCi->curl->info['http_code']) ? $this->oCi->curl->info['http_code'] : '';
+            $oHttpClient = \Nails\Factory::factory('HttpClient');
+            $oResponse   = $oHttpClient->get($_url);
 
-            if (!$_test || $_code != 200) {
+            if ($oResponse->getStatusCode() !== 200) {
 
-                $error  = 'Failed to serve object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').';
-                $error .= '<small>' . $_url . '</small>';
+                $error  = 'Failed to serve object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . '). ';
+                $error .= '<small>Received code ' . $oResponse->getStatusCode() . ' for ' . $_url . '</small>';
                 $this->set_error($error);
                 continue;
             }
@@ -2952,13 +2947,12 @@ class Cdn
                 continue;
             }
 
-            $_test  = $this->oCi->curl->simple_get($_url);
-            $_code  = !empty($this->oCi->curl->info['http_code']) ? $this->oCi->curl->info['http_code'] : '';
+            $oResponse = $oHttpClient->get($_url);
 
-            if (!$_test || $_code != 200) {
+            if ($oResponse->getStatusCode() !== 200) {
 
                 $error  = 'Failed to crop object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').';
-                $error .= '<small>' . $_url . '</small>';
+                $error .= '<small>Received code ' . $oResponse->getStatusCode() . ' for ' . $_url . '</small>';
                 $this->set_error();
                 continue;
             }
@@ -2974,13 +2968,12 @@ class Cdn
                 continue;
             }
 
-            $_test  = $this->oCi->curl->simple_get($_url);
-            $_code  = !empty($this->oCi->curl->info['http_code']) ? $this->oCi->curl->info['http_code'] : '';
+            $oResponse = $oHttpClient->get($_url);
 
-            if (!$_test || $_code != 200) {
+            if ($oResponse->getStatusCode() !== 200) {
 
                 $error  = 'Failed to scale object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').';
-                $error .= '<small>' . $_url . '</small>';
+                $error .= '<small>Received code ' . $oResponse->getStatusCode() . ' for ' . $_url . '</small>';
                 $this->set_error($error);
                 continue;
             }
