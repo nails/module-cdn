@@ -10,7 +10,7 @@
  * @link
  */
 
-namespace Nails\Cdn\Controllers;
+namespace Nails\Cdn\Controller;
 
 class Base extends \NAILS_Controller
 {

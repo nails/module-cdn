@@ -2,7 +2,7 @@
 
 namespace Nails\Cdn\Controller;
 
-class BaseTest extends \PHPUnit_Framework_TestCase
+class BaseAdminTest extends \PHPUnit_Framework_TestCase
 {
     public function testFoo()
     {

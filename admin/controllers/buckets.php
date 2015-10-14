@@ -12,7 +12,9 @@
 
 namespace Nails\Admin\Cdn;
 
-class Buckets extends \AdminController
+use Nails\Cdn\Controller\BaseAdmin;
+
+class Buckets extends BaseAdmin
 {
     /**
      * Announces this controller's navGroups

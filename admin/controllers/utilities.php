@@ -12,7 +12,9 @@
 
 namespace Nails\Admin\Cdn;
 
-class Utilities extends \AdminController
+use Nails\Cdn\Controller\BaseAdmin;
+
+class Utilities extends BaseAdmin
 {
     /**
      * Announces this controller's navGroups

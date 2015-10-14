@@ -12,7 +12,9 @@
 
 namespace Nails\Admin\Cdn;
 
-class Trash extends \AdminController
+use Nails\Cdn\Controller\BaseAdmin;
+
+class Trash extends BaseAdmin
 {
     /**
      * Announces this controller's navGroups
