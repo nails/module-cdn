@@ -10,6 +10,7 @@
  * @link
  */
 
+use Nails\Factory;
 use Nails\Cdn\Controller\Base;
 
 class Manager extends Base
@@ -34,7 +35,7 @@ class Manager extends Base
         // --------------------------------------------------------------------------
 
         //  Load CDN library
-        $this->oCdn = \Nails\Factory::service('Cdn', 'nailsapp/module-cdn');
+        $this->oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
 
         // --------------------------------------------------------------------------
 

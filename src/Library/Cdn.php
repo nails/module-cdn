@@ -12,11 +12,13 @@
 
 namespace Nails\Cdn\Library;
 
+use Nails\Factory;
+
 class Cdn
 {
-    use \Nails\Common\Traits\ErrorHandling;
-    use \Nails\Common\Traits\Caching;
-    use \Nails\Common\Traits\GetCountCommon;
+    use Nails\Common\Traits\ErrorHandling;
+    use Nails\Common\Traits\Caching;
+    use Nails\Common\Traits\GetCountCommon;
 
     // --------------------------------------------------------------------------
 
@@ -32,7 +34,7 @@ class Cdn
     public function __construct()
     {
         $this->oCi =& get_instance();
-        $this->oDb =& \Nails\Factory::service('Database');
+        $this->oDb =& Factory::service('Database');
 
         // --------------------------------------------------------------------------
 
@@ -2925,7 +2927,7 @@ class Cdn
                 continue;
             }
 
-            $oHttpClient = \Nails\Factory::factory('HttpClient');
+            $oHttpClient = Factory::factory('HttpClient');
             $oResponse   = $oHttpClient->get($_url);
 
             if ($oResponse->getStatusCode() !== 200) {

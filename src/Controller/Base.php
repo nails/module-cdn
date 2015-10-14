@@ -12,6 +12,8 @@
 
 namespace Nails\Cdn\Controller;
 
+use Nails\Factory;
+
 class Base extends \NAILS_Controller
 {
     protected $cdnRoot;
@@ -66,7 +68,7 @@ class Base extends \NAILS_Controller
         // --------------------------------------------------------------------------
 
         //  Load CDN library
-        $this->cdn = \Nails\Factory::service('Cdn', 'nailsapp/module-cdn');
+        $this->cdn = Factory::service('Cdn', 'nailsapp/module-cdn');
     }
 
     // --------------------------------------------------------------------------

@@ -10,6 +10,7 @@
  * @link
  */
 
+use Nails\Factory;
 use Nails\Cdn\Controller\Base;
 
 class Crop extends Base
@@ -460,7 +461,7 @@ class Crop extends Base
         // --------------------------------------------------------------------------
 
         //  Save to cache
-        \Nails\Factory::helper('file');
+        Factory::helper('file');
         write_file($this->cdnCacheDir . $this->cdnCacheFile, $data);
 
         // --------------------------------------------------------------------------

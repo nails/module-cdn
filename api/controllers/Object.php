@@ -1,7 +1,5 @@
 <?php
 
-namespace Nails\Api\Cdn;
-
 /**
  * Admin API end points: CDN objects
  *
@@ -11,6 +9,10 @@ namespace Nails\Api\Cdn;
  * @author      Nails Dev Team
  * @link
  */
+
+namespace Nails\Api\Cdn;
+
+use Nails\Factory;
 
 class Object extends \Nails\Api\Controller\Base
 {
@@ -25,7 +27,7 @@ class Object extends \Nails\Api\Controller\Base
     {
         parent::__construct($apiRouter);
 
-        $this->oCdn = \Nails\Factory::service('Cdn', 'nailsapp/module-cdn');
+        $this->oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
     }
 
     // --------------------------------------------------------------------------
