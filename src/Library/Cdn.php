@@ -16,9 +16,9 @@ use Nails\Factory;
 
 class Cdn
 {
-    use Nails\Common\Traits\ErrorHandling;
-    use Nails\Common\Traits\Caching;
-    use Nails\Common\Traits\GetCountCommon;
+    use \Nails\Common\Traits\ErrorHandling;
+    use \Nails\Common\Traits\Caching;
+    use \Nails\Common\Traits\GetCountCommon;
 
     // --------------------------------------------------------------------------
 
