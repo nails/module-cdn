@@ -12,6 +12,7 @@
 
 namespace Nails\Admin\Cdn;
 
+use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
 
 class Trash extends BaseAdmin
@@ -102,8 +103,8 @@ class Trash extends BaseAdmin
         $this->data['objects'] = $this->cdn->get_objects_from_trash($page, $perPage, $data);
 
         //  Set Search and Pagination objects for the view
-        $this->data['search']     = \Nails\Admin\Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
-        $this->data['pagination'] = \Nails\Admin\Helper::paginationObject($page, $perPage, $totalRows);
+        $this->data['search']     = Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
+        $this->data['pagination'] = Helper::paginationObject($page, $perPage, $totalRows);
 
         //  Work out the return variable
         parse_str($this->input->server('QUERY_STRING'), $query);
@@ -115,7 +116,7 @@ class Trash extends BaseAdmin
         //  Add a header button
         if (!empty($this->data['objects']) && userHasPermission('admin:cdn:trash:purge')) {
 
-             \Nails\Admin\Helper::addHeaderButton(
+             Helper::addHeaderButton(
                 'admin/cdn/trash/purge' . $return,
                 'Empty Trash',
                 'red',
@@ -126,7 +127,7 @@ class Trash extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        \Nails\Admin\Helper::loadView('index');
+        Helper::loadView('index');
     }
 
 

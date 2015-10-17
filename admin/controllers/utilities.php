@@ -12,6 +12,7 @@
 
 namespace Nails\Admin\Cdn;
 
+use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
 
 class Utilities extends BaseAdmin
@@ -148,7 +149,7 @@ class Utilities extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        \Nails\Admin\Helper::loadView('index');
+        Helper::loadView('index');
     }
 
     // --------------------------------------------------------------------------

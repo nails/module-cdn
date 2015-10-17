@@ -12,6 +12,7 @@
 
 namespace Nails\Admin\Cdn;
 
+use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
 
 class Buckets extends BaseAdmin
@@ -99,8 +100,8 @@ class Buckets extends BaseAdmin
         $this->data['buckets'] = $this->cdn->get_buckets($page, $perPage, $data);
 
         //  Set Search and Pagination objects for the view
-        $this->data['search']     = \Nails\Admin\Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
-        $this->data['pagination'] = \Nails\Admin\Helper::paginationObject($page, $perPage, $totalRows);
+        $this->data['search']     = Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
+        $this->data['pagination'] = Helper::paginationObject($page, $perPage, $totalRows);
 
         //  Work out the return variable
         parse_str($this->input->server('QUERY_STRING'), $query);
@@ -112,12 +113,12 @@ class Buckets extends BaseAdmin
         //  Add a header button
         if (userHasPermission('admin:cdn:buckets:create')) {
 
-             \Nails\Admin\Helper::addHeaderButton('admin/cdn/buckets/create' . $return, 'Create Bucket');
+             Helper::addHeaderButton('admin/cdn/buckets/create' . $return, 'Create Bucket');
         }
 
         // --------------------------------------------------------------------------
 
-        \Nails\Admin\Helper::loadView('index');
+        Helper::loadView('index');
     }
 
     // --------------------------------------------------------------------------

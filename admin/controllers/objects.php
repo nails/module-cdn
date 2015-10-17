@@ -12,6 +12,7 @@
 
 namespace Nails\Admin\Cdn;
 
+use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
 
 class Objects extends BaseAdmin
@@ -123,8 +124,8 @@ class Objects extends BaseAdmin
         $this->data['objects'] = $this->cdn->get_objects($page, $perPage, $data);
 
         //  Set Search and Pagination objects for the view
-        $this->data['search']     = \Nails\Admin\Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
-        $this->data['pagination'] = \Nails\Admin\Helper::paginationObject($page, $perPage, $totalRows);
+        $this->data['search']     = Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
+        $this->data['pagination'] = Helper::paginationObject($page, $perPage, $totalRows);
 
         //  Work out the return variable
         parse_str($this->input->server('QUERY_STRING'), $query);
@@ -136,12 +137,12 @@ class Objects extends BaseAdmin
         //  Add a header button
         if (userHasPermission('admin:cdn:objects:create')) {
 
-             \Nails\Admin\Helper::addHeaderButton('admin/cdn/objects/create' . $return, 'Upload Items');
+             Helper::addHeaderButton('admin/cdn/objects/create' . $return, 'Upload Items');
         }
 
         // --------------------------------------------------------------------------
 
-        \Nails\Admin\Helper::loadView('index');
+        Helper::loadView('index');
     }
 
     // --------------------------------------------------------------------------
@@ -175,7 +176,7 @@ class Objects extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        \Nails\Admin\Helper::loadView('create');
+        Helper::loadView('create');
     }
 
     // --------------------------------------------------------------------------
@@ -197,7 +198,7 @@ class Objects extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        \Nails\Admin\Helper::loadView('edit');
+        Helper::loadView('edit');
     }
 
     // --------------------------------------------------------------------------
