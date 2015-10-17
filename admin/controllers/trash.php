@@ -18,22 +18,6 @@ use Nails\Cdn\Controller\BaseAdmin;
 class Trash extends BaseAdmin
 {
     /**
-     * Announces this controller's navGroups
-     * @return stdClass
-     */
-    public static function announce()
-    {
-        if (userHasPermission('admin:cdn:trash:browse')) {
-
-            $navGroup = new \Nails\Admin\Nav('CDN', 'fa-cloud-upload');
-            $navGroup->addAction('Browse Trash');
-            return $navGroup;
-        }
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Returns an array of extra permissions for this controller
      * @return array
      */
@@ -119,7 +103,7 @@ class Trash extends BaseAdmin
              Helper::addHeaderButton(
                 'admin/cdn/trash/purge' . $return,
                 'Empty Trash',
-                'red',
+                'danger',
                 'Are you sure?',
                 'Emptying the trash will <strong>permanently</strong> delete all items.'
             );

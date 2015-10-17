@@ -134,10 +134,15 @@ class Objects extends BaseAdmin
         $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
         $this->data['return'] = $return;
 
-        //  Add a header button
+        //  Add header buttons
         if (userHasPermission('admin:cdn:objects:create')) {
 
              Helper::addHeaderButton('admin/cdn/objects/create' . $return, 'Upload Items');
+        }
+
+        if (userHasPermission('admin:cdn:trash:browse')) {
+
+             Helper::addHeaderButton('admin/cdn/trash', 'Browse Trash', 'warning');
         }
 
         // --------------------------------------------------------------------------
