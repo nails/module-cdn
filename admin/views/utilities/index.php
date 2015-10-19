@@ -1,128 +1,138 @@
 <div class="group-utilities cdn orphans">
-	<p>
-		It is possible for CDN objects in the database to become disconnected from the physical files on disk.
-		If you notice files seem to be missing when they shouldn't (e.g error triangle or 404s) then use this utlity
-		to find broken objects.
-	</p>
-	<p>
-		You can choose to specify wether to look for database items which are missing files, or the opposite,
-		files which aren't in the database.
-	</p>
-	<p class="system-alert message">
-		<strong>Please note:</strong> This process can take some time to execute on large CDNs and may time out. If
-		you are experiencing timeouts consider increasing the timeout limit for PHP temporarily or executing
-		<u rel="tipsy" title="Use command: `php index.php admin cdn utilities index`">via the command line</u>.
-	</p>
+    <p>
+        It is possible for CDN objects in the database to become disconnected from the physical files on disk.
+        If you notice files seem to be missing when they shouldn't (e.g error triangle or 404s) then use this utlity
+        to find broken objects.
+    </p>
+    <p>
+        You can choose to specify wether to look for database items which are missing files, or the opposite,
+        files which aren't in the database.
+    </p>
+    <p class="system-alert message">
+        <strong>Please note:</strong> This process can take some time to execute on large CDNs and may time out. If
+        you are experiencing timeouts consider increasing the timeout limit for PHP temporarily or executing
+        <u rel="tipsy" title="Use command: `php index.php admin cdn utilities index`">via the command line</u>.
+    </p>
+    <hr />
+    <?=form_open(NULL, 'id="search-form"')?>
+    <fieldset>
+        <legend>Search Options</legend>
+        <?php
 
-	<hr />
+        $aField          = array();
+        $aField['key']   = 'type';
+        $aField['label'] = 'Search For';
+        $aField['class'] = 'select2';
 
-	<?=form_open( NULL, 'id="search-form"' )?>
-		<fieldset>
-			<legend>Search Options</legend>
-			<?php
+        $aOptions = array(
+            'db'   => 'Database objects for which the file does not exist.',
+            'file' => 'Files which do not exist in the database.'
+       );
 
-				$_field				= array();
-				$_field['key']		= 'type';
-				$_field['label']	= 'Search For';
-				$_field['class']	= 'select2';
+        echo form_field_dropdown($aField, $aOptions);
 
-				$_options = array(
-					'db'	=>	'Database objects for which the file does not exist.',
-					'file'	=>	'Files which do not exist in the database.'
-				);
+        // --------------------------------------------------------------------------
 
-				echo form_field_dropdown( $_field, $_options );
+        $aField          = array();
+        $aField['key']   = 'parser';
+        $aField['label'] = 'With the results';
+        $aField['class'] = 'select2';
 
-				// --------------------------------------------------------------------------
+        $aOptions = array(
+            'list'   => 'Show list of results',
+            'purge'  => 'Permanently delete',
+            'create' => 'Add to database (applicable to File search only)'
+       );
 
-				$_field				= array();
-				$_field['key']		= 'parser';
-				$_field['label']	= 'With the results';
-				$_field['class']	= 'select2';
+        echo form_field_dropdown($aField, $aOptions);
 
-				$_options = array(
-					'list'		=> 'Show list of results',
-					'purge'		=> 'Permanently delete',
-					'create'	=> 'Add to database (applicable to File search only)'
-				);
+        ?>
+    </fieldset>
+    <?=form_submit('submit', lang('action_search'), 'class="btn btn-primary"')?>
+    <?=form_close()?>
+    <?php
 
-				echo form_field_dropdown( $_field, $_options );
+    if (isset($orphans)) {
 
-			?>
-		</fieldset>
-		<?=form_submit( 'submit', lang( 'action_search' ), 'class="awesome"' )?>
-	<?=form_close()?>
+        ?>
+        <hr />
+        <h2>
+            Results <?=!empty($orphans['elapsed_time']) ? '(search took ' . $orphans['elapsed_time'] . ' seconds)' : '' ?>
+        </h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bucket</th>
+                        <th>Filename</th>
+                        <th>Filesize</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php
 
-	<?php if ( isset( $orphans ) ) : ?>
+                if (!empty($orphans['orphans'])) {
 
-		<hr />
+                    foreach ($orphans['orphans'] as $orphan) {
 
-		<h2 style="margin-bottom:1em;">
-			Results <?=! empty( $orphans['elapsed_time'] ) ? '(search took ' . $orphans['elapsed_time'] . ' seconds)' : '' ?>
-		</h2>
+                        ?>
+                        <tr>
+                            <td><?=$orphan->bucket?></td>
+                            <td><?=$orphan->filename_display?></td>
+                            <td><?=format_bytes($orphan->filesize)?></td>
+                            <td>
+                            <?php
 
-		<div class="table-responsive">
-			<table>
-				<thead>
-					<tr>
-						<th>Bucket</th>
-						<th>Filename</th>
-						<th>Filesize</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-				<?php
+                            $aAttr = array(
+                                'data-title="Are you sure?"',
+                                'data-body="This action is permanent and cannot be undone."',
+                                'class="confirm btn btn-xs btn-danger"'
+                            );
 
-					if ( ! empty( $orphans['orphans'] ) ) :
+                            if (!empty($orphan->id)) {
 
-						foreach ( $orphans['orphans'] as $orphan ) :
+                                echo anchor(
+                                    '#',
+                                    lang('action_delete'),
+                                    implode(' ', $aAttr)
+                                );
 
-							echo '<tr>';
-								echo '<td>' . $orphan->bucket . '</td>';
-								echo '<td>' . $orphan->filename_display . '</td>';
-								echo '<td>' . format_bytes( $orphan->filesize ) . '</td>';
-								echo '<td>';
-									if ( ! empty( $orphan->id ) ) :
+                            } else {
 
-										echo anchor( '#', lang( 'action_delete' ), 'data-title="Are you sure?" data-body="This action is permanent and cannot be undone." class="confirm awesome small red"' );
+                                echo anchor(
+                                    '#',
+                                    lang('action_delete'),
+                                    implode(' ', $aAttr)
+                                );
 
-									else :
+                            }
 
-										echo anchor( '#', lang( 'action_delete' ), 'data-title="Are you sure?" data-body="This action is permanent and cannot be undone." class="confirm awesome small red"' );
+                            ?>
+                            </td>
+                        </tr>
+                        <?php
+                    }
 
-									endif;
-								echo '</td>';
-							echo '</tr>';
+                } else {
 
-						endforeach;
+                    ?>
+                    <tr>
+                        <td colspan="4" class="no-data">
+                            No orphaned items were found.
+                        </td>
+                    </tr>
+                    <?php
+                }
 
-					else :
+                ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
 
-						echo '<tr>';
-							echo '<td colspan="4" class="no-data">No orphaned items were found.</td>';
-						echo '</tr>';
+    }
 
-					endif;
-
-				?>
-				</tbody>
-			</table>
-		</div>
-
-	<?php endif; ?>
-
-	<div id="search-mask" class="mask"></div>
+    ?>
+    <div id="search-mask" class="mask"></div>
 </div>
-<script type="text/javascript">
-<!--//
-
-	$(function(){
-
-		var _Admin_Utilities_Cdn_Orphans = new NAILS_Admin_Utilities_Cdn_Orphans();
-		_Admin_Utilities_Cdn_Orphans.init();
-
-	});
-
-//-->
-</script>

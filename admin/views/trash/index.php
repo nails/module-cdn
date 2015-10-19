@@ -72,16 +72,28 @@
 
                                 if ($object->is_img) {
 
-                                    echo anchor(cdnServe($object->id), 'View', 'class="awesome small fancybox"');
+                                    echo anchor(
+                                        cdnServe($object->id),
+                                        'View',
+                                        'class="btn btn-xs btn-warning fancybox"'
+                                    );
 
                                 } else {
 
-                                    echo anchor(cdnServe($object->id), 'View', 'class="awesome small fancybox" data-fancybox-type="iframe"');
+                                    echo anchor(
+                                        cdnServe($object->id),
+                                        'View',
+                                        'class="btn btn-xs btn-warning fancybox" data-fancybox-type="iframe"'
+                                    );
                                 }
 
                                 if (userHasPermission('admin:cdn:trash:restore')) {
 
-                                    echo anchor('admin/cdn/trash/restore/' . $object->id . $return, 'Restore', 'class="awesome small green"');
+                                    echo anchor(
+                                        'admin/cdn/trash/restore/' . $object->id . $return,
+                                        'Restore',
+                                        'class="btn btn-xs btn-success"'
+                                    );
                                 }
 
                                 if (userHasPermission('admin:cdn:trash:purge')) {
@@ -92,7 +104,11 @@
                                     $title = 'Are you sure?';
                                     $body  = 'You will <strong>permenantly</strong> delete this object. This action cannot be undone.';
 
-                                    echo anchor('admin/cdn/trash/purge' . $return . $ids, 'Delete', 'data-title="' . $title . '" data-body="' . $body . '" class="confirm awesome small red"');
+                                    echo anchor(
+                                        'admin/cdn/trash/purge' . $return . $ids,
+                                        'Delete',
+                                        'data-title="' . $title . '" data-body="' . $body . '" class="confirm btn btn-xs btn-danger"'
+                                    );
                                 }
 
                             echo '</td>';

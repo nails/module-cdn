@@ -289,6 +289,8 @@ class Cdn
 
         $this->oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
 
+        $this->oDb->group_by('o.id');
+
         // --------------------------------------------------------------------------
 
         //  Apply common items; pass $data

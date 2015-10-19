@@ -146,6 +146,11 @@ class Utilities extends BaseAdmin
         // --------------------------------------------------------------------------
 
         $this->asset->load('nails.admin.utilities.cdn.orphans.min.js', true);
+        $this->asset->inline(
+            'var _Admin_Utilities_Cdn_Orphans = new NAILS_Admin_Utilities_Cdn_Orphans();
+            _Admin_Utilities_Cdn_Orphans.init();',
+            'JS'
+        );
 
         // --------------------------------------------------------------------------
 
