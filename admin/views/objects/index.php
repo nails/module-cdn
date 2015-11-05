@@ -76,7 +76,7 @@
                                 echo anchor(
                                     'admin/cdn/objects/delete/' . $object->id . $return,
                                     'Delete',
-                                    'data-title="Are you sure?" data-body="Deleting an item will attempt to disconnect it from resources which depend on it. The object will be recoverable but dependencies won\'t." class="confirm btn btn-xs btn-danger"'
+                                    'data-body="Deleting an item will attempt to disconnect it from resources which depend on it. The object will be recoverable but dependencies won\'t." class="confirm btn btn-xs btn-danger"'
                                 );
                             }
 

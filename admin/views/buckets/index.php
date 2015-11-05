@@ -56,7 +56,7 @@
                                 echo anchor(
                                     'admin/cdn/buckets/delete/' . $bucket->id . $return,
                                     'Delete',
-                                    'data-title="Are you sure?" data-body="All objects contained within a bucket will be orphaned. This cannot be undone." class="confirm btn btn-xs btn-danger"'
+                                    'data-body="All objects contained within a bucket will be orphaned. This cannot be undone." class="confirm btn btn-xs btn-danger"'
                                 );
                             }
 
