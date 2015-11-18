@@ -2,8 +2,8 @@
     <p>
         Browse all items stored in the site's CDN.
     </p>
-    <?=\Nails\Admin\Helper::loadSearch($search)?>
-    <?=\Nails\Admin\Helper::loadPagination($pagination)?>
+    <?=adminHelper('loadSearch', $search)?>
+    <?=adminHelper('loadPagination', $pagination)?>
     <div class="table-responsive">
         <table>
             <thead>
@@ -56,9 +56,9 @@
                         echo '<td class="bucket">' . $object->bucket->label . '</td>';
                         echo '<td class="mime">' . $object->mime . '</td>';
                         echo '<td class="filename">' . $object->filename_display . '</td>';
-                        echo \Nails\Admin\Helper::loadUserCell($object->creator);
-                        echo \Nails\Admin\Helper::loadDatetimeCell($object->created);
-                        echo \Nails\Admin\Helper::loadDatetimeCell($object->modified);
+                        echo adminHelper('loadUserCell', $object->creator);
+                        echo adminHelper('loadDatetimeCell', $object->created);
+                        echo adminHelper('loadDatetimeCell', $object->modified);
                         echo '<td class="filesize">' . format_bytes($object->filesize) . '</td>';
                         echo '<td class="actions">';
 
@@ -117,5 +117,5 @@
             </tbody>
         </table>
     </div>
-    <?=\Nails\Admin\Helper::loadPagination($pagination)?>
+    <?=adminHelper('loadPagination', $pagination)?>
 </div>

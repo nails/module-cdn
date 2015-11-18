@@ -4,8 +4,8 @@
     </p>
     <?php
 
-        echo \Nails\Admin\Helper::loadSearch($search);
-        echo \Nails\Admin\Helper::loadPagination($pagination);
+        echo adminHelper('loadSearch', $search);
+        echo adminHelper('loadPagination', $pagination);
 
     ?>
     <div class="table-responsive">
@@ -62,11 +62,11 @@
                             echo '<td class="bucket">' . $object->bucket->label . '</td>';
                             echo '<td class="mime">' . $object->mime . '</td>';
                             echo '<td class="filename">' . $object->filename_display . '</td>';
-                            echo \Nails\Admin\Helper::loadUserCell($object->creator);
-                            echo \Nails\Admin\Helper::loadDatetimeCell($object->created);
-                            echo \Nails\Admin\Helper::loadDatetimeCell($object->modified);
-                            echo \Nails\Admin\Helper::loadDatetimeCell($object->trashed);
-                            echo \Nails\Admin\Helper::loadUserCell($object->trasher);
+                            echo adminHelper('loadUserCell', $object->creator);
+                            echo adminHelper('loadDatetimeCell', $object->created);
+                            echo adminHelper('loadDatetimeCell', $object->modified);
+                            echo adminHelper('loadDatetimeCell', $object->trashed);
+                            echo adminHelper('loadUserCell', $object->trasher);
                             echo '<td class="filesize">' . format_bytes($object->filesize) . '</td>';
                             echo '<td class="actions">';
 
@@ -131,7 +131,7 @@
     </div>
     <?php
 
-        echo \Nails\Admin\Helper::loadPagination($pagination);
+        echo adminHelper('loadPagination', $pagination);
 
     ?>
 </div>

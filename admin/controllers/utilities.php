@@ -12,6 +12,7 @@
 
 namespace Nails\Admin\Cdn;
 
+use Nails\Factory;
 use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
 
@@ -23,7 +24,9 @@ class Utilities extends BaseAdmin
      */
     public static function announce()
     {
-        $navGroup = new \Nails\Admin\Nav('Utilities', 'fa-sliders');
+        $navGroup = Factory::factory('Nav', 'nailsapp/module-admin');
+        $navGroup->setLabel('Utilities');
+        $navGroup->setIcon('fa-sliders');
 
         if (userHasPermission('admin:cdn:utilities:findOrphan')) {
 

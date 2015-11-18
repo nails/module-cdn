@@ -2,8 +2,8 @@
     <p>
         The following buckets are available on this site.
     </p>
-    <?=\Nails\Admin\Helper::loadSearch($search)?>
-    <?=\Nails\Admin\Helper::loadPagination($pagination)?>
+    <?=adminHelper('loadSearch', $search)?>
+    <?=adminHelper('loadPagination', $pagination)?>
     <div class="table-responsive">
         <table>
             <thead>
@@ -28,8 +28,8 @@
                         <td class="id"><?=number_format($bucket->id)?></td>
                         <td class="label"><?=$bucket->label?></td>
                         <td class="count"><?=$bucket->objectCount?></td>
-                        <?=\Nails\Admin\Helper::loadUserCell($bucket->creator)?>
-                        <?=\Nails\Admin\Helper::loadDatetimeCell($bucket->created)?>
+                        <?=adminHelper('loadUserCell', $bucket->creator)?>
+                        <?=adminHelper('loadDatetimeCell', $bucket->created)?>
                         <td class="actions">
                             <?php
 
@@ -83,5 +83,5 @@
             </tbody>
         </table>
     </div>
-    <?=\Nails\Admin\Helper::loadPagination($pagination)?>
+    <?=adminHelper('loadPagination', $pagination)?>
 </div>

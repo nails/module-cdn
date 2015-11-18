@@ -12,6 +12,7 @@
 
 namespace Nails\Admin\Cdn;
 
+use Nails\Factory;
 use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
 
@@ -25,7 +26,9 @@ class Buckets extends BaseAdmin
     {
         if (userHasPermission('admin:cdn:buckets:browse')) {
 
-            $navGroup = new \Nails\Admin\Nav('CDN', 'fa-cloud-upload');
+            $navGroup = Factory::factory('Nav', 'nailsapp/module-admin');
+            $navGroup->setLabel('CDN');
+            $navGroup->setIcon('fa-cloud-upload');
             $navGroup->addAction('Browse Buckets');
             return $navGroup;
         }
