@@ -185,10 +185,9 @@ class Cdn
      * @param  integer $page    The page to return
      * @param  integer $perPage The number of items to return per page
      * @param  array   $data    An array of data to pass to _getcount_common_buckets()
-     * @param  string  $_caller An internal flag indicating which method is the parent caller
      * @return array
      */
-    public function get_objects($page = null, $perPage = null, $data = array(), $_caller = 'GET_OBJECTS')
+    public function get_objects($page = null, $perPage = null, $data = array())
     {
         $this->oDb->select('o.id, o.filename, o.filename_display, o.created, o.created_by, o.modified, o.modified_by');
         $this->oDb->Select('o.serves, o.downloads, o.thumbs, o.scales');
@@ -203,7 +202,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Apply common items; pass $data
-        $this->_getcount_common_objects($data, $_caller);
+        $this->_getcount_common_objects($data);
 
         // --------------------------------------------------------------------------
 
@@ -241,7 +240,7 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    public function _getcount_common_objects($data = array(), $_caller = null)
+    public function _getcount_common_objects($data = array())
     {
         if (!empty($data['keywords'])) {
 
@@ -256,7 +255,7 @@ class Cdn
             );
         }
 
-        $this->_getcount_common($data, $_caller);
+        $this->_getcount_common($data);
     }
 
     // --------------------------------------------------------------------------
@@ -266,10 +265,9 @@ class Cdn
      * @param  int    $page    The page of results to return
      * @param  int    $perPage The number of results per page
      * @param  array  $data    Data to pass to _getcount_common()
-     * @param  string $_caller The method being called
      * @return array
      */
-    public function get_objects_from_trash($page = null, $perPage = null, $data = array(), $_caller = 'GET_OBJECTS_FROM_TRASH')
+    public function get_objects_from_trash($page = null, $perPage = null, $data = array())
     {
         $this->oDb->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.created, o.created_by');
         $this->oDb->select('o.modified, o.modified_by, o.serves, o.downloads, o.thumbs, o.scales');
@@ -294,7 +292,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Apply common items; pass $data
-        $this->_getcount_common_objects_from_trash($data, $_caller);
+        $this->_getcount_common_objects_from_trash($data);
 
         // --------------------------------------------------------------------------
 
@@ -332,7 +330,7 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    public function _getcount_common_objects_from_trash($data = array(), $_caller = null)
+    public function _getcount_common_objects_from_trash($data = array())
     {
         if (!empty($data['keywords'])) {
 
@@ -347,7 +345,7 @@ class Cdn
             );
         }
 
-        $this->_getcount_common($data, $_caller);
+        $this->_getcount_common($data);
     }
 
     // --------------------------------------------------------------------------
@@ -530,13 +528,12 @@ class Cdn
      * @param  int    $page    The page of results to return
      * @param  int    $perPage The number of results per page
      * @param  array  $data    Data to pass to _getcount_common()
-     * @param  string $_caller The calling method's name
      * @return array
      */
-    public function get_objects_for_user($userId, $page = null, $perPage = null, $data = array(), $_caller = 'GET_OBJECTS_FOR_USER')
+    public function get_objects_for_user($userId, $page = null, $perPage = null, $data = array())
     {
         $this->oDb->where('o.created_by', $userId);
-        return $this->get_objects($page, $perPage, $data, $_caller);
+        return $this->get_objects($page, $perPage, $data);
     }
 
     // --------------------------------------------------------------------------
@@ -1556,10 +1553,9 @@ class Cdn
      * @param  integer $page    The page to return
      * @param  integer $perPage The number of items to return per page
      * @param  array   $data    An array of data to pass to _getcount_common_buckets()
-     * @param  string  $_caller An internal flag indicating which method is the parent caller
      * @return array
      */
-    public function get_buckets($page = null, $perPage = null, $data = array(), $_caller = 'GET_BUCKETS')
+    public function get_buckets($page = null, $perPage = null, $data = array())
     {
         $this->oDb->select('b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by');
         $this->oDb->select('b.modified,b.modified_by,ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
@@ -1568,7 +1564,7 @@ class Cdn
         $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = b.created_by AND ue.is_primary = 1', 'LEFT');
 
         //  Apply common items; pass $data
-        $this->_getcount_common_buckets($data, $_caller);
+        $this->_getcount_common_buckets($data);
 
         // --------------------------------------------------------------------------
 
@@ -1607,7 +1603,7 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    public function _getcount_common_buckets($data = array(), $_caller = null)
+    public function _getcount_common_buckets($data = array())
     {
         if (!empty($data['keywords'])) {
 
@@ -1627,7 +1623,7 @@ class Cdn
             $this->oDb->select('(SELECT COUNT(*) FROM ' .NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) objectCount');
         }
 
-        $this->_getcount_common($data, $_caller);
+        $this->_getcount_common($data);
     }
 
     // --------------------------------------------------------------------------
