@@ -182,7 +182,7 @@ class Cdn
      * Returns an array of objects
      * @param  integer $page    The page to return
      * @param  integer $perPage The number of items to return per page
-     * @param  array   $data    An array of data to pass to _getcount_common_buckets()
+     * @param  array   $data    An array of data to pass to getCountCommonBuckets()
      * @return array
      */
     public function get_objects($page = null, $perPage = null, $data = array())
@@ -200,7 +200,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Apply common items; pass $data
-        $this->_getcount_common_objects($data);
+        $this->getCountCommonObjects($data);
 
         // --------------------------------------------------------------------------
 
@@ -230,7 +230,7 @@ class Cdn
         for ($i = 0; $i < $numObjects; $i++) {
 
             //  Format the object, make it pretty
-            $this->_format_object($objects[$i]);
+            $this->formatObject($objects[$i]);
         }
 
         return $objects;
@@ -238,7 +238,7 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    public function _getcount_common_objects($data = array())
+    public function getCountCommonObjects($data = array())
     {
         if (!empty($data['keywords'])) {
 
@@ -253,7 +253,7 @@ class Cdn
             );
         }
 
-        $this->_getcount_common($data);
+        $this->getCountCommon($data);
     }
 
     // --------------------------------------------------------------------------
@@ -262,7 +262,7 @@ class Cdn
      * Retrieves objects from the trash
      * @param  int    $page    The page of results to return
      * @param  int    $perPage The number of results per page
-     * @param  array  $data    Data to pass to _getcount_common()
+     * @param  array  $data    Data to pass to getCountCommon()
      * @return array
      */
     public function get_objects_from_trash($page = null, $perPage = null, $data = array())
@@ -290,7 +290,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Apply common items; pass $data
-        $this->_getcount_common_objects_from_trash($data);
+        $this->getCountCommonObjectsFromTrash($data);
 
         // --------------------------------------------------------------------------
 
@@ -320,7 +320,7 @@ class Cdn
         for ($i = 0; $i < $numObjects; $i++) {
 
             //  Format the object, make it pretty
-            $this->_format_object($objects[$i]);
+            $this->formatObject($objects[$i]);
         }
 
         return $objects;
@@ -328,7 +328,7 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    public function _getcount_common_objects_from_trash($data = array())
+    public function getCountCommonObjectsFromTrash($data = array())
     {
         if (!empty($data['keywords'])) {
 
@@ -343,7 +343,7 @@ class Cdn
             );
         }
 
-        $this->_getcount_common($data);
+        $this->getCountCommon($data);
     }
 
     // --------------------------------------------------------------------------
@@ -418,7 +418,7 @@ class Cdn
      * Returns a single object from the trash
      * @param  mixed  $object The object's ID or filename
      * @param  string $bucket The bucket's ID or slug
-     * @param  array  $data   Data to pass to _getcount_common()
+     * @param  array  $data   Data to pass to getCountCommon()
      * @return mixed          stdClass on success, false on failure
      */
     public function get_object_from_trash($object, $bucket = '', $data = array())
@@ -488,13 +488,13 @@ class Cdn
 
     /**
      * Counts all objects
-     * @param  mixed $data Data to pass to _getcount_common()
+     * @param  mixed $data Data to pass to getCountCommon()
      * @return int
      **/
     public function count_all_objects($data = array())
     {
         //  Apply common items
-        $this->_getcount_common($data, 'COUNT_ALL_OBJECTS');
+        $this->getCountCommon($data, 'COUNT_ALL_OBJECTS');
 
         // --------------------------------------------------------------------------
 
@@ -505,13 +505,13 @@ class Cdn
 
     /**
      * Counts all objects from the trash
-     * @param  mixed $data Data to pass to _getcount_common()
+     * @param  mixed $data Data to pass to getCountCommon()
      * @return int
      **/
     public function count_all_objects_from_trash($data = array())
     {
         //  Apply common items
-        $this->_getcount_common($data, 'COUNT_ALL_OBJECTS_FROM_TRASH');
+        $this->getCountCommon($data, 'COUNT_ALL_OBJECTS_FROM_TRASH');
 
         // --------------------------------------------------------------------------
 
@@ -525,7 +525,7 @@ class Cdn
      * @param  int    $userId  The user's ID
      * @param  int    $page    The page of results to return
      * @param  int    $perPage The number of results per page
-     * @param  array  $data    Data to pass to _getcount_common()
+     * @param  array  $data    Data to pass to getCountCommon()
      * @return array
      */
     public function get_objects_for_user($userId, $page = null, $perPage = null, $data = array())
@@ -1464,7 +1464,7 @@ class Cdn
      * @param   object  $object The object to format
      * @return  void
      **/
-    protected function _format_object(&$object)
+    protected function formatObject(&$object)
     {
         $object->id          = (int) $object->id;
         $object->filesize    = (int) $object->filesize;
@@ -1550,7 +1550,7 @@ class Cdn
      * Returns an array of buckets
      * @param  integer $page    The page to return
      * @param  integer $perPage The number of items to return per page
-     * @param  array   $data    An array of data to pass to _getcount_common_buckets()
+     * @param  array   $data    An array of data to pass to getCountCommonBuckets()
      * @return array
      */
     public function get_buckets($page = null, $perPage = null, $data = array())
@@ -1562,7 +1562,7 @@ class Cdn
         $this->oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = b.created_by AND ue.is_primary = 1', 'LEFT');
 
         //  Apply common items; pass $data
-        $this->_getcount_common_buckets($data);
+        $this->getCountCommonBuckets($data);
 
         // --------------------------------------------------------------------------
 
@@ -1592,7 +1592,7 @@ class Cdn
         for ($i = 0; $i < $numBuckets; $i++) {
 
             //  Format the object, make it pretty
-            $this->_format_bucket($buckets[$i]);
+            $this->formatBucket($buckets[$i]);
 
         }
 
@@ -1601,7 +1601,7 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    public function _getcount_common_buckets($data = array())
+    public function getCountCommonBuckets($data = array())
     {
         if (!empty($data['keywords'])) {
 
@@ -1618,10 +1618,12 @@ class Cdn
 
         if (!empty($data['includeObjectCount'])) {
 
-            $this->oDb->select('(SELECT COUNT(*) FROM ' .NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) objectCount');
+            $this->oDb->select(
+                '(SELECT COUNT(*) FROM ' .NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) objectCount'
+            );
         }
 
-        $this->_getcount_common($data);
+        $this->getCountCommon($data);
     }
 
     // --------------------------------------------------------------------------
@@ -1630,7 +1632,7 @@ class Cdn
      * Returns an array of buckets as a flat array
      * @param  integer $page    The page to return
      * @param  integer $perPage The number of items to return per page
-     * @param  array   $data    An array of data to pass to _getcount_common_buckets()
+     * @param  array   $data    An array of data to pass to getCountCommonBuckets()
      * @return array
      */
     public function get_buckets_flat($page = null, $perPage = null, $data = array())
@@ -1681,7 +1683,7 @@ class Cdn
     public function count_all_buckets($data = array())
     {
         //  Apply common items
-        $this->_getcount_common($data, 'COUNT_ALL_BUCKETS');
+        $this->getCountCommon($data, 'COUNT_ALL_BUCKETS');
 
         // --------------------------------------------------------------------------
 
@@ -1866,7 +1868,7 @@ class Cdn
      * @param   object  $bucket The bucket to format
      * @return  void
      **/
-    protected function _format_bucket(&$bucket)
+    protected function formatBucket(&$bucket)
     {
         $bucket->id          = (int) $bucket->id;
         $bucket->max_size    = (int) $bucket->max_size;
@@ -2512,7 +2514,7 @@ class Cdn
 
         } else {
 
-            $user = $this->oCi->user_model->get_by_id($userId);
+            $user = $this->oCi->user_model->getById($userId);
 
             if (empty($user)) {
 
@@ -2551,7 +2553,7 @@ class Cdn
 
         } else {
 
-            $user = $this->oCi->user_model->get_by_id($userId);
+            $user = $this->oCi->user_model->getById($userId);
 
             if (empty($user->profile_img)) {
 
@@ -2619,7 +2621,7 @@ class Cdn
             $userId = activeUser('id');
         }
 
-        $user = getUserObject()->get_by_id($userId);
+        $user = getUserObject()->getById($userId);
 
         if (!$user) {
 
@@ -2708,7 +2710,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Fetch and check user
-        $user = getUserObject()->get_by_id($token[0]);
+        $user = getUserObject()->getById($token[0]);
 
         //  User exists?
         if (!$user) {

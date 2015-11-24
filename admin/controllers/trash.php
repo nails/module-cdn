@@ -100,7 +100,7 @@ class Trash extends BaseAdmin
         //  Add a header button
         if (!empty($this->data['objects']) && userHasPermission('admin:cdn:trash:purge')) {
 
-             Helper::addHeaderButton(
+            Helper::addHeaderButton(
                 'admin/cdn/trash/purge' . $return,
                 'Empty Trash',
                 'danger',
@@ -129,7 +129,7 @@ class Trash extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        //  Define the $_data variable, this'll be passed to the get_all() and count_all() methods
+        //  Define the $_data variable, this'll be passed to the getAll() and countAll() methods
         $_data = array('where' => array(), 'sort' => array());
 
         // --------------------------------------------------------------------------
