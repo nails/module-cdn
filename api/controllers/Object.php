@@ -60,7 +60,7 @@ class Object extends \Nails\Api\Controller\Base
             if (!$user) {
 
                 $out['status'] = 400;
-                $out['error']  = $this->oCdn->last_error();
+                $out['error']  = $this->oCdn->lastError();
 
                 return $out;
 
@@ -196,7 +196,7 @@ class Object extends \Nails\Api\Controller\Base
         } else {
 
             $out['status'] = 400;
-            $out['error']  = $this->oCdn->last_error();
+            $out['error']  = $this->oCdn->lastError();
         }
 
         // --------------------------------------------------------------------------
@@ -235,7 +235,7 @@ class Object extends \Nails\Api\Controller\Base
         if (!$delete) {
 
             $out['status'] = 400;
-            $out['error']  = $this->oCdn->last_error();
+            $out['error']  = $this->oCdn->lastError();
         }
 
         return $out;

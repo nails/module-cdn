@@ -85,7 +85,7 @@ class Manager extends Base
                                     $testOk = false;
                                     $error  = 'Bucket <strong>"' . $bucket[0] . '"</strong> does not exist';
                                     $error .= '<small>Additionally, the following error occured while attempting ';
-                                    $error .= 'to create the bucket:<br />' . $this->oCdn->last_error() . '</small>';
+                                    $error .= 'to create the bucket:<br />' . $this->oCdn->lastError() . '</small>';
                                 }
                             }
 
@@ -133,7 +133,7 @@ class Manager extends Base
                     if (!$bucket_id) {
 
                          $this->data['enabled']    = false;
-                         $this->data['badBucket'] = 'Unable to create upload bucket: ' . $this->oCdn->last_error();
+                         $this->data['badBucket'] = 'Unable to create upload bucket: ' . $this->oCdn->lastError();
 
                     } else {
 
@@ -221,7 +221,7 @@ class Manager extends Base
 
         } else {
 
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->last_error());
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->lastError());
         }
 
         redirect($return);
@@ -285,7 +285,7 @@ class Manager extends Base
 
         } else {
 
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->last_error());
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->lastError());
         }
 
         // --------------------------------------------------------------------------
@@ -344,7 +344,7 @@ class Manager extends Base
 
         } else {
 
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->last_error());
+            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->lastError());
         }
 
         // --------------------------------------------------------------------------

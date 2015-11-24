@@ -154,7 +154,7 @@ class Serve extends Base
         if (!$usefile) {
 
             log_message('error', 'CDN: Serve: File does not exist');
-            log_message('error', 'CDN: Serve: ' . $this->cdn->last_error());
+            log_message('error', 'CDN: Serve: ' . $this->cdn->lastError());
 
             if ($this->user_model->isSuperuser()) {
 

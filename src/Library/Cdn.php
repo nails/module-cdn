@@ -76,14 +76,12 @@ class Cdn
      **/
     public function __destruct()
     {
-        //  Clear cache's
-        if (isset($this->_cache_keys) && $this->_cache_keys) {
+        /**
+         * @todo: decide whether this is necessary; should caches be persistent;
+         * gut says yes.
+         */
 
-            foreach ($this->_cache_keys as $key) {
-
-                $this->_unset_cache($key);
-            }
-        }
+        $this->clearCache();
     }
 
     // --------------------------------------------------------------------------
@@ -94,7 +92,7 @@ class Cdn
      */
     public function set_error($error)
     {
-        return $this->_set_error($error);
+        return $this->setError($error);
     }
 
     // --------------------------------------------------------------------------
@@ -113,10 +111,10 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $this->_unset_cache('object-' . $objectId);
-        $this->_unset_cache('object-' . $objectFilename);
-        $this->_unset_cache('object-' . $objectFilename . '-' . $bucketId);
-        $this->_unset_cache('object-' . $objectFilename . '-' . $bucketSlug);
+        $this->unsetCache('object-' . $objectId);
+        $this->unsetCache('object-' . $objectFilename);
+        $this->unsetCache('object-' . $objectFilename . '-' . $bucketId);
+        $this->unsetCache('object-' . $objectFilename . '-' . $bucketSlug);
 
         // --------------------------------------------------------------------------
 
@@ -362,7 +360,7 @@ class Cdn
         //  Check the cache
         $cacheKey  = 'object-' . $objectIdSlug;
         $cacheKey .= $bucketIdSlug ? '-' . $bucketIdSlug : '';
-        $cache     = $this->_get_cache($cacheKey);
+        $cache     = $this->getCache($cacheKey);
 
         if ($cache) {
 
@@ -407,7 +405,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Cache the object
-        $this->_set_cache($cacheKey, $objects[0]);
+        $this->setCache($cacheKey, $objects[0]);
 
         // --------------------------------------------------------------------------
 
@@ -429,7 +427,7 @@ class Cdn
 
             //  Check the cache
             $cacheKey = 'object-trash-' . $object;
-            $cache    = $this->_get_cache($cacheKey);
+            $cache    = $this->getCache($cacheKey);
 
             if ($cache) {
 
@@ -445,7 +443,7 @@ class Cdn
             //  Check the cache
             $cacheKey  = 'object-trash-' . $object;
             $cacheKey .= !empty($bucket) ? '-' . $bucket : '';
-            $cache     = $this->_get_cache($cacheKey);
+            $cache     = $this->getCache($cacheKey);
 
             if ($cache) {
 
@@ -479,7 +477,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Cache the object
-        $this->_set_cache($cacheKey, $objects[0]);
+        $this->setCache($cacheKey, $objects[0]);
 
         // --------------------------------------------------------------------------
 
@@ -1383,7 +1381,7 @@ class Cdn
 
         } else {
 
-            $this->_set_error('Invalid Object ID');
+            $this->setError('Invalid Object ID');
             return false;
         }
     }
@@ -2140,7 +2138,7 @@ class Cdn
     protected function getMimeMappings()
     {
         $cacheKey = 'mimes';
-        $cache    = $this->_get_cache($cacheKey);
+        $cache    = $this->getCache($cacheKey);
 
         if ($cache) {
 
@@ -2164,7 +2162,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $this->_set_cache($cacheKey, $mimes);
+        $this->setCache($cacheKey, $mimes);
 
         // --------------------------------------------------------------------------
 
@@ -3032,7 +3030,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Any errors?
-        if ($this->get_errors()) {
+        if ($this->getErrors()) {
 
             return false;
 
@@ -3121,13 +3119,13 @@ class Cdn
 
         } elseif (!is_array($purgeIds)) {
 
-            $this->_set_error('Invalid IDs to purge.');
+            $this->setError('Invalid IDs to purge.');
             return false;
         }
 
         if (empty($purgeIds)) {
 
-            $this->_set_error('Nothing to purge.');
+            $this->setError('Nothing to purge.');
             return false;
         }
 
@@ -3164,7 +3162,7 @@ class Cdn
             }
 
             //  Flush DB caches
-            _db_flush_caches();
+            $this->oDb->flushCache();
         }
 
         return true;

@@ -235,7 +235,7 @@ class Objects extends BaseAdmin
         } else {
 
             $status = 'error';
-            $msg    = 'CDN Object failed to delete. ' . $this->cdn->last_error();
+            $msg    = 'CDN Object failed to delete. ' . $this->cdn->lastError();
         }
 
         $this->session->set_flashdata($status, $msg);

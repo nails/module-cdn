@@ -223,7 +223,7 @@ class Crop extends Base
             if (!$filePath) {
 
                 log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned.');
-                log_message('error', 'CDN: ' . $cropMethod . ': ' . $this->cdn->last_error());
+                log_message('error', 'CDN: ' . $cropMethod . ': ' . $this->cdn->lastError());
 
                 $width  = $this->width * $this->retinaMultiplier;
                 $height = $this->height * $this->retinaMultiplier;
@@ -247,7 +247,7 @@ class Crop extends Base
                 if (!$filePath) {
 
                     log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned, second attempt.');
-                    log_message('error', 'CDN: ' . $cropMethod . ': ' . $this->cdn->last_error());
+                    log_message('error', 'CDN: ' . $cropMethod . ': ' . $this->cdn->lastError());
 
                     $width  = $this->width * $this->retinaMultiplier;
                     $height = $this->height * $this->retinaMultiplier;

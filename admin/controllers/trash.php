@@ -212,15 +212,15 @@ class Trash extends BaseAdmin
 
             if (!is_null($purgeIds) && count($purgeIds) == 1) {
 
-                $msg = 'CDN Object failed to delete. ' . $this->cdn->last_error();
+                $msg = 'CDN Object failed to delete. ' . $this->cdn->lastError();
 
             } elseif (!is_null($purgeIds) && count($purgeIds) > 1) {
 
-                $msg = 'CDN Objects failed to delete. ' . $this->cdn->last_error();
+                $msg = 'CDN Objects failed to delete. ' . $this->cdn->lastError();
 
             } else {
 
-                $msg = 'CDN Trash failed to empty. ' . $this->cdn->last_error();
+                $msg = 'CDN Trash failed to empty. ' . $this->cdn->lastError();
             }
         }
 
@@ -254,7 +254,7 @@ class Trash extends BaseAdmin
         } else {
 
             $status = 'error';
-            $msg    = 'CDN Object failed to restore. ' . $this->cdn->last_error();
+            $msg    = 'CDN Object failed to restore. ' . $this->cdn->lastError();
         }
 
         $this->session->set_flashdata($status, $msg);
