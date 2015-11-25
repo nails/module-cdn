@@ -1,7 +1,6 @@
-<?php
-
-    echo '<li class="file thumb" data-title="' . $object->filename_display . '" data-id="' . $object->id . '">';
-    echo '<div class="image">';
+<li class="file thumb" data-title="<?=$object->filename_display?>" data-id="<?=$object->id?>">
+    <div class="image">
+        <?php
 
         if ($object->is_img) {
 
@@ -41,17 +40,14 @@
             $action        = 'Download';
         }
 
-        //  Actions
-        echo '<div class="actions">';
-
-            echo '<a href="#" data-id="' . $object->id . '" data-bucket="' . $bucket->slug .'" data-file="' . $object->filename .'" class="awesome green small insert">Insert</a>';
-            echo anchor(site_url('cdn/manager/delete/' . $object->id . $_query_string, isPageSecure()), 'Delete', 'class="awesome red small delete"');
-            echo anchor($url, $action, 'data-fancybox-title="' . $object->filename_display . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' awesome small"');
-
-        echo '</div>';
-
-    echo '</div>';
-
-    //  Filename
-    echo '<p class="filename">' . $object->filename_display . '</p>';
-    echo '</li>';
+        ?>
+        <div class="actions">
+            <a href="#" data-id="<?=$object->id?>" data-bucket="<?=$bucket->slug?>" data-file="<?=$object->filename?>" class="btn btn-xs btn-success insert">Insert</a>
+            <?=anchor(site_url('cdn/manager/delete/' . $object->id . $_query_string, isPageSecure()), 'Delete', 'class="btn btn-xs btn-danger delete"')?>
+            <?=anchor($url, $action, 'data-fancybox-title="' . $object->filename_display . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' btn btn-xs btn-default"')?>
+        </div>
+    </div>
+    <p class="filename">
+        <?=$object->filename_display?>
+    </p>
+</li>

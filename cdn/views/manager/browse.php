@@ -51,35 +51,35 @@
 
                 if ($success) {
 
-                    echo '<p class="system-alert success">';
+                    echo '<p class="alert alert-success">';
                         echo $success;
-                        echo '<br /><a href="#" class="awesome small ok">OK</a>';
+                        echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
                     echo '</p>';
                 }
 
                 if ($error) {
 
-                    echo '<p class="system-alert error">';
+                    echo '<p class="alert alert-danger">';
                         echo $error;
-                        echo '<br /><a href="#" class="awesome small ok">OK</a>';
-                        echo '<a href="#" class="awesome small cancel">Cancel</a>';
+                        echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
+                        echo '<a href="#" class="btn btn-danger cancel">Cancel</a>';
                     echo '</p>';
 
                 }
 
                 if ($notice) {
 
-                    echo '<p class="system-alert notice">';
+                    echo '<p class="alert alert-info">';
                         echo $notice;
-                        echo '<br /><a href="#" class="awesome small ok">OK</a>';
+                        echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
                     echo '</p>';
                 }
 
                 if ($message) {
 
-                    echo '<p class="system-alert message">';
+                    echo '<p class="alert alert-warning">';
                         echo $message;
-                        echo '<br /><a href="#" class="awesome small ok">OK</a>';
+                        echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
                     echo '</p>';
                 }
             ?>
@@ -94,7 +94,7 @@
                                 //  Support no JS - might make sense to get rid of this eventually
                                 // echo '<noscript>';
                                     echo form_open_multipart(site_url('cdn/manager/upload' . $queryString, isPageSecure()));
-                                        echo form_submit('submit', 'Upload', 'class="awesome green"');
+                                        echo form_submit('submit', 'Upload', 'class="btn btn-xs btn-success"');
                                         echo form_upload('userfile');
                                     echo form_close();
                                 // echo '</noscript>';
@@ -102,7 +102,7 @@
                                 //  Javascript goodness
                                 // echo '<div class="js-only">';
 
-                                    // echo '<button class="awesome green">';
+                                    // echo '<button class="btn btn-success">';
                                         // echo '<strong>Choose Files to Upload</strong>';
                                     // echo '</button>';
 

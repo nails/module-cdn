@@ -41,7 +41,7 @@
                                 echo anchor(
                                     'auth/login?return_to=' . urlencode($_SERVER['REQUEST_URI']),
                                     lang('action_login'),
-                                    'class="awesome"'
+                                    'class="btn btn-primary"'
                                 );
                                 echo '</p>';
                             }
@@ -50,7 +50,7 @@
 
                             if (isset($badBucket)) {
 
-                                echo '<p class="system-alert error">';
+                                echo '<p class="alert alert-danger">';
                                 echo $badBucket;
                                 echo '</p>';
                             }

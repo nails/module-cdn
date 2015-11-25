@@ -1,8 +1,6 @@
-<?php
-
-    echo '<li class="file detail" data-title="' . $object->filename_display . '" data-id="' . $object->id . '">';
-
-    echo '<div class="image">';
+<li class="file detail" data-title="<?=$object->filename_display?>" data-id="<?=$object->id?>">
+    <div class="image">
+        <?php
 
         if ($object->is_img) {
 
@@ -42,36 +40,33 @@
             $action        = 'Download';
         }
 
-    echo '</div>';
-
-    //  Filename
-    echo '<div class="details">';
-        echo '<span class="filename">';
-            echo $object->filename_display;
-        echo '</span>';
-        echo '<div class="type">';
-            echo '<strong>Type:</strong> ';
-            echo $object->mime;
-        echo '</div>';
-        echo '<div class="filesize">';
-            echo '<strong>Filesize:</strong> ';
-            echo format_bytes($object->filesize);
-        echo '</div>';
-        echo '<div class="created">';
-            echo '<strong>Created:</strong> ';
-            echo toUserDatetime($object->created);
-        echo '</div>';
-        echo '<div class="modified">';
-            echo '<strong>Modified:</strong> ';
-            echo toUserDatetime($object->modified);
-        echo '</div>';
-        echo '<div class="actions">';
-
-            echo '<a href="#" data-id="' . $object->id . '" data-bucket="' . $bucket->slug .'" data-file="' . $object->filename .'" class="awesome green small insert">Insert</a>';
-            echo anchor(site_url('cdn/manager/delete/' . $object->id . '?' . $_SERVER['QUERY_STRING'], isPageSecure()), 'Delete', 'class="awesome red small delete"');
-            echo anchor($url, $action, 'data-fancybox-title="' . $object->filename_display . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' awesome small"');
-
-        echo '</div>';
-    echo '</div>';
-    echo '<div class="clear"></div>';
-    echo '</li>';
+        ?>
+    </div>
+    <div class="details">
+        <span class="filename">
+            <?=$object->filename_display?>
+        </span>
+        <div class="type">
+            <strong>Type:</strong>
+            <?=$object->mime?>
+        </div>
+        <div class="filesize">
+            <strong>Filesize:</strong>
+            <?=format_bytes($object->filesize)?>
+        </div>
+        <div class="created">
+            <strong>Created:</strong>
+            <?=toUserDatetime($object->created)?>
+        </div>
+        <div class="modified">
+            <strong>Modified:</strong>
+            <?=toUserDatetime($object->modified)?>
+        </div>
+        <div class="actions">
+            <a href="#" data-id="<?=$object->id?>" data-bucket="<?=$bucket->slug?>" data-file="<?=$object->filename?>" class="btn btn-xs btn-fsuccess insert">Insert</a>
+            <?=anchor(site_url('cdn/manager/delete/' . $object->id . '?' . $_SERVER['QUERY_STRING'], isPageSecure()), 'Delete', 'class="btn btn-xs btn-danger delete"')?>
+            <?=anchor($url, $action, 'data-fancybox-title="' . $object->filename_display . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' btn btn-xs btn-default"')?>
+        </div>
+    </div>
+    <div class="clear"></div>
+</li>
