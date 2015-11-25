@@ -26,11 +26,11 @@ class Objects extends BaseAdmin
     {
         if (userHasPermission('admin:cdn:objects:browse')) {
 
-            $navGroup = Factory::factory('Nav', 'nailsapp/module-admin');
-            $navGroup->setLabel('CDN');
-            $navGroup->setIcon('fa-cloud-upload');
-            $navGroup->addAction('Browse Objects');
-            return $navGroup;
+            $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
+            $oNavGroup->setLabel('CDN');
+            $oNavGroup->setIcon('fa-cloud-upload');
+            $oNavGroup->addAction('Browse Objects');
+            return $oNavGroup;
         }
     }
 

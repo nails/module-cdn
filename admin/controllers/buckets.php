@@ -26,11 +26,11 @@ class Buckets extends BaseAdmin
     {
         if (userHasPermission('admin:cdn:buckets:browse')) {
 
-            $navGroup = Factory::factory('Nav', 'nailsapp/module-admin');
-            $navGroup->setLabel('CDN');
-            $navGroup->setIcon('fa-cloud-upload');
-            $navGroup->addAction('Browse Buckets');
-            return $navGroup;
+            $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
+            $oNavGroup->setLabel('CDN');
+            $oNavGroup->setIcon('fa-cloud-upload');
+            $oNavGroup->addAction('Browse Buckets');
+            return $oNavGroup;
         }
     }
 

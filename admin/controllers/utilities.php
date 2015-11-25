@@ -24,16 +24,16 @@ class Utilities extends BaseAdmin
      */
     public static function announce()
     {
-        $navGroup = Factory::factory('Nav', 'nailsapp/module-admin');
-        $navGroup->setLabel('Utilities');
-        $navGroup->setIcon('fa-sliders');
+        $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
+        $oNavGroup->setLabel('Utilities');
+        $oNavGroup->setIcon('fa-sliders');
 
         if (userHasPermission('admin:cdn:utilities:findOrphan')) {
 
-            $navGroup->addAction('CDN: Find orphaned objects');
+            $oNavGroup->addAction('CDN: Find orphaned objects');
         }
 
-        return $navGroup;
+        return $oNavGroup;
     }
 
     // --------------------------------------------------------------------------
@@ -117,21 +117,24 @@ class Utilities extends BaseAdmin
                             $this->data['success'] = '<strong>Search complete!</strong> your results are show below.';
                             break;
 
-                        //  TODO: keep the unset(), it prevents the table from rendering
+                        //  @todo: keep the unset(), it prevents the table from rendering
                         case 'purge':
 
-                            $this->data['message'] = '<strong>TODO:</strong> purge results.'; unset($this->data['orphans']);
+                            $this->data['message'] = '<strong>TODO:</strong> purge results.';
+                            unset($this->data['orphans']);
                             break;
 
                         case 'create':
 
-                            $this->data['message'] = '<strong>TODO:</strong> create objects using results.'; unset($this->data['orphans']);
+                            $this->data['message'] = '<strong>TODO:</strong> create objects using results.';
+                            unset($this->data['orphans']);
                             break;
 
                         //  Invalid request
                         default:
 
-                            $this->data['error'] = 'Invalid result parse selected.'; unset($this->data['orphans']);
+                            $this->data['error'] = 'Invalid result parse selected.';
+                            unset($this->data['orphans']);
                             break;
                     }
                 }
