@@ -2639,7 +2639,7 @@ class Cdn
 
         if ($restrictIp) {
 
-            $token[] = get_instance()->input->ip_address();
+            $token[] = get_instance()->input->ipAddress();
 
         } else {
 
@@ -2745,7 +2745,7 @@ class Cdn
         }
 
         //  Valid IP?
-        if (!$token[4] && $token[4] != get_instance()->input->ip_address()) {
+        if (!$token[4] && $token[4] != get_instance()->input->ipAddress()) {
 
             //  Error #9: Invalid IP
             $this->set_error('Invalid Token (Error #9)');
