@@ -494,7 +494,7 @@ class Cdn
     public function count_all_objects($data = array())
     {
         //  Apply common items
-        $this->getCountCommon($data, 'COUNT_ALL_OBJECTS');
+        $this->getCountCommon($data);
 
         // --------------------------------------------------------------------------
 
@@ -511,7 +511,7 @@ class Cdn
     public function count_all_objects_from_trash($data = array())
     {
         //  Apply common items
-        $this->getCountCommon($data, 'COUNT_ALL_OBJECTS_FROM_TRASH');
+        $this->getCountCommon($data);
 
         // --------------------------------------------------------------------------
 
@@ -1637,7 +1637,7 @@ class Cdn
      */
     public function get_buckets_flat($page = null, $perPage = null, $data = array())
     {
-        $_buckets = $this->get_buckets($page, $perPage, $data, 'GET_BUCKETS_FLAT');
+        $_buckets = $this->get_buckets($page, $perPage, $data);
         $_out     = array();
 
         foreach ($_buckets as $bucket) {
@@ -1683,7 +1683,7 @@ class Cdn
     public function count_all_buckets($data = array())
     {
         //  Apply common items
-        $this->getCountCommon($data, 'COUNT_ALL_BUCKETS');
+        $this->getCountCommon($data);
 
         // --------------------------------------------------------------------------
 
