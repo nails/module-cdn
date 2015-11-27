@@ -28,7 +28,7 @@ class Zip extends Base
         if ($ids && $hash) {
 
             //  Check the hash
-            $objects = $this->cdn->verify_url_serve_zipped_hash($hash, $ids, $filename);
+            $objects = $this->cdn->verifyUrlServeZippedHash($hash, $ids, $filename);
 
             if ($objects) {
 
@@ -73,7 +73,7 @@ class Zip extends Base
                     foreach ($objects as $obj) {
 
                         $temp           = new stdClass();
-                        $temp->path     = $this->cdn->object_local_path($obj->bucket->slug, $obj->filename);
+                        $temp->path     = $this->cdn->objectLocalPath($obj->bucket->slug, $obj->filename);
                         $temp->filename = $obj->filename_display;
                         $temp->bucket   = $obj->bucket->label;
 

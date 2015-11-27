@@ -92,7 +92,7 @@ class Utilities extends BaseAdmin
 
                     case 'db':
 
-                        $this->data['orphans']  = $this->cdn->find_orphaned_objects();
+                        $this->data['orphans']  = $this->cdn->findOrphanedObjects();
                         break;
 
                     //  @TODO

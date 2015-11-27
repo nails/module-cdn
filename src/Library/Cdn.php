@@ -13,6 +13,7 @@
 namespace Nails\Cdn\Library;
 
 use Nails\Factory;
+use Nails\Cdn\Exception\CdnDriverException;
 
 class Cdn
 {
@@ -22,9 +23,14 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    private $oCi;
-    private $oDb;
-    private $oCdnDriver;
+    protected $oCi;
+    protected $oDb;
+    protected $oDriverModel;
+    protected $oDriver;
+
+    // --------------------------------------------------------------------------
+
+    const DEFAULT_DRIVER = 'nailsapp/driver-cdn-local';
 
     // --------------------------------------------------------------------------
 
@@ -33,8 +39,8 @@ class Cdn
      **/
     public function __construct()
     {
-        $this->oCi =& get_instance();
-        $this->oDb =& Factory::service('Database');
+        $this->oCi = get_instance();
+        $this->oDb = Factory::service('Database');
 
         // --------------------------------------------------------------------------
 
@@ -44,28 +50,35 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Load the storage driver
-        $sDriverClassName = defined('APP_CDN_DRIVER') ? ucfirst(strtolower(APP_CDN_DRIVER)) : 'Local';
-        $sDriverClassName = '\Nails\Cdn\Driver\\' . $sDriverClassName;
+        // @todo: build a settings interface for etting and configuring the driver.
+        $sSlug    = defined('APP_CDN_DRIVER') ? strtolower(APP_CDN_DRIVER) : self::DEFAULT_DRIVER;
+        $aDrivers = _NAILS_GET_DRIVERS('nailsapp/module-cdn');
+        $oDriver  = null;
 
-        //  Test if class exists
-        if (!class_exists($sDriverClassName)) {
-
-            $sSubject = 'Failed to load CDN driver.';
-            $sMessage = '"' . $sDriverClassName . '" is not a valid CDN Driver.';
-
-            showFatalError($sSubject, $sMessage);
+        for ($i=0; $i < count($aDrivers); $i++) {
+            if ($aDrivers[$i]->slug == $sSlug) {
+                $oDriver = $aDrivers[$i];
+                break;
+            }
         }
+
+        if (empty($oDriver)) {
+            throw new CdnDriverException('"' . $sSlug . '" is not a valid CDN driver', 1);
+        }
+
+        $sDriverClass = $oDriver->data->namespace . $oDriver->data->class;
 
         //  Ensure driver implements the correct interface
-        if (!in_array('Nails\Cdn\Interfaces\Driver', class_implements($sDriverClassName))) {
+        $sInterfaceName = 'Nails\Cdn\Interfaces\Driver';
+        if (!in_array($sInterfaceName, class_implements($sDriverClass))) {
 
-            $sSubject = 'Failed to load CDN driver.';
-            $sMessage = '"' . $sDriverClassName . '" must implement the Nails\Cdn\Interfaces\Driver interface.';
-
-            showFatalError($sSubject, $sMessage);
+            throw new CdnDriverException(
+                '"' . $sDriverClass . '" must implement ' . $sInterfaceName,
+                2
+            );
         }
 
-        $this->oCdnDriver = new $sDriverClassName($this);
+        $this->oDriver = _NAILS_GET_DRIVER_INSTANCE($oDriver);
     }
 
     // --------------------------------------------------------------------------
@@ -82,17 +95,6 @@ class Cdn
          */
 
         $this->clearCache();
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Need a public route to the _set_error() method (for the driver)
-     * @param string $error the error message
-     */
-    public function set_error($error)
-    {
-        return $this->setError($error);
     }
 
     // --------------------------------------------------------------------------
@@ -148,7 +150,7 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Catches calls amde to shortcuts
+     * Catches calls made to shortcuts
      * @param  string $method   The method being called
      * @param  mixed $arguments The arguments to pass to the method
      * @return mixed
@@ -166,9 +168,9 @@ class Cdn
         }
 
         //  Test the drive
-        if (method_exists($this->oCdnDriver, $method)) {
+        if (method_exists($this->oDriver, $method)) {
 
-            return call_user_func_array(array($this->oCdnDriver, $method), $arguments);
+            return call_user_func_array(array($this->oDriver, $method), $arguments);
         }
 
         throw new \Exception('Call to undefined method Cdn::' . $method . '()');
@@ -185,7 +187,7 @@ class Cdn
      * @param  array   $data    An array of data to pass to getCountCommonBuckets()
      * @return array
      */
-    public function get_objects($page = null, $perPage = null, $data = array())
+    public function getObjects($page = null, $perPage = null, $data = array())
     {
         $this->oDb->select('o.id, o.filename, o.filename_display, o.created, o.created_by, o.modified, o.modified_by');
         $this->oDb->Select('o.serves, o.downloads, o.thumbs, o.scales');
@@ -265,7 +267,7 @@ class Cdn
      * @param  array  $data    Data to pass to getCountCommon()
      * @return array
      */
-    public function get_objects_from_trash($page = null, $perPage = null, $data = array())
+    public function getObjectsFromTrash($page = null, $perPage = null, $data = array())
     {
         $this->oDb->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.created, o.created_by');
         $this->oDb->select('o.modified, o.modified_by, o.serves, o.downloads, o.thumbs, o.scales');
@@ -395,7 +397,7 @@ class Cdn
             }
         }
 
-        $objects = $this->get_objects(null, null, $data, 'GET_OBJECT');
+        $objects = $this->getObjects(null, null, $data);
 
         if (empty($objects)) {
 
@@ -421,7 +423,7 @@ class Cdn
      * @param  array  $data   Data to pass to getCountCommon()
      * @return mixed          stdClass on success, false on failure
      */
-    public function get_object_from_trash($object, $bucket = '', $data = array())
+    public function getObjectFromTrash($object, $bucket = '', $data = array())
     {
         if (is_numeric($object)) {
 
@@ -467,7 +469,7 @@ class Cdn
             }
         }
 
-        $objects = $this->get_objects_from_trash(null, null, $data, 'GET_OBJECT_FROM_TRASH');
+        $objects = $this->getObjectsFromTrash(null, null, $data);
 
         if (empty($objects)) {
 
@@ -491,7 +493,7 @@ class Cdn
      * @param  mixed $data Data to pass to getCountCommon()
      * @return int
      **/
-    public function count_all_objects($data = array())
+    public function countAllObjects($data = array())
     {
         //  Apply common items
         $this->getCountCommon($data);
@@ -508,7 +510,7 @@ class Cdn
      * @param  mixed $data Data to pass to getCountCommon()
      * @return int
      **/
-    public function count_all_objects_from_trash($data = array())
+    public function countAllObjectsFromTrash($data = array())
     {
         //  Apply common items
         $this->getCountCommon($data);
@@ -528,10 +530,10 @@ class Cdn
      * @param  array  $data    Data to pass to getCountCommon()
      * @return array
      */
-    public function get_objects_for_user($userId, $page = null, $perPage = null, $data = array())
+    public function getObjectsForUser($userId, $page = null, $perPage = null, $data = array())
     {
         $this->oDb->where('o.created_by', $userId);
-        return $this->get_objects($page, $perPage, $data);
+        return $this->getObjects($page, $perPage, $data);
     }
 
     // --------------------------------------------------------------------------
@@ -544,7 +546,7 @@ class Cdn
      * @param  boolean $isStream Whether the upload is a stream or not
      * @return mixed             stdClass on success, false on failure
      */
-    public function object_create($object, $bucket, $options = array(), $isStream = false)
+    public function objectCreate($object, $bucket, $options = array(), $isStream = false)
     {
         //  Define variables we'll need
         $_data = new \stdClass();
@@ -576,7 +578,7 @@ class Cdn
 
             if (empty($object)) {
 
-                $this->set_error(lang('cdn_error_invalid_url'));
+                $this->setError(lang('cdn_error_invalid_url'));
                 return false;
             }
         }
@@ -592,7 +594,7 @@ class Cdn
                 //  If it's not in $_FILES does that file exist on the file system?
                 if (!is_file($object)) {
 
-                    $this->set_error(lang('cdn_error_no_file'));
+                    $this->setError(lang('cdn_error_no_file'));
                     return false;
 
                 } else {
@@ -675,7 +677,7 @@ class Cdn
                             break;
                     }
 
-                    $this->set_error($error);
+                    $this->setError($error);
                     return false;
                 }
             }
@@ -698,7 +700,7 @@ class Cdn
 
             } else {
 
-                $_data->mime = $this->get_mime_from_file($_data->file);
+                $_data->mime = $this->getMimeFromFile($_data->file);
             }
 
             // --------------------------------------------------------------------------
@@ -706,7 +708,7 @@ class Cdn
             //  If no extension, then guess it
             if (empty($_data->ext)) {
 
-                $_data->ext = $this->get_ext_from_mime($_data->mime);
+                $_data->ext = $this->getExtFromMime($_data->mime);
             }
 
         } else {
@@ -718,7 +720,7 @@ class Cdn
 
             if (!isset($options['content-type'])) {
 
-                $this->set_error(lang('cdn_stream_content_type'));
+                $this->setError(lang('cdn_stream_content_type'));
                 return false;
 
             } else {
@@ -746,7 +748,7 @@ class Cdn
 
                     } else {
 
-                        $_data->ext = $this->get_ext_from_mime($_data->mime);
+                        $_data->ext = $this->getExtFromMime($_data->mime);
                     }
 
                     // --------------------------------------------------------------------------
@@ -757,7 +759,7 @@ class Cdn
 
                 } else {
 
-                    $this->set_error(lang('cdn_error_cache_write_fail'));
+                    $this->setError(lang('cdn_error_cache_write_fail'));
                     return false;
                 }
             }
@@ -766,9 +768,9 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Valid extension for mime type?
-        if (!$this->valid_ext_for_mime($_data->ext, $_data->mime)) {
+        if (!$this->validExtForMime($_data->ext, $_data->mime)) {
 
-            $this->set_error(lang('cdn_error_bad_extension_mime', $_data->ext));
+            $this->setError(lang('cdn_error_bad_extension_mime', $_data->ext));
             return false;
         }
 
@@ -777,7 +779,7 @@ class Cdn
         //  Test and set the bucket, if it doesn't exist, create it
         if (is_numeric($bucket) || is_string($bucket)) {
 
-            $_bucket = $this->get_bucket($bucket);
+            $_bucket = $this->getBucket($bucket);
 
         } else {
 
@@ -786,9 +788,9 @@ class Cdn
 
         if (!$_bucket) {
 
-            if ($this->bucket_create($bucket)) {
+            if ($this->bucketCreate($bucket)) {
 
-                $_bucket = $this->get_bucket($bucket);
+                $_bucket = $this->getBucket($bucket);
 
                 $_data->bucket       = new \stdClass();
                 $_data->bucket->id   = $_bucket->id;
@@ -816,12 +818,12 @@ class Cdn
                 array_splice($_bucket->allowed_types, count($_bucket->allowed_types) - 1, 0, array(' and '));
                 $accepted = implode(', .', $_bucket->allowed_types);
                 $accepted = str_replace(', . and , ', ' and ', $accepted);
-                $this->set_error(lang('cdn_error_bad_mime_plural', $accepted));
+                $this->setError(lang('cdn_error_bad_mime_plural', $accepted));
 
             } else {
 
                 $accepted = implode('', $_bucket->allowed_types);
-                $this->set_error(lang('cdn_error_bad_mime', $accepted));
+                $this->setError(lang('cdn_error_bad_mime', $accepted));
             }
 
             return false;
@@ -837,7 +839,7 @@ class Cdn
             if ($_data->filesize > $_bucket->max_size) {
 
                 $_fs_in_kb = format_bytes($_bucket->max_size);
-                $this->set_error(lang('cdn_error_filesize', $_fs_in_kb));
+                $this->setError(lang('cdn_error_filesize', $_fs_in_kb));
                 return false;
             }
         }
@@ -894,7 +896,7 @@ class Cdn
 
                     if ($_data->img->width > $options['dimensions']['max_width']) {
 
-                        $this->set_error(lang('cdn_error_maxwidth', $options['dimensions']['max_width']));
+                        $this->setError(lang('cdn_error_maxwidth', $options['dimensions']['max_width']));
                         $error++;
                     }
                 }
@@ -903,7 +905,7 @@ class Cdn
 
                     if ($_data->img->height > $options['dimensions']['max_height']) {
 
-                        $this->set_error(lang('cdn_error_maxheight', $options['dimensions']['max_height']));
+                        $this->setError(lang('cdn_error_maxheight', $options['dimensions']['max_height']));
                         $error++;
                     }
                 }
@@ -912,7 +914,7 @@ class Cdn
 
                     if ($_data->img->width < $options['dimensions']['min_width']) {
 
-                        $this->set_error(lang('cdn_error_minwidth', $options['dimensions']['min_width']));
+                        $this->setError(lang('cdn_error_minwidth', $options['dimensions']['min_width']));
                         $error++;
                     }
                 }
@@ -921,7 +923,7 @@ class Cdn
 
                     if ($_data->img->height < $options['dimensions']['min_height']) {
 
-                        $this->set_error(lang('cdn_error_minheight', $options['dimensions']['min_height']));
+                        $this->setError(lang('cdn_error_minheight', $options['dimensions']['min_height']));
                         $error++;
                     }
                 }
@@ -952,7 +954,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $upload = $this->oCdnDriver->objectCreate($_data);
+        $upload = $this->oDriver->objectCreate($_data);
 
         // --------------------------------------------------------------------------
 
@@ -966,12 +968,13 @@ class Cdn
 
             } else {
 
-                $this->oCdnDriver->destroy($_data->filename, $_data->bucket_slug);
+                $this->oDriver->destroy($_data->filename, $_data->bucket_slug);
                 $status = false;
             }
 
         } else {
 
+            $this->setError($this->oDriver->lastError());
             $status = false;
         }
 
@@ -995,11 +998,11 @@ class Cdn
      * @param  int     $object The object's ID or filename
      * @return boolean
      */
-    public function object_delete($object)
+    public function objectDelete($object)
     {
         if (!$object) {
 
-            $this->set_error(lang('cdn_error_object_invalid'));
+            $this->setError(lang('cdn_error_object_invalid'));
             return false;
         }
 
@@ -1009,7 +1012,7 @@ class Cdn
 
         if (!$object) {
 
-            $this->set_error(lang('cdn_error_object_invalid'));
+            $this->setError(lang('cdn_error_object_invalid'));
             return false;
         }
 
@@ -1073,7 +1076,7 @@ class Cdn
 
         } else {
 
-            $this->set_error(lang('cdn_error_delete'));
+            $this->setError(lang('cdn_error_delete'));
             return false;
         }
     }
@@ -1085,21 +1088,21 @@ class Cdn
      * @param  mixed   $object The object's ID or filename
      * @return boolean
      */
-    public function object_restore($object)
+    public function objectRestore($object)
     {
         if (!$object) {
 
-            $this->set_error(lang('cdn_error_object_invalid'));
+            $this->setError(lang('cdn_error_object_invalid'));
             return false;
         }
 
         // --------------------------------------------------------------------------
 
-        $object = $this->get_object_from_trash($object);
+        $object = $this->getObjectFromTrash($object);
 
         if (!$object) {
 
-            $this->set_error(lang('cdn_error_object_invalid'));
+            $this->setError(lang('cdn_error_object_invalid'));
             return false;
         }
 
@@ -1149,7 +1152,7 @@ class Cdn
 
         } else {
 
-            $this->set_error(lang('cdn_error_delete'));
+            $this->setError(lang('cdn_error_delete'));
             return false;
         }
     }
@@ -1161,11 +1164,11 @@ class Cdn
      * @param  mixed $object The object's ID or filename
      * @return void
      **/
-    public function object_destroy($object)
+    public function objectDestroy($object)
     {
         if (!$object) {
 
-            $this->set_error(lang('cdn_error_object_invalid'));
+            $this->setError(lang('cdn_error_object_invalid'));
             return false;
         }
 
@@ -1176,25 +1179,25 @@ class Cdn
         if ($object) {
 
             //  Delete the object first
-            if (!$this->object_delete($object->id)) {
+            if (!$this->objectDelete($object->id)) {
 
                 return false;
             }
         }
 
         //  Object doesn't exist but may exist in the trash
-        $object = $this->get_object_from_trash($object);
+        $object = $this->getObjectFromTrash($object);
 
         if (!$object) {
 
-            $this->set_error('Nothing to destroy.');
+            $this->setError('Nothing to destroy.');
             return false;
         }
 
         // --------------------------------------------------------------------------
 
         //  Attempt to remove the file
-        if ($this->oCdnDriver->objectDestroy($object->filename, $object->bucket->slug)) {
+        if ($this->oDriver->objectDestroy($object->filename, $object->bucket->slug)) {
 
             //  Remove the database entries
             $this->oDb->trans_begin();
@@ -1224,6 +1227,7 @@ class Cdn
 
         } else {
 
+            $this->setError($this->oDriver->lastError());
             return false;
         }
     }
@@ -1237,7 +1241,7 @@ class Cdn
      * @param  array   $options        An array of options to apply to the new object
      * @return boolean
      */
-    public function object_copy($sourceObjectId, $newBucket = null, $options = array())
+    public function objectCopy($sourceObjectId, $newBucket = null, $options = array())
     {
         //  @todo: Copy object between buckets
         return false;
@@ -1251,7 +1255,7 @@ class Cdn
      * @param  mixed   $newBucket      The ID or slug of the destination bucket
      * @return boolean
      */
-    public function object_move($sourceObjectId, $newBucket)
+    public function objectMove($sourceObjectId, $newBucket)
     {
         //  @todo: Move object between buckets
         return false;
@@ -1268,10 +1272,10 @@ class Cdn
      * @param  boolean $isStream    Whether the replacement object is a data stream or not
      * @return mixed                stdClass on success, false on failure
      */
-    public function object_replace($object, $bucket, $replaceWith, $options = array(), $isStream = false)
+    public function objectReplace($object, $bucket, $replaceWith, $options = array(), $isStream = false)
     {
         //  Firstly, attempt the upload
-        $upload = $this->object_create($replaceWith, $bucket, $options, $isStream);
+        $upload = $this->objectCreate($replaceWith, $bucket, $options, $isStream);
 
         if ($upload) {
 
@@ -1300,7 +1304,7 @@ class Cdn
      * @param  mixed   $bucket The bucket's ID or slug
      * @return boolean
      */
-    public function object_increment_count($action, $object, $bucket = null)
+    public function objectIncrementCount($action, $object, $bucket = null)
     {
         switch (strtoupper($action)) {
 
@@ -1359,9 +1363,15 @@ class Cdn
      * @param  string $filename   The object's filename
      * @return mixed              string on success, false on failure
      */
-    public function object_local_path($bucketSlug, $filename)
+    public function objectLocalPath($bucketSlug, $filename)
     {
-        return $this->oCdnDriver->objectLocalPath($bucketSlug, $filename);
+        $sLocalPath = $this->oDriver->objectLocalPath($bucketSlug, $filename);
+        if (!empty($sLocalPath)) {
+            return $sLocalPath;
+        } else {
+            $this->setError($this->oDriver->lastError());
+            return false;
+        }
     }
 
     // --------------------------------------------------------------------------
@@ -1371,13 +1381,13 @@ class Cdn
      * @param  int   $objectId The object's ID
      * @return mixed           string on success, false on failure
      */
-    public function object_local_path_by_id($objectId)
+    public function objectLocalPathById($objectId)
     {
         $object = $this->get_object($objectId);
 
         if ($object) {
 
-            return $this->object_local_path($object->bucket->slug, $object->filename);
+            return $this->objectLocalPath($object->bucket->slug, $object->filename);
 
         } else {
 
@@ -1553,7 +1563,7 @@ class Cdn
      * @param  array   $data    An array of data to pass to getCountCommonBuckets()
      * @return array
      */
-    public function get_buckets($page = null, $perPage = null, $data = array())
+    public function getBuckets($page = null, $perPage = null, $data = array())
     {
         $this->oDb->select('b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by');
         $this->oDb->select('b.modified,b.modified_by,ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
@@ -1635,9 +1645,9 @@ class Cdn
      * @param  array   $data    An array of data to pass to getCountCommonBuckets()
      * @return array
      */
-    public function get_buckets_flat($page = null, $perPage = null, $data = array())
+    public function getBucketsFlat($page = null, $perPage = null, $data = array())
     {
-        $_buckets = $this->get_buckets($page, $perPage, $data);
+        $_buckets = $this->getBuckets($page, $perPage, $data);
         $_out     = array();
 
         foreach ($_buckets as $bucket) {
@@ -1655,7 +1665,7 @@ class Cdn
      * @param   string
      * @return  boolean
      **/
-    public function get_bucket($bucketIdSlug)
+    public function getBucket($bucketIdSlug)
     {
         $data = array('where' => array());
 
@@ -1668,7 +1678,7 @@ class Cdn
             $data['where'][] = array('b.slug', $bucketIdSlug);
         }
 
-        $bucket = $this->get_buckets(null, null, $data, 'GET_BUCKET');
+        $bucket = $this->getBuckets(null, null, $data, 'GET_BUCKET');
 
         if (empty($bucket)) {
 
@@ -1680,7 +1690,7 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    public function count_all_buckets($data = array())
+    public function countAllBuckets($data = array())
     {
         //  Apply common items
         $this->getCountCommon($data);
@@ -1697,10 +1707,10 @@ class Cdn
      * @param   string
      * @return  boolean
      **/
-    public function bucket_create($bucket, $label = null)
+    public function bucketCreate($bucket, $label = null)
     {
         //  Test if bucket exists, if it does stop, job done.
-        $_bucket = $this->get_bucket($bucket);
+        $_bucket = $this->getBucket($bucket);
 
         if ($_bucket) {
 
@@ -1709,7 +1719,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $_bucket = $this->oCdnDriver->bucketCreate($bucket);
+        $_bucket = $this->oDriver->bucketCreate($bucket);
 
         if ($_bucket) {
 
@@ -1739,14 +1749,15 @@ class Cdn
 
             } else {
 
-                $this->oCdnDriver->destroy($bucket);
+                $this->oDriver->destroy($bucket);
 
-                $this->set_error(lang('cdn_error_bucket_insert'));
+                $this->setError(lang('cdn_error_bucket_insert'));
                 return false;
             }
 
         } else {
 
+            $this->setError($this->oDriver->lastError());
             return false;
         }
     }
@@ -1758,7 +1769,7 @@ class Cdn
      * @param   string
      * @return  boolean
      **/
-    public function bucket_list($bucket, $filter_tag = null, $sort_on = null, $sort_order = null)
+    public function bucketList($bucket, $filter_tag = null, $sort_on = null, $sort_order = null)
     {
         $data = array();
         //  Sorting?
@@ -1805,7 +1816,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        return $this->get_objects(null, null, $data);
+        return $this->getObjects(null, null, $data);
     }
 
     // --------------------------------------------------------------------------
@@ -1815,13 +1826,13 @@ class Cdn
      * @param   string
      * @return  boolean
      **/
-    public function bucket_destroy($bucket)
+    public function bucketDestroy($bucket)
     {
-        $_bucket = $this->get_bucket($bucket, true);
+        $_bucket = $this->getBucket($bucket, true);
 
         if (!$_bucket) {
 
-            $this->set_error(lang('cdn_error_bucket_invalid'));
+            $this->setError(lang('cdn_error_bucket_invalid'));
             return false;
         }
 
@@ -1831,31 +1842,30 @@ class Cdn
         $errors = 0;
         foreach ($_bucket->objects as $obj) {
 
-            if (!$this->object_destroy($obj->id)) {
+            if (!$this->objectDestroy($obj->id)) {
 
-                $this->set_error('Unable to delete object "' . $obj->filename_display . '" (ID:' . $obj->id . ').');
+                $this->setError('Unable to delete object "' . $obj->filename_display . '" (ID:' . $obj->id . ').');
                 $errors++;
             }
         }
 
         if ($errors) {
 
-            $this->set_error('Unable to delete bucket, bucket not empty.');
+            $this->setError('Unable to delete bucket, bucket not empty.');
             return false;
 
         } else {
 
             //  Remove the bucket
-            if ($this->oCdnDriver->bucketDestroy($_bucket->slug)) {
+            if ($this->oDriver->bucketDestroy($_bucket->slug)) {
 
                 $this->oDb->where('id', $_bucket->id);
                 $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_bucket');
-
                 return true;
 
             } else {
 
-                $this->set_error('Unable to remove empty bucket directory.');
+                $this->setError('Unable to remove empty bucket directory. ' . $this->oDriver->lastError());
                 return false;
             }
         }
@@ -1967,7 +1977,7 @@ class Cdn
      * Fetches the extension from the mime type
      * @return  string
      **/
-    public function get_ext_from_mime($mime)
+    public function getExtFromMime($mime)
     {
         $mimes = $this->getMimeMappings();
         $out   = false;
@@ -2010,7 +2020,7 @@ class Cdn
      * @param  string $ext The extension to return the mime type for
      * @return string
      */
-    public function get_mime_from_ext($ext)
+    public function getMimeFromExt($ext)
     {
         //  Prep $ext, make sure it has no dots
         $ext = strpos($ext, '.') !== false ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
@@ -2045,7 +2055,7 @@ class Cdn
      * @param  string $file The file to analyse
      * @return string
      */
-    public function get_mime_from_file($file)
+    public function getMimeFromFile($file)
     {
         if (file_exists($file)) {
 
@@ -2066,7 +2076,7 @@ class Cdn
      * @param  string $mime The mime type to test agains
      * @return bool
      */
-    public function valid_ext_for_mime($ext, $mime)
+    public function validExtForMime($ext, $mime)
     {
         $_assocs = array();
         $_mimes  = $this->getMimeMappings();
@@ -2176,12 +2186,12 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_serve_url method
+     * Calls the driver's public urlServe method
      * @param  int     $objectId       The ID of the object to serve
      * @param  boolean $forceDownload  Whether or not to force downlaod of the object
      * @return string
      */
-    public function url_serve($objectId, $forceDownload = false)
+    public function urlServe($objectId, $forceDownload = false)
     {
         $isTrashed = false;
         $object    = $this->get_object($objectId);
@@ -2194,7 +2204,7 @@ class Cdn
 
             if (userHasPermission('admin:cdn:trash:browse')) {
 
-                $object = $this->get_object_from_trash($objectId);
+                $object = $this->getObjectFromTrash($objectId);
 
                 if (!$object) {
 
@@ -2219,7 +2229,7 @@ class Cdn
             }
         }
 
-        $url = $this->oCdnDriver->urlServe($object->filename, $object->bucket->slug, $forceDownload);
+        $url = $this->oDriver->urlServe($object->filename, $object->bucket->slug, $forceDownload);
         $url .= $isTrashed ? '?trashed=1' : '';
 
         return $url;
@@ -2228,26 +2238,26 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_serve_url_scheme method
+     * Calls the driver's public urlServeScheme method
      * @param   none
      * @return  string
      **/
-    public function url_serve_scheme($force_download = false)
+    public function urlServeScheme($force_download = false)
     {
-        return $this->oCdnDriver->urlServeScheme($force_download);
+        return $this->oDriver->urlServeScheme($force_download);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_serve_url method
+     * Calls the driver's public urlServeZipped method
      * @param   array $objects An array of the Object IDs which should be zipped together
      * @return  string
      **/
-    public function url_serve_zipped($objects, $filename = 'download.zip')
+    public function urlServeZipped($objects, $filename = 'download.zip')
     {
         $_data    = array('where_in' => array(array('o.id', $objects)));
-        $_objects = $this->get_objects(null, null, $_data);
+        $_objects = $this->getObjects(null, null, $_data);
 
         $_ids      = array();
         $_ids_hash = array();
@@ -2262,7 +2272,7 @@ class Cdn
         $_ids_hash = implode('-', $_ids_hash);
         $_hash     = md5(APP_PRIVATE_KEY . $_ids . $_ids_hash . $filename);
 
-        return $this->oCdnDriver->urlServeZipped($_ids, $_hash, $filename);
+        return $this->oDriver->urlServeZipped($_ids, $_hash, $filename);
     }
 
     // --------------------------------------------------------------------------
@@ -2271,7 +2281,7 @@ class Cdn
      * Verifies a zip file's hash
      * @return  boolean
      **/
-    public function verify_url_serve_zipped_hash($hash, $objects, $filename = 'download.zip')
+    public function verifyUrlServeZippedHash($hash, $objects, $filename = 'download.zip')
     {
         if (!is_array($objects)) {
 
@@ -2280,7 +2290,7 @@ class Cdn
         }
 
         $_data    = array('where_in' => array(array('o.id', $objects)));
-        $_objects = $this->get_objects(null, null, $_data);
+        $_objects = $this->getObjects(null, null, $_data);
 
         $_ids      = array();
         $_ids_hash = array();
@@ -2301,25 +2311,25 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_serve_url_scheme method
+     * Calls the driver's public urlServeScheme method
      * @param   none
      * @return  string
      **/
-    public function url_serve_zipped_scheme($filename = null)
+    public function urlServeZipped_scheme($filename = null)
     {
-        return $this->oCdnDriver->urlServeScheme($filename);
+        return $this->oDriver->urlServeScheme($filename);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_crop_url method
+     * Calls the driver's public urlCrop method
      * @param   string  $objectId   The ID of the object we're cropping
      * @param   string  $width      The width of the crop
      * @param   string  $height     The height of the crop
      * @return  string
      **/
-    public function url_crop($objectId, $width, $height)
+    public function urlCrop($objectId, $width, $height)
     {
         $isTrashed = false;
         $object    = $this->get_object($objectId);
@@ -2332,7 +2342,7 @@ class Cdn
 
             if (userHasPermission('admin:cdn:trash:browse')) {
 
-                $object = $this->get_object_from_trash($objectId);
+                $object = $this->getObjectFromTrash($objectId);
 
                 if (!$object) {
 
@@ -2357,7 +2367,7 @@ class Cdn
             }
         }
 
-        $url = $this->oCdnDriver->urlCrop($object->filename, $object->bucket->slug, $width, $height);
+        $url = $this->oDriver->urlCrop($object->filename, $object->bucket->slug, $width, $height);
         $url .= $isTrashed ? '?trashed=1' : '';
 
         return $url;
@@ -2366,25 +2376,25 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_crop_url_scheme method
+     * Calls the driver's public urlCropScheme method
      * @param   none
      * @return  string
      **/
-    public function url_crop_scheme()
+    public function urlCropScheme()
     {
-        return $this->oCdnDriver->urlCropScheme();
+        return $this->oDriver->urlCropScheme();
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_crop_url method
+     * Calls the driver's public urlScale method
      * @param   string  $objectId   The ID of the object we're cropping
      * @param   string  $width      The width of the scaled image
      * @param   string  $height     The height of the scaled image
      * @return  string
      **/
-    public function url_scale($objectId, $width, $height)
+    public function urlScale($objectId, $width, $height)
     {
         $isTrashed = false;
         $object    = $this->get_object($objectId);
@@ -2397,7 +2407,7 @@ class Cdn
 
             if (userHasPermission('admin:cdn:trash:browse')) {
 
-                $object = $this->get_object_from_trash($objectId);
+                $object = $this->getObjectFromTrash($objectId);
 
                 if (!$object) {
 
@@ -2422,7 +2432,7 @@ class Cdn
             }
         }
 
-        $url = $this->oCdnDriver->urlScale($object->filename, $object->bucket->slug, $width, $height);
+        $url = $this->oDriver->urlScale($object->filename, $object->bucket->slug, $width, $height);
         $url .= $isTrashed ? '?trashed=1' : '';
 
         return $url;
@@ -2431,77 +2441,77 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_serve_url_scheme method
+     * Calls the driver's public urlScaleScheme method
      * @param   none
      * @return  string
      **/
-    public function url_scale_scheme()
+    public function urlScaleScheme()
     {
-        return $this->oCdnDriver->urlScaleScheme();
+        return $this->oDriver->urlScaleScheme();
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_placeholder_url method
+     * Calls the driver's public urlPlaceholder method
      * @param   int     $width  The width of the placeholder
      * @param   int     $height The height of the placeholder
      * @param   int     border  The width of the border round the placeholder
      * @return  string
      **/
-    public function url_placeholder($width = 100, $height = 100, $border = 0)
+    public function urlPlaceholder($width = 100, $height = 100, $border = 0)
     {
-        return $this->oCdnDriver->urlPlaceholder($width, $height, $border);
+        return $this->oDriver->urlPlaceholder($width, $height, $border);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_serve_url_scheme method
+     * Calls the driver's public urlPlaceholderScheme method
      * @param   none
      * @return  string
      **/
-    public function url_placeholder_scheme()
+    public function urlPlaceholderScheme()
     {
-        return $this->oCdnDriver->urlPlaceholderScheme();
+        return $this->oDriver->urlPlaceholderScheme();
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_blank_avatar_url method
+     * Calls the driver's public urlBlankAvatar method
      * @param   int     $width  The width of the placeholder
      * @param   int     $height The height of the placeholder
      * @param   mixed   $sex    The gender of the blank avatar to show
      * @return  string
      **/
-    public function url_blank_avatar($width = 100, $height = 100, $sex = '')
+    public function urlBlankAvatar($width = 100, $height = 100, $sex = '')
     {
-        return $this->oCdnDriver->urlBlankAvatar($width, $height, $sex);
+        return $this->oDriver->urlBlankAvatar($width, $height, $sex);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_serve_url_scheme method
+     * Calls the driver's public urlBlankAvatarScheme method
      * @param   none
      * @return  string
      **/
-    public function url_blank_avatar_scheme()
+    public function urlBlankAvatarScheme()
     {
-        return $this->oCdnDriver->urlBlankAvatarScheme();
+        return $this->oDriver->urlBlankAvatarScheme();
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_blank_avatar_url method
+     * Returns the appropriate avatar for a user
      * @param   int     $userId The user's ID
      * @param   int     $width  The width of the avatar
      * @param   int     $height The height of the avatar
      * @return  string
      **/
-    public function url_avatar($userId = null, $width = 100, $height = 100)
+    public function urlAvatar($userId = null, $width = 100, $height = 100)
     {
         if (is_null($userId)) {
 
@@ -2510,7 +2520,7 @@ class Cdn
 
         if (empty($userId)) {
 
-            $avatarUrl = $this->url_blank_avatar($width, $height);
+            $avatarUrl = $this->urlBlankAvatar($width, $height);
 
         } else {
 
@@ -2518,15 +2528,15 @@ class Cdn
 
             if (empty($user)) {
 
-                $avatarUrl = $this->url_blank_avatar($width, $height);
+                $avatarUrl = $this->urlBlankAvatar($width, $height);
 
             } elseif (empty($user->profile_img)) {
 
-                $avatarUrl = $this->url_blank_avatar($width, $height, $user->gender);
+                $avatarUrl = $this->urlBlankAvatar($width, $height, $user->gender);
 
             } else {
 
-                $avatarUrl = $this->url_crop($user->profile_img, $width, $height);
+                $avatarUrl = $this->urlCrop($user->profile_img, $width, $height);
             }
         }
 
@@ -2540,7 +2550,7 @@ class Cdn
      * @param  integer $userId The User ID to check
      * @return string
      */
-    public function url_avatar_scheme($userId = null)
+    public function urlAvatarScheme($userId = null)
     {
         if (is_null($userId)) {
 
@@ -2549,7 +2559,7 @@ class Cdn
 
         if (empty($userId)) {
 
-            $avatarScheme = $this->url_blank_avatar_scheme();
+            $avatarScheme = $this->urlBlankAvatarScheme();
 
         } else {
 
@@ -2557,11 +2567,11 @@ class Cdn
 
             if (empty($user->profile_img)) {
 
-                $avatarScheme = $this->url_blank_avatar_scheme();
+                $avatarScheme = $this->urlBlankAvatarScheme();
 
             } else {
 
-                $avatarScheme = $this->url_crop_scheme();
+                $avatarScheme = $this->urlCropScheme();
             }
         }
 
@@ -2576,7 +2586,7 @@ class Cdn
      * @param  integer $expires The length of time the URL should be valid for, in seconds
      * @return string
      */
-    public function url_expiring($object, $expires, $forceDownload = false)
+    public function urlExpiring($object, $expires, $forceDownload = false)
     {
         $object = $this->get_object($object);
 
@@ -2590,19 +2600,19 @@ class Cdn
 
         }
 
-        return $this->oCdnDriver->urlExpiring($object->filename, $object->bucket->slug, $expires, $forceDownload);
+        return $this->oDriver->urlExpiring($object->filename, $object->bucket->slug, $expires, $forceDownload);
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Calls the driver's public cdn_expiring_url_scheme method
+     * Calls the driver's public urlExpiringScheme method
      * @param   none
      * @return  string
      **/
-    public function url_expiring_scheme()
+    public function urlExpiringScheme()
     {
-        return $this->oCdnDriver->urlExpiringScheme();
+        return $this->oDriver->urlExpiringScheme();
     }
 
     // --------------------------------------------------------------------------
@@ -2614,7 +2624,7 @@ class Cdn
      * @param  boolean $restrictIp Whether or not to restrict to a particular IP
      * @return mixed               String on success, false on failure
      */
-    public function generate_api_upload_token($userId = null, $duration = 7200, $restrictIp = true)
+    public function generateApiUploadToken($userId = null, $duration = 7200, $restrictIp = true)
     {
         if (is_null($userId)) {
 
@@ -2625,7 +2635,7 @@ class Cdn
 
         if (!$user) {
 
-            $this->set_error('Invalid user ID');
+            $this->setError('Invalid user ID');
             return false;
         }
 
@@ -2660,14 +2670,14 @@ class Cdn
      * @param  string $token The upload token to validate
      * @return mixed         stdClass (the user object) on success, false on failure
      */
-    public function validate_api_upload_token($token)
+    public function validateApiUploadToken($token)
     {
         $token = get_instance()->encrypt->decode($token, APP_PRIVATE_KEY);
 
         if (!$token) {
 
             //  Error #1: Could not decrypot
-            $this->set_error('Invalid Token (Error #1)');
+            $this->setError('Invalid Token (Error #1)');
             return false;
         }
 
@@ -2678,13 +2688,13 @@ class Cdn
         if (empty($token)) {
 
             //  Error #2: Could not explode
-            $this->set_error('Invalid Token (Error #2)');
+            $this->setError('Invalid Token (Error #2)');
             return false;
 
         } elseif (count($token) != 6) {
 
             //  Error #3: Bad count
-            $this->set_error('Invalid Token (Error #3)');
+            $this->setError('Invalid Token (Error #3)');
             return false;
         }
 
@@ -2703,7 +2713,7 @@ class Cdn
         if ($hash != md5(serialize($token) . APP_PRIVATE_KEY)) {
 
             //  Error #4: Bad hash
-            $this->set_error('Invalid Token (Error #4)');
+            $this->setError('Invalid Token (Error #4)');
             return false;
         }
 
@@ -2716,7 +2726,7 @@ class Cdn
         if (!$user) {
 
             //  Error #5: User not found
-            $this->set_error('Invalid Token (Error #5)');
+            $this->setError('Invalid Token (Error #5)');
             return false;
         }
 
@@ -2724,7 +2734,7 @@ class Cdn
         if ($user->email != $token[2]) {
 
             //  Error #6: Invalid Email
-            $this->set_error('Invalid Token (Error #6)');
+            $this->setError('Invalid Token (Error #6)');
             return false;
         }
 
@@ -2732,7 +2742,7 @@ class Cdn
         if ($user->password_md5 != $token[1]) {
 
             //  Error #7: Invalid password
-            $this->set_error('Invalid Token (Error #7)');
+            $this->setError('Invalid Token (Error #7)');
             return false;
         }
 
@@ -2740,7 +2750,7 @@ class Cdn
         if ($user->is_suspended) {
 
             //  Error #8: User suspended
-            $this->set_error('Invalid Token (Error #8)');
+            $this->setError('Invalid Token (Error #8)');
             return false;
         }
 
@@ -2748,7 +2758,7 @@ class Cdn
         if (!$token[4] && $token[4] != get_instance()->input->ipAddress()) {
 
             //  Error #9: Invalid IP
-            $this->set_error('Invalid Token (Error #9)');
+            $this->setError('Invalid Token (Error #9)');
             return false;
         }
 
@@ -2756,7 +2766,7 @@ class Cdn
         if ($token[3] < time()) {
 
             //  Error #10: Token expired
-            $this->set_error('Invalid Token (Error #10)');
+            $this->setError('Invalid Token (Error #10)');
             return false;
         }
 
@@ -2772,7 +2782,7 @@ class Cdn
      * Finds objects which have no file coutnerparts
      * @return  string
      **/
-    public function find_orphaned_objects()
+    public function findOrphanedObjects()
     {
         $_out = array('orphans' => array(), 'elapsed_time' => 0);
 
@@ -2788,7 +2798,7 @@ class Cdn
 
         while ($row = $_orphans->_fetch_object()) {
 
-            if (!$this->oCdnDriver->objectExists($row->filename, $row->bucket_slug)) {
+            if (!$this->oDriver->objectExists($row->filename, $row->bucket_slug)) {
 
                 $_out['orphans'][] = $row;
             }
@@ -2804,242 +2814,12 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Finds fiels which have no object coutnerparts
+     * Finds files which have no object coutnerparts
      * @return  string
      **/
-    public function find_orphaned_files()
+    public function findOrphanedFiles()
     {
         return array();
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Runs the CDN tests
-     * @return  string
-     **/
-    public function run_tests()
-    {
-        //  If defined, run the pre_test method for the driver
-        if (method_exists($this->oCdnDriver, 'pre_test')) {
-
-            call_user_func(array($this->oCdnDriver, 'pre_test'));
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Create a test bucket
-        $_test_id        = md5(microtime(true) . uniqid());
-        $_test_bucket    = 'test-' . $_test_id;
-        $_test_bucket_id = $this->bucket_create($_test_bucket, $_test_bucket);
-
-        if (!$_test_bucket_id) {
-
-            $this->set_error('Failed to create a new bucket.');
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Fetch and test all buckets
-        $_buckets = $this->get_buckets();
-
-        foreach ($_buckets as $bucket) {
-
-            //  Can fetch bucket by ID?
-            $_bucket = $this->get_bucket($bucket->id);
-
-            if (!$_bucket) {
-
-                $this->set_error('Unable to fetch bucket by ID; ID: ' . $bucket->id);
-                continue;
-            }
-
-            // --------------------------------------------------------------------------
-
-            //  Can fetch bucket by slug?
-            $_bucket = $this->get_bucket($bucket->slug);
-
-            if (!$_bucket) {
-
-                $this->set_error('Unable to fetch bucket by slug; slug: ' . $bucket->slug);
-                continue;
-            }
-
-            // --------------------------------------------------------------------------
-
-            /**
-             * Can we write a small image to the bucket? Or a PDF, whatever the bucket
-             * will accept. Do these in order of filesize, we want to be dealing with as
-             * small a file as possible.
-             */
-
-            $_file        = array();
-            $_file['txt'] = NAILS_COMMON_PATH . 'assets/tests/cdn/txt.txt';
-            $_file['jpg'] = NAILS_COMMON_PATH . 'assets/tests/cdn/jpg.jpg';
-            $_file['pdf'] = NAILS_COMMON_PATH . 'assets/tests/cdn/pdf.pdf';
-
-            if (empty($_bucket->allowed_types)) {
-
-                //  Not specified, use the txt as it's so tiny
-                $_file = $_file['txt'];
-
-            } else {
-
-                //  Find a file we can use
-                foreach ($_file as $ext => $path) {
-
-                    if ($this->isAllowedExt($ext, $_bucket->allowed_types)) {
-
-                        $_file = $path;
-                        break;
-                    }
-                }
-            }
-
-            //  Copy this file temporarily to the cache
-            $cachefile = DEPLOY_CACHE_DIR . 'test-' . $bucket->slug . '-' . $_test_id . '.jpg';
-
-            if (!@copy($_file, $cachefile)) {
-
-                $this->set_error('Unable to create temporary cache file.');
-                continue;
-            }
-
-            $_upload = $this->object_create($cachefile, $_bucket->id);
-
-            if (!$_upload) {
-
-                $error = 'Unable to create a new object in bucket "' . $bucket->id . ' / ' . $bucket->slug . '"';
-                $this->set_error($error);
-                continue;
-            }
-
-            // --------------------------------------------------------------------------
-
-            //  Can we serve the object?
-            $_url = $this->url_serve($_upload->id);
-
-            if (!$_url) {
-
-                $this->set_error('Unable to generate serve URL for uploaded file');
-                continue;
-            }
-
-            $oHttpClient = Factory::factory('HttpClient');
-            $oResponse   = $oHttpClient->get($_url);
-
-            if ($oResponse->getStatusCode() !== 200) {
-
-                $error  = 'Failed to serve object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . '). ';
-                $error .= '<small>Received code ' . $oResponse->getStatusCode() . ' for ' . $_url . '</small>';
-                $this->set_error($error);
-                continue;
-            }
-
-            // --------------------------------------------------------------------------
-
-            //  Can we crop the object?
-            $_url = $this->url_crop($_upload->id, 10, 10);
-
-            if (!$_url) {
-
-                $this->set_error('Unable to generate crop URL for object.');
-                continue;
-            }
-
-            $oResponse = $oHttpClient->get($_url);
-
-            if ($oResponse->getStatusCode() !== 200) {
-
-                $error  = 'Failed to crop object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').';
-                $error .= '<small>Received code ' . $oResponse->getStatusCode() . ' for ' . $_url . '</small>';
-                $this->set_error();
-                continue;
-            }
-
-            // --------------------------------------------------------------------------
-
-            //  Can we scale the object?
-            $_url = $this->url_scale($_upload->id, 10, 10);
-
-            if (!$_url) {
-
-                $this->set_error('Unable to generate scale URL for object.');
-                continue;
-            }
-
-            $oResponse = $oHttpClient->get($_url);
-
-            if ($oResponse->getStatusCode() !== 200) {
-
-                $error  = 'Failed to scale object with 200 OK (' . $bucket->slug . ' / ' . $_upload->filename . ').';
-                $error .= '<small>Received code ' . $oResponse->getStatusCode() . ' for ' . $_url . '</small>';
-                $this->set_error($error);
-                continue;
-            }
-
-            // --------------------------------------------------------------------------
-
-            //  Can we delete the object?
-            $_test = $this->object_delete($_upload->id);
-
-            if (!$_test) {
-
-                $error  = 'Unable to delete test object (' . $bucket->slug . '/' . $_upload->filename . '; ';
-                $error .= 'ID: ' . $_upload->id . ').';
-                $this->set_error($error);
-            }
-
-            // --------------------------------------------------------------------------
-
-            //  Can we destroy the object?
-            $_test = $this->object_destroy($_upload->id);
-
-            if (!$_test) {
-
-                $error  = 'Unable to destroy test object (' . $bucket->slug . '/' . $_upload->filename . '; ';
-                $error .= 'ID: ' . $_upload->id . ').';
-                $this->set_error($error);
-            }
-
-            // --------------------------------------------------------------------------
-
-            //  Delete the cache files
-            if (file_exists($cachefile) && !unlink($cachefile)) {
-
-                $this->set_error('Unable to delete temporary cache file: ' . $cachefile);
-            }
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Attempt to destroy the test bucket
-        $_test = $this->bucket_destroy($_test_bucket_id);
-
-        if (!$_test) {
-
-            $this->set_error('Unable to destroy test bucket: ' . $_test_bucket_id);
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  If defined, run the post_test method fo the driver
-        if (method_exists($this->oCdnDriver, 'post_test')) {
-
-            call_user_func(array($this->oCdnDriver, 'post_test'));
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Any errors?
-        if ($this->getErrors()) {
-
-            return false;
-
-        } else {
-
-            return true;
-        }
     }
 
     // --------------------------------------------------------------------------
@@ -3140,7 +2920,7 @@ class Cdn
 
             if (!empty($object)) {
 
-                if ($this->oCdnDriver->objectDestroy($object->filename, $object->bucket_slug)) {
+                if ($this->oDriver->objectDestroy($object->filename, $object->bucket_slug)) {
 
                     //  Remove the database entries
                     $this->oDb->where('id', $object->id);
@@ -3160,6 +2940,10 @@ class Cdn
                     $cacheObject->bucket->slug = $object->bucket_slug;
 
                     $this->unsetCacheObject($object);
+
+                } else {
+
+                    //  @todo: Rollback? Warn?
                 }
             }
 

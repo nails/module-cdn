@@ -72,7 +72,7 @@ class Objects extends BaseAdmin
 
         if ($this->input->get('bucketId')) {
 
-            $bucket = $this->cdn->get_bucket($this->input->get('bucketId'));
+            $bucket = $this->cdn->getBucket($this->input->get('bucketId'));
 
             if ($bucket) {
 
@@ -123,8 +123,8 @@ class Objects extends BaseAdmin
         // --------------------------------------------------------------------------
 
         //  Get the items for the page
-        $totalRows             = $this->cdn->count_all_objects($data);
-        $this->data['objects'] = $this->cdn->get_objects($page, $perPage, $data);
+        $totalRows             = $this->cdn->countAllObjects($data);
+        $this->data['objects'] = $this->cdn->getObjects($page, $perPage, $data);
 
         //  Set Search and Pagination objects for the view
         $this->data['search']     = Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
@@ -172,7 +172,12 @@ class Objects extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        $this->data['buckets'] = $this->cdn->get_buckets();
+        $this->data['buckets'] = $this->cdn->getBuckets();
+
+        if (empty($this->data['buckets'])) {
+            $this->session->set_flashdata('warning', 'Create a bucket before uploading content.');
+            redirect('admin/cdn/buckets/create');
+        }
 
         // --------------------------------------------------------------------------
 
@@ -227,7 +232,7 @@ class Objects extends BaseAdmin
         $objectId = $this->uri->segment(5);
         $return   = $this->input->get('return') ? $this->input->get('return') : 'admin/cdn/objects/index';
 
-        if ($this->cdn->object_delete($objectId)) {
+        if ($this->cdn->objectDelete($objectId)) {
 
             $status = 'success';
             $msg    = 'CDN Object was deleted successfully.';

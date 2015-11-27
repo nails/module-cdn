@@ -13,21 +13,7 @@ if (!function_exists('cdnServe')) {
     function cdnServe($iObjectId, $bForceDownload = false)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->url_serve($iObjectId, $bForceDownload);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdn_serve')) {
-
-    /**
-     * Alias to cdnServe
-     * @see cdnServe
-     */
-    function cdn_serve($iObjectId, $bForceDownload = false)
-    {
-        return cdnServe($iObjectId, $bForceDownload);
+        return $oCdn->urlServe($iObjectId, $bForceDownload);
     }
 }
 
@@ -44,21 +30,7 @@ if (!function_exists('cdnServeZipped')) {
     function cdnServeZipped($aObjectIds, $sFilename = 'download.zip')
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->url_serve_zipped($aObjectIds, $sFilename);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdn_serve_zipped')) {
-
-    /**
-     * Alias to cdnServeZipped
-     * @see cdnServeZipped
-     */
-    function cdn_serve_zipped($aObjectIds, $sFilename = 'download.zip')
-    {
-        return cdnServeZipped($aObjectIds, $sFilename);
+        return $oCdn->urlServeZipped($aObjectIds, $sFilename);
     }
 }
 
@@ -76,37 +48,10 @@ if (!function_exists('cdnCrop')) {
     function cdnCrop($iObjectId, $iWidth, $iHeight)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->url_crop($iObjectId, $iWidth, $iHeight);
+        return $oCdn->urlCrop($iObjectId, $iWidth, $iHeight);
     }
 }
 
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdn_crop')) {
-
-    /**
-     * Alias to cdnCrop
-     * @see cdnCrop
-     */
-    function cdn_crop($iObjectId, $iWidth, $iHeight)
-    {
-        return cdnCrop($iObjectId, $iWidth, $iHeight);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdn_thumb')) {
-
-    /**
-     * Alias to cdnCrop
-     * @see cdnCrop
-     */
-    function cdn_thumb($iObjectId, $iWidth, $iHeight)
-    {
-        return cdnCrop($iObjectId, $iWidth, $iHeight);
-    }
-}
 
 // --------------------------------------------------------------------------
 
@@ -122,21 +67,7 @@ if (!function_exists('cdnScale')) {
     function cdnScale($iObjectId, $iWidth, $iHeight)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->url_scale($iObjectId, $iWidth, $iHeight);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdn_scale')) {
-
-    /**
-     * Alias to cdnScale
-     * @see cdnScale
-     */
-    function cdn_scale($iObjectId, $iWidth, $iHeight)
-    {
-        return cdnScale($iObjectId, $iWidth, $iHeight);
+        return $oCdn->urlScale($iObjectId, $iWidth, $iHeight);
     }
 }
 
@@ -154,21 +85,7 @@ if (!function_exists('cdnPlaceholder')) {
     function cdnPlaceholder($iWidth, $iHeight, $iBorder = 0)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->url_placeholder($iWidth, $iHeight, $iBorder);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdn_placeholder')) {
-
-    /**
-     * Alias to cdnPlaceholder
-     * @see cdnPlaceholder
-     */
-    function cdn_placeholder($iWidth, $iHeight, $iBorder = 0)
-    {
-        return cdnPlaceholder($iWidth, $iHeight, $iBorder);
+        return $oCdn->urlPlaceholder($iWidth, $iHeight, $iBorder);
     }
 }
 
@@ -186,21 +103,7 @@ if (!function_exists('cdnBlankAvatar')) {
     function cdnBlankAvatar($iWidth, $iHeight, $mSex = '')
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->url_blank_avatar($iWidth, $iHeight, $mSex);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdn_blank_avatar')) {
-
-    /**
-     * Alias to cdnBlankAvatar
-     * @see cdnBlankAvatar
-     */
-    function cdn_blank_avatar($iWidth, $iHeight, $mSex = '')
-    {
-        return cdnBlankAvatar($iWidth, $iHeight, $mSex);
+        return $oCdn->urlBlankAvatar($iWidth, $iHeight, $mSex);
     }
 }
 
@@ -218,21 +121,7 @@ if (!function_exists('cdnAvatar')) {
     function cdnAvatar($iUserId = null, $iWidth = 100, $iHeight = 100)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->url_avatar($iUserId, $iWidth, $iHeight);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdn_avatar')) {
-
-    /**
-     * Alias to cdnAvatar
-     * @see cdnAvatar
-     */
-    function cdn_avatar($iWidth = 100, $iHeight = 100, $iBorder = 0)
-    {
-        return cdnAvatar($iWidth, $iHeight, $iBorder);
+        return $oCdn->urlAvatar($iUserId, $iWidth, $iHeight);
     }
 }
 
@@ -250,21 +139,7 @@ if (!function_exists('cdnExpiringUrl')) {
     function cdnExpiringUrl($iObject, $iExpires, $bForceDownload = false)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->url_expiring($iObject, $iExpires, $bForceDownload);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdn_expiring_url')) {
-
-    /**
-     * Alias to cdnExpiringUrl
-     * @see cdnExpiringUrl
-     */
-    function cdn_expiring_url($iObject, $iExpires, $bForceDownload = false)
-    {
-        return cdnExpiringUrl($iObject, $iExpires, $bForceDownload);
+        return $oCdn->urlExpiring($iObject, $iExpires, $bForceDownload);
     }
 }
 
@@ -280,21 +155,7 @@ if (!function_exists('getExtFromMime')) {
     function getExtFromMime($sMime)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->get_ext_from_mime($sMime);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('get_ext_from_mime')) {
-
-    /**
-     * Alias to getExtFromMime
-     * @see getExtFromMime
-     */
-    function get_ext_from_mime($sMime)
-    {
-        return getExtFromMime($sMime);
+        return $oCdn->getExtFromMime($sMime);
     }
 }
 
@@ -310,21 +171,7 @@ if (!function_exists('getMimeFromExt')) {
     function getMimeFromExt($sExt)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->get_mime_from_ext($sExt);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('get_mime_from_ext')) {
-
-    /**
-     * Alias to getMimeFromExt
-     * @see getMimeFromExt
-     */
-    function get_mime_from_ext($sExt)
-    {
-        return getMimeFromExt($sExt);
+        return $oCdn->getMimeFromExt($sExt);
     }
 }
 
@@ -340,27 +187,13 @@ if (!function_exists('getMimeFromFile')) {
     function getMimeFromFile($sFile)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        return $oCdn->get_mime_from_file($sFile);
+        return $oCdn->getMimeFromFile($sFile);
     }
 }
 
 // --------------------------------------------------------------------------
 
-if (!function_exists('get_mime_from_file')) {
-
-    /**
-     * Alias to getMimeFromFile
-     * @see getMimeFromFile
-     */
-    function get_mime_from_file($sExt)
-    {
-        return getMimeFromFile($sExt);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('cdnManageUrl')) {
+if (!function_exists('cdnManagerUrl')) {
 
     /**
      * Generate a valid URL for the CDN Manager
@@ -370,7 +203,7 @@ if (!function_exists('cdnManageUrl')) {
      * @param  boolean $bSecure   Whether or not the link should be secure
      * @return string
      */
-    function cdnManageUrl($sBucket, $aCallback = array(), $mPassback = null, $bSecure = false)
+    function cdnManagerUrl($sBucket, $aCallback = array(), $mPassback = null, $bSecure = false)
     {
         $aParams = array();
 

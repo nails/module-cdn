@@ -283,11 +283,11 @@
 
                 //  Initialise CDN Manager
                 urlScheme              = {};
-                urlScheme.serve        = '<?=$this->cdn->url_serve_scheme()?>';
-                urlScheme.thumb        = '<?=$this->cdn->url_crop_scheme()?>';
-                urlScheme.scale        = '<?=$this->cdn->url_scale_scheme()?>';
-                urlScheme.placeholder  = '<?=$this->cdn->url_placeholder_scheme()?>';
-                urlScheme.blank_avatar = '<?=$this->cdn->url_blank_avatar_scheme()?>';
+                urlScheme.serve        = '<?=$this->cdn->urlServeScheme()?>';
+                urlScheme.thumb        = '<?=$this->cdn->urlCropScheme()?>';
+                urlScheme.scale        = '<?=$this->cdn->urlScaleScheme()?>';
+                urlScheme.placeholder  = '<?=$this->cdn->urlPlaceholderScheme()?>';
+                urlScheme.blank_avatar = '<?=$this->cdn->urlBlankAvatarScheme()?>';
 
                 <?php
 

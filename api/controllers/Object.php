@@ -55,7 +55,7 @@ class Object extends \Nails\Api\Controller\Base
                 $token = $this->input->get_request_header('X-cdn-token');
             }
 
-            $user = $this->oCdn->validate_api_upload_token($token);
+            $user = $this->oCdn->validateApiUploadToken($token);
 
             if (!$user) {
 
@@ -92,7 +92,7 @@ class Object extends \Nails\Api\Controller\Base
         // --------------------------------------------------------------------------
 
         //  Attempt upload
-        $upload = $this->oCdn->object_create('upload', $bucket);
+        $upload = $this->oCdn->objectCreate('upload', $bucket);
 
         if ($upload) {
 
@@ -230,7 +230,7 @@ class Object extends \Nails\Api\Controller\Base
         // --------------------------------------------------------------------------
 
         $objectId = $this->input->post('object_id');
-        $delete   = $this->oCdn->object_delete($objectId);
+        $delete   = $this->oCdn->objectDelete($objectId);
 
         if (!$delete) {
 

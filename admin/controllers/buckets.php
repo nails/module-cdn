@@ -99,8 +99,8 @@ class Buckets extends BaseAdmin
         );
 
         //  Get the items for the page
-        $totalRows             = $this->cdn->count_all_buckets($data);
-        $this->data['buckets'] = $this->cdn->get_buckets($page, $perPage, $data);
+        $totalRows             = $this->cdn->countAllBuckets($data);
+        $this->data['buckets'] = $this->cdn->getBuckets($page, $perPage, $data);
 
         //  Set Search and Pagination objects for the view
         $this->data['search']     = Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);

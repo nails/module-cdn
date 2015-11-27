@@ -83,8 +83,8 @@ class Trash extends BaseAdmin
         );
 
         //  Get the items for the page
-        $totalRows             = $this->cdn->count_all_objects_from_trash($data);
-        $this->data['objects'] = $this->cdn->get_objects_from_trash($page, $perPage, $data);
+        $totalRows             = $this->cdn->countAllObjectsFromTrash($data);
+        $this->data['objects'] = $this->cdn->getObjectsFromTrash($page, $perPage, $data);
 
         //  Set Search and Pagination objects for the view
         $this->data['search']     = Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
@@ -150,9 +150,9 @@ class Trash extends BaseAdmin
         $this->data['pagination']             = new \stdClass();
         $this->data['pagination']->page       = $_page;
         $this->data['pagination']->per_page   = $_per_page;
-        $this->data['pagination']->total_rows = $this->cdn->count_all_objects_from_trash($_data);
+        $this->data['pagination']->total_rows = $this->cdn->countAllObjectsFromTrash($_data);
 
-        $this->data['objects'] = $this->cdn->get_objects_from_trash($_page, $_per_page, $_data);
+        $this->data['objects'] = $this->cdn->getObjectsFromTrash($_page, $_per_page, $_data);
 
         // --------------------------------------------------------------------------
 
@@ -246,7 +246,7 @@ class Trash extends BaseAdmin
         $objectId = $this->uri->segment(5);
         $return   = $this->input->get('return') ? $this->input->get('return') : 'admin/cdn/trash/index';
 
-        if ($this->cdn->object_restore($objectId)) {
+        if ($this->cdn->objectRestore($objectId)) {
 
             $status = 'success';
             $msg    = 'CDN Object was restored successfully.';

@@ -106,7 +106,7 @@ class Serve extends Base
 
             if ($this->input->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
 
-                $object = $this->cdn->get_object_from_trash($this->object, $this->bucket);
+                $object = $this->cdn->getObjectFromTrash($this->object, $this->bucket);
 
                 if (!$object) {
 
@@ -135,11 +135,11 @@ class Serve extends Base
 
                 if ($this->input->get('dl')) {
 
-                    $this->cdn->object_increment_count('DOWNLOAD', $object->id);
+                    $this->cdn->objectIncrementCount('DOWNLOAD', $object->id);
 
                 } else {
 
-                    $this->cdn->object_increment_count('SERVE', $object->id);
+                    $this->cdn->objectIncrementCount('SERVE', $object->id);
                 }
             }
 
@@ -149,7 +149,7 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Fetch source
-        $usefile = $this->cdn->object_local_path($this->bucket, $this->object);
+        $usefile = $this->cdn->objectLocalPath($this->bucket, $this->object);
 
         if (!$usefile) {
 
@@ -219,11 +219,11 @@ class Serve extends Base
 
             if ($this->input->get('dl')) {
 
-                $this->cdn->object_increment_count('DOWNLOAD', $object->id);
+                $this->cdn->objectIncrementCount('DOWNLOAD', $object->id);
 
             } else {
 
-                $this->cdn->object_increment_count('SERVE', $object->id);
+                $this->cdn->objectIncrementCount('SERVE', $object->id);
             }
         }
 

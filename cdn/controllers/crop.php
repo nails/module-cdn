@@ -110,7 +110,7 @@ class Crop extends Base
 
         if ($this->serveNotModified($this->cdnCacheFile . $this->extension)) {
 
-            $this->cdn->object_increment_count($cropMethod, $this->object, $this->bucket);
+            $this->cdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
             return;
         }
 
@@ -127,7 +127,7 @@ class Crop extends Base
 
             if ($this->input->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
 
-                $object = $this->cdn->get_object_from_trash($this->object, $this->bucket);
+                $object = $this->cdn->getObjectFromTrash($this->object, $this->bucket);
 
                 if (!$object) {
 
@@ -207,7 +207,7 @@ class Crop extends Base
 
         if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) {
 
-            $this->cdn->object_increment_count($cropMethod, $this->object, $this->bucket);
+            $this->cdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
             $this->serveFromCache($this->cdnCacheFile);
 
         } else {
@@ -218,7 +218,7 @@ class Crop extends Base
              */
 
             //  Fetch the file to use
-            $filePath = $this->cdn->object_local_path($this->bucket, $this->object);
+            $filePath = $this->cdn->objectLocalPath($this->bucket, $this->object);
 
             if (!$filePath) {
 
@@ -242,7 +242,7 @@ class Crop extends Base
                     unlink($filePath);
                 }
 
-                $filePath = $this->cdn->object_local_path($this->bucket, $this->object);
+                $filePath = $this->cdn->objectLocalPath($this->bucket, $this->object);
 
                 if (!$filePath) {
 
@@ -291,7 +291,7 @@ class Crop extends Base
             // --------------------------------------------------------------------------
 
             //  Bump the counter
-            $this->cdn->object_increment_count($cropMethod, $object->id);
+            $this->cdn->objectIncrementCount($cropMethod, $object->id);
         }
     }
 

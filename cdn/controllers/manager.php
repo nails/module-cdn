@@ -66,7 +66,7 @@ class Manager extends Base
                         //  Bucket and nonce set, cross-check
                         if (md5($bucket[0] . '|' . $bucket[1] . '|' . APP_PRIVATE_KEY) === $hash) {
 
-                            $this->data['bucket'] = $this->oCdn->get_bucket($bucket[0]);
+                            $this->data['bucket'] = $this->oCdn->getBucket($bucket[0]);
 
                             if ($this->data['bucket']) {
 
@@ -75,10 +75,10 @@ class Manager extends Base
                             } else {
 
                                 //  Bucket doesn't exist - attempt to create it
-                                if ($this->oCdn->bucket_create($bucket[0])) {
+                                if ($this->oCdn->bucketCreate($bucket[0])) {
 
                                     $testOk = true;
-                                    $this->data['bucket'] = $this->oCdn->get_bucket($bucket[0]);
+                                    $this->data['bucket'] = $this->oCdn->getBucket($bucket[0]);
 
                                 } else {
 
@@ -124,11 +124,11 @@ class Manager extends Base
                 // --------------------------------------------------------------------------
 
                 //  Test bucket, if it doesn't exist, create it
-                $this->data['bucket'] = $this->oCdn->get_bucket($slug);
+                $this->data['bucket'] = $this->oCdn->getBucket($slug);
 
                 if (!$this->data['bucket']) {
 
-                    $bucket_id = $this->oCdn->bucket_create($slug, $label);
+                    $bucket_id = $this->oCdn->bucketCreate($slug, $label);
 
                     if (!$bucket_id) {
 
@@ -137,7 +137,7 @@ class Manager extends Base
 
                     } else {
 
-                        $this->data['bucket'] = $this->oCdn->get_bucket($bucket_id);
+                        $this->data['bucket'] = $this->oCdn->getBucket($bucket_id);
                     }
                 }
             }
@@ -179,7 +179,7 @@ class Manager extends Base
             // --------------------------------------------------------------------------
 
             //  List the bucket objects
-            $this->data['objects'] = $this->oCdn->bucket_list($this->data['bucket']->id);
+            $this->data['objects'] = $this->oCdn->bucketList($this->data['bucket']->id);
 
             // --------------------------------------------------------------------------
 
@@ -215,7 +215,7 @@ class Manager extends Base
         // --------------------------------------------------------------------------
 
         //  Upload the file
-        if ($this->oCdn->object_create('userfile', $this->data['bucket']->id)) {
+        if ($this->oCdn->objectCreate('userfile', $this->data['bucket']->id)) {
 
             $this->session->set_flashdata('success', '<strong>Success!</strong> File uploaded successfully!');
 
@@ -270,7 +270,7 @@ class Manager extends Base
         // --------------------------------------------------------------------------
 
         //  Attempt Delete
-        $delete = $this->oCdn->object_delete($object->id);
+        $delete = $this->oCdn->objectDelete($object->id);
 
         if ($delete) {
 
@@ -325,7 +325,7 @@ class Manager extends Base
             redirect($return);
         }
 
-        $object = $this->oCdn->get_object_from_trash($this->uri->segment(4));
+        $object = $this->oCdn->getObjectFromTrash($this->uri->segment(4));
 
         if (!$object) {
 
@@ -336,7 +336,7 @@ class Manager extends Base
         // --------------------------------------------------------------------------
 
         //  Attempt Restore
-        $restore = $this->oCdn->object_restore($object->id);
+        $restore = $this->oCdn->objectRestore($object->id);
 
         if ($restore) {
 

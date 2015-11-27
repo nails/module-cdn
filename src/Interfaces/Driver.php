@@ -4,6 +4,9 @@ namespace Nails\Cdn\Interfaces;
 
 interface Driver
 {
+    //  Error properties & methods
+    public function lastError();
+
     //  Object methods
     public function objectCreate($oData);
     public function objectExists($sFilename, $sBucket);

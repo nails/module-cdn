@@ -95,7 +95,7 @@ class Base extends \NAILS_Controller
         }
 
         //  Work out content type
-        $mime = $this->cdn->get_mime_from_file($this->cdnCacheDir . $file);
+        $mime = $this->cdn->getMimeFromFile($this->cdnCacheDir . $file);
 
         header('Content-Type: ' . $mime, true);
 
