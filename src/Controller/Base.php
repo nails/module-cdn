@@ -90,7 +90,6 @@ class Base extends \NAILS_Controller
 
         //  Set cache headers
         if ($setCacheHeaders) {
-
             $this->setCacheHeaders($stats['mtime'], $file, $hit);
         }
 

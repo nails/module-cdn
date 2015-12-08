@@ -193,7 +193,7 @@ class Serve extends Base
 
             //  Determine headers to send
             $finfo = new finfo(FILEINFO_MIME_TYPE); // return mime type ala mimetype extension
-            header('Content-type: ' . $finfo->file($usefile), true);
+            header('Content-Type: ' . $finfo->file($usefile), true);
 
             $stats = stat($usefile);
             $this->setCacheHeaders($stats[9], $this->bucket . $this->object, false);
