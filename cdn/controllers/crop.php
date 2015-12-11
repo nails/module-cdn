@@ -116,7 +116,7 @@ class Crop extends Base
 
         // --------------------------------------------------------------------------
 
-        $object = $this->cdn->get_object($this->object, $this->bucket);
+        $object = $this->cdn->getObject($this->object, $this->bucket);
 
         if (!$object) {
 

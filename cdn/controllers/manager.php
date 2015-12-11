@@ -166,7 +166,7 @@ class Manager extends Base
             $this->asset->load('jquery.scrollTo/jquery.scrollTo.min.js', 'NAILS-BOWER');
             $this->asset->load('tipsy/src/javascripts/jquery.tipsy.js', 'NAILS-BOWER');
             $this->asset->load('tipsy/src/stylesheets/tipsy.css', 'NAILS-BOWER');
-            $this->asset->load('mustache.js/mustache.js', 'NAILS-BOWER');
+            $this->asset->library('MUSTACHE');
             $this->asset->load('jquery-cookie/jquery.cookie.js', 'NAILS-BOWER');
             // $this->asset->load('dropzone/downloads/dropzone.min.js', 'NAILS-BOWER');
             $this->asset->load('fontawesome/css/font-awesome.min.css', 'NAILS-BOWER');
@@ -259,7 +259,7 @@ class Manager extends Base
             redirect($return);
         }
 
-        $object = $this->oCdn->get_object($this->uri->segment(4));
+        $object = $this->oCdn->getObject($this->uri->segment(4));
 
         if (!$object) {
 

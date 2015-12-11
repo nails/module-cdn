@@ -20,6 +20,14 @@ class Object extends \Nails\Api\Controller\Base
 
     // --------------------------------------------------------------------------
 
+    public static $requiresAuthentication = true;
+
+    // --------------------------------------------------------------------------
+
+    const MAX_OBJECTS_PER_REQUEST = 100;
+
+    // --------------------------------------------------------------------------
+
     /**
      * Construct the controller
      */
@@ -28,6 +36,120 @@ class Object extends \Nails\Api\Controller\Base
         parent::__construct($apiRouter);
 
         $this->oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function getIndex()
+    {
+        $sIds = '';
+
+        if (!empty($this->input->get('id'))) {
+            $sIds = $this->input->get('id');
+        }
+
+        if (!empty($this->input->get('ids'))) {
+            $sIds = $this->input->get('ids');
+        }
+
+        $aIds = explode(',', $sIds);
+        $aIds = array_filter($aIds);
+        $aIds = array_unique($aIds);
+
+        if (count($aIds) > 100) {
+            return array(
+                'status' => 400,
+                'error'  => 'You can request a maximum of ' . self::MAX_OBJECTS_PER_REQUEST . ' objects per request'
+            );
+        }
+
+        // --------------------------------------------------------------------------
+
+        //  Parse out any URLs requested
+        $sUrls = $sIds = $this->input->get('urls');
+
+        $aUrls = explode(',', $sUrls);
+
+        //  Filter out any which don't follow the format {digit}x{digit}-{scale|crop}
+        foreach ($aUrls as &$sDimension) {
+            preg_match_all('/^(\d+?)x(\d+?)(-(scale|crop))?$/i', $sDimension, $aMatches);
+
+            if (empty($aMatches[0])) {
+
+                $sDimension = null;
+
+            } else {
+
+                $sDimension           = array();
+                $sDimension['width']  = !empty($aMatches[1][0]) ? $aMatches[1][0] : null;
+                $sDimension['height'] = !empty($aMatches[2][0]) ? $aMatches[2][0] : null;
+                $sDimension['type']   = !empty($aMatches[4][0]) ? strtoupper($aMatches[4][0]) : 'CROP';
+            }
+        }
+
+        $aUrls = array_filter($aUrls);
+
+        // --------------------------------------------------------------------------
+
+        //  Build the query
+        $aWhere = array(
+            'where_in' => array(
+                array('o.id', $aIds)
+            )
+        );
+
+        $aResults = $this->oCdn->getObjects(0, self::MAX_OBJECTS_PER_REQUEST, $aWhere);
+        $aOut     = array();
+        foreach ($aResults as $oObject) {
+
+            $oTemp = new \stdClass();
+            $oTemp->id = $oObject->id;
+            $oTemp->object = new \stdClass();
+            $oTemp->object->name = $oObject->filename_display;
+            $oTemp->object->mime = $oObject->mime;
+            $oTemp->object->size = $oObject->filesize;
+            $oTemp->bucket = $oObject->bucket;
+            $oTemp->isImg = $oObject->is_img;
+            $oTemp->img = new \stdClass();
+            $oTemp->img->width = $oObject->img_width;
+            $oTemp->img->height = $oObject->img_height;
+            $oTemp->img->orientation = $oObject->img_orientation;
+            $oTemp->img->isAnimated = $oObject->is_animated;
+            $oTemp->url = new \stdClass();
+            $oTemp->url->src = $this->oCdn->urlServe($oObject);
+
+            if ($oTemp->isImg) {
+                foreach ($aUrls as $aDimension) {
+
+                    $sProperty = $aDimension['type'] . '-' . $aDimension['width'] . 'x' . $aDimension['height'];
+
+                    switch ($aDimension['type']) {
+                        case 'CROP':
+                            $oTemp->url->{$sProperty} = $this->oCdn->urlCrop(
+                                $oObject,
+                                $aDimension['width'],
+                                $aDimension['height']
+                            );
+                            break;
+
+                        case 'SCALE':
+                            $oTemp->url->{$sProperty} = $this->oCdn->urlScale(
+                                $oObject,
+                                $aDimension['width'],
+                                $aDimension['height']
+                            );
+                            break;
+                    }
+                }
+            }
+            $aOut[] = $oTemp;
+        }
+
+        if ($this->input->get('id')) {
+            return array('data' => $aOut[0]);
+        } else {
+            return array('data' => $aOut);
+        }
     }
 
     // --------------------------------------------------------------------------

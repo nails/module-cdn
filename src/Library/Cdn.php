@@ -357,7 +357,7 @@ class Cdn
      * @param  array  $data         Data to pass to _getcount_common_object()
      * @return mixed                stdClass on success, false on failure
      */
-    public function get_object($objectIdSlug, $bucketIdSlug = '', $data = array())
+    public function getObject($objectIdSlug, $bucketIdSlug = '', $data = array())
     {
         //  Check the cache
         $cacheKey  = 'object-' . $objectIdSlug;
@@ -1008,7 +1008,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $object = $this->get_object($object);
+        $object = $this->getObject($object);
 
         if (!$object) {
 
@@ -1174,7 +1174,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $object = $this->get_object($object);
+        $object = $this->getObject($object);
 
         if ($object) {
 
@@ -1279,7 +1279,7 @@ class Cdn
 
         if ($upload) {
 
-            $_object = $this->get_object($object);
+            $_object = $this->getObject($object);
 
             if ($_object) {
 
@@ -1383,7 +1383,7 @@ class Cdn
      */
     public function objectLocalPathById($objectId)
     {
-        $object = $this->get_object($objectId);
+        $object = $this->getObject($objectId);
 
         if ($object) {
 
@@ -1454,7 +1454,7 @@ class Cdn
 
             if ($return_object) {
 
-                return $this->get_object($objectId);
+                return $this->getObject($objectId);
 
             } else {
 
@@ -1507,7 +1507,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         $object->bucket        = new \stdClass();
-        $object->bucket->id    = $object->bucket_id;
+        $object->bucket->id    = (int) $object->bucket_id;
         $object->bucket->label = $object->bucket_label;
         $object->bucket->slug  = $object->bucket_slug;
 
@@ -2194,39 +2194,50 @@ class Cdn
     public function urlServe($objectId, $forceDownload = false)
     {
         $isTrashed = false;
-        $object    = $this->get_object($objectId);
 
-        if (!$object) {
+        $oEmptyObj               = new \stdClass();
+        $oEmptyObj->filename     = '';
+        $oEmptyObj->bucket       = new \stdClass();
+        $oEmptyObj->bucket->slug = '';
 
-            /**
-             * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
-             */
+        if (empty($objectId)) {
 
-            if (userHasPermission('admin:cdn:trash:browse')) {
+            $object = $oEmptyObj;
 
-                $object = $this->getObjectFromTrash($objectId);
+        } elseif (is_numeric($objectId)) {
 
-                if (!$object) {
+            $object = $this->getObject($objectId);
 
-                    //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
-                    $object               = new \stdClass();
-                    $object->filename     = '';
-                    $object->bucket       = new \stdClass();
-                    $object->bucket->slug = '';
+            if (!$object) {
+
+                /**
+                 * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
+                 */
+
+                if (userHasPermission('admin:cdn:trash:browse')) {
+
+                    $object = $this->getObjectFromTrash($objectId);
+
+                    if (!$object) {
+
+                        //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
+                        $object = $oEmptyObj;
+
+                    } else {
+
+                        $isTrashed = true;
+                    }
 
                 } else {
 
-                    $isTrashed = true;
+                    //  Let the renderer show a bad_src graphic
+                    $object = $oEmptyObj;
                 }
-
-            } else {
-
-                //  Let the renderer show a bad_src graphic
-                $object               = new \stdClass();
-                $object->filename     = '';
-                $object->bucket       = new \stdClass();
-                $object->bucket->slug = '';
             }
+
+        } else {
+
+            $object    = $objectId;
         }
 
         $url = $this->oDriver->urlServe($object->filename, $object->bucket->slug, $forceDownload);
@@ -2332,39 +2343,49 @@ class Cdn
     public function urlCrop($objectId, $width, $height)
     {
         $isTrashed = false;
-        $object    = $this->get_object($objectId);
 
-        if (!$object) {
+        $oEmptyObj               = new \stdClass();
+        $oEmptyObj->filename     = '';
+        $oEmptyObj->bucket       = new \stdClass();
+        $oEmptyObj->bucket->slug = '';
 
-            /**
-             * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
-             */
+        if (empty($objectId)) {
 
-            if (userHasPermission('admin:cdn:trash:browse')) {
+            $object = $oEmptyObj;
 
-                $object = $this->getObjectFromTrash($objectId);
+        } elseif (is_numeric($objectId)) {
 
-                if (!$object) {
+            $object = $this->getObject($objectId);
 
-                    //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
-                    $object               = new \stdClass();
-                    $object->filename     = '';
-                    $object->bucket       = new \stdClass();
-                    $object->bucket->slug = '';
+            if (!$object) {
+
+                /**
+                 * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
+                 */
+
+                if (userHasPermission('admin:cdn:trash:browse')) {
+
+                    $object = $this->getObjectFromTrash($objectId);
+
+                    if (!$object) {
+
+                        //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
+                        $object = $oEmptyObj;
+
+                    } else {
+
+                        $isTrashed = true;
+                    }
 
                 } else {
 
-                    $isTrashed = true;
+                    //  Let the renderer show a bad_src graphic
+                    $object = $oEmptyObj;
                 }
-
-            } else {
-
-                //  Let the renderer show a bad_src graphic
-                $object               = new \stdClass();
-                $object->filename     = '';
-                $object->bucket       = new \stdClass();
-                $object->bucket->slug = '';
             }
+        } else {
+
+            $object = $objectId;
         }
 
         $url = $this->oDriver->urlCrop($object->filename, $object->bucket->slug, $width, $height);
@@ -2397,42 +2418,56 @@ class Cdn
     public function urlScale($objectId, $width, $height)
     {
         $isTrashed = false;
-        $object    = $this->get_object($objectId);
 
-        if (!$object) {
+        $oEmptyObj               = new \stdClass();
+        $oEmptyObj->filename     = '';
+        $oEmptyObj->bucket       = new \stdClass();
+        $oEmptyObj->bucket->slug = '';
 
-            /**
-             * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
-             */
+        if (empty($objectId)) {
 
-            if (userHasPermission('admin:cdn:trash:browse')) {
+            $object = $oEmptyObj;
 
-                $object = $this->getObjectFromTrash($objectId);
+        } else if (is_numeric($objectId)) {
 
-                if (!$object) {
+            $object = $this->getObject($objectId);
 
-                    //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
-                    $object               = new \stdClass();
-                    $object->filename     = '';
-                    $object->bucket       = new \stdClass();
-                    $object->bucket->slug = '';
+            if (!$object) {
+
+                /**
+                 * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
+                 */
+
+                if (userHasPermission('admin:cdn:trash:browse')) {
+
+                    $object = $this->getObjectFromTrash($objectId);
+
+                    if (!$object) {
+
+                        //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
+                        $object = $oEmptyObj;
+
+                    } else {
+
+                        $isTrashed = true;
+                    }
 
                 } else {
 
-                    $isTrashed = true;
+                    //  Let the renderer show a bad_src graphic
+                    $object = $oEmptyObj;
                 }
-
-            } else {
-
-                //  Let the renderer show a bad_src graphic
-                $object               = new \stdClass();
-                $object->filename     = '';
-                $object->bucket       = new \stdClass();
-                $object->bucket->slug = '';
             }
+        } else {
+
+            $object = $objectId;
         }
 
-        $url = $this->oDriver->urlScale($object->filename, $object->bucket->slug, $width, $height);
+        $url = $this->oDriver->urlScale(
+            $object->filename,
+            $object->bucket->slug,
+            $width, $height
+            );
         $url .= $isTrashed ? '?trashed=1' : '';
 
         return $url;
@@ -2582,22 +2617,28 @@ class Cdn
 
     /**
      * Generates an expiring URL for an object
-     * @param  integer $object  The object's ID
+     * @param  integer $objectId  The object's ID
      * @param  integer $expires The length of time the URL should be valid for, in seconds
      * @return string
      */
-    public function urlExpiring($object, $expires, $forceDownload = false)
+    public function urlExpiring($objectId, $expires, $forceDownload = false)
     {
-        $object = $this->get_object($object);
+        if (is_numeric($objectId)) {
 
-        if (!$object) {
+            $object = $this->getObject($objectId);
 
-            //  Let the renderer show a bad_src graphic
-            $object               = new \stdClass();
-            $object->filename     = '';
-            $object->bucket       = new \stdClass();
-            $object->bucket->slug = '';
+            if (!$object) {
 
+                //  Let the renderer show a bad_src graphic
+                $object               = new \stdClass();
+                $object->filename     = '';
+                $object->bucket       = new \stdClass();
+                $object->bucket->slug = '';
+
+            }
+        } else {
+
+            $object = $objectId;
         }
 
         return $this->oDriver->urlExpiring($object->filename, $object->bucket->slug, $expires, $forceDownload);

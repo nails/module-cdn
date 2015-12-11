@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * This file provides some shortcuts for the CDN
+ *
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Helper
+ * @author      Nails Dev Team
+ * @link
+ */
+
 use Nails\Factory;
 
 if (!function_exists('cdnServe')) {

@@ -95,7 +95,7 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Look up the object in the DB
-        $object = $this->cdn->get_object($this->object, $this->bucket);
+        $object = $this->cdn->getObject($this->object, $this->bucket);
 
         if (!$object) {
 
