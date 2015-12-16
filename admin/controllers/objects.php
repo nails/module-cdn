@@ -181,7 +181,7 @@ class Objects extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        $this->asset->load('nails.admin.cdn.upload.min.js', 'NAILS');
+        $this->asset->load('admin.upload.min.js', 'nailsapp/module-cdn');
         $this->asset->load('dropzone/downloads/css/dropzone.css', 'NAILS-BOWER');
         $this->asset->load('dropzone/downloads/css/basic.css', 'NAILS-BOWER');
         $this->asset->load('dropzone/downloads/dropzone.min.js', 'NAILS-BOWER');

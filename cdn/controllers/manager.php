@@ -154,7 +154,7 @@ class Manager extends Base
     {
         //  Unload all styles and load just the nails styles
         $this->asset->clear();
-        $this->asset->load('nails.cdn.manager.css', true);
+        $this->asset->load('admin.manager.css', 'nailsapp/module-cdn');
 
         //  Fetch files
         if ($this->data['enabled']) {
@@ -174,7 +174,7 @@ class Manager extends Base
             //  Load other assets
             $this->asset->load('nails.default.min.js', true);
             $this->asset->load('nails.api.min.js', true);
-            $this->asset->load('nails.cdn.manager.min.js', true);
+            $this->asset->load('admin.manager.min.js', 'nailsapp/module-cdn');
 
             // --------------------------------------------------------------------------
 

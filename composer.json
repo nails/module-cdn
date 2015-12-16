@@ -55,16 +55,20 @@
                 "helpers": ["cdn"]
             },
             "data": {
-                "adminAutoLoad": {
-                    "helpers": [
-                        "admin"
-                    ],
-                    "js": [
-                        ["nails.admin.cdn.objectpicker.min.js", "NAILS"]
-                    ],
-                    "css": [
-                        ["nails.admin.module.cdn.objectpicker.css", "NAILS"]
-                    ]
+                "nailsapp/module-admin": {
+                    "autoload": {
+                        "helpers": [
+                            "admin"
+                        ],
+                        "assets": {
+                            "js": [
+                                ["admin.objectpicker.min.js", "nailsapp/module-cdn"]
+                            ],
+                            "css": [
+                                ["admin.objectpicker.css", "nailsapp/module-cdn"]
+                            ]
+                        }
+                    }
                 }
             }
         }

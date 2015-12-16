@@ -1,0 +1,22 @@
+{
+  "name": "nailsapp-module-cdn",
+  "description": "This is the \"CDN\" module for Nails.",
+  "main": "",
+  "authors": [
+    "Nails Dev Team <hello@nailsapp.co.uk>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/nailsapp/module-cdn",
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "assets/bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.6"
+  }
+}
