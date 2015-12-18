@@ -13,7 +13,8 @@
 namespace Nails\Cdn\Library;
 
 use Nails\Factory;
-use Nails\Cdn\Exception\CdnDriverException;
+use Nails\Cdn\Exception\DriverException;
+use Nails\Cdn\Exception\UrlException;
 
 class Cdn
 {
@@ -63,7 +64,7 @@ class Cdn
         }
 
         if (empty($oDriver)) {
-            throw new CdnDriverException('"' . $sSlug . '" is not a valid CDN driver', 1);
+            throw new DriverException('"' . $sSlug . '" is not a valid CDN driver', 1);
         }
 
         $sDriverClass = $oDriver->data->namespace . $oDriver->data->class;
@@ -72,7 +73,7 @@ class Cdn
         $sInterfaceName = 'Nails\Cdn\Interfaces\Driver';
         if (!in_array($sInterfaceName, class_implements($sDriverClass))) {
 
-            throw new CdnDriverException(
+            throw new DriverException(
                 '"' . $sDriverClass . '" must implement ' . $sInterfaceName,
                 2
             );
@@ -2235,9 +2236,13 @@ class Cdn
                 }
             }
 
+        } elseif (is_object($objectId)) {
+
+            $object = $objectId;
+
         } else {
 
-            $object    = $objectId;
+            throw new UrlException('Supplied $objectId must be numeric or an object', 1);
         }
 
         $url = $this->oDriver->urlServe($object->filename, $object->bucket->slug, $forceDownload);

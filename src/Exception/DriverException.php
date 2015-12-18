@@ -14,6 +14,6 @@ namespace Nails\Cdn\Exception;
 
 use Nails\Common\Exception\NailsException;
 
-class CdnDriverException extends NailsException
+class DriverException extends NailsException
 {
 }
