@@ -16,11 +16,14 @@ use Nails\Factory;
 
 class Manager extends \Nails\Api\Controller\Base
 {
+    /**
+     * Require the user be authenticated to use any endpoint
+     */
+    const REQUIRE_AUTH = true;
+
+     // --------------------------------------------------------------------------
+
     private $oCdn;
-
-    // --------------------------------------------------------------------------
-
-     public static $requiresAuthentication = true;
 
     // --------------------------------------------------------------------------
 

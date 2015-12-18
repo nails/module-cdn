@@ -16,15 +16,21 @@ use Nails\Factory;
 
 class Object extends \Nails\Api\Controller\Base
 {
-    private $oCdn;
+    /**
+     * Require the user be authenticated to use any endpoint
+     */
+    const REQUIRE_AUTH = true;
 
     // --------------------------------------------------------------------------
 
-    public static $requiresAuthentication = true;
-
-    // --------------------------------------------------------------------------
-
+    /**
+     * The maximum number of objects a user can request at any one time
+     */
     const MAX_OBJECTS_PER_REQUEST = 100;
+
+    // --------------------------------------------------------------------------
+
+    private $oCdn;
 
     // --------------------------------------------------------------------------
 
