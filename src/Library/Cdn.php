@@ -160,8 +160,8 @@ class Cdn
     {
         //  Shortcut methods
         $shortcuts           = array();
-        $shortcuts['upload'] = 'object_create';
-        $shortcuts['delete'] = 'object_delete';
+        $shortcuts['upload'] = 'objectCreate';
+        $shortcuts['delete'] = 'objectDelete';
 
         if (isset($shortcuts[$method])) {
 
