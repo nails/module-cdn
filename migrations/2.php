@@ -24,6 +24,6 @@ class Migration2 extends Base
      */
     public function execute()
     {
-        $this->query("ALTER TABLE `{NAILS_DB_PREFIX}}cdn_object` CHANGE `mime` `mime` VARCHAR(130)  CHARACTER SET utf8  COLLATE utf8_general_ci  NULL  DEFAULT NULL;");
+        $this->query("ALTER TABLE `{{NAILS_DB_PREFIX}}cdn_object` CHANGE `mime` `mime` VARCHAR(130)  CHARACTER SET utf8  COLLATE utf8_general_ci  NULL  DEFAULT NULL;");
     }
 }
