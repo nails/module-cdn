@@ -16,7 +16,7 @@ namespace Nails\Database\Migration\Nailsapp\ModuleCdn;
 
 use Nails\Common\Console\Migrate\Base;
 
-class Migration2 extends Base
+class Migration1 extends Base
 {
     /**
      * Execute the migration
