@@ -17,14 +17,15 @@ if (!function_exists('cdnObjectPicker')) {
      * @param  string $sKey      The name to give the input
      * @param  string $sBucket   The bucket we're picking from
      * @param  int    $iObjectId The object which has previously been chosen
+     * @param  string $sAttr     Any attrbutes to add to the containing element
      * @return string
      */
-    function cdnObjectPicker($sKey, $sBucket, $iObjectId = null)
+    function cdnObjectPicker($sKey, $sBucket, $iObjectId = null, $sAttr = null)
     {
         $oCi = get_instance();
         return $oCi->load->view(
             'cdn/admin/picker',
-            array('key' => $sKey, 'bucket' => $sBucket, 'object' => $iObjectId),
+            array('key' => $sKey, 'bucket' => $sBucket, 'object' => $iObjectId, 'attr' => $sAttr),
             true
         );
     }

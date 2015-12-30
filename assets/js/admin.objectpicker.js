@@ -14,6 +14,14 @@ _CDN_OBJECTPICKER = function()
 
     // --------------------------------------------------------------------------
 
+    /**
+     * A cache of objects to avoid hitting the API again
+     * @type {Array}
+     */
+    base.objectCache = [];
+
+    // --------------------------------------------------------------------------
+
     base.__construct =function() {
 
         base.log('Constructing');
@@ -34,16 +42,19 @@ _CDN_OBJECTPICKER = function()
 
         $(document).on('click', '.cdn-object-picker', function() {
             base.openManager($(this));
+            $(this).trigger('opened');
             return false;
         });
 
         $(document).on('click', '.cdn-object-picker .cdn-object-picker__remove', function() {
+            $(this).closest('.cdn-object-picker').trigger('removed');
             base.resetPicker($(this).closest('.cdn-object-picker'));
             return false;
         });
 
         $(document).on('click', '.cdn-object-picker .cdn-object-picker__preview-link', function() {
             if ($.fn.fancybox) {
+                $(this).closest('.cdn-object-picker').trigger('preview');
                 $.fancybox.open(
                     $(this).attr('href'),
                     {
@@ -55,6 +66,7 @@ _CDN_OBJECTPICKER = function()
                     }
                 );
             } else {
+                $(this).closest('.cdn-object-picker').trigger('opened');
                 base.openManager($(this).closest('.cdn-object-picker'));
             }
             return false;
@@ -135,6 +147,7 @@ _CDN_OBJECTPICKER = function()
 
         base.log('Setting picker object');
         picker.find('.cdn-object-picker__input').val(object.id);
+        picker.trigger('picked');
 
         if (object.isImg) {
             picker.addClass('cdn-object-picker--has-image');
@@ -244,37 +257,52 @@ _CDN_OBJECTPICKER = function()
         base.log('Received data from manager');
         base.activePicker.addClass('cdn-object-picker--pending');
 
-        $.ajax({
-            'url': window.SITE_URL + 'api/cdn/object',
-            'data' : {
-                'id': id,
-                'urls': '150x150-crop'
-            }
-        })
-        .done(function(data) {
-            base.setPickerObject(base.activePicker, data.data);
-        })
-        .fail(function(data) {
+        //  Check the Object Cache
+        var cache = base.getFromCache(id);
 
-            var _data;
-            try {
+        if (cache) {
 
-                _data = JSON.parse(data.responseText);
-
-            } catch (e) {
-
-                _data = {
-                    'status': 500,
-                    'error': 'An unknown error occurred.'
-                };
-            }
-
-            base.warn(_data.error);
-        })
-        .always(function() {
+            base.log('Using Cache');
+            base.setPickerObject(base.activePicker, cache);
             base.activePicker.removeClass('cdn-object-picker--pending');
             base.activePicker = null;
-        });
+
+        } else {
+
+            base.log('Requesting Object data');
+            $.ajax({
+                'url': window.SITE_URL + 'api/cdn/object',
+                'data' : {
+                    'id': id,
+                    'urls': '150x150-crop'
+                }
+            })
+            .done(function(data) {
+                base.setObjectCache(data.data);
+                base.setPickerObject(base.activePicker, data.data);
+            })
+            .fail(function(data) {
+
+                var _data;
+                try {
+
+                    _data = JSON.parse(data.responseText);
+
+                } catch (e) {
+
+                    _data = {
+                        'status': 500,
+                        'error': 'An unknown error occurred.'
+                    };
+                }
+
+                base.warn(_data.error);
+            })
+            .always(function() {
+                base.activePicker.removeClass('cdn-object-picker--pending');
+                base.activePicker = null;
+            });
+        }
     };
 
     // --------------------------------------------------------------------------
@@ -294,6 +322,33 @@ _CDN_OBJECTPICKER = function()
         } while (fileSizeInBytes > 1024);
 
         return Math.max(fileSizeInBytes, 0.1).toFixed(1) + byteUnits[i];
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Fetches an object from the object cache
+     * @param  {Number} objectId The ID of the object to fetch
+     * @return {Object}
+     */
+    base.getFromCache = function(objectId) {
+        for (var i = base.objectCache.length - 1; i >= 0; i--) {
+            if (base.objectCache[i].id === objectId) {
+                return base.objectCache[i];
+            }
+        }
+
+        return null;
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Save an object to the cache
+     * @param {Object} object The object to save
+     */
+    base.setObjectCache = function(object) {
+        base.objectCache.push(object);
     };
 
     // --------------------------------------------------------------------------
