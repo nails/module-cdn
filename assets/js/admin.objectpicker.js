@@ -162,7 +162,9 @@ _CDN_OBJECTPICKER = function()
             var sizeHuman = base.getReadableFileSizeString(object.object.size);
 
             picker.addClass('cdn-object-picker--has-file');
-            picker.find('.cdn-object-picker__label').html(object.object.name + ' (' + sizeHuman + ')');
+            picker.find('.cdn-object-picker__label')
+                .html(object.object.name + ' (' + sizeHuman + ')')
+                .attr('title', object.object.name + ' (' + sizeHuman + ')');
         }
     };
 
