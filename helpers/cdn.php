@@ -12,6 +12,38 @@
 
 use Nails\Factory;
 
+if (!function_exists('cdnObject')) {
+
+    /**
+     * Returns a CDN object
+     * @param  integer $iObjectId The ID of the object to get
+     * @return stdClass
+     */
+    function cdnObject($iObjectId)
+    {
+        $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+        return $oCdn->getObject($iObjectId);
+    }
+}
+
+// --------------------------------------------------------------------------
+
+if (!function_exists('cdnBucket')) {
+
+    /**
+     * Returns a CDN object
+     * @param  integer $iBucketId The ID of the bucket to get
+     * @return stdClass
+     */
+    function cdnBucket($iBucketId)
+    {
+        $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+        return $oCdn->getBucket($iBucketId);
+    }
+}
+
+// --------------------------------------------------------------------------
+
 if (!function_exists('cdnServe')) {
 
     /**
