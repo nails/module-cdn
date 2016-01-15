@@ -181,7 +181,7 @@ class Serve extends Base
             //  If the object is known about, add some extra headers
             if ($object) {
 
-                header('Content-Disposition: attachment; filename="' . $object->filename_display . '"', true);
+                header('Content-Disposition: attachment; filename="' . $object->file->name->human . '"', true);
                 header('Content-Length: ' . $object->filesize, true);
 
             } else {
@@ -192,8 +192,7 @@ class Serve extends Base
         } else {
 
             //  Determine headers to send
-            $finfo = new finfo(FILEINFO_MIME_TYPE); // return mime type ala mimetype extension
-            header('Content-Type: ' . $finfo->file($usefile), true);
+            header('Content-Type: ' .  $object->file->mime, true);
 
             $stats = stat($usefile);
             $this->setCacheHeaders($stats[9], $this->bucket . $this->object, false);
@@ -202,8 +201,7 @@ class Serve extends Base
 
             //  If the object is known about, add some extra headers
             if ($object) {
-
-                header('Content-Length: ' . $object->filesize, true);
+                header('Content-Length: ' . $object->file->size->bytes, true);
             }
         }
 

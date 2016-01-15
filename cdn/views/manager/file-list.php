@@ -1,5 +1,5 @@
 
-<tr class="file list" data-title="<?=$object->filename_display?>" data-id="<?=$object->id?>">
+<tr class="file list" data-title="<?=$object->file->name->human?>" data-id="<?=$object->id?>">
     <td class="filename">
         <?php
 
@@ -13,7 +13,7 @@
             $action        = 'View';
 
 
-        } elseif ($object->mime == 'audio/mpeg') {
+        } elseif ($object->file->mime == 'audio/mpeg') {
 
             //  Audio/Video
             echo '<div class="icon"><span class="fa fa-music" style="font-size:2.2em"></span></div>';
@@ -23,7 +23,7 @@
             $action        = 'Play';
 
 
-        } elseif ($object->mime == 'application/pdf') {
+        } elseif ($object->file->mime == 'application/pdf') {
 
             //  PDF
             echo '<div class="icon"><span class="fa fa-file-o" style="font-size:2.2em"></span></div>';
@@ -42,22 +42,22 @@
             $action        = 'Download';
         }
 
-        echo $object->filename_display;
+        echo $object->file->name->human;
 
         ?>
     </td>
     <td class="mime">
-        <?=$object->mime?>
+        <?=$object->file->mime?>
     </td>
     <td class="filesize">
-        <?=format_bytes($object->filesize)?>
+        <?=$object->file->size->human?>
     </td>
     <td class="modified">
         <?=toUserDatetime($object->modified)?>
     </td>
     <td class="actions">
-        <a href="#" data-fieldid="' . $this->input->get('fieldid') . '" data-id="' . $object->id . '" data-bucket="' . $bucket->slug .'" data-file="' . $object->filename .'" class="btn btn-xs btn-success insert">Insert</a>
+        <a href="#" data-fieldid="' . $this->input->get('fieldid') . '" data-id="' . $object->id . '" data-bucket="' . $bucket->slug .'" data-file="' . $object->file->name->disk .'" class="btn btn-xs btn-success insert">Insert</a>
         <?=anchor(site_url('cdn/manager/delete/' . $object->id . '?' . $_SERVER['QUERY_STRING'], isPageSecure()), 'Delete', 'class="btn btn-xs btn-danger delete"')?>
-        <?=anchor($url, $action, 'data-fancybox-title="' . $object->filename_display . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' btn btn-xs btn-default"')?>
+        <?=anchor($url, $action, 'data-fancybox-title="' . $object->file->name->human . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' btn btn-xs btn-default"')?>
     </td>
 </tr>

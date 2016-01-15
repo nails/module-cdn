@@ -31,7 +31,7 @@
                         echo '<td class="id">' . number_format($object->id) . '</td>';
                         echo '<td class="thumbnail">';
 
-                            switch ($object->mime) {
+                            switch ($object->file->mime) {
 
                                 case 'image/png' :
                                 case 'image/jpeg' :
@@ -54,12 +54,12 @@
 
                         echo '</td>';
                         echo '<td class="bucket">' . $object->bucket->label . '</td>';
-                        echo '<td class="mime">' . $object->mime . '</td>';
-                        echo '<td class="filename">' . $object->filename_display . '</td>';
+                        echo '<td class="mime">' . $object->file->mime . '</td>';
+                        echo '<td class="filename">' . $object->file->name->human . '</td>';
                         echo adminHelper('loadUserCell', $object->creator);
                         echo adminHelper('loadDatetimeCell', $object->created);
                         echo adminHelper('loadDatetimeCell', $object->modified);
-                        echo '<td class="filesize">' . format_bytes($object->filesize) . '</td>';
+                        echo '<td class="filesize">' . $object->file->size->human . '</td>';
                         echo '<td class="actions">';
 
                             if (userHasPermission('admin:cdn:objects:edit')) {

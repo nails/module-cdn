@@ -79,8 +79,8 @@
                         ?>
                         <tr>
                             <td><?=$orphan->bucket?></td>
-                            <td><?=$orphan->filename_display?></td>
-                            <td><?=format_bytes($orphan->filesize)?></td>
+                            <td><?=$orphan->file->name->human?></td>
+                            <td><?=$orphan->file->size->human?></td>
                             <td>
                             <?php
 

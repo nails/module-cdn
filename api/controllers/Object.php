@@ -111,9 +111,9 @@ class Object extends \Nails\Api\Controller\Base
             $oTemp = new \stdClass();
             $oTemp->id = $oObject->id;
             $oTemp->object = new \stdClass();
-            $oTemp->object->name = $oObject->filename_display;
-            $oTemp->object->mime = $oObject->mime;
-            $oTemp->object->size = $oObject->filesize;
+            $oTemp->object->name = $oObject->file->name->human;
+            $oTemp->object->mime = $oObject->file->mime;
+            $oTemp->object->size = $oObject->file->size;
             $oTemp->bucket = $oObject->bucket;
             $oTemp->isImg = $oObject->is_img;
             $oTemp->img = new \stdClass();

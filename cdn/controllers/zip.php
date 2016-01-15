@@ -73,8 +73,8 @@ class Zip extends Base
                     foreach ($objects as $obj) {
 
                         $temp           = new stdClass();
-                        $temp->path     = $this->cdn->objectLocalPath($obj->bucket->slug, $obj->filename);
-                        $temp->filename = $obj->filename_display;
+                        $temp->path     = $this->cdn->objectLocalPath($obj->bucket->slug, $obj->file->name->disk);
+                        $temp->filename = $obj->file->name->human;
                         $temp->bucket   = $obj->bucket->label;
 
                         if (!$temp->path) {

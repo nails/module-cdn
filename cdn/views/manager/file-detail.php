@@ -1,4 +1,4 @@
-<li class="file detail" data-title="<?=$object->filename_display?>" data-id="<?=$object->id?>">
+<li class="file detail" data-title="<?=$object->file->name->human?>" data-id="<?=$object->id?>">
     <div class="image">
         <?php
 
@@ -12,7 +12,7 @@
             $action        = 'View';
 
 
-        } elseif ($object->mime == 'audio/mpeg') {
+        } elseif ($object->file->mime == 'audio/mpeg') {
 
             //  Audio/Video
             echo '<span class="fa fa-music" style="font-size:5em"></span>';
@@ -21,7 +21,7 @@
             $url           = cdnServe($object->id);
             $action        = 'Play';
 
-        } elseif ($object->mime == 'application/pdf') {
+        } elseif ($object->file->mime == 'application/pdf') {
 
             //  PDF
             echo '<span class="fa fa-file-o" style="font-size:5em"></span>';
@@ -44,15 +44,15 @@
     </div>
     <div class="details">
         <span class="filename">
-            <?=$object->filename_display?>
+            <?=$object->file->name->human?>
         </span>
         <div class="type">
             <strong>Type:</strong>
-            <?=$object->mime?>
+            <?=$object->file->mime?>
         </div>
         <div class="filesize">
             <strong>Filesize:</strong>
-            <?=format_bytes($object->filesize)?>
+            <?=$object->file->size->human?>
         </div>
         <div class="created">
             <strong>Created:</strong>
@@ -63,9 +63,9 @@
             <?=toUserDatetime($object->modified)?>
         </div>
         <div class="actions">
-            <a href="#" data-id="<?=$object->id?>" data-bucket="<?=$bucket->slug?>" data-file="<?=$object->filename?>" class="btn btn-xs btn-fsuccess insert">Insert</a>
+            <a href="#" data-id="<?=$object->id?>" data-bucket="<?=$bucket->slug?>" data-file="<?=$object->file->name->disk?>" class="btn btn-xs btn-success insert">Insert</a>
             <?=anchor(site_url('cdn/manager/delete/' . $object->id . '?' . $_SERVER['QUERY_STRING'], isPageSecure()), 'Delete', 'class="btn btn-xs btn-danger delete"')?>
-            <?=anchor($url, $action, 'data-fancybox-title="' . $object->filename_display . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' btn btn-xs btn-default"')?>
+            <?=anchor($url, $action, 'data-fancybox-title="' . $object->file->name->human . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' btn btn-xs btn-default"')?>
         </div>
     </div>
     <div class="clear"></div>

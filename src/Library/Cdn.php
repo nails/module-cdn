@@ -31,7 +31,11 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
-    const DEFAULT_DRIVER = 'nailsapp/driver-cdn-local';
+    const DEFAULT_DRIVER     = 'nailsapp/driver-cdn-local';
+    const BYTE_MULTIPLIER_KB = 1024;
+    const BYTE_MULTIPLIER_MB = self::BYTE_MULTIPLIER_KB * 1024;
+    const BYTE_MULTIPLIER_GB = self::BYTE_MULTIPLIER_MB * 1024;
+    const FILESIZE_PRECISION = 6;
 
     // --------------------------------------------------------------------------
 
@@ -108,7 +112,7 @@ class Cdn
     protected function unsetCacheObject($object, $clearCachedir = true)
     {
         $objectId       = isset($object->id) ? $object->id : '';
-        $objectFilename = isset($object->filename) ? $object->filename : '';
+        $objectFilename = isset($object->file->name->disk) ? $object->file->name->disk : '';
         $bucketId       = isset($object->bucket->id) ? $object->bucket->id : '';
         $bucketSlug     = isset($object->bucket->slug) ? $object->bucket->slug : '';
 
@@ -629,8 +633,8 @@ class Cdn
 
                             if (!is_null($maxFileSize)) {
 
-                                $maxFileSize = return_bytes($maxFileSize);
-                                $maxFileSize = format_bytes($maxFileSize);
+                                $maxFileSize = $this->returnBytes($maxFileSize);
+                                $maxFileSize = $this->formatBytes($maxFileSize);
 
                                 $error = lang('cdn_upload_err_ini_size', $maxFileSize);
 
@@ -837,7 +841,7 @@ class Cdn
 
             if ($_data->filesize > $_bucket->max_size) {
 
-                $_fs_in_kb = format_bytes($_bucket->max_size);
+                $_fs_in_kb = $this->formatBytes($_bucket->max_size);
                 $this->setError(lang('cdn_error_filesize', $_fs_in_kb));
                 return false;
             }
@@ -1020,10 +1024,10 @@ class Cdn
         $objectData                     = array();
         $objectData['id']               = $object->id;
         $objectData['bucket_id']        = $object->bucket->id;
-        $objectData['filename']         = $object->filename;
-        $objectData['filename_display'] = $object->filename_display;
-        $objectData['mime']             = $object->mime;
-        $objectData['filesize']         = $object->filesize;
+        $objectData['filename']         = $object->file->name->disk;
+        $objectData['filename_display'] = $object->file->name->human;
+        $objectData['mime']             = $object->file->mime;
+        $objectData['filesize']         = $object->file->size->bytes;
         $objectData['img_width']        = $object->img_width;
         $objectData['img_height']       = $object->img_height;
         $objectData['img_orientation']  = $object->img_orientation;
@@ -1110,10 +1114,10 @@ class Cdn
         $objectData                     = array();
         $objectData['id']               = $object->id;
         $objectData['bucket_id']        = $object->bucket->id;
-        $objectData['filename']         = $object->filename;
-        $objectData['filename_display'] = $object->filename_display;
-        $objectData['mime']             = $object->mime;
-        $objectData['filesize']         = $object->filesize;
+        $objectData['filename']         = $object->file->name->disk;
+        $objectData['filename_display'] = $object->file->name->human;
+        $objectData['mime']             = $object->file->mime;
+        $objectData['filesize']         = $object->file->size->bytes;
         $objectData['img_width']        = $object->img_width;
         $objectData['img_height']       = $object->img_height;
         $objectData['img_orientation']  = $object->img_orientation;
@@ -1196,7 +1200,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Attempt to remove the file
-        if ($this->oDriver->objectDestroy($object->filename, $object->bucket->slug)) {
+        if ($this->oDriver->objectDestroy($object->file->name->disk, $object->bucket->slug)) {
 
             //  Remove the database entries
             $this->oDb->trans_begin();
@@ -1386,7 +1390,7 @@ class Cdn
 
         if ($object) {
 
-            return $this->objectLocalPath($object->bucket->slug, $object->filename);
+            return $this->objectLocalPath($object->bucket->slug, $object->file->name->disk);
 
         } else {
 
@@ -1476,7 +1480,6 @@ class Cdn
     protected function formatObject(&$object)
     {
         $object->id          = (int) $object->id;
-        $object->filesize    = (int) $object->filesize;
         $object->img_width   = (int) $object->img_width;
         $object->img_height  = (int) $object->img_height;
         $object->is_animated = (bool) $object->is_animated;
@@ -1485,6 +1488,32 @@ class Cdn
         $object->thumbs      = (int) $object->thumbs;
         $object->scales      = (int) $object->scales;
         $object->modified_by = $object->modified_by ? (int) $object->modified_by : null;
+
+        // --------------------------------------------------------------------------
+
+        $sFileNameDisk  = $object->filename;
+        $sFileNameHuman = $object->filename_display;
+        $iFileSize      = (int) $object->filesize;
+
+        $object->file                  = new \stdClass();
+
+        $object->file->name            = new \stdClass();
+        $object->file->name->disk      = $sFileNameDisk;
+        $object->file->name->human     = $sFileNameHuman;
+        unset($object->filename);
+        unset($object->filename_display);
+
+        $object->file->mime            = $object->mime;
+        $object->file->ext             = strtolower(pathinfo($object->file->name->disk, PATHINFO_EXTENSION));
+        unset($object->mime);
+
+        $object->file->size            = new \stdClass();
+        $object->file->size->bytes     = $iFileSize;
+        $object->file->size->kilobytes = round($iFileSize / self::BYTE_MULTIPLIER_KB, self::FILESIZE_PRECISION);
+        $object->file->size->megabytes = round($iFileSize / self::BYTE_MULTIPLIER_MB, self::FILESIZE_PRECISION);
+        $object->file->size->gigabytes = round($iFileSize / self::BYTE_MULTIPLIER_GB, self::FILESIZE_PRECISION);
+        $object->file->size->human     = $this->formatBytes($iFileSize);
+        unset($object->filesize);
 
         // --------------------------------------------------------------------------
 
@@ -1519,7 +1548,7 @@ class Cdn
         //  Quick flag for detecting images
         $object->is_img = false;
 
-        switch ($object->mime) {
+        switch ($object->file->mime) {
 
             case 'image/jpg':
             case 'image/jpeg':
@@ -1843,7 +1872,7 @@ class Cdn
 
             if (!$this->objectDestroy($obj->id)) {
 
-                $this->setError('Unable to delete object "' . $obj->filename_display . '" (ID:' . $obj->id . ').');
+                $this->setError('Unable to delete object "' . $obj->file->name->human . '" (ID:' . $obj->id . ').');
                 $errors++;
             }
         }
@@ -2194,10 +2223,12 @@ class Cdn
     {
         $isTrashed = false;
 
-        $oEmptyObj               = new \stdClass();
-        $oEmptyObj->filename     = '';
-        $oEmptyObj->bucket       = new \stdClass();
-        $oEmptyObj->bucket->slug = '';
+        $oEmptyObj                   = new \stdClass();
+        $oEmptyObj->file             = new \stdClass();
+        $oEmptyObj->file->name       = new \stdClass();
+        $oEmptyObj->file->name->disk = '';
+        $oEmptyObj->bucket           = new \stdClass();
+        $oEmptyObj->bucket->slug     = '';
 
         if (empty($objectId)) {
 
@@ -2243,7 +2274,7 @@ class Cdn
             throw new UrlException('Supplied $objectId must be numeric or an object', 1);
         }
 
-        $url = $this->oDriver->urlServe($object->filename, $object->bucket->slug, $forceDownload);
+        $url = $this->oDriver->urlServe($object->file->name->disk, $object->bucket->slug, $forceDownload);
         $url .= $isTrashed ? '?trashed=1' : '';
 
         return $url;
@@ -2347,10 +2378,12 @@ class Cdn
     {
         $isTrashed = false;
 
-        $oEmptyObj               = new \stdClass();
-        $oEmptyObj->filename     = '';
-        $oEmptyObj->bucket       = new \stdClass();
-        $oEmptyObj->bucket->slug = '';
+        $oEmptyObj                   = new \stdClass();
+        $oEmptyObj->file             = new \stdClass();
+        $oEmptyObj->file->name       = new \stdClass();
+        $oEmptyObj->file->name->disk = '';
+        $oEmptyObj->bucket           = new \stdClass();
+        $oEmptyObj->bucket->slug     = '';
 
         if (empty($objectId)) {
 
@@ -2391,7 +2424,7 @@ class Cdn
             $object = $objectId;
         }
 
-        $url = $this->oDriver->urlCrop($object->filename, $object->bucket->slug, $width, $height);
+        $url = $this->oDriver->urlCrop($object->file->name->disk, $object->bucket->slug, $width, $height);
         $url .= $isTrashed ? '?trashed=1' : '';
 
         return $url;
@@ -2422,10 +2455,12 @@ class Cdn
     {
         $isTrashed = false;
 
-        $oEmptyObj               = new \stdClass();
-        $oEmptyObj->filename     = '';
-        $oEmptyObj->bucket       = new \stdClass();
-        $oEmptyObj->bucket->slug = '';
+        $oEmptyObj                   = new \stdClass();
+        $oEmptyObj->file             = new \stdClass();
+        $oEmptyObj->file->name       = new \stdClass();
+        $oEmptyObj->file->name->disk = '';
+        $oEmptyObj->bucket           = new \stdClass();
+        $oEmptyObj->bucket->slug     = '';
 
         if (empty($objectId)) {
 
@@ -2467,7 +2502,7 @@ class Cdn
         }
 
         $url = $this->oDriver->urlScale(
-            $object->filename,
+            $object->file->name->disk,
             $object->bucket->slug,
             $width, $height
             );
@@ -2633,10 +2668,12 @@ class Cdn
             if (!$object) {
 
                 //  Let the renderer show a bad_src graphic
-                $object               = new \stdClass();
-                $object->filename     = '';
-                $object->bucket       = new \stdClass();
-                $object->bucket->slug = '';
+                $object                   = new \stdClass();
+                $object->file             = new \stdClass();
+                $object->file->name       = new \stdClass();
+                $object->file->name->disk = '';
+                $object->bucket           = new \stdClass();
+                $object->bucket->slug     = '';
 
             }
         } else {
@@ -2644,7 +2681,7 @@ class Cdn
             $object = $objectId;
         }
 
-        return $this->oDriver->urlExpiring($object->filename, $object->bucket->slug, $expires, $forceDownload);
+        return $this->oDriver->urlExpiring($object->file->name->disk, $object->bucket->slug, $expires, $forceDownload);
     }
 
     // --------------------------------------------------------------------------
@@ -2996,5 +3033,68 @@ class Cdn
         }
 
         return true;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Formats a filesize given in bytes into a human-friendly string
+     * @param  integer $iBytes     The filesize, in bytes
+     * @param  integer $iPrecision The precision to use
+     * @return string
+     */
+    public function formatBytes($bytes, $precision = 2)
+    {
+        $units = array('B', 'KB', 'MB', 'GB', 'TB');
+        $bytes = max($bytes, 0);
+        $pow   = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow   = min($pow, count($units) - 1);
+
+        //  Uncomment one of the following alternatives
+        //$bytes /= pow(1024, $pow);
+        $bytes /= (1 << (10 * $pow));
+
+        $var     = round($bytes, $precision) . ' ' . $units[$pow];
+        $pattern = '/(.+?)\.(.*?)/';
+
+        return preg_replace_callback(
+            $pattern,
+            function ($matches) {
+                return number_format($matches[1]) . '.' . $matches[2];
+            },
+            $var
+        );
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Formats a filesize as bytes (e.g max_upload_size)
+     * hat-tip: http://php.net/manual/en/function.ini-get.php#96996
+     * @param  string $sSize The string to convert to bytes
+     * @return integer
+     */
+    public function returnBytes($sSize)
+    {
+        switch (strtoupper(substr($sSize, -1))) {
+
+            case 'M':
+                $iReturn = (int) $sSize * 1048576;
+                break;
+
+            case 'K':
+                $iReturn = (int) $sSize * 1024;
+                break;
+
+            case 'G':
+                $iReturn = (int) $sSize * 1073741824;
+                break;
+
+            default:
+                $iReturn = $sSize;
+                break;
+        }
+
+        return $iReturn;
     }
 }
