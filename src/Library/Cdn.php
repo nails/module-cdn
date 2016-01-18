@@ -1477,106 +1477,106 @@ class Cdn
      * @param   object  $object The object to format
      * @return  void
      **/
-    protected function formatObject(&$object)
+    protected function formatObject(&$oObj)
     {
-        $object->id          = (int) $object->id;
-        $object->img_width   = (int) $object->img_width;
-        $object->img_height  = (int) $object->img_height;
-        $object->is_animated = (bool) $object->is_animated;
-        $object->serves      = (int) $object->serves;
-        $object->downloads   = (int) $object->downloads;
-        $object->thumbs      = (int) $object->thumbs;
-        $object->scales      = (int) $object->scales;
-        $object->modified_by = $object->modified_by ? (int) $object->modified_by : null;
+        $oObj->id          = (int) $oObj->id;
+        $oObj->img_width   = (int) $oObj->img_width;
+        $oObj->img_height  = (int) $oObj->img_height;
+        $oObj->is_animated = (bool) $oObj->is_animated;
+        $oObj->serves      = (int) $oObj->serves;
+        $oObj->downloads   = (int) $oObj->downloads;
+        $oObj->thumbs      = (int) $oObj->thumbs;
+        $oObj->scales      = (int) $oObj->scales;
+        $oObj->modified_by = $oObj->modified_by ? (int) $oObj->modified_by : null;
 
         // --------------------------------------------------------------------------
 
-        $sFileNameDisk  = $object->filename;
-        $sFileNameHuman = $object->filename_display;
-        $iFileSize      = (int) $object->filesize;
+        $sFileNameDisk  = $oObj->filename;
+        $sFileNameHuman = $oObj->filename_display;
+        $iFileSize      = (int) $oObj->filesize;
 
-        $object->file                  = new \stdClass();
+        $oObj->file                  = new \stdClass();
 
-        $object->file->name            = new \stdClass();
-        $object->file->name->disk      = $sFileNameDisk;
-        $object->file->name->human     = $sFileNameHuman;
-        unset($object->filename);
-        unset($object->filename_display);
+        $oObj->file->name            = new \stdClass();
+        $oObj->file->name->disk      = $sFileNameDisk;
+        $oObj->file->name->human     = $sFileNameHuman;
+        unset($oObj->filename);
+        unset($oObj->filename_display);
 
-        $object->file->mime            = $object->mime;
-        $object->file->ext             = strtolower(pathinfo($object->file->name->disk, PATHINFO_EXTENSION));
-        unset($object->mime);
+        $oObj->file->mime            = $oObj->mime;
+        $oObj->file->ext             = strtolower(pathinfo($oObj->file->name->disk, PATHINFO_EXTENSION));
+        unset($oObj->mime);
 
-        $object->file->size            = new \stdClass();
-        $object->file->size->bytes     = $iFileSize;
-        $object->file->size->kilobytes = round($iFileSize / self::BYTE_MULTIPLIER_KB, self::FILESIZE_PRECISION);
-        $object->file->size->megabytes = round($iFileSize / self::BYTE_MULTIPLIER_MB, self::FILESIZE_PRECISION);
-        $object->file->size->gigabytes = round($iFileSize / self::BYTE_MULTIPLIER_GB, self::FILESIZE_PRECISION);
-        $object->file->size->human     = $this->formatBytes($iFileSize);
-        unset($object->filesize);
-
-        // --------------------------------------------------------------------------
-
-        $object->creator              = new \stdClass();
-        $object->creator->id          = $object->created_by ? (int) $object->created_by : null;
-        $object->creator->first_name  = $object->first_name;
-        $object->creator->last_name   = $object->last_name;
-        $object->creator->email       = $object->email;
-        $object->creator->profile_img = $object->profile_img;
-        $object->creator->gender      = $object->gender;
-
-        unset($object->created_by);
-        unset($object->first_name);
-        unset($object->last_name);
-        unset($object->email);
-        unset($object->profile_img);
-        unset($object->gender);
+        $oObj->file->size            = new \stdClass();
+        $oObj->file->size->bytes     = $iFileSize;
+        $oObj->file->size->kilobytes = round($iFileSize / self::BYTE_MULTIPLIER_KB, self::FILESIZE_PRECISION);
+        $oObj->file->size->megabytes = round($iFileSize / self::BYTE_MULTIPLIER_MB, self::FILESIZE_PRECISION);
+        $oObj->file->size->gigabytes = round($iFileSize / self::BYTE_MULTIPLIER_GB, self::FILESIZE_PRECISION);
+        $oObj->file->size->human     = $this->formatBytes($iFileSize);
+        unset($oObj->filesize);
 
         // --------------------------------------------------------------------------
 
-        $object->bucket        = new \stdClass();
-        $object->bucket->id    = (int) $object->bucket_id;
-        $object->bucket->label = $object->bucket_label;
-        $object->bucket->slug  = $object->bucket_slug;
+        $oObj->creator              = new \stdClass();
+        $oObj->creator->id          = $oObj->created_by ? (int) $oObj->created_by : null;
+        $oObj->creator->first_name  = $oObj->first_name;
+        $oObj->creator->last_name   = $oObj->last_name;
+        $oObj->creator->email       = $oObj->email;
+        $oObj->creator->profile_img = $oObj->profile_img;
+        $oObj->creator->gender      = $oObj->gender;
 
-        unset($object->bucket_id);
-        unset($object->bucket_label);
-        unset($object->bucket_slug);
+        unset($oObj->created_by);
+        unset($oObj->first_name);
+        unset($oObj->last_name);
+        unset($oObj->email);
+        unset($oObj->profile_img);
+        unset($oObj->gender);
+
+        // --------------------------------------------------------------------------
+
+        $oObj->bucket        = new \stdClass();
+        $oObj->bucket->id    = (int) $oObj->bucket_id;
+        $oObj->bucket->label = $oObj->bucket_label;
+        $oObj->bucket->slug  = $oObj->bucket_slug;
+
+        unset($oObj->bucket_id);
+        unset($oObj->bucket_label);
+        unset($oObj->bucket_slug);
 
         // --------------------------------------------------------------------------
 
         //  Quick flag for detecting images
-        $object->is_img = false;
+        $oObj->is_img = false;
 
-        switch ($object->file->mime) {
+        switch ($oObj->file->mime) {
 
             case 'image/jpg':
             case 'image/jpeg':
             case 'image/gif':
             case 'image/png':
 
-                $object->is_img = true;
+                $oObj->is_img = true;
                 break;
         }
 
         // --------------------------------------------------------------------------
 
-        if (isset($object->trashed)) {
+        if (isset($oObj->trashed)) {
 
-            $object->trasher              = new \stdClass();
-            $object->trasher->id          = $object->trashed_by ? (int) $object->trashed_by : null;
-            $object->trasher->first_name  = $object->trasher_first_name;
-            $object->trasher->last_name   = $object->trasher_last_name;
-            $object->trasher->email       = $object->trasher_email;
-            $object->trasher->profile_img = $object->trasher_profile_img;
-            $object->trasher->gender      = $object->trasher_gender;
+            $oObj->trasher              = new \stdClass();
+            $oObj->trasher->id          = $oObj->trashed_by ? (int) $oObj->trashed_by : null;
+            $oObj->trasher->first_name  = $oObj->trasher_first_name;
+            $oObj->trasher->last_name   = $oObj->trasher_last_name;
+            $oObj->trasher->email       = $oObj->trasher_email;
+            $oObj->trasher->profile_img = $oObj->trasher_profile_img;
+            $oObj->trasher->gender      = $oObj->trasher_gender;
 
-            unset($object->trashed_by);
-            unset($object->trasher_first_name);
-            unset($object->trasher_last_name);
-            unset($object->trasher_email);
-            unset($object->trasher_profile_img);
-            unset($object->trasher_gender);
+            unset($oObj->trashed_by);
+            unset($oObj->trasher_first_name);
+            unset($oObj->trasher_last_name);
+            unset($oObj->trasher_email);
+            unset($oObj->trasher_profile_img);
+            unset($oObj->trasher_gender);
         }
     }
 

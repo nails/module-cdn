@@ -27,9 +27,13 @@
 
                 foreach ($objects as $object) {
 
-                    echo '<tr>';
-                        echo '<td class="id">' . number_format($object->id) . '</td>';
-                        echo '<td class="thumbnail">';
+                    ?>
+                    <tr>
+                        <td class="id">
+                            <?=number_format($object->id)?>
+                        </td>
+                        <td class="thumbnail">
+                            <?php
 
                             switch ($object->file->mime) {
 
@@ -37,7 +41,11 @@
                                 case 'image/jpeg' :
                                 case 'image/gif' :
 
-                                    echo anchor(cdnServe($object->id), img(cdnScale($object->id, 64, 64)), 'class="fancybox"');
+                                    echo anchor(
+                                        cdnServe($object->id),
+                                        img(cdnScale($object->id, 64, 64)),
+                                        'class="fancybox"'
+                                    );
                                     break;
 
                                 case 'audio/mpeg' :
@@ -49,18 +57,30 @@
 
                                     echo '<span class="fa fa-file-o"></span>';
                                     break;
-
                             }
 
-                        echo '</td>';
-                        echo '<td class="bucket">' . $object->bucket->label . '</td>';
-                        echo '<td class="mime">' . $object->file->mime . '</td>';
-                        echo '<td class="filename">' . $object->file->name->human . '</td>';
-                        echo adminHelper('loadUserCell', $object->creator);
-                        echo adminHelper('loadDatetimeCell', $object->created);
-                        echo adminHelper('loadDatetimeCell', $object->modified);
-                        echo '<td class="filesize">' . $object->file->size->human . '</td>';
-                        echo '<td class="actions">';
+                            ?>
+                        </td>
+                        <td class="bucket">
+                            <?=$object->bucket->label?>
+                        </td>
+                        <td class="mime">
+                            .<?=$object->file->ext?>
+                            <small title="<?=$object->file->mime?>">
+                                <?=$object->file->mime?>
+                            </small>
+                        </td>
+                        <td class="filename">
+                            <?=$object->file->name->human?>
+                        </td>
+                        <?=adminHelper('loadUserCell', $object->creator)?>
+                        <?=adminHelper('loadDatetimeCell', $object->created)?>
+                        <?=adminHelper('loadDatetimeCell', $object->modified)?>
+                        <td class="filesize">
+                            <?=$object->file->size->human?>
+                        </td>
+                        <td class="actions">
+                            <?php
 
                             if (userHasPermission('admin:cdn:objects:edit')) {
 
@@ -97,8 +117,10 @@
                                 );
                             }
 
-                        echo '</td>';
-                    echo '</tr>';
+                            ?>
+                        </td>
+                    </tr>
+                    <?php
                 }
 
             } else {
@@ -110,7 +132,6 @@
                     </td>
                 </tr>
                 <?php
-
             }
 
             ?>

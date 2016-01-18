@@ -32,8 +32,24 @@
         td.count {
             width: 100px;
         }
+        th.mime,
+        td.mime {
+            max-width: 250px;
+        }
+        th.filename,
+        td.filename {
+            min-width: 250px;
+        }
         th.actions {
             min-width: 170px;
+        }
+        td.mime {
+            small {
+                white-space: nowrap;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
         }
     }
     &.object {
