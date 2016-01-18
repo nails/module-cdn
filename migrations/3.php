@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Migration:   2
- * Started:     22/12/2015
- * Finalised:   22/12/2015
+ * Migration:   3
+ * Started:     18/01/2016
+ * Finalised:   18/01/2016
  *
  * @package     Nails
  * @subpackage  module-cdn
@@ -16,7 +16,7 @@ namespace Nails\Database\Migration\Nailsapp\ModuleCdn;
 
 use Nails\Common\Console\Migrate\Base;
 
-class Migration2 extends Base
+class Migration3 extends Base
 {
     /**
      * Execute the migration
@@ -24,6 +24,6 @@ class Migration2 extends Base
      */
     public function execute()
     {
-        $this->query("ALTER TABLE `{{NAILS_DB_PREFIX}}cdn_object` CHANGE `mime` `mime` VARCHAR(130)  CHARACTER SET utf8  COLLATE utf8_general_ci  NULL  DEFAULT NULL;");
+        $this->query("ALTER TABLE `{{NAILS_DB_PREFIX}}cdn_object` CHANGE `mime` `mime` VARCHAR(150) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;");
     }
 }
