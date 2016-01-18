@@ -2177,32 +2177,28 @@ class Cdn
      */
     protected function getMimeMappings()
     {
-        $cacheKey = 'mimes';
-        $cache    = $this->getCache($cacheKey);
+        $sCacheKey = 'mimes';
+        $aCache    = $this->getCache($sCacheKey);
 
-        if ($cache) {
-
-            return $cache;
+        if ($aCache) {
+            return $aCache;
         }
 
         // --------------------------------------------------------------------------
 
-        //  Try to work it out using CodeIgniter's mapping
+        //  Try to work it out using Nail's mapping
         require NAILS_COMMON_PATH . 'config/mimes.php';
 
         // --------------------------------------------------------------------------
 
-        //  Override/add mimes
+        //  Make sure we at least have an empty array
         if (!isset($mimes)) {
-
             $mimes = array();
         }
 
-        $mimes['doc'] = array('application/msword', 'application/vnd.ms-office');
-
         // --------------------------------------------------------------------------
 
-        $this->setCache($cacheKey, $mimes);
+        $this->setCache($sCacheKey, $mimes);
 
         // --------------------------------------------------------------------------
 
