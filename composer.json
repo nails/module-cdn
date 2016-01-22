@@ -57,9 +57,6 @@
             "data": {
                 "nailsapp/module-admin": {
                     "autoload": {
-                        "helpers": [
-                            "admin"
-                        ],
                         "assets": {
                             "js": [
                                 ["admin.objectpicker.min.js", "nailsapp/module-cdn"]

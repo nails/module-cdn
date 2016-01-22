@@ -235,6 +235,10 @@ if (!function_exists('getMimeFromFile')) {
 
 // --------------------------------------------------------------------------
 
+/**
+ * @todo These should be loaded for admin, BUT also work via the API - i.e CMS Page widgets
+ */
+
 if (!function_exists('cdnManagerUrl')) {
 
     /**
@@ -276,5 +280,38 @@ if (!function_exists('cdnManagerUrl')) {
         $aParams = http_build_query($aParams);
 
         return site_url('cdn/manager/browse?' . $aParams, $bSecure);
+    }
+}
+
+// --------------------------------------------------------------------------
+
+/**
+ * This file provides some CDN related helpers for admin
+ *
+ * @package     Nails
+ * @subpackage  module-cdn
+ * @category    Helper
+ * @author      Nails Dev Team
+ * @link
+ */
+
+if (!function_exists('cdnObjectPicker')) {
+
+    /**
+     * Returns the markup required for cdn Object Pickers
+     * @param  string $sKey      The name to give the input
+     * @param  string $sBucket   The bucket we're picking from
+     * @param  int    $iObjectId The object which has previously been chosen
+     * @param  string $sAttr     Any attrbutes to add to the containing element
+     * @return string
+     */
+    function cdnObjectPicker($sKey, $sBucket, $iObjectId = null, $sAttr = null)
+    {
+        $oCi = get_instance();
+        return $oCi->load->view(
+            'cdn/picker',
+            array('key' => $sKey, 'bucket' => $sBucket, 'object' => $iObjectId, 'attr' => $sAttr),
+            true
+        );
     }
 }
