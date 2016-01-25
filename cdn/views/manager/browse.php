@@ -264,7 +264,7 @@
             </div>
         </div>
         <script type="text/javascript">
-            var ENVIRONMENT         = '<?=ENVIRONMENT?>';
+            var ENVIRONMENT         = '<?=nailsEnvironment('get')?>';
             window.SITE_URL         = '<?=site_url('', isPageSecure())?>';
             window.NAILS_ASSETS_URL = '<?=NAILS_ASSETS_URL?>';
             window.NAILS_LANG       = {};

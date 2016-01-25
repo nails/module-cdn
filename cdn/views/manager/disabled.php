@@ -13,7 +13,7 @@
         </style>
         <!--    JS GLOBALS  -->
         <script type="text/javascript">
-            var ENVIRONMENT         = '<?=ENVIRONMENT?>';
+            var ENVIRONMENT         = '<?=nailsEnvironment('get')?>';
             window.SITE_URL         = '<?=site_url()?>';
             window.NAILS_ASSETS_URL = '<?=NAILS_ASSETS_URL?>';
             window.NAILS_LANG       = {};
