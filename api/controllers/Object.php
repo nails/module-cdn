@@ -58,7 +58,7 @@ class Object extends \Nails\Api\Controller\Base
             $sIds = $this->input->get('ids');
         }
 
-        $aIds = explode(',', $sIds);
+        $aIds = !is_array($sIds) ? explode(',', $sIds) : $sIds;
         $aIds = array_filter($aIds);
         $aIds = array_unique($aIds);
 
@@ -68,16 +68,20 @@ class Object extends \Nails\Api\Controller\Base
                 'error'  => 'You can request a maximum of ' . self::MAX_OBJECTS_PER_REQUEST . ' objects per request'
             );
         }
-
         // --------------------------------------------------------------------------
 
         //  Parse out any URLs requested
         $sUrls = $sIds = $this->input->get('urls');
-
-        $aUrls = explode(',', $sUrls);
+        $aUrls = !is_array($sUrls) ? explode(',', $sUrls) : $sUrls;
 
         //  Filter out any which don't follow the format {digit}x{digit}-{scale|crop}
         foreach ($aUrls as &$sDimension) {
+
+            if (!is_string($sDimension)) {
+                $sDimension = null;
+                continue;
+            }
+
             preg_match_all('/^(\d+?)x(\d+?)(-(scale|crop))?$/i', $sDimension, $aMatches);
 
             if (empty($aMatches[0])) {
@@ -106,6 +110,7 @@ class Object extends \Nails\Api\Controller\Base
 
         $aResults = $this->oCdn->getObjects(0, self::MAX_OBJECTS_PER_REQUEST, $aWhere);
         $aOut     = array();
+
         foreach ($aResults as $oObject) {
 
             $oTemp = new \stdClass();
