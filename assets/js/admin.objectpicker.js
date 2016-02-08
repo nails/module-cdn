@@ -71,19 +71,39 @@ _CDN_OBJECTPICKER = function()
             }
             return false;
         });
+
+        $(document).on('refresh', '.cdn-object-picker', function() {
+            base.refreshPicker($(this));
+            return false;
+        });
     };
 
     // --------------------------------------------------------------------------
 
     /**
-     * PRocesses CDN pickers and populates them if they have an object ID
+     * Processes CDN pickers and populates them if they have an object ID
      * @return {Void}
      */
     base.initPickers = function() {
 
         base.log('Processing new CDN Pickers');
+        base.refreshPicker(
+            $('.cdn-object-picker:not(.cdn-object-picker--pending)')
+        );
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Refresh the matched pickers
+     * @param  {Object} elements A jQuery object of pickers
+     * @return {Void}
+     */
+    base.refreshPicker = function(elements) {
+
         var fetchIds = [];
-        $('.cdn-object-picker:not(.cdn-object-picker--pending)').each(function() {
+
+        elements.each(function() {
             $(this).addClass('cdn-object-picker--pending');
             var iObjectId = $(this).find('.cdn-object-picker__input').val();
             if (iObjectId) {
@@ -107,7 +127,7 @@ _CDN_OBJECTPICKER = function()
             })
             .done(function(data) {
 
-                $('.cdn-object-picker--pending').each(function() {
+                elements.each(function() {
                     var iObjectId = parseInt($(this).find('.cdn-object-picker__input').val(), 10);
                     for (var i = data.data.length - 1; i >= 0; i--) {
                         if (iObjectId === data.data[i].id) {
@@ -117,7 +137,7 @@ _CDN_OBJECTPICKER = function()
                     }
                 });
 
-                $('.cdn-object-picker--pending').removeClass('cdn-object-picker--pending');
+                elements.removeClass('cdn-object-picker--pending');
             })
             .fail(function(data) {
 
