@@ -21,10 +21,10 @@ $lang['cdn_error_target_write_fail']       = 'The target directory is not writab
 
 $lang['cdn_upload_err_ini_size']         = 'The file exceeds the maximum size accepted by this server (which is %s).';
 $lang['cdn_upload_err_ini_size_unknown'] = 'The file exceeds the maximum size accepted by this server.';
-$lang['cdn_upload_err_form_size']        = 'The file exceeds the maximum size accepted for this firm';
+$lang['cdn_upload_err_form_size']        = 'The file exceeds the maximum size accepted by this server.';
 $lang['cdn_upload_err_partial']          = 'The file was only partially uploaded.';
 $lang['cdn_upload_err_no_file']          = 'No file was uploaded.';
-$lang['cdn_upload_err_no_tmp_dir']       = 'This server is missing a temporary directory and cannot accept uploads at this time.';
+$lang['cdn_upload_err_no_tmp_dir']       = 'This server cannot accept uploads at this time.';
 $lang['cdn_upload_err_cant_write']       = 'Failed to write uploaded file to disk, you can try again.';
 $lang['cdn_upload_err_extension']        = 'The file failed to upload due to a server configuration.';
 $lang['cdn_upload_err_unknown']          = 'The file failed to upload.';
