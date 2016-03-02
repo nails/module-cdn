@@ -51,6 +51,7 @@
         {
             "moduleName": "cdn",
             "type": "module",
+            "namespace": "Nails\\Cdn\\",
             "autoload": {
                 "helpers": ["cdn"]
             },
