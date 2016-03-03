@@ -28,6 +28,7 @@ class Cdn
     protected $oDb;
     protected $oDriverModel;
     protected $oDriver;
+    protected $aDefaultAllowedTypes;
 
     // --------------------------------------------------------------------------
 
@@ -51,6 +52,10 @@ class Cdn
 
         //  Load langfile
         $this->oCi->lang->load('cdn/cdn');
+
+        // --------------------------------------------------------------------------
+
+        $this->aDefaultAllowedTypes = Factory::property('bucketDefaultAllowedTypes', 'nailsapp/module-cdn');
 
         // --------------------------------------------------------------------------
 
@@ -566,11 +571,10 @@ class Cdn
 
             if (!isset($options['content-type'])) {
 
-                $_headers                   = get_headers($object, 1);
-                $options['content-type']    = $_headers['Content-Type'];
+                $_headers                = get_headers($object, 1);
+                $options['content-type'] = $_headers['Content-Type'];
 
                 if (empty($options['content-type'])) {
-
                     $options['content-type'] = 'application/octet-stream';
                 }
             }
@@ -580,7 +584,6 @@ class Cdn
             $isStream = true;
 
             if (empty($object)) {
-
                 $this->setError(lang('cdn_error_invalid_url'));
                 return false;
             }
@@ -1731,34 +1734,35 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Creates a new bucket
-     * @param   string
-     * @return  boolean
-     **/
-    public function bucketCreate($bucket, $label = null)
+     * Create a new bucket
+     * @param  string  $sSlug         The slug to give the bucket
+     * @param  string  $sLabel        The label to give the bucket
+     * @param  array   $aAllowedTypes An array of file types the bucket will accept
+     * @return boolean
+     */
+    public function bucketCreate($sSlug, $sLabel = null, $aAllowedTypes = array())
     {
         //  Test if bucket exists, if it does stop, job done.
-        $_bucket = $this->getBucket($bucket);
+        $oBucket = $this->getBucket($sSlug);
 
-        if ($_bucket) {
-
-            return $_bucket->id;
+        if ($oBucket) {
+            return $oBucket->id;
         }
 
         // --------------------------------------------------------------------------
 
-        $_bucket = $this->oDriver->bucketCreate($bucket);
+        $bResult = $this->oDriver->bucketCreate($sSlug);
 
-        if ($_bucket) {
+        if ($bResult) {
 
-            $this->oDb->set('slug', $bucket);
-            if (!$label) {
+            $this->oDb->set('slug', $sSlug);
+            if (empty($sLabel)) {
 
-                $this->oDb->set('label', ucwords(str_replace('-', ' ', $bucket)));
+                $this->oDb->set('label', ucwords(str_replace('-', ' ', $sSlug)));
 
             } else {
 
-                $this->oDb->set('label', $label);
+                $this->oDb->set('label', $sLabel);
             }
             $this->oDb->set('created', 'NOW()', false);
             $this->oDb->set('modified', 'NOW()', false);
@@ -1769,6 +1773,14 @@ class Cdn
                 $this->oDb->set('modified_by', activeUser('id'));
             }
 
+            $aAllowedTypes = (array) $aAllowedTypes;
+            $aAllowedTypes = array_filter($aAllowedTypes);
+            $aAllowedTypes = array_unique($aAllowedTypes);
+
+            if (!empty($aAllowedTypes)) {
+                $this->oDb->set('allowed_types', implode('|', $aAllowedTypes));
+            }
+
             $this->oDb->insert(NAILS_DB_PREFIX . 'cdn_bucket');
 
             if ($this->oDb->affected_rows()) {
@@ -1777,7 +1789,7 @@ class Cdn
 
             } else {
 
-                $this->oDriver->destroy($bucket);
+                $this->oDriver->destroy($sSlug);
 
                 $this->setError(lang('cdn_error_bucket_insert'));
                 return false;
@@ -1914,11 +1926,20 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $bucket->allowed_types = explode('|', $bucket->allowed_types);
-        $bucket->allowed_types = (array) $bucket->allowed_types;
-        $bucket->allowed_types = array_map(array($this, 'sanitiseExtension'), $bucket->allowed_types);
-        $bucket->allowed_types = array_unique($bucket->allowed_types);
-        $bucket->allowed_types = array_values($bucket->allowed_types);
+        if (!empty($bucket->allowed_types)) {
+
+            $aAllowedTypes = explode('|', $bucket->allowed_types);
+
+        } else {
+
+            $aAllowedTypes = $this->aDefaultAllowedTypes;
+        }
+
+        $aAllowedTypes = array_map(array($this, 'sanitiseExtension'), $aAllowedTypes);
+        $aAllowedTypes = array_unique($aAllowedTypes);
+        $aAllowedTypes = array_values($aAllowedTypes);
+
+        $bucket->allowed_types = $aAllowedTypes;
 
         // --------------------------------------------------------------------------
 
@@ -1940,7 +1961,6 @@ class Cdn
         // --------------------------------------------------------------------------
 
         if (isset($bucket->objectCount)) {
-
             $bucket->objectCount = (int) $bucket->objectCount;
         }
     }
