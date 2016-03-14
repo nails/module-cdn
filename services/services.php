@@ -15,7 +15,9 @@ return array(
             //  Video
             'mp4', 'mov', 'm4v', 'mpg', 'mpeg', 'avi',
             //  Audio
-            'mp3', 'wav', 'aiff', 'ogg', 'm4a', 'wma', 'aac'
+            'mp3', 'wav', 'aiff', 'ogg', 'm4a', 'wma', 'aac',
+            //  Zips
+            'zip'
         )
     ),
     'services' => array(
