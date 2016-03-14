@@ -182,7 +182,7 @@ class Serve extends Base
             if ($object) {
 
                 header('Content-Disposition: attachment; filename="' . $object->file->name->human . '"', true);
-                header('Content-Length: ' . $object->filesize, true);
+                header('Content-Length: ' . $object->file->size->bytes, true);
 
             } else {
 
