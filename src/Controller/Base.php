@@ -151,7 +151,6 @@ class Base extends \NAILS_Controller
     protected function unsetCacheHeaders()
     {
         if (empty($this->cdnCacheHeadersSet)) {
-
             return false;
         }
 
