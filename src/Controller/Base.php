@@ -104,6 +104,7 @@ class Base extends \NAILS_Controller
         // --------------------------------------------------------------------------
 
         //  Send the contents of the file to the browser
+        Factory::helper('file');
         echo readFileChunked($this->cdnCacheDir . $file);
 
         /**

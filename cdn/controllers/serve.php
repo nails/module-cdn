@@ -10,6 +10,7 @@
  * @link
  */
 
+use Nails\Factory;
 use Nails\Cdn\Controller\Base;
 
 class Serve extends Base
@@ -208,6 +209,7 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Send the contents of the file to the browser
+        Factory::helper('file');
         echo readFileChunked($usefile);
 
         // --------------------------------------------------------------------------
