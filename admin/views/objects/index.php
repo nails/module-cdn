@@ -117,6 +117,12 @@
                                 );
                             }
 
+                            echo anchor(
+                                cdnServe($object->id, true),
+                                '<b class="fa fa-download"></b>',
+                                'class="btn btn-xs btn-success"'
+                            );
+
                             ?>
                         </td>
                     </tr>
