@@ -56,7 +56,7 @@
         <?=toUserDatetime($object->modified)?>
     </td>
     <td class="actions">
-        <a href="#" data-fieldid="' . $this->input->get('fieldid') . '" data-id="' . $object->id . '" data-bucket="' . $bucket->slug .'" data-file="' . $object->file->name->disk .'" class="btn btn-xs btn-success insert">Insert</a>
+        <a href="#" data-id="<?=$object->id?>" data-bucket="<?=$bucket->slug?>" data-file="<?=$object->file->name->disk?>" class="btn btn-xs btn-success insert">Insert</a>
         <?=anchor(site_url('cdn/manager/delete/' . $object->id . '?' . $_SERVER['QUERY_STRING'], isPageSecure()), 'Delete', 'class="btn btn-xs btn-danger delete"')?>
         <?=anchor($url, $action, 'data-fancybox-title="' . $object->file->name->human . '" data-fancybox-type="' . $fancyboxType . '" class="' . $fancyboxClass . ' btn btn-xs btn-default"')?>
     </td>
