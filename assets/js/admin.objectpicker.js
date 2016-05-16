@@ -179,7 +179,7 @@ _CDN_OBJECTPICKER = function()
             );
         } else {
 
-            var sizeHuman = base.getReadableFileSizeString(object.object.size);
+            var sizeHuman = base.getReadableFileSizeString(object.object.size.bytes);
 
             picker.addClass('cdn-object-picker--has-file');
             picker.find('.cdn-object-picker__label')
