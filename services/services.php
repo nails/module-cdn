@@ -13,9 +13,9 @@ return array(
             //  Documents & Text
             'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'rtf', 'txt', 'csv', 'xml',
             //  Video
-            'mp4', 'mov', 'm4v', 'mpg', 'mpeg', 'avi',
+            'mp4', 'mov', 'm4v', 'mpg', 'mpeg', 'avi', 'ogv',
             //  Audio
-            'mp3', 'wav', 'aiff', 'ogg', 'm4a', 'wma', 'aac',
+            'mp3', 'wav', 'aiff', 'ogg', 'm4a', 'wma', 'aac', 'oga',
             //  Zips
             'zip'
         )
