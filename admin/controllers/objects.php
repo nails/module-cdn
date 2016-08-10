@@ -20,12 +20,11 @@ class Objects extends BaseAdmin
 {
     /**
      * Announces this controller's navGroups
-     * @return stdClass
+     * @return \stdClass
      */
     public static function announce()
     {
         if (userHasPermission('admin:cdn:objects:browse')) {
-
             $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
             $oNavGroup->setLabel('CDN');
             $oNavGroup->setIcon('fa-cloud-upload');
@@ -61,7 +60,6 @@ class Objects extends BaseAdmin
     public function index()
     {
         if (!userHasPermission('admin:cdn:objects:browse')) {
-
             unauthorised();
         }
 
@@ -70,12 +68,12 @@ class Objects extends BaseAdmin
         //  Set method info
         $this->data['page']->title = 'Browse Objects';
 
-        if ($this->input->get('bucketId')) {
+        $oInput = Factory::service('Input');
+        $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
 
-            $bucket = $this->cdn->getBucket($this->input->get('bucketId'));
-
+        if ($oInput->get('bucketId')) {
+            $bucket = $oCdn->getBucket($oInput->get('bucketId'));
             if ($bucket) {
-
                 $this->data['page']->title .= ' &rsaquo; ' . $bucket->label;
             }
         }
@@ -83,11 +81,11 @@ class Objects extends BaseAdmin
         // --------------------------------------------------------------------------
 
         //  Get pagination and search/sort variables
-        $page      = $this->input->get('page')      ? $this->input->get('page')      : 0;
-        $perPage   = $this->input->get('perPage')   ? $this->input->get('perPage')   : 50;
-        $sortOn    = $this->input->get('sortOn')    ? $this->input->get('sortOn')    : 'o.created';
-        $sortOrder = $this->input->get('sortOrder') ? $this->input->get('sortOrder') : 'desc';
-        $keywords  = $this->input->get('keywords')  ? $this->input->get('keywords')  : '';
+        $page      = $oInput->get('page')      ? $oInput->get('page')      : 0;
+        $perPage   = $oInput->get('perPage')   ? $oInput->get('perPage')   : 50;
+        $sortOn    = $oInput->get('sortOn')    ? $oInput->get('sortOn')    : 'o.created';
+        $sortOrder = $oInput->get('sortOrder') ? $oInput->get('sortOrder') : 'desc';
+        $keywords  = $oInput->get('keywords')  ? $oInput->get('keywords')  : '';
 
         // --------------------------------------------------------------------------
 
@@ -98,7 +96,9 @@ class Objects extends BaseAdmin
             'b.label'            => 'Bucket',
             'o.mime'             => 'File Type',
             'o.filesize'         => 'File Size',
-            'o.created'          => 'Date Uploaded'
+            'o.created'          => 'Date Uploaded',
+            'o.serves'           => 'Number of serves',
+            'o.downloads'        => 'Number of downloads'
         );
 
         // --------------------------------------------------------------------------
@@ -113,25 +113,25 @@ class Objects extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        if ($this->input->get('bucketId')) {
+        if ($oInput->get('bucketId')) {
 
             $data['where'] = array(
-                array('o.bucket_id', $this->input->get('bucketId'))
+                array('o.bucket_id', $oInput->get('bucketId'))
             );
         }
 
         // --------------------------------------------------------------------------
 
         //  Get the items for the page
-        $totalRows             = $this->cdn->countAllObjects($data);
-        $this->data['objects'] = $this->cdn->getObjects($page, $perPage, $data);
+        $totalRows             = $oCdn->countAllObjects($data);
+        $this->data['objects'] = $oCdn->getObjects($page, $perPage, $data);
 
         //  Set Search and Pagination objects for the view
         $this->data['search']     = Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
         $this->data['pagination'] = Helper::paginationObject($page, $perPage, $totalRows);
 
         //  Work out the return variable
-        parse_str($this->input->server('QUERY_STRING'), $query);
+        parse_str($oInput->server('QUERY_STRING'), $query);
         $query = array_filter($query);
         $query = $query ? '?' . http_build_query($query) : '';
         $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
@@ -139,13 +139,11 @@ class Objects extends BaseAdmin
 
         //  Add header buttons
         if (userHasPermission('admin:cdn:objects:create')) {
-
-             Helper::addHeaderButton('admin/cdn/objects/create' . $return, 'Upload Items');
+            Helper::addHeaderButton('admin/cdn/objects/create' . $return, 'Upload Items');
         }
 
         if (userHasPermission('admin:cdn:trash:browse')) {
-
-             Helper::addHeaderButton('admin/cdn/trash', 'Browse Trash', 'warning');
+            Helper::addHeaderButton('admin/cdn/trash', 'Browse Trash', 'warning');
         }
 
         // --------------------------------------------------------------------------
@@ -162,7 +160,6 @@ class Objects extends BaseAdmin
     public function create()
     {
         if (!userHasPermission('admin:cdn:objects:create')) {
-
             unauthorised();
         }
 
@@ -172,20 +169,23 @@ class Objects extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        $this->data['buckets'] = $this->cdn->getBuckets();
+        $oCdn                  = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $this->data['buckets'] = $oCdn->getBuckets();
 
         if (empty($this->data['buckets'])) {
-            $this->session->set_flashdata('warning', 'Create a bucket before uploading content.');
+            $oSession = Factory::service('Session', 'nailsapp/module-auth');
+            $oSession->set_flashdata('warning', 'Create a bucket before uploading content.');
             redirect('admin/cdn/buckets/create');
         }
 
         // --------------------------------------------------------------------------
 
-        $this->asset->load('admin.upload.min.js', 'nailsapp/module-cdn');
-        $this->asset->load('dropzone/downloads/css/dropzone.css', 'NAILS-BOWER');
-        $this->asset->load('dropzone/downloads/css/basic.css', 'NAILS-BOWER');
-        $this->asset->load('dropzone/downloads/dropzone.min.js', 'NAILS-BOWER');
-        $this->asset->inline('var _upload = new NAILS_Admin_CDN_Upload();', 'JS');
+        $oAsset = Factory::service('Asset');
+        $oAsset->load('admin.upload.min.js', 'nailsapp/module-cdn');
+        $oAsset->load('dropzone/downloads/css/dropzone.css', 'NAILS-BOWER');
+        $oAsset->load('dropzone/downloads/css/basic.css', 'NAILS-BOWER');
+        $oAsset->load('dropzone/downloads/dropzone.min.js', 'NAILS-BOWER');
+        $oAsset->inline('var _upload = new NAILS_Admin_CDN_Upload();', 'JS');
 
         // --------------------------------------------------------------------------
 
@@ -201,7 +201,6 @@ class Objects extends BaseAdmin
     public function edit()
     {
         if (!userHasPermission('admin:cdn:objects:edit')) {
-
             unauthorised();
         }
 
@@ -223,16 +222,19 @@ class Objects extends BaseAdmin
     public function delete()
     {
         if (!userHasPermission('admin:cdn:objects:delete')) {
-
             unauthorised();
         }
 
         // --------------------------------------------------------------------------
 
-        $objectId = $this->uri->segment(5);
-        $return   = $this->input->get('return') ? $this->input->get('return') : 'admin/cdn/objects/index';
+        $oUri     = Factory::service('Uri');
+        $oInput   = Factory::service('Input');
+        $oSession = Factory::service('Session', 'nailsapp/module-auth');
+        $oCdn     = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $objectId = $oUri->segment(5);
+        $return   = $oInput->get('return') ? $oInput->get('return') : 'admin/cdn/objects/index';
 
-        if ($this->cdn->objectDelete($objectId)) {
+        if ($oCdn->objectDelete($objectId)) {
 
             $status = 'success';
             $msg    = 'CDN Object was deleted successfully.';
@@ -240,10 +242,10 @@ class Objects extends BaseAdmin
         } else {
 
             $status = 'error';
-            $msg    = 'CDN Object failed to delete. ' . $this->cdn->lastError();
+            $msg    = 'CDN Object failed to delete. ' . $oCdn->lastError();
         }
 
-        $this->session->set_flashdata($status, $msg);
+        $oSession->set_flashdata($status, $msg);
         redirect($return);
     }
 }
