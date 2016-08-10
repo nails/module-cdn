@@ -7,18 +7,20 @@
     <div class="table-responsive">
         <table>
             <thead>
-                <tr>
-                    <th class="id">ID</th>
-                    <th class="thumbnail"></th>
-                    <th class="bucket">Bucket</th>
-                    <th class="mime">Type</th>
-                    <th class="filename">Filename</th>
-                    <th class="user">Uploader</th>
-                    <th class="created datetime">Created</th>
-                    <th class="modified datetime">Modified</th>
-                    <th class="filesize">Filesize</th>
-                    <th class="actions">Actions</th>
-                </tr>
+            <tr>
+                <th class="id">ID</th>
+                <th class="thumbnail"></th>
+                <th class="bucket">Bucket</th>
+                <th class="mime">Type</th>
+                <th class="filename">Filename</th>
+                <th class="user">Uploader</th>
+                <th class="created datetime">Created</th>
+                <th class="modified datetime">Modified</th>
+                <th class="filesize">Filesize</th>
+                <th class="serves text-center">Serves</th>
+                <th class="downloads text-center">Downloads</th>
+                <th class="actions">Actions</th>
+            </tr>
             </thead>
             <tbody>
             <?php
@@ -78,6 +80,12 @@
                         <?=adminHelper('loadDatetimeCell', $object->modified)?>
                         <td class="filesize">
                             <?=$object->file->size->human?>
+                        </td>
+                        <td class="serves text-center">
+                            <?=$object->serves?>
+                        </td>
+                        <td class="downloads text-center">
+                            <?=$object->downloads?>
                         </td>
                         <td class="actions">
                             <?php
