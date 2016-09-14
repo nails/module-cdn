@@ -28,5 +28,21 @@ return array(
                 return new \Nails\Cdn\Library\Cdn();
             }
         }
+    ),
+    'models' => array(
+        'Bucket' => function () {
+            if (class_exists('\App\Cdn\Model\Bucket')) {
+                return new \App\Cdn\Model\Bucket();
+            } else {
+                return new \Nails\Cdn\Model\Bucket();
+            }
+        },
+        'Object' => function () {
+            if (class_exists('\App\Cdn\Model\CdnObject')) {
+                return new \App\Cdn\Model\CdnObject();
+            } else {
+                return new \Nails\Cdn\Model\CdnObject();
+            }
+        }
     )
 );
