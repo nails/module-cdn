@@ -373,7 +373,6 @@ class Cdn
         $cache     = $this->getCache($cacheKey);
 
         if ($cache) {
-
             return $cache;
         }
 
@@ -440,7 +439,6 @@ class Cdn
             $cache    = $this->getCache($cacheKey);
 
             if ($cache) {
-
                 return $cache;
             }
 
@@ -456,7 +454,6 @@ class Cdn
             $cache     = $this->getCache($cacheKey);
 
             if ($cache) {
-
                 return $cache;
             }
 
@@ -1001,88 +998,72 @@ class Cdn
 
     /**
      * Deletes an object
-     * @param  int     $object The object's ID or filename
+     * @param  int     $iObjectId The object's ID or filename
      * @return boolean
      */
-    public function objectDelete($object)
+    public function objectDelete($iObjectId)
     {
-        if (!$object) {
+        try {
+            log_message('error', 'delete; loaded with object Id ' . $iObjectId);
+            $object = $this->getObject($iObjectId);
+            if (empty($object)) {
+                throw new \Exception(lang('cdn_error_object_invalid'));
+            }
 
-            $this->setError(lang('cdn_error_object_invalid'));
-            return false;
-        }
+            // --------------------------------------------------------------------------
 
-        // --------------------------------------------------------------------------
+            $objectData                     = array();
+            $objectData['id']               = $object->id;
+            $objectData['bucket_id']        = $object->bucket->id;
+            $objectData['filename']         = $object->file->name->disk;
+            $objectData['filename_display'] = $object->file->name->human;
+            $objectData['mime']             = $object->file->mime;
+            $objectData['filesize']         = $object->file->size->bytes;
+            $objectData['img_width']        = $object->img_width;
+            $objectData['img_height']       = $object->img_height;
+            $objectData['img_orientation']  = $object->img_orientation;
+            $objectData['is_animated']      = $object->is_animated;
+            $objectData['created']          = $object->created;
+            $objectData['created_by']       = $object->creator->id;
+            $objectData['modified']         = $object->modified;
+            $objectData['modified_by']      = $object->modified_by;
+            $objectData['serves']           = $object->serves;
+            $objectData['downloads']        = $object->downloads;
+            $objectData['thumbs']           = $object->thumbs;
+            $objectData['scales']           = $object->scales;
 
-        $object = $this->getObject($object);
+            $this->oDb->set($objectData);
+            $this->oDb->set('trashed', 'NOW()', false);
 
-        if (!$object) {
+            if ($this->oCi->user_model->isLoggedIn()) {
+                $this->oDb->set('trashed_by', activeUser('id'));
+            }
 
-            $this->setError(lang('cdn_error_object_invalid'));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        $objectData                     = array();
-        $objectData['id']               = $object->id;
-        $objectData['bucket_id']        = $object->bucket->id;
-        $objectData['filename']         = $object->file->name->disk;
-        $objectData['filename_display'] = $object->file->name->human;
-        $objectData['mime']             = $object->file->mime;
-        $objectData['filesize']         = $object->file->size->bytes;
-        $objectData['img_width']        = $object->img_width;
-        $objectData['img_height']       = $object->img_height;
-        $objectData['img_orientation']  = $object->img_orientation;
-        $objectData['is_animated']      = $object->is_animated;
-        $objectData['created']          = $object->created;
-        $objectData['created_by']       = $object->creator->id;
-        $objectData['modified']         = $object->modified;
-        $objectData['modified_by']      = $object->modified_by;
-        $objectData['serves']           = $object->serves;
-        $objectData['downloads']        = $object->downloads;
-        $objectData['thumbs']           = $object->thumbs;
-        $objectData['scales']           = $object->scales;
-
-        $this->oDb->set($objectData);
-        $this->oDb->set('trashed', 'NOW()', false);
-
-        if ($this->oCi->user_model->isLoggedIn()) {
-
-            $this->oDb->set('trashed_by', activeUser('id'));
-        }
-
-        //  Turn off DB Errors
-        $previousDebug = $this->oDb->db_debug;
-        $this->oDb->db_debug = false;
-
-        //  Start transaction
-        $this->oDb->trans_start();
+            //  Start transaction
+            $this->oDb->trans_begin();
 
             //  Create trash object
-            $this->oDb->insert(NAILS_DB_PREFIX . 'cdn_object_trash');
+            if (!$this->oDb->insert(NAILS_DB_PREFIX . 'cdn_object_trash')) {
+                throw new \Exception('Failed to create the trash object.');
+            }
 
             //  Remove original object
             $this->oDb->where('id', $object->id);
-            $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object');
+            if (!$this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object')) {
+                throw new \Exception('Failed to remove original object.');
+            }
 
-        $this->oDb->trans_complete();
-
-        //  Set DB errors as they were
-        $this->oDb->db_debug = $previousDebug;
-
-        if ($this->oDb->trans_status() !== false) {
+            $this->oDb->trans_commit();
 
             //  Clear caches
             $this->unsetCacheObject($object);
 
-            // --------------------------------------------------------------------------
-
             return true;
 
-        } else {
+        } catch (\Exception $e) {
 
-            $this->setError(lang('cdn_error_delete'));
+            $this->oDb->trans_rollback();
+            $this->setError($e->getMessage());
             return false;
         }
     }
@@ -1094,71 +1075,65 @@ class Cdn
      * @param  mixed   $object The object's ID or filename
      * @return boolean
      */
-    public function objectRestore($object)
+    public function objectRestore($iObjectId)
     {
-        if (!$object) {
+        try {
 
-            $this->setError(lang('cdn_error_object_invalid'));
-            return false;
-        }
+            log_message('error', 'restore; loaded with object Id ' . $iObjectId);
+            $object = $this->getObjectFromTrash($iObjectId);
+            if (empty($object)) {
+                throw new \Exception(lang('cdn_error_object_invalid'));
+            }
 
-        // --------------------------------------------------------------------------
+            // --------------------------------------------------------------------------
 
-        $object = $this->getObjectFromTrash($object);
+            $objectData                     = array();
+            $objectData['id']               = $object->id;
+            $objectData['bucket_id']        = $object->bucket->id;
+            $objectData['filename']         = $object->file->name->disk;
+            $objectData['filename_display'] = $object->file->name->human;
+            $objectData['mime']             = $object->file->mime;
+            $objectData['filesize']         = $object->file->size->bytes;
+            $objectData['img_width']        = $object->img_width;
+            $objectData['img_height']       = $object->img_height;
+            $objectData['img_orientation']  = $object->img_orientation;
+            $objectData['is_animated']      = $object->is_animated;
+            $objectData['created']          = $object->created;
+            $objectData['created_by']       = $object->creator->id;
+            $objectData['serves']           = $object->serves;
+            $objectData['downloads']        = $object->downloads;
+            $objectData['thumbs']           = $object->thumbs;
+            $objectData['scales']           = $object->scales;
 
-        if (!$object) {
+            if (getUserObject()->isLoggedIn()) {
+                $objectData['modified_by'] = activeUser('id');
+            }
 
-            $this->setError(lang('cdn_error_object_invalid'));
-            return false;
-        }
+            $this->oDb->set($objectData);
+            $this->oDb->set('modified', 'NOW()', false);
 
-        // --------------------------------------------------------------------------
+            //  Start transaction
+            $this->oDb->trans_begin();
 
-        $objectData                     = array();
-        $objectData['id']               = $object->id;
-        $objectData['bucket_id']        = $object->bucket->id;
-        $objectData['filename']         = $object->file->name->disk;
-        $objectData['filename_display'] = $object->file->name->human;
-        $objectData['mime']             = $object->file->mime;
-        $objectData['filesize']         = $object->file->size->bytes;
-        $objectData['img_width']        = $object->img_width;
-        $objectData['img_height']       = $object->img_height;
-        $objectData['img_orientation']  = $object->img_orientation;
-        $objectData['is_animated']      = $object->is_animated;
-        $objectData['created']          = $object->created;
-        $objectData['created_by']       = $object->creator->id;
-        $objectData['serves']           = $object->serves;
-        $objectData['downloads']        = $object->downloads;
-        $objectData['thumbs']           = $object->thumbs;
-        $objectData['scales']           = $object->scales;
+            //  Restore object
+            if (!$this->oDb->insert(NAILS_DB_PREFIX . 'cdn_object')) {
+                throw new \Exception('Failed to restore original object.');
+            }
 
-        if (getUserObject()->isLoggedIn()) {
+            //  Remove trash object
+            $this->oDb->where('id', $object->id);
+            if (!$this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash')) {
+                throw new \Exception('Failed to remove the trash object.');
+            }
 
-            $objectData['modified_by'] = activeUser('id');
-        }
-
-        $this->oDb->set($objectData);
-        $this->oDb->set('modified', 'NOW()', false);
-
-        //  Start transaction
-        $this->oDb->trans_start();
-
-        //  Restore object
-        $this->oDb->insert(NAILS_DB_PREFIX . 'cdn_object');
-
-        //  Remove trash object
-        $this->oDb->where('id', $object->id);
-        $this->oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
-
-        $this->oDb->trans_complete();
-
-        if ($this->oDb->trans_status() !== false) {
+            $this->oDb->trans_commit();
 
             return true;
 
-        } else {
+        } catch (\Exception $e) {
 
-            $this->setError(lang('cdn_error_delete'));
+            $this->oDb->trans_rollback();
+            $this->setError($e->getMessage());
             return false;
         }
     }
@@ -1173,7 +1148,6 @@ class Cdn
     public function objectDestroy($object)
     {
         if (!$object) {
-
             $this->setError(lang('cdn_error_object_invalid'));
             return false;
         }
@@ -1928,7 +1902,12 @@ class Cdn
 
         if (!empty($bucket->allowed_types)) {
 
-            $aAllowedTypes = explode('|', $bucket->allowed_types);
+            if (strpos($bucket->allowed_types, '|') !== false) {
+                $aAllowedTypes = explode('|', $bucket->allowed_types);
+            } else {
+                $aAllowedTypes = explode(',', $bucket->allowed_types);
+            }
+            $aAllowedTypes = array_map('trim', $aAllowedTypes);
 
         } else {
 

@@ -21,7 +21,8 @@ class Bucket extends Base
     public function __construct()
     {
         parent::__construct();
-        $this->table = NAILS_DB_PREFIX . 'cdn_bucket';
+        $this->table             = NAILS_DB_PREFIX . 'cdn_bucket';
+        $this->tableAutoSetSlugs = true;
     }
 
     // --------------------------------------------------------------------------

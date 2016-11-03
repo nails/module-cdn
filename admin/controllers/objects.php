@@ -231,7 +231,8 @@ class Objects extends BaseAdmin
         $oInput   = Factory::service('Input');
         $oSession = Factory::service('Session', 'nailsapp/module-auth');
         $oCdn     = Factory::service('Cdn', 'nailsapp/module-cdn');
-        $objectId = $oUri->segment(5);
+
+        $objectId = (int) $oUri->segment(5);
         $return   = $oInput->get('return') ? $oInput->get('return') : 'admin/cdn/objects/index';
 
         if ($oCdn->objectDelete($objectId)) {

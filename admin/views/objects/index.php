@@ -141,7 +141,7 @@
 
                 ?>
                 <tr>
-                    <td colspan="10" class="no-data">
+                    <td colspan="12" class="no-data">
                         No Objects Found
                     </td>
                 </tr>

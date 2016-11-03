@@ -19,11 +19,18 @@ use Nails\Cdn\Controller\BaseAdmin;
 class Buckets extends BaseAdmin
 {
     /**
+     * The base URL for this controller
+     */
+    const CONTROLLER_URL = 'admin/cdn/buckets';
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Announces this controller's navGroups
-     * @return stdClass
+     * @return \stdClass
      */
     public static function announce()
-    {
+        {
         if (userHasPermission('admin:cdn:buckets:browse')) {
 
             $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
@@ -133,54 +140,198 @@ class Buckets extends BaseAdmin
     public function create()
     {
         if (!userHasPermission('admin:cdn:buckets:create')) {
-
             unauthorised();
         }
 
-        // --------------------------------------------------------------------------
+        $oInput     = Factory::service('Input');
+        $oDb        = Factory::service('Database');
+        $oItemModel = Factory::model('Bucket', 'nailsapp/module-cdn');
 
-        $return = $this->input->get('return') ? $this->input->get('return') : 'admin/cdn/buckets/index';
-        $this->session->set_flashdata('message', '<strong>TODO:</strong> Manually create buckets from admin');
-        redirect($return);
+        if ($oInput->post()) {
+            if ($this->validatePost()) {
+                try {
+                    $oDb->trans_begin();
+                    if (!$oItemModel->create($this->extractPost())) {
+                        throw new \Exception('Failed to create item.' . $oItemModel->lastError());
+                    }
+
+                    $oDb->trans_commit();
+                    $oSession = Factory::service('Session', 'nailsapp/module-auth');
+                    $oSession->set_flashdata('success', 'Bucket created successfully.');
+                    redirect(self::CONTROLLER_URL);
+
+                } catch (\Exception $e) {
+                    $oDb->trans_rollback();
+                    $this->data['error'] = $e->getMessage();
+                }
+
+            } else {
+                $this->data['error'] = lang('fv_there_were_errors');
+            }
+        }
+
+        //  View Data & Assets
+        $this->loadViewData();
+
+        $this->data['page']->title = 'Bucket &rsaquo; Create';
+        Helper::loadView('edit');
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Edit an existing CDN Bucket
+     * Edit an existing item
      * @return void
      */
     public function edit()
     {
         if (!userHasPermission('admin:cdn:buckets:edit')) {
-
             unauthorised();
+        }
+
+        $oInput     = Factory::service('Input');
+        $oDb        = Factory::service('Database');
+        $oUri       = Factory::service('Uri');
+        $oItemModel = Factory::model('Bucket', 'nailsapp/module-cdn');
+        $iItemId    = (int) $oUri->segment(5);
+        $oItem      = $oItemModel->getById($iItemId);
+
+        if (empty($oItem)) {
+            show_404();
         }
 
         // --------------------------------------------------------------------------
 
-        $return = $this->input->get('return') ? $this->input->get('return') : 'admin/cdn/buckets/index';
-        $this->session->set_flashdata('message', '<strong>TODO:</strong> Edit buckets from admin');
-        redirect($return);
+        if ($oInput->post()) {
+            if ($this->validatePost()) {
+                try {
+                    $oDb->trans_begin();
+                    if (!$oItemModel->update($iItemId, $this->extractPost())) {
+                        throw new \Exception('Failed to update item.' . $oItemModel->lastError());
+                    }
+
+                    $oDb->trans_commit();
+                    $oSession = Factory::service('Session', 'nailsapp/module-auth');
+                    $oSession->set_flashdata('success', 'Bucket updated successfully.');
+                    redirect(self::CONTROLLER_URL);
+
+                } catch (\Exception $e) {
+                    $oDb->trans_rollback();
+                    $this->data['error'] = $e->getMessage();
+                }
+
+            } else {
+                $this->data['error'] = lang('fv_there_were_errors');
+            }
+        }
+
+        //  View Data & Assets
+        $this->loadViewData($oItem);
+
+        $this->data['page']->title = 'Bucket &rsaquo; Edit';
+        Helper::loadView('edit');
     }
 
     // --------------------------------------------------------------------------
 
     /**
-     * Delete an existing CDN Bucket
+     * Form validation for edit/create
+     * @return boolean
+     */
+    private function validatePost()
+    {
+        $oFormValidation = Factory::service('FormValidation');
+        $oItemModel      = Factory::model('Bucket', 'nailsapp/module-cdn');
+        $sBucketTable    =  $oItemModel->getTableName();
+
+        $aRules = array(
+            'label'         => 'required|is_unique[' . $sBucketTable . '.label]',
+            'allowed_types' => '',
+            'max_size'      => 'is_natural_no_zero',
+            'disk_quota'    => 'is_natural_no_zero',
+        );
+
+        $aRulesFormValidation = array();
+        foreach ($aRules as $sKey => $sRules) {
+            $aRulesFormValidation[] = array(
+                'field' => $sKey,
+                'label' => '',
+                'rules' => $sRules
+            );
+        }
+
+        $oFormValidation->set_rules($aRulesFormValidation);
+
+        $oFormValidation->set_message('required', lang('fv_required'));
+        $oFormValidation->set_message('is_unique', lang('fv_is_unique'));
+        $oFormValidation->set_message('is_natural_no_zero', lang('fv_is_natural_no_zero'));
+
+        return $oFormValidation->run();
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Load data for the edit/create view
+     * @param  \stdClass $oItem The main item object
+     * @return void
+     */
+    private function loadViewData($oItem = null)
+    {
+        $this->data['item'] = $oItem;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Extract data from post variable
+     * @return array
+     */
+    private function extractPost()
+    {
+        $oInput = Factory::service('Input');
+        return array(
+            'label'         => $oInput->post('label'),
+            'allowed_types' => $oInput->post('allowed_types'),
+            'max_size'      => (int) $oInput->post('max_size') ?: null,
+            'disk_quota'    => (int) $oInput->post('disk_quota') ?: null,
+        );
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Delete a bucket
      * @return void
      */
     public function delete()
     {
-        if (!userHasPermission('admin:cdn:buckets:delete')) {
+        $oItemModel = Factory::model('Bucket', 'nailsapp/module-cdn');
+        $oUri       = Factory::service('Uri');
+        $oDb        = Factory::service('Database');
+        $iItemId    = (int) $oUri->segment(5);
+        $oItem      = $oItemModel->getById($iItemId);
 
-            unauthorised();
+        if (empty($oItem)) {
+            show_404();
         }
 
-        // --------------------------------------------------------------------------
+        try {
+            if (!$oItemModel->delete($iItemId)) {
+                throw new \Exception('Failed to delete item.' . $oItemModel->lastError());
+            }
 
-        $return = $this->input->get('return') ? $this->input->get('return') : 'admin/cdn/buckets/index';
-        $this->session->set_flashdata('message', '<strong>TODO:</strong> Delete buckets from admin');
-        redirect($return);
+            $oDb->trans_commit();
+            $oSession = Factory::service('Session', 'nailsapp/module-auth');
+            $oSession->set_flashdata(
+                'success',
+                'Item deleted successfully.'
+            );
+            redirect(self::CONTROLLER_URL);
+
+        } catch (\Exception $e) {
+            $oDb->trans_rollback();
+            $this->data['error'] = $e->getMessage();
+        }
     }
 }

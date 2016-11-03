@@ -13,6 +13,7 @@
 namespace Nails\Admin\Cdn;
 
 use Nails\Admin\Helper;
+use Nails\Factory;
 use Nails\Cdn\Controller\BaseAdmin;
 
 class Trash extends BaseAdmin
@@ -237,7 +238,6 @@ class Trash extends BaseAdmin
     public function restore()
     {
         if (!userHasPermission('admin:cdn:trash:restore')) {
-
             unauthorised();
         }
 
@@ -257,7 +257,9 @@ class Trash extends BaseAdmin
             $msg    = 'CDN Object failed to restore. ' . $this->cdn->lastError();
         }
 
-        $this->session->set_flashdata($status, $msg);
+        $oSession = Factory::service('Session', 'nailsapp/module-auth');
+        $oSession->set_flashdata($status, $msg);
+
         redirect($return);
     }
 }
