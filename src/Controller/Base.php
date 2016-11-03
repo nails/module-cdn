@@ -14,7 +14,7 @@ namespace Nails\Cdn\Controller;
 
 use Nails\Factory;
 
-class Base extends \NAILS_Controller
+class Base extends \App\Controller\Base
 {
     protected $cdnRoot;
     protected $cdnCacheDir;
