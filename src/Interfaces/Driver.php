@@ -19,6 +19,7 @@ interface Driver
 
     //  URL methods
     public function urlServe($sObject, $sBucket, $bForceDownload = false);
+    public function urlServeRaw($sObject, $sBucket);
     public function urlServeScheme($bForceDownload = false);
     public function urlServeZipped($sObjectIds, $sHash, $sFilename);
     public function urlServeZippedScheme();

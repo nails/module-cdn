@@ -2278,6 +2278,66 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
+     * Returns the URL for serving raw content from the CDN driver's source and not running it through the main CDN
+     * @param  integer $iObjectId The ID of the object to serve
+     * @return string
+     * @throws UrlException
+     */
+    public function urlServeRaw($iObjectId)
+    {
+        $bIsTrashed = false;
+
+        $oEmptyObj                   = new \stdClass();
+        $oEmptyObj->file             = new \stdClass();
+        $oEmptyObj->file->name       = new \stdClass();
+        $oEmptyObj->file->name->disk = '';
+        $oEmptyObj->bucket           = new \stdClass();
+        $oEmptyObj->bucket->slug     = '';
+
+        if (empty($iObjectId)) {
+            $oObject = $oEmptyObj;
+        } elseif (is_numeric($iObjectId)) {
+
+            $oObject = $this->getObject($iObjectId);
+
+            if (!$oObject) {
+
+                /**
+                 * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
+                 */
+
+                if (userHasPermission('admin:cdn:trash:browse')) {
+
+                    $oObject = $this->getObjectFromTrash($iObjectId);
+
+                    if (!$oObject) {
+                        //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
+                        $oObject = $oEmptyObj;
+                    } else {
+                        $bIsTrashed = true;
+                    }
+
+                } else {
+                    //  Let the renderer show a bad_src graphic
+                    $oObject = $oEmptyObj;
+                }
+            }
+
+        } elseif (is_object($iObjectId)) {
+            $oObject = $iObjectId;
+        } else {
+            throw new UrlException('Supplied $iObjectId must be numeric or an object', 1);
+        }
+
+        $sUrl  = $this->oDriver->urlServeRaw($oObject->file->name->disk, $oObject->bucket->slug);
+        $sUrl .= $bIsTrashed ? '?trashed=1' : '';
+
+        return $sUrl;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Calls the driver's public urlServeScheme method
      * @param   none
      * @return  string

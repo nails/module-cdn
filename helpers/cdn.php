@@ -61,6 +61,22 @@ if (!function_exists('cdnServe')) {
 
 // --------------------------------------------------------------------------
 
+if (!function_exists('cdnServeRaw')) {
+
+    /**
+     * Returns the URL for serving raw content from the CDN driver's source and not running it through the main CDN
+     * @param  integer $iObjectId      The ID of the object to serve
+     * @return string
+     */
+    function cdnServeRaw($iObjectId)
+    {
+        $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+        return $oCdn->urlServeRaw($iObjectId);
+    }
+}
+
+// --------------------------------------------------------------------------
+
 if (!function_exists('cdnServeZipped')) {
 
     /**
