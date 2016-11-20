@@ -20,7 +20,7 @@ class Utilities extends BaseAdmin
 {
     /**
      * Announces this controller's navGroups
-     * @return stdClass
+     * @return \stdClass
      */
     public static function announce()
     {
@@ -29,7 +29,6 @@ class Utilities extends BaseAdmin
         $oNavGroup->setIcon('fa-sliders');
 
         if (userHasPermission('admin:cdn:utilities:findOrphan')) {
-
             $oNavGroup->addAction('CDN: Find orphaned objects');
         }
 
@@ -45,9 +44,7 @@ class Utilities extends BaseAdmin
     public static function permissions()
     {
         $permissions = parent::permissions();
-
         $permissions['findOrphan'] = 'Can find orphans';
-
         return $permissions;
     }
 
@@ -60,107 +57,106 @@ class Utilities extends BaseAdmin
     public function index()
     {
         if (!userHasPermission('admin:cdn:utilities:findOrphan')) {
-
             unauthorised();
         }
 
         // --------------------------------------------------------------------------
 
-        if ($this->input->is_cli_request()) {
+        $oInput = Factory::service('Input');
+        if ($oInput->is_cli_request()) {
+            $this->indexCli();
+        } else {
 
-            return $this->indexCli();
-        }
+            if ($oInput->post()) {
 
-        // --------------------------------------------------------------------------
+                //  A little form validation
+                $type = $oInput->post('type');
+                $parser = $oInput->post('parser');
+                $error = '';
 
-        if ($this->input->post()) {
-
-            //  A little form validation
-            $type   = $this->input->post('type');
-            $parser = $this->input->post('parser');
-            $error  = '';
-
-            if ($type == 'db' && $parser == 'create') {
-
-                $error  = 'Cannot use "Add to database" results parser when finding orphaned database objects.';
-            }
-
-
-            if (empty($error)) {
-
-                switch ($type) {
-
-                    case 'db':
-
-                        $this->data['orphans']  = $this->cdn->findOrphanedObjects();
-                        break;
-
-                    //  @TODO
-                    case 'file':
-
-                        $this->data['message']  = '<strong>TODO:</strong> find orphaned files.';
-                        break;
-
-                    //  Invalid request
-                    default:
-
-                        $this->data['error']    = 'Invalid search type.';
-                        break;
+                if ($type == 'db' && $parser == 'create') {
+                    $error = 'Cannot use "Add to database" results parser when finding orphaned database objects.';
                 }
 
-                if (isset($this->data['orphans'])) {
 
-                    switch ($parser) {
+                if (empty($error)) {
 
-                        case 'list':
+                    switch ($type) {
 
-                            $this->data['success'] = '<strong>Search complete!</strong> your results are show below.';
+                        case 'db':
+
+                            $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+                            $this->data['orphans'] = $oCdn->findOrphanedObjects();
                             break;
 
-                        //  @todo: keep the unset(), it prevents the table from rendering
-                        case 'purge':
+                        //  @TODO
+                        case 'file':
 
-                            $this->data['message'] = '<strong>TODO:</strong> purge results.';
-                            unset($this->data['orphans']);
-                            break;
-
-                        case 'create':
-
-                            $this->data['message'] = '<strong>TODO:</strong> create objects using results.';
-                            unset($this->data['orphans']);
+                            $this->data['message'] = '<strong>TODO:</strong> find orphaned files.';
                             break;
 
                         //  Invalid request
                         default:
 
-                            $this->data['error'] = 'Invalid result parse selected.';
-                            unset($this->data['orphans']);
+                            $this->data['error'] = 'Invalid search type.';
                             break;
                     }
+
+                    if (isset($this->data['orphans'])) {
+
+                        switch ($parser) {
+
+                            case 'list':
+
+                                $this->data['success'] = '<strong>Search complete!</strong> your results are show below.';
+                                break;
+
+                            //  @todo: keep the unset(), it prevents the table from rendering
+                            case 'purge':
+
+                                $this->data['message'] = '<strong>TODO:</strong> purge results.';
+                                unset($this->data['orphans']);
+                                break;
+
+                            case 'create':
+
+                                $this->data['message'] = '<strong>TODO:</strong> create objects using results.';
+                                unset($this->data['orphans']);
+                                break;
+
+                            //  Invalid request
+                            default:
+
+                                $this->data['error'] = 'Invalid result parse selected.';
+                                unset($this->data['orphans']);
+                                break;
+                        }
+                    }
+
+                } else {
+
+                    $this->data['error'] = 'An error occurred. ' . $error;
                 }
-
-            } else {
-
-                $this->data['error'] = 'An error occurred. ' . $error;
             }
+
+            // --------------------------------------------------------------------------
+
+            $this->data['page']->title = 'CDN: Find Orphaned Objects';
+
+            // --------------------------------------------------------------------------
+
+            $oAsset = Factory::service('Asset');
+            $oAsset->load('admin.utilities.orphans.min.js', 'nailsapp/module-cdn');
+            $oAsset->inline(
+                'var _Admin_Utilities_Cdn_Orphans = new NAILS_Admin_Utilities_Cdn_Orphans();
+                _Admin_Utilities_Cdn_Orphans.init();',
+                'JS'
+            );
+
+            // --------------------------------------------------------------------------
+
+            Helper::loadView('index');
         }
-
-        // --------------------------------------------------------------------------
-
-        $this->data['page']->title = 'CDN: Find Orphaned Objects';
-
-        // --------------------------------------------------------------------------
-
-        $this->asset->load('admin.utilities.orphans.min.js', 'nailsapp/module-cdn');
-        $this->asset->inline(
-            'var _Admin_Utilities_Cdn_Orphans = new NAILS_Admin_Utilities_Cdn_Orphans();
-            _Admin_Utilities_Cdn_Orphans.init();',
-            'JS'
-        );
-
-        // --------------------------------------------------------------------------
-
-        Helper::loadView('index');
     }
 
     // --------------------------------------------------------------------------

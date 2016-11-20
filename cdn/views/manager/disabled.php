@@ -1,3 +1,10 @@
+<?php
+
+use Nails\Factory;
+$oInput = Factory::service('Input');
+$oAsset = Factory::service('Asset');
+
+?>
 <!DOCTYPE html>
 <html>
     <head>
@@ -20,13 +27,13 @@
         </script>
         <?php
 
-            $this->asset->output('CSS');
-            $this->asset->output('CSS-INLINE');
+        $oAsset->output('CSS');
+        $oAsset->output('CSS-INLINE');
 
         ?>
     </head>
     <body>
-        <div class="group-cdn manager <?=$this->input->get('isModal') ? 'is-fancybox' : ''?>">
+        <div class="group-cdn manager <?=$oInput->get('isModal') ? 'is-fancybox' : ''?>">
             <div id="mask"></div>
             <div class="browser-outer">
                 <div class="browser-inner">
@@ -35,25 +42,25 @@
                         <p>You don't have permission to view the media manager at the moment.</p>
                         <?php
 
-                            if (!$user->isLoggedIn()) {
+                        if (!$user->isLoggedIn()) {
 
-                                echo '<p>';
-                                echo anchor(
-                                    'auth/login?return_to=' . urlencode($_SERVER['REQUEST_URI']),
-                                    lang('action_login'),
-                                    'class="btn btn-primary"'
-                                );
-                                echo '</p>';
-                            }
+                            echo '<p>';
+                            echo anchor(
+                                'auth/login?return_to=' . urlencode($_SERVER['REQUEST_URI']),
+                                lang('action_login'),
+                                'class="btn btn-primary"'
+                            );
+                            echo '</p>';
+                        }
 
-                            // --------------------------------------------------------------------------
+                        // --------------------------------------------------------------------------
 
-                            if (isset($badBucket)) {
+                        if (isset($badBucket)) {
 
-                                echo '<p class="alert alert-danger">';
-                                echo $badBucket;
-                                echo '</p>';
-                            }
+                            echo '<p class="alert alert-danger">';
+                            echo $badBucket;
+                            echo '</p>';
+                        }
 
                         ?>
                     </div>
@@ -62,8 +69,8 @@
         </div>
         <?php
 
-            $this->asset->output('JS');
-            $this->asset->output('JS-INLINE');
+        $oAsset->output('JS');
+        $oAsset->output('JS-INLINE');
 
         ?>
     </body>

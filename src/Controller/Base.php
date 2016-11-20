@@ -64,19 +64,15 @@ class Base extends \App\Controller\Base
 
         //  Load language file
         $this->lang->load('cdn');
-
-        // --------------------------------------------------------------------------
-
-        //  Load CDN library
-        $this->cdn = Factory::service('Cdn', 'nailsapp/module-cdn');
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Serve a file from the app's cache
-     * @param  string  $file The file to serve
-     * @param  boolean $hit  Whether or not the request was a cache hit or not
+     * @param  string  $file            The file to serve
+     * @param  boolean $hit             Whether or not the request was a cache hit or not
+     * @param  boolean $setCacheHeaders Whether tos et the cache headers or not
      * @return void
      */
     protected function serveFromCache($file, $hit = true, $setCacheHeaders = true)
@@ -94,7 +90,8 @@ class Base extends \App\Controller\Base
         }
 
         //  Work out content type
-        $mime = $this->cdn->getMimeFromFile($this->cdnCacheDir . $file);
+        $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $mime = $oCdn->getMimeFromFile($this->cdnCacheDir . $file);
 
         header('Content-Type: ' . $mime, true);
 
@@ -122,17 +119,16 @@ class Base extends \App\Controller\Base
      * Set the cache headers of an object
      * @param string  $lastModified The last modified date of the file
      * @param string  $file         The file we're serving
-     * @param booleam $hit          Whether or not the request was a cache hit or not
+     * @param boolean $hit          Whether or not the request was a cache hit or not
      */
     protected function setCacheHeaders($lastModified, $file, $hit)
     {
         //  Set some flags
-        $this->cdnCacheHeadersSet           = true;
-        $this->cdnCacheHeadersMaxAge       = $this->cdnCacheHeadersMaxAge;
+        $this->cdnCacheHeadersSet          = true;
         $this->cdnCacheHeadersLastModified = $lastModified;
-        $this->cdnCacheHeadersExpires       = time() + $this->cdnCacheHeadersMaxAge;
-        $this->cdnCacheHeadersFile          = $file;
-        $this->cdnCacheHeadersHit           = $hit ? 'HIT' : 'MISS';
+        $this->cdnCacheHeadersExpires      = time() + $this->cdnCacheHeadersMaxAge;
+        $this->cdnCacheHeadersFile         = $file;
+        $this->cdnCacheHeadersHit          = $hit ? 'HIT' : 'MISS';
 
         // --------------------------------------------------------------------------
 
@@ -186,14 +182,15 @@ class Base extends \App\Controller\Base
      */
     protected function serveNotModified($file)
     {
+        $oInput = Factory::service('Input');
         if (function_exists('apache_request_headers')) {
 
             $headers = apache_request_headers();
 
-        } elseif ($this->input->server('HTTP_IF_NONE_MATCH')) {
+        } elseif ($oInput->server('HTTP_IF_NONE_MATCH')) {
 
             $headers                  = array();
-            $headers['If-None-Match'] = $this->input->server('HTTP_IF_NONE_MATCH');
+            $headers['If-None-Match'] = $oInput->server('HTTP_IF_NONE_MATCH');
 
         } elseif (isset($_SERVER)) {
 
@@ -217,12 +214,9 @@ class Base extends \App\Controller\Base
                      **/
 
                     if (count($rxMatches) > 0 && strlen($arhKey) > 2) {
-
                         foreach ($rxMatches as $ak_key => $akVal) {
-
                             $rxMatches[$ak_key] = ucfirst($akVal);
                         }
-
                         $arhKey = implode('-', $rxMatches);
                     }
 
@@ -237,8 +231,7 @@ class Base extends \App\Controller\Base
         }
 
         if (isset($headers['If-None-Match']) && $headers['If-None-Match'] == '"' . md5($file) . '"') {
-
-            header($this->input->server('SERVER_PROTOCOL') . ' 304 Not Modified', true, 304);
+            header($oInput->server('SERVER_PROTOCOL') . ' 304 Not Modified', true, 304);
             return true;
         }
 
@@ -253,6 +246,7 @@ class Base extends \App\Controller\Base
      * Serve up the "fail whale" graphic
      * @param  integer $width  The width of the graphic
      * @param  integer $height The height of the graphic
+     * @param  string  $sError The error message
      * @return void
      */
     protected function serveBadSrc($width = 100, $height = 100, $sError = '')
@@ -264,11 +258,8 @@ class Base extends \App\Controller\Base
 
         //  Create the icon
         if ($this->isRetina) {
-
             $icon = @imagecreatefrompng($this->cdnRoot . '_resources/img/fail@2x.png');
-
         } else {
-
             $icon = @imagecreatefrompng($this->cdnRoot . '_resources/img/fail.png');
         }
         $iconW = imagesx($icon);
@@ -292,7 +283,6 @@ class Base extends \App\Controller\Base
 
         //  Write the error on the bottom
         if (!empty($sError)) {
-
             $textcolor = imagecolorallocate($bg, 0, 0, 0);
             imagestring($bg, 1, 5, $height - 15, 'ERROR: ' . $sError, $textcolor);
         }
@@ -300,8 +290,9 @@ class Base extends \App\Controller\Base
         // --------------------------------------------------------------------------
 
         //  Output to browser
+        $oInput = Factory::service('Input');
         header('Content-Type: image/png', true);
-        header($this->input->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
+        header($oInput->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
         imagepng($bg);
 
         // --------------------------------------------------------------------------

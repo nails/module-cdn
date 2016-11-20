@@ -30,9 +30,8 @@ class Buckets extends BaseAdmin
      * @return \stdClass
      */
     public static function announce()
-        {
+    {
         if (userHasPermission('admin:cdn:buckets:browse')) {
-
             $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
             $oNavGroup->setLabel('CDN');
             $oNavGroup->setIcon('fa-cloud-upload');
@@ -80,11 +79,12 @@ class Buckets extends BaseAdmin
         // --------------------------------------------------------------------------
 
         //  Get pagination and search/sort variables
-        $page      = $this->input->get('page')      ? $this->input->get('page')      : 0;
-        $perPage   = $this->input->get('perPage')   ? $this->input->get('perPage')   : 50;
-        $sortOn    = $this->input->get('sortOn')    ? $this->input->get('sortOn')    : 'b.label';
-        $sortOrder = $this->input->get('sortOrder') ? $this->input->get('sortOrder') : 'asc';
-        $keywords  = $this->input->get('keywords')  ? $this->input->get('keywords')  : '';
+        $oInput    = Factory::service('Input');
+        $page      = $oInput->get('page')      ? $oInput->get('page')      : 0;
+        $perPage   = $oInput->get('perPage')   ? $oInput->get('perPage')   : 50;
+        $sortOn    = $oInput->get('sortOn')    ? $oInput->get('sortOn')    : 'b.label';
+        $sortOrder = $oInput->get('sortOrder') ? $oInput->get('sortOrder') : 'asc';
+        $keywords  = $oInput->get('keywords')  ? $oInput->get('keywords')  : '';
 
         // --------------------------------------------------------------------------
 
@@ -106,15 +106,17 @@ class Buckets extends BaseAdmin
         );
 
         //  Get the items for the page
-        $totalRows             = $this->cdn->countAllBuckets($data);
-        $this->data['buckets'] = $this->cdn->getBuckets($page, $perPage, $data);
+        $oCdn                  = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $totalRows             = $oCdn->countAllBuckets($data);
+        $this->data['buckets'] = $oCdn->getBuckets($page, $perPage, $data);
 
         //  Set Search and Pagination objects for the view
         $this->data['search']     = Helper::searchObject(true, $sortColumns, $sortOn, $sortOrder, $perPage, $keywords);
         $this->data['pagination'] = Helper::paginationObject($page, $perPage, $totalRows);
 
         //  Work out the return variable
-        parse_str($this->input->server('QUERY_STRING'), $query);
+        $oInput = Factory::service('Input');
+        parse_str($oInput->server('QUERY_STRING'), $query);
         $query = array_filter($query);
         $query = $query ? '?' . http_build_query($query) : '';
         $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
@@ -122,7 +124,6 @@ class Buckets extends BaseAdmin
 
         //  Add a header button
         if (userHasPermission('admin:cdn:buckets:create')) {
-
              Helper::addHeaderButton('admin/cdn/buckets/create' . $return, 'Create Bucket');
         }
 

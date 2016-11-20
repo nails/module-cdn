@@ -1,22 +1,29 @@
 <?php
 
-    $filterView = $this->input->get('filter-view');
+use Nails\Factory;
+
+$oCdn     = Factory::service('Cdn', 'nailsapp/module-cdn');
+$oInput   = Factory::service('Input');
+$oSession = Factory::service('Session', 'nailsapp/module-auth');
+$oAsset   = Factory::service('Asset');
+$oView    = Factory::service('View');
+
+$filterView = $oInput->get('filter-view');
+
+if (!$filterView) {
+
+    $filterView = $oSession->userdata('cdn-manager-view');
 
     if (!$filterView) {
-
-        $filterView = $this->session->userdata('cdn-manager-view');
-
-        if (!$filterView) {
-
-            $filterView = 'thumb';
-        }
+        $filterView = 'thumb';
     }
+}
 
-    $this->session->set_userdata('cdn-manager-view', $filterView);
+$oSession->set_userdata('cdn-manager-view', $filterView);
 
-    // --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 
-    $queryString = $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
+$queryString = $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
 
 ?><!DOCTYPE html>
 <html>
@@ -25,8 +32,8 @@
         <meta charset="utf-8">
         <?php
 
-            $this->asset->output('CSS');
-            $this->asset->output('CSS-INLINE');
+        $oAsset->output('CSS');
+        $oAsset->output('CSS-INLINE');
 
         ?>
         <noscript>
@@ -41,7 +48,7 @@
         </noscript>
     </head>
     <body>
-        <div class="group-cdn manager <?=$this->input->get('isModal') ? 'isModal' : ''?>">
+        <div class="group-cdn manager <?=$oInput->get('isModal') ? 'isModal' : ''?>">
             <div id="dropToUpload">
                 <div id="dropzone1"></div>
             </div>
@@ -49,39 +56,40 @@
             <div id="alert" <?= $success || $error || $notice || $message  ? 'style="display:block;"' : ''?>>
             <?php
 
-                if ($success) {
+            if ($success) {
 
-                    echo '<p class="alert alert-success">';
-                        echo $success;
-                        echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
-                    echo '</p>';
-                }
+                echo '<p class="alert alert-success">';
+                    echo $success;
+                    echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
+                echo '</p>';
+            }
 
-                if ($error) {
+            if ($error) {
 
-                    echo '<p class="alert alert-danger">';
-                        echo $error;
-                        echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
-                        echo '<a href="#" class="btn btn-danger cancel">Cancel</a>';
-                    echo '</p>';
+                echo '<p class="alert alert-danger">';
+                    echo $error;
+                    echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
+                    echo '<a href="#" class="btn btn-danger cancel">Cancel</a>';
+                echo '</p>';
 
-                }
+            }
 
-                if ($notice) {
+            if ($notice) {
 
-                    echo '<p class="alert alert-info">';
-                        echo $notice;
-                        echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
-                    echo '</p>';
-                }
+                echo '<p class="alert alert-info">';
+                    echo $notice;
+                    echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
+                echo '</p>';
+            }
 
-                if ($message) {
+            if ($message) {
 
-                    echo '<p class="alert alert-warning">';
-                        echo $message;
-                        echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
-                    echo '</p>';
-                }
+                echo '<p class="alert alert-warning">';
+                    echo $message;
+                    echo '<br /><a href="#" class="btn btn-success ok">OK</a>';
+                echo '</p>';
+            }
+
             ?>
             </div>
             <div class="browser-outer">
@@ -93,10 +101,10 @@
 
                                 //  Support no JS - might make sense to get rid of this eventually
                                 // echo '<noscript>';
-                                    echo form_open_multipart(site_url('cdn/manager/upload' . $queryString, isPageSecure()));
-                                        echo form_submit('submit', 'Upload', 'class="btn btn-xs btn-success"');
-                                        echo form_upload('userfile');
-                                    echo form_close();
+                                echo form_open_multipart(site_url('cdn/manager/upload' . $queryString, isPageSecure()));
+                                echo form_submit('submit', 'Upload', 'class="btn btn-xs btn-success"');
+                                echo form_upload('userfile');
+                                echo form_close();
                                 // echo '</noscript>';
 
                                 //  Javascript goodness
@@ -121,47 +129,48 @@
                                 <span class="view-swap">
                                     <?php
 
-                                        //  Get the query string into an array for mutation
-                                        parse_str($this->input->server('QUERY_STRING'), $query);
+                                    //  Get the query string into an array for mutation
+                                    parse_str($oInput->server('QUERY_STRING'), $query);
 
-                                        //  Filter out any existing filter-view=
-                                        unset($query['filter-view']);
+                                    //  Filter out any existing filter-view=
+                                    unset($query['filter-view']);
 
-                                        // --------------------------------------------------------------------------
+                                    // --------------------------------------------------------------------------
 
-                                        //  Item is selected?
-                                        $selected  = $filterView == 'thumb' ? 'selected' : '';
+                                    //  Item is selected?
+                                    $selected  = $filterView == 'thumb' ? 'selected' : '';
 
-                                        //  Build the URI for this item
-                                        $query['filter-view'] = 'thumb';
-                                        $uri  = site_url(uri_string(), isPageSecure());
-                                        $uri .= $query ? '?' . http_build_query($query) : '';
+                                    //  Build the URI for this item
+                                    $query['filter-view'] = 'thumb';
+                                    $uri  = site_url(uri_string(), isPageSecure());
+                                    $uri .= $query ? '?' . http_build_query($query) : '';
 
-                                        echo anchor($uri, 'Thumbnails', 'class="thumbnail ' . $selected . '"');
+                                    echo anchor($uri, 'Thumbnails', 'class="thumbnail ' . $selected . '"');
 
-                                        // --------------------------------------------------------------------------
+                                    // --------------------------------------------------------------------------
 
-                                        //  Item is selected?
-                                        $selected  = $filterView == 'list' ? 'selected' : '';
+                                    //  Item is selected?
+                                    $selected  = $filterView == 'list' ? 'selected' : '';
 
-                                        //  Build the URI for this item
-                                        $query['filter-view'] = 'list';
-                                        $uri  = site_url(uri_string(), isPageSecure());
-                                        $uri .= $query ? '?' . http_build_query($query) : '';
+                                    //  Build the URI for this item
+                                    $query['filter-view'] = 'list';
+                                    $uri  = site_url(uri_string(), isPageSecure());
+                                    $uri .= $query ? '?' . http_build_query($query) : '';
 
-                                        echo anchor($uri, 'List', 'class="list ' . $selected . '"');
+                                    echo anchor($uri, 'List', 'class="list ' . $selected . '"');
 
-                                        // --------------------------------------------------------------------------
+                                    // --------------------------------------------------------------------------
 
-                                        //  Item is selected?
-                                        $selected  = $filterView == 'detail' ? 'selected' : '';
+                                    //  Item is selected?
+                                    $selected  = $filterView == 'detail' ? 'selected' : '';
 
-                                        //  Build the URI for this item
-                                        $query['filter-view'] = 'detail';
-                                        $uri  = site_url(uri_string(), isPageSecure());
-                                        $uri .= $query ? '?' . http_build_query($query) : '';
+                                    //  Build the URI for this item
+                                    $query['filter-view'] = 'detail';
+                                    $uri  = site_url(uri_string(), isPageSecure());
+                                    $uri .= $query ? '?' . http_build_query($query) : '';
 
-                                        echo anchor($uri, 'Details', 'class="detail ' . $selected . '"');
+                                    echo anchor($uri, 'Details', 'class="detail ' . $selected . '"');
+
                                     ?>
                                 </span>
                             </li>
@@ -174,87 +183,87 @@
                             <li class="files <?=$filterView?>">
                             <?php
 
-                                if ($objects) {
+                            if ($objects) {
 
-                                    if ($filterView == 'list') {
+                                if ($filterView == 'list') {
 
-                                        echo '<table>';
-                                            echo '<thead>';
-                                                echo '<tr class="file list head">';
-                                                echo '<th class="filename">File</th>';
-                                                echo '<th class="mime">Type</th>';
-                                                echo '<th class="filesize">Filesize</th>';
-                                                echo '<th class="modified">Modified</th>';
-                                                echo '<th class="actions">Actions</th>';
-                                            echo '</tr>';
-                                            echo '</thead>';
-                                        echo '<tbody>';
-
-                                    } else {
-
-                                        echo '<ul>';
-                                    }
-
-                                    // --------------------------------------------------------------------------
-
-                                    foreach ($objects as $object) {
-
-                                        switch ($filterView) {
-
-                                            case 'detail':
-
-                                                $this->load->view(
-                                                    'cdn/manager/file-detail',
-                                                    array(
-                                                        'object'        => &$object,
-                                                        '_query_string' => &$queryString
-                                                    )
-                                                );
-                                                break;
-
-                                            case 'list':
-
-                                                $this->load->view(
-                                                    'cdn/manager/file-list',
-                                                    array(
-                                                        'object'        => &$object,
-                                                        '_query_string' => &$queryString
-                                                    )
-                                                );
-                                                break;
-
-
-                                            case 'thumb':
-                                            default:
-
-                                                $this->load->view(
-                                                    'cdn/manager/file-thumb',
-                                                    array(
-                                                        'object'        => &$object,
-                                                        '_query_string' => &$queryString
-                                                    )
-                                                );
-                                                break;
-                                        }
-                                    }
-
-                                    if ($filterView == 'list') {
-
-                                            echo '</tbody>';
-                                        echo '</table>';
-
-                                    } else {
-
-                                        echo '</ul>';
-                                    }
+                                    echo '<table>';
+                                        echo '<thead>';
+                                            echo '<tr class="file list head">';
+                                            echo '<th class="filename">File</th>';
+                                            echo '<th class="mime">Type</th>';
+                                            echo '<th class="filesize">Filesize</th>';
+                                            echo '<th class="modified">Modified</th>';
+                                            echo '<th class="actions">Actions</th>';
+                                        echo '</tr>';
+                                        echo '</thead>';
+                                    echo '<tbody>';
 
                                 } else {
 
-                                    echo '<div class="no-files">';
-                                        echo '<h1>No Files</h1>';
-                                        echo '<p>Upload your first file using the form above.</p>';
-                                    echo '</div>';
+                                    echo '<ul>';
                                 }
+
+                                // --------------------------------------------------------------------------
+
+                                foreach ($objects as $object) {
+
+                                    switch ($filterView) {
+
+                                        case 'detail':
+
+                                            $oView->load(
+                                                'cdn/manager/file-detail',
+                                                array(
+                                                    'object'        => &$object,
+                                                    '_query_string' => &$queryString
+                                                )
+                                            );
+                                            break;
+
+                                        case 'list':
+
+                                            $oView->load(
+                                                'cdn/manager/file-list',
+                                                array(
+                                                    'object'        => &$object,
+                                                    '_query_string' => &$queryString
+                                                )
+                                            );
+                                            break;
+
+
+                                        case 'thumb':
+                                        default:
+
+                                            $oView->load(
+                                                'cdn/manager/file-thumb',
+                                                array(
+                                                    'object'        => &$object,
+                                                    '_query_string' => &$queryString
+                                                )
+                                            );
+                                            break;
+                                    }
+                                }
+
+                                if ($filterView == 'list') {
+
+                                        echo '</tbody>';
+                                    echo '</table>';
+
+                                } else {
+
+                                    echo '</ul>';
+                                }
+
+                            } else {
+
+                                echo '<div class="no-files">';
+                                    echo '<h1>No Files</h1>';
+                                    echo '<p>Upload your first file using the form above.</p>';
+                                echo '</div>';
+                            }
 
                             ?>
                             </li>
@@ -271,8 +280,8 @@
         </script>
         <?php
 
-            $this->asset->output('JS');
-            $this->asset->output('JS-INLINE');
+        $oAsset->output('JS');
+        $oAsset->output('JS-INLINE');
 
         ?>
         <script type="text/javascript">
@@ -283,38 +292,38 @@
 
                 //  Initialise CDN Manager
                 urlScheme              = {};
-                urlScheme.serve        = '<?=$this->cdn->urlServeScheme()?>';
-                urlScheme.thumb        = '<?=$this->cdn->urlCropScheme()?>';
-                urlScheme.scale        = '<?=$this->cdn->urlScaleScheme()?>';
-                urlScheme.placeholder  = '<?=$this->cdn->urlPlaceholderScheme()?>';
-                urlScheme.blank_avatar = '<?=$this->cdn->urlBlankAvatarScheme()?>';
+                urlScheme.serve        = '<?=$oCdn->urlServeScheme()?>';
+                urlScheme.thumb        = '<?=$oCdn->urlCropScheme()?>';
+                urlScheme.scale        = '<?=$oCdn->urlScaleScheme()?>';
+                urlScheme.placeholder  = '<?=$oCdn->urlPlaceholderScheme()?>';
+                urlScheme.blank_avatar = '<?=$oCdn->urlBlankAvatarScheme()?>';
 
                 <?php
 
-                    $isModal     = $this->input->get('isModal') ? 'true' : 'false';
-                    $reopenModal = $this->input->get('reopenModal') ? $this->input->get('reopenModal') : '';
+                $isModal     = $oInput->get('isModal') ? 'true' : 'false';
+                $reopenModal = $oInput->get('reopenModal') ? $oInput->get('reopenModal') : '';
 
-                    if (isset($_GET['CKEditorFuncNum'])) {
+                if (isset($_GET['CKEditorFuncNum'])) {
 
-                        echo 'manager = new NAILS_CDN_Manager("ckeditor", ' . $this->input->get('CKEditorFuncNum') . ', null, urlScheme, ' . $isModal . ', "' . $reopenModal . '");';
+                    echo 'manager = new NAILS_CDN_Manager("ckeditor", ' . $oInput->get('CKEditorFuncNum') . ', null, urlScheme, ' . $isModal . ', "' . $reopenModal . '");';
 
-                        if ($this->input->get('deleted')) {
+                    if ($oInput->get('deleted')) {
 
-                            echo 'manager.insertCkeditor(\'\', \'\');';
-                        }
-
-                    } else {
-
-                        $callback = json_encode($this->input->get('callback'));
-                        $passback = $this->input->get('passback');
-
-                        echo 'manager = new NAILS_CDN_Manager("native", ' . $callback . ', ' . $passback . ', urlScheme, ' . $isModal . ', "' . $reopenModal . '");';
-
-                        if ($this->input->get('deleted')) {
-
-                            echo 'manager.insertNative("", "");';
-                        }
+                        echo 'manager.insertCkeditor(\'\', \'\');';
                     }
+
+                } else {
+
+                    $callback = json_encode($oInput->get('callback'));
+                    $passback = $oInput->get('passback');
+
+                    echo 'manager = new NAILS_CDN_Manager("native", ' . $callback . ', ' . $passback . ', urlScheme, ' . $isModal . ', "' . $reopenModal . '");';
+
+                    if ($oInput->get('deleted')) {
+
+                        echo 'manager.insertNative("", "");';
+                    }
+                }
 
                 ?>
             });

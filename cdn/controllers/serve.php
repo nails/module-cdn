@@ -31,13 +31,15 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Work out some variables
-        $token = $this->input->get('token');
+        $oInput = Factory::service('Input');
+        $token  = $oInput->get('token');
 
         if ($token) {
 
             //  Encrypted token/expiring URL
-            $token = $this->encrypt->decode($token, APP_PRIVATE_KEY);
-            $token = explode('|', $token);
+            $oEncrypt = Factory::service('Encrypt');
+            $token    = $oEncrypt->decode($token, APP_PRIVATE_KEY);
+            $token    = explode('|', $token);
 
             if (count($token) == 5) {
 
@@ -56,25 +58,23 @@ class Serve extends Base
                         $this->badToken = false;
 
                     } else {
-
                         $this->badToken = true;
                     }
 
                 } else {
-
                     $this->badToken = true;
                 }
 
             } else {
-
                 $this->badToken = true;
             }
 
         } else {
 
+            $oUri           = Factory::service('Uri');
             $this->badToken = false;
-            $this->bucket   = $this->uri->segment(3);
-            $this->object   = urldecode($this->uri->segment(4));
+            $this->bucket   = $oUri->segment(3);
+            $this->object   = urldecode($oUri->segment(4));
         }
     }
 
@@ -86,17 +86,18 @@ class Serve extends Base
      */
     public function index()
     {
+        $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $oInput = Factory::service('Input');
         //  Check if there was a bad token
         if ($this->badToken) {
-
             log_message('error', 'CDN: Serve: Bad Token');
-            return $this->serveBadSrc(lang('cdn_error_serve_badToken'));
+            $this->serveBadSrc(lang('cdn_error_serve_badToken'));
         }
 
         // --------------------------------------------------------------------------
 
         //  Look up the object in the DB
-        $object = $this->cdn->getObject($this->object, $this->bucket);
+        $object = $oCdn->getObject($this->object, $this->bucket);
 
         if (!$object) {
 
@@ -105,21 +106,20 @@ class Serve extends Base
              * can_browse_trash permission then have a look in the trash
              */
 
-            if ($this->input->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
+            if ($oInput->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
 
-                $object = $this->cdn->getObjectFromTrash($this->object, $this->bucket);
+                $object = $oCdn->getObjectFromTrash($this->object, $this->bucket);
 
                 if (!$object) {
-
                     //  Cool, guess it really doesn't exist
                     log_message('error', 'CDN: Serve: Object not defined');
-                    return $this->serveBadSrc(lang('cdn_error_serve_object_not_defined'));
+                    $this->serveBadSrc(lang('cdn_error_serve_object_not_defined'));
                 }
 
             } else {
 
                 log_message('error', 'CDN: Serve: Object not defined');
-                return $this->serveBadSrc(lang('cdn_error_serve_object_not_defined'));
+                $this->serveBadSrc(lang('cdn_error_serve_object_not_defined'));
             }
         }
 
@@ -134,13 +134,13 @@ class Serve extends Base
 
             if ($object) {
 
-                if ($this->input->get('dl')) {
+                if ($oInput->get('dl')) {
 
-                    $this->cdn->objectIncrementCount('DOWNLOAD', $object->id);
+                    $oCdn->objectIncrementCount('DOWNLOAD', $object->id);
 
                 } else {
 
-                    $this->cdn->objectIncrementCount('SERVE', $object->id);
+                    $oCdn->objectIncrementCount('SERVE', $object->id);
                 }
             }
 
@@ -150,27 +150,24 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Fetch source
-        $usefile = $this->cdn->objectLocalPath($this->bucket, $this->object);
+        $usefile = $oCdn->objectLocalPath($this->bucket, $this->object);
 
         if (!$usefile) {
 
             log_message('error', 'CDN: Serve: File does not exist');
-            log_message('error', 'CDN: Serve: ' . $this->cdn->lastError());
+            log_message('error', 'CDN: Serve: ' . $oCdn->lastError());
 
-            if ($this->user_model->isSuperuser()) {
-
-                return $this->serveBadSrc(lang('cdn_error_serve_file_not_found') . ': ' . $usefile);
-
+            if (isSuperuser()) {
+                $this->serveBadSrc(lang('cdn_error_serve_file_not_found') . ': ' . $usefile);
             } else {
-
-                return $this->serveBadSrc(lang('cdn_error_serve_file_not_found'));
+                $this->serveBadSrc(lang('cdn_error_serve_file_not_found'));
             }
         }
 
         // --------------------------------------------------------------------------
 
         //  Determine headers to send. Are we forcing the download?
-        if ($this->input->get('dl')) {
+        if ($oInput->get('dl')) {
 
             header('Content-Description: File Transfer', true);
             header('Content-Type: application/octet-stream', true);
@@ -209,21 +206,27 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Send the contents of the file to the browser
-        Factory::helper('file');
-        echo readFileChunked($usefile);
+        //  If a particular range of bytes is being requested then send those.
+        //  header('Accept-Ranges: bytes');
+        if (isset($_SERVER['HTTP_RANGE'])) {
+
+            //  @todo - support ranges
+            //  See http://www.media-division.com/the-right-way-to-handle-file-downloads-in-php/
+
+        } else {
+
+            Factory::helper('file');
+            echo readFileChunked($usefile);
+        }
 
         // --------------------------------------------------------------------------
 
         //  Bump the counter
         if ($object) {
-
-            if ($this->input->get('dl')) {
-
-                $this->cdn->objectIncrementCount('DOWNLOAD', $object->id);
-
+            if ($oInput->get('dl')) {
+                $oCdn->objectIncrementCount('DOWNLOAD', $object->id);
             } else {
-
-                $this->cdn->objectIncrementCount('SERVE', $object->id);
+                $oCdn->objectIncrementCount('SERVE', $object->id);
             }
         }
 
@@ -246,10 +249,11 @@ class Serve extends Base
      */
     protected function serveBadSrc($error = '')
     {
+        $oInput = Factory::service('Input');
         header('Cache-Control: no-cache, must-revalidate', true);
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
         header('Content-type: application/json', true);
-        header($this->input->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
+        header($oInput->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
 
         // --------------------------------------------------------------------------
 

@@ -29,7 +29,7 @@ class Manager extends Base
         // --------------------------------------------------------------------------
 
         //  Determine if browsing/uploading is permitted
-        $this->data['enabled'] = $this->user_model->isLoggedIn() ? true : false;
+        $this->data['enabled'] = isLoggedIn() ? true : false;
         $this->data['enabled'] = true;
 
         // --------------------------------------------------------------------------
@@ -46,16 +46,19 @@ class Manager extends Base
              * then use the user's upload directory
              */
 
-            if ($this->input->get('bucket') && $this->input->get('hash')) {
+            $oInput = Factory::service('Input');
+
+            if ($oInput->get('bucket') && $oInput->get('hash')) {
 
                 /**
                  * Decrypt the bucket and cross reference with the hash. Doing this so
                  * that users can't casually specify a bucket and upload willy nilly.
                  */
 
-                $bucket    = $this->input->get('bucket');
-                $hash      = $this->input->get('hash');
-                $decrypted = $this->encrypt->decode($bucket, APP_PRIVATE_KEY);
+                $oEncrypt  = Factory::service('Encrypt');
+                $bucket    = $oInput->get('bucket');
+                $hash      = $oInput->get('hash');
+                $decrypted = $oEncrypt->decode($bucket, APP_PRIVATE_KEY);
 
                 if ($decrypted) {
 
@@ -90,19 +93,16 @@ class Manager extends Base
                             }
 
                         } else {
-
                             $testOk = false;
                             $error  = 'Could not verify bucket hash';
                         }
 
                     } else {
-
                         $testOk = false;
                         $error  = 'Incomplete bucket hash';
                     }
 
                 } else {
-
                     $testOk = false;
                     $error  = 'Could not decrypt bucket hash';
                 }
@@ -110,7 +110,6 @@ class Manager extends Base
                 // --------------------------------------------------------------------------
 
                 if (!$testOk) {
-
                     $this->data['enabled']   = false;
                     $this->data['badBucket'] = $error;
                 }
@@ -153,28 +152,29 @@ class Manager extends Base
     public function browse()
     {
         //  Unload all styles and load just the nails styles
-        $this->asset->clear();
-        $this->asset->load('admin.manager.css', 'nailsapp/module-cdn');
+        $oAsset = Factory::service('Asset');
+        $oAsset->clear();
+        $oAsset->load('admin.manager.css', 'nailsapp/module-cdn');
 
         //  Fetch files
         if ($this->data['enabled']) {
 
             //  Load Bower assets
-            $this->asset->load('jquery/dist/jquery.min.js', 'NAILS-BOWER');
-            $this->asset->load('fancybox/source/jquery.fancybox.pack.js', 'NAILS-BOWER');
-            $this->asset->load('fancybox/source/jquery.fancybox.css', 'NAILS-BOWER');
-            $this->asset->load('jquery.scrollTo/jquery.scrollTo.min.js', 'NAILS-BOWER');
-            $this->asset->load('tipsy/src/javascripts/jquery.tipsy.js', 'NAILS-BOWER');
-            $this->asset->load('tipsy/src/stylesheets/tipsy.css', 'NAILS-BOWER');
-            $this->asset->library('MUSTACHE');
-            $this->asset->load('jquery-cookie/jquery.cookie.js', 'NAILS-BOWER');
-            // $this->asset->load('dropzone/downloads/dropzone.min.js', 'NAILS-BOWER');
-            $this->asset->load('fontawesome/css/font-awesome.min.css', 'NAILS-BOWER');
+            $oAsset->load('jquery/dist/jquery.min.js', 'NAILS-BOWER');
+            $oAsset->load('fancybox/source/jquery.fancybox.pack.js', 'NAILS-BOWER');
+            $oAsset->load('fancybox/source/jquery.fancybox.css', 'NAILS-BOWER');
+            $oAsset->load('jquery.scrollTo/jquery.scrollTo.min.js', 'NAILS-BOWER');
+            $oAsset->load('tipsy/src/javascripts/jquery.tipsy.js', 'NAILS-BOWER');
+            $oAsset->load('tipsy/src/stylesheets/tipsy.css', 'NAILS-BOWER');
+            $oAsset->library('MUSTACHE');
+            $oAsset->load('jquery-cookie/jquery.cookie.js', 'NAILS-BOWER');
+            // $oAsset->load('dropzone/downloads/dropzone.min.js', 'NAILS-BOWER');
+            $oAsset->load('fontawesome/css/font-awesome.min.css', 'NAILS-BOWER');
 
             //  Load other assets
-            $this->asset->load('nails.default.min.js', true);
-            $this->asset->load('nails.api.min.js', true);
-            $this->asset->load('admin.manager.min.js', 'nailsapp/module-cdn');
+            $oAsset->load('nails.default.min.js', true);
+            $oAsset->load('nails.api.min.js', true);
+            $oAsset->load('admin.manager.min.js', 'nailsapp/module-cdn');
 
             // --------------------------------------------------------------------------
 
@@ -200,15 +200,16 @@ class Manager extends Base
     public function upload()
     {
         //  Returning to...?
-        $return = site_url('cdn/manager/browse', isPageSecure());
-        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
+        $oInput   = Factory::service('Input');
+        $oSession = Factory::service('Session', 'nailsapp/module-auth');
+        $return   = site_url('cdn/manager/browse', isPageSecure());
+        $return  .= $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
         //  User is authorised to upload?
         if (!$this->data['enabled']) {
-
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> uploads are not available right now.');
+            $oSession->set_flashdata('error', '<strong>Sorry,</strong> uploads are not available right now.');
             redirect($return);
         }
 
@@ -216,12 +217,9 @@ class Manager extends Base
 
         //  Upload the file
         if ($this->oCdn->objectCreate('userfile', $this->data['bucket']->id)) {
-
-            $this->session->set_flashdata('success', '<strong>Success!</strong> File uploaded successfully!');
-
+            $oSession->set_flashdata('success', '<strong>Success!</strong> File uploaded successfully!');
         } else {
-
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->lastError());
+            $oSession->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->lastError());
         }
 
         redirect($return);
@@ -236,34 +234,34 @@ class Manager extends Base
     public function delete()
     {
         //  Returning to...?
-        $return  = site_url('cdn/manager/browse', isPageSecure());
-        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
+        $oInput   = Factory::service('Input');
+        $oSession = Factory::service('Session', 'nailsapp/module-auth');
+        $oUri     = Factory::service('Uri');
+        $return   = site_url('cdn/manager/browse', isPageSecure());
+        $return  .= $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
         //  User is authorised to delete?
         if (!$this->data['enabled']) {
-
             $status  = 'error';
             $message = '<strong>Sorry,</strong> file deletions are not available right now.';
-            $this->session->set_flashdata($status, $message);
+            $oSession->set_flashdata($status, $message);
             redirect($return);
         }
 
         // --------------------------------------------------------------------------
 
         //  Fetch the object
-        if (!$this->uri->segment(4)) {
-
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
+        if (!$oUri->segment(4)) {
+            $oSession->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
             redirect($return);
         }
 
-        $object = $this->oCdn->getObject($this->uri->segment(4));
+        $object = $this->oCdn->getObject($oUri->segment(4));
 
         if (!$object) {
-
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
+            $oSession->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
             redirect($return);
         }
 
@@ -274,18 +272,18 @@ class Manager extends Base
 
         if ($delete) {
 
-            $url = 'cdn/manager/restore/' . $this->uri->segment(4) . '?' . $this->input->server('QUERY_STRING');
+            $url = 'cdn/manager/restore/' . $oUri->segment(4) . '?' . $oInput->server('QUERY_STRING');
             $url = site_url($url, isPageSecure());
 
             $status  = 'success';
             $message = '<strong>Success!</strong> File deleted successfully! <a href="' . $url . '">Undo?</a>';
 
-            $this->session->set_flashdata($status, $message);
-            $this->session->set_flashdata('deleted', true);
+            $oSession->set_flashdata($status, $message);
+            $oSession->set_flashdata('deleted', true);
 
         } else {
 
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->lastError());
+            $oSession->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->lastError());
         }
 
         // --------------------------------------------------------------------------
@@ -302,34 +300,34 @@ class Manager extends Base
     public function restore()
     {
         //  Returning to...?
-        $return  = site_url('cdn/manager/browse', isPageSecure());
-        $return .= $this->input->server('QUERY_STRING') ? '?' . $this->input->server('QUERY_STRING') : '';
+        $oInput   = Factory::service('Input');
+        $oSession = Factory::service('Session', 'nailsapp/module-auth');
+        $oUri     = Factory::service('Uri');
+        $return   = site_url('cdn/manager/browse', isPageSecure());
+        $return  .= $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
         //  User is authorised to restore??
         if (!$this->data['enabled']) {
-
             $status  = 'error';
             $message = '<strong>Sorry,</strong> file restorations are not available right now.';
-            $this->session->set_flashdata($status, $message);
+            $oSession->set_flashdata($status, $message);
             redirect($return);
         }
 
         // --------------------------------------------------------------------------
 
         //  Fetch the object
-        if (!$this->uri->segment(4)) {
-
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
+        if (!$oUri->segment(4)) {
+            $oSession->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
             redirect($return);
         }
 
-        $object = $this->oCdn->getObjectFromTrash($this->uri->segment(4));
+        $object = $this->oCdn->getObjectFromTrash($oUri->segment(4));
 
         if (!$object) {
-
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
+            $oSession->set_flashdata('error', '<strong>Sorry,</strong> invalid object.');
             redirect($return);
         }
 
@@ -339,12 +337,9 @@ class Manager extends Base
         $restore = $this->oCdn->objectRestore($object->id);
 
         if ($restore) {
-
-            $this->session->set_flashdata('success', '<strong>Success!</strong> File restored successfully!');
-
+            $oSession->set_flashdata('success', '<strong>Success!</strong> File restored successfully!');
         } else {
-
-            $this->session->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->lastError());
+            $oSession->set_flashdata('error', '<strong>Sorry,</strong> ' . $this->oCdn->lastError());
         }
 
         // --------------------------------------------------------------------------

@@ -10,8 +10,8 @@
  * @link
  */
 
-use Nails\Factory;
 use Nails\Cdn\Controller\Base;
+use Nails\Factory;
 
 class Crop extends Base
 {
@@ -34,10 +34,11 @@ class Crop extends Base
         // --------------------------------------------------------------------------
 
         //  Determine dynamic values
-        $this->width     = $this->uri->segment(3, 100);
-        $this->height    = $this->uri->segment(4, 100);
-        $this->bucket    = $this->uri->segment(5);
-        $this->object    = urldecode($this->uri->segment(6));
+        $oUri            = Factory::service('Uri');
+        $this->width     = $oUri->segment(3, 100);
+        $this->height    = $oUri->segment(4, 100);
+        $this->bucket    = $oUri->segment(5);
+        $this->object    = urldecode($oUri->segment(6));
         $this->extension = !empty($this->object) ? strtolower(substr($this->object, strrpos($this->object, '.'))) : '';
 
         // --------------------------------------------------------------------------
@@ -48,10 +49,9 @@ class Crop extends Base
          */
 
         if (preg_match('/(.+)@2x(\..+)/', $this->object, $matches)) {
-
-            $this->isRetina         = true;
+            $this->isRetina = true;
             $this->retinaMultiplier = 2;
-            $this->object           = $matches[1] . $matches[2];
+            $this->object = $matches[1] . $matches[2];
         }
     }
 
@@ -59,24 +59,24 @@ class Crop extends Base
 
     /**
      * Generate the thumbnail
-     * @param  string $cropMethod The crop methiod to use, either SCALE or CROP
+     * @param  string $cropMethod The crop method to use, either SCALE or CROP
      * @return void
      */
     public function index($cropMethod = 'CROP')
     {
+        $oInput = Factory::service('Input');
+        $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
+
         //  Sanitize the crop method
         $cropMethod = strtoupper($cropMethod);
 
         switch ($cropMethod) {
-
             case 'SCALE':
-
                 $phpCropMethod = 'resize';
                 break;
 
             case 'CROP':
             default:
-
                 $phpCropMethod = 'adaptiveResizeQuadrant';
                 break;
         }
@@ -87,18 +87,22 @@ class Crop extends Base
         $width  = $this->width * $this->retinaMultiplier;
         $height = $this->height * $this->retinaMultiplier;
 
-        $this->cdnCacheFile  = $this->bucket;
-        $this->cdnCacheFile .= '-' . substr($this->object, 0, strrpos($this->object, '.'));
-        $this->cdnCacheFile .= '-' . $cropMethod;
-        $this->cdnCacheFile .= '-' . $width . 'x' . $height;
+        $aCacheFile = [
+            $this->bucket,
+            substr($this->object, 0, strrpos($this->object, '.')),
+            $cropMethod,
+            $width . 'x' . $height,
+            $oInput->get('filter') ? 'FILTER-' . $oInput->get('filter') : ''
+        ];
+        $aCacheFile         = array_filter($aCacheFile);
+        $this->cdnCacheFile = implode('-', $aCacheFile);
 
         // --------------------------------------------------------------------------
 
         //  We must have a bucket, object and extension in order to work with this
         if (!$this->bucket || !$this->object || !$this->extension) {
-
             log_message('error', 'CDN: ' . $cropMethod . ': Missing _bucket, _object or _extension');
-            return $this->serveBadSrc($this->width, $this->height);
+            $this->serveBadSrc($this->width, $this->height);
         }
 
         // --------------------------------------------------------------------------
@@ -109,14 +113,13 @@ class Crop extends Base
          */
 
         if ($this->serveNotModified($this->cdnCacheFile . $this->extension)) {
-
-            $this->cdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
+            $oCdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
             return;
         }
 
         // --------------------------------------------------------------------------
 
-        $object = $this->cdn->getObject($this->object, $this->bucket);
+        $object = $oCdn->getObject($this->object, $this->bucket);
 
         if (!$object) {
 
@@ -125,25 +128,18 @@ class Crop extends Base
              * can_browse_trash permission then have a look in the trash
              */
 
-            if ($this->input->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
+            if ($oInput->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
 
-                $object = $this->cdn->getObjectFromTrash($this->object, $this->bucket);
+                $object = $oCdn->getObjectFromTrash($this->object, $this->bucket);
 
                 if (!$object) {
-
                     //  Cool, guess it really doesn't exist
-                    $width  = $this->width * $this->retinaMultiplier;
-                    $height = $this->height * $this->retinaMultiplier;
-
-                    return $this->serveBadSrc($width, $height);
+                    $this->serveBadSrc($width, $height);
                 }
 
             } else {
 
-                $width  = $this->width * $this->retinaMultiplier;
-                $height = $this->height * $this->retinaMultiplier;
-
-                return $this->serveBadSrc($width, $height);
+                $this->serveBadSrc($width, $height);
             }
         }
 
@@ -151,11 +147,7 @@ class Crop extends Base
 
         //  Only images
         if (empty($object->is_img)) {
-
-            $width  = $this->width * $this->retinaMultiplier;
-            $height = $this->height * $this->retinaMultiplier;
-
-            return $this->serveBadSrc($width, $height, 'Not an image');
+            $this->serveBadSrc($width, $height, 'Not an image');
         }
 
         // --------------------------------------------------------------------------
@@ -164,32 +156,27 @@ class Crop extends Base
         if ($phpCropMethod == 'adaptiveResizeQuadrant') {
 
             switch ($object->img_orientation) {
-
                 case 'PORTRAIT':
-
                     $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_PORTRAIT') ? APP_CDN_CROP_QUADRANT_PORTRAIT : 'C';
                     break;
 
                 case 'LANDSCAPE':
-
                     $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_LANDSCAPE') ? APP_CDN_CROP_QUADRANT_LANDSCAPE : 'C';
                     break;
 
                 default:
-
                     $sCropQuadrant = 'C';
                     break;
             }
 
-            $sCropQuadrant = strtoupper($sCropQuadrant);
+            $sCropQuadrant      = strtoupper($sCropQuadrant);
             $this->cropQuadrant = $sCropQuadrant;
 
             /**
-             * The default quadrant is C, so leave that blank. This is msotly for backwards compatibility as old
+             * The default quadrant is C, so leave that blank. This is mostly for backwards compatibility as old
              * caches will have images which are cropped from the center, but not got `-C` in the cache filename.
              */
             if ($sCropQuadrant != 'C') {
-
                 $this->cdnCacheFile .= '-' . $sCropQuadrant;
             }
         }
@@ -207,7 +194,7 @@ class Crop extends Base
 
         if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) {
 
-            $this->cdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
+            $oCdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
             $this->serveFromCache($this->cdnCacheFile);
 
         } else {
@@ -218,17 +205,13 @@ class Crop extends Base
              */
 
             //  Fetch the file to use
-            $filePath = $this->cdn->objectLocalPath($this->bucket, $this->object);
+            $filePath = $oCdn->objectLocalPath($this->bucket, $this->object);
 
             if (!$filePath) {
 
                 log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned.');
-                log_message('error', 'CDN: ' . $cropMethod . ': ' . $this->cdn->lastError());
-
-                $width  = $this->width * $this->retinaMultiplier;
-                $height = $this->height * $this->retinaMultiplier;
-
-                return $this->serveBadSrc($width, $height);
+                log_message('error', 'CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
+                $this->serveBadSrc($width, $height);
 
             } elseif (!filesize($filePath)) {
 
@@ -238,30 +221,21 @@ class Crop extends Base
                  */
 
                 if (file_exists($filePath)) {
-
                     unlink($filePath);
                 }
 
-                $filePath = $this->cdn->objectLocalPath($this->bucket, $this->object);
+                $filePath = $oCdn->objectLocalPath($this->bucket, $this->object);
 
                 if (!$filePath) {
 
                     log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned, second attempt.');
-                    log_message('error', 'CDN: ' . $cropMethod . ': ' . $this->cdn->lastError());
-
-                    $width  = $this->width * $this->retinaMultiplier;
-                    $height = $this->height * $this->retinaMultiplier;
-
-                    return $this->serveBadSrc($width, $height);
+                    log_message('error', 'CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
+                    $this->serveBadSrc($width, $height);
 
                 } elseif (!filesize($filePath)) {
 
                     log_message('error', 'CDN: ' . $cropMethod . ': local path exists, but has a zero filesize.');
-
-                    $width  = $this->width * $this->retinaMultiplier;
-                    $height = $this->height * $this->retinaMultiplier;
-
-                    return $this->serveBadSrc($width, $height);
+                    $this->serveBadSrc($width, $height);
                 }
             }
 
@@ -280,18 +254,15 @@ class Crop extends Base
 
             //  Handle the actual resize
             if ($object->is_animated) {
-
                 $this->resizeAnimated($filePath, $phpCropMethod);
-
             } else {
-
                 $this->resize($filePath, $phpCropMethod);
             }
 
             // --------------------------------------------------------------------------
 
             //  Bump the counter
-            $this->cdn->objectIncrementCount($cropMethod, $object->id);
+            $oCdn->objectIncrementCount($cropMethod, $object->id);
         }
     }
 
@@ -299,15 +270,15 @@ class Crop extends Base
 
     /**
      * Resize a static image
-     * @param  string $filePath       The file to resize
+     * @param  string $filePath The file to resize
      * @param  string $phpCropMethod The PHPThumb method to use for resizing
      * @return void
      */
     private function resize($filePath, $phpCropMethod)
     {
         //  Set some PHPThumb options
-        $_options                = array();
-        $_options['resizeUp']    = true;
+        $_options = array();
+        $_options['resizeUp'] = true;
         $_options['jpegQuality'] = 80;
 
         // --------------------------------------------------------------------------
@@ -367,7 +338,7 @@ class Crop extends Base
             ob_end_clean();
 
             //  Bad SRC
-            return $this->serveBadSrc($width, $height);
+            $this->serveBadSrc($width, $height);
         }
 
         $this->serveFromCache($this->cdnCacheFile, false);
@@ -381,7 +352,7 @@ class Crop extends Base
 
     /**
      * Resize an animated image
-     * @param  string $filePath       The file to resize
+     * @param  string $filePath The file to resize
      * @param  string $phpCropMethod The PHPThumb method to use for resizing
      * @return void
      */
@@ -417,8 +388,9 @@ class Crop extends Base
             // --------------------------------------------------------------------------
 
             //  Set some PHPThumb options
-            $options             = array();
-            $options['resizeUp'] = true;
+            $options = array(
+                'resizeUp' => true
+            );
 
             // --------------------------------------------------------------------------
 
@@ -429,8 +401,8 @@ class Crop extends Base
 
             //  Prepare the parameters and call the method
             $aParams = array(
-                $iWidth,
-                $iHeight,
+                $width,
+                $height,
                 $this->cropQuadrant
             );
 
@@ -443,7 +415,7 @@ class Crop extends Base
         }
 
         /**
-         * Recompile the resized images back into an animated gif and save to the cache
+         * Recompile the re-sized images back into an animated gif and save to the cache
          * @todo: We assume the gif loops infinitely but we should really check.
          * Issue made on the library's GitHub asking for this feature.
          * View here: https://github.com/Sybio/GifFrameExtractor/issues/3
@@ -468,17 +440,13 @@ class Crop extends Base
 
         //  Remove cache frames
         foreach ($frames as $frame) {
-
             if (file_exists($frame)) {
-
                 unlink($frame);
             }
         }
 
         foreach ($cacheFiles as $frame) {
-
             if (file_exists($frame)) {
-
                 unlink($frame);
             }
         }

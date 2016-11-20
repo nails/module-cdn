@@ -10,6 +10,7 @@
  * @link
  */
 
+use Nails\Factory;
 use Nails\Cdn\Controller\Base;
 
 class Zip extends Base
@@ -21,14 +22,16 @@ class Zip extends Base
     public function index()
     {
         //  Decode the token
-        $ids      = $this->uri->segment(3);
-        $hash     = $this->uri->segment(4);
-        $filename = urldecode($this->uri->segment(5));
+        $oUri     = Factory::service('Uri');
+        $ids      = $oUri->segment(3);
+        $hash     = $oUri->segment(4);
+        $filename = urldecode($oUri->segment(5));
 
         if ($ids && $hash) {
 
             //  Check the hash
-            $objects = $this->cdn->verifyUrlServeZippedHash($hash, $ids, $filename);
+            $oCdn    = Factory::service('Cdn', 'nailsapp/module-cdn');
+            $objects = $oCdn->verifyUrlServeZippedHash($hash, $ids, $filename);
 
             if ($objects) {
 
@@ -41,7 +44,6 @@ class Zip extends Base
                  */
 
                 if ($this->serveNotModified($this->cdnCacheFile)) {
-
                     return;
                 }
 
@@ -73,17 +75,15 @@ class Zip extends Base
                     foreach ($objects as $obj) {
 
                         $temp           = new stdClass();
-                        $temp->path     = $this->cdn->objectLocalPath($obj->bucket->slug, $obj->file->name->disk);
+                        $temp->path     = $oCdn->objectLocalPath($obj->bucket->slug, $obj->file->name->disk);
                         $temp->filename = $obj->file->name->human;
                         $temp->bucket   = $obj->bucket->label;
 
                         if (!$temp->path) {
-
-                            return $this->serveBadSrc('Object "' . $obj->filename . '" does not exist');
+                            $this->serveBadSrc('Object "' . $obj->filename . '" does not exist');
                         }
 
                         if (!$useBuckets && $prevBucket && $prevBucket !== $obj->bucket->id) {
-
                             $useBuckets = true;
                         }
 
@@ -128,12 +128,10 @@ class Zip extends Base
                 }
 
             } else {
-
                 $this->serveBadSrc('Could not verify token');
             }
 
         } else {
-
             $this->serveBadSrc('Missing parameters');
         }
     }
@@ -147,10 +145,11 @@ class Zip extends Base
      */
     protected function serveBadSrc($error = '')
     {
+        $oInput = Factory::service('Input');
         header('Cache-Control: no-cache, must-revalidate', true);
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
         header('Content-type: application/json', true);
-        header($this->input->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
+        header($oInput->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
 
         // --------------------------------------------------------------------------
 
@@ -160,7 +159,6 @@ class Zip extends Base
         );
 
         if (!empty($error)) {
-
             $out['error'] = $error;
         }
 

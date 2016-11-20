@@ -13,8 +13,9 @@
 namespace Nails\Api\Cdn;
 
 use Nails\Factory;
+use Nails\Api\Controller\Base;
 
-class Manager extends \Nails\Api\Controller\Base
+class Manager extends Base
 {
     /**
      * Require the user be authenticated to use any endpoint
@@ -28,7 +29,8 @@ class Manager extends \Nails\Api\Controller\Base
     // --------------------------------------------------------------------------
 
     /**
-     * Construct the controller
+     * Manager constructor.
+     * @param $apiRouter
      */
     public function __construct($apiRouter)
     {
@@ -44,10 +46,11 @@ class Manager extends \Nails\Api\Controller\Base
      */
     public function getUrl()
     {
-        $sBucket   = $this->input->get('bucket');
-        $aCallback = $this->input->get('callback');
-        $mPassback = $this->input->get('passback');
-        $bSecure   = $this->input->get('secure');
+        $oInput    = Factory::service('Input');
+        $sBucket   = $oInput->get('bucket');
+        $aCallback = $oInput->get('callback');
+        $mPassback = $oInput->get('passback');
+        $bSecure   = $oInput->get('secure');
 
 
         return array('data' => cdnManagerUrl($sBucket, $aCallback, $mPassback, $bSecure));
