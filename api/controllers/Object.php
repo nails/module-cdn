@@ -74,7 +74,7 @@ class Object extends \Nails\Api\Controller\Base
         $sUrls = $sIds = $this->input->get('urls');
         $aUrls = !is_array($sUrls) ? explode(',', $sUrls) : $sUrls;
 
-        //  Filter out any which don't follow the format {digit}x{digit}-{scale|crop}
+        //  Filter out any which don't follow the format {digit}x{digit}-{scale|crop} || raw
         foreach ($aUrls as &$sDimension) {
 
             if (!is_string($sDimension)) {
@@ -82,18 +82,27 @@ class Object extends \Nails\Api\Controller\Base
                 continue;
             }
 
-            preg_match_all('/^(\d+?)x(\d+?)(-(scale|crop))?$/i', $sDimension, $aMatches);
+            preg_match_all('/^((\d+?)x(\d+?)(-(scale|crop)))|raw?$/i', $sDimension, $aMatches);
 
             if (empty($aMatches[0])) {
 
                 $sDimension = null;
 
+            } elseif (!empty($aMatches[0][0]) && strtoupper($aMatches[0][0]) == 'RAW') {
+
+                $sDimension = [
+                    'width'  => null,
+                    'height' => null,
+                    'type'   => 'RAW',
+                ];
+
             } else {
 
-                $sDimension           = array();
-                $sDimension['width']  = !empty($aMatches[1][0]) ? $aMatches[1][0] : null;
-                $sDimension['height'] = !empty($aMatches[2][0]) ? $aMatches[2][0] : null;
-                $sDimension['type']   = !empty($aMatches[4][0]) ? strtoupper($aMatches[4][0]) : 'CROP';
+                $sDimension = [
+                    'width'  => !empty($aMatches[2][0]) ? $aMatches[2][0] : null,
+                    'height' => !empty($aMatches[3][0]) ? $aMatches[3][0] : null,
+                    'type'   => !empty($aMatches[4][0]) ? strtoupper($aMatches[5][0]) : 'CROP',
+                ];
             }
         }
 
@@ -148,6 +157,16 @@ class Object extends \Nails\Api\Controller\Base
                                 $oObject,
                                 $aDimension['width'],
                                 $aDimension['height']
+                            );
+                            break;
+                    }
+                }
+            } else {
+                foreach ($aUrls as $aDimension) {
+                    switch ($aDimension['type']) {
+                        case 'RAW':
+                            $oTemp->url->raw = $this->oCdn->urlServeRaw(
+                                $oObject
                             );
                             break;
                     }
