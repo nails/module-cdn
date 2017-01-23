@@ -15,8 +15,8 @@ class Migrate extends Base
      */
     protected function configure()
     {
-        $this->setName('cdn-migrate');
-        $this->setDescription('Migrates CDN between drivers');
+        $this->setName('cdn:migrate');
+        $this->setDescription('[WIP] Migrates CDN between drivers');
     }
 
     // --------------------------------------------------------------------------
