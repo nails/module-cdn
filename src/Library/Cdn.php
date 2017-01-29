@@ -729,7 +729,7 @@ class Cdn
             } else {
 
                 //  Write the file to the cache temporarily
-                if (is_writeable(DEPLOY_CACHE_DIR)) {
+                if (is_writable(DEPLOY_CACHE_DIR)) {
 
                     $cacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
                     $fh = fopen(DEPLOY_CACHE_DIR . $cacheFile, 'w');
