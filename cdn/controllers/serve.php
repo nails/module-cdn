@@ -216,7 +216,7 @@ class Serve extends Base
         } else {
 
             Factory::helper('file');
-            echo readFileChunked($usefile);
+            readFileChunked($usefile);
         }
 
         // --------------------------------------------------------------------------

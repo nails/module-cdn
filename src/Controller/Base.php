@@ -102,7 +102,7 @@ class Base extends \App\Controller\Base
 
         //  Send the contents of the file to the browser
         Factory::helper('file');
-        echo readFileChunked($this->cdnCacheDir . $file);
+        readFileChunked($this->cdnCacheDir . $file);
 
         /**
          * Kill script, th, th, that's all folks.
