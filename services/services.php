@@ -43,6 +43,13 @@ return array(
             } else {
                 return new \Nails\Cdn\Model\CdnObject();
             }
-        }
+        },
+        'StorageDriver' => function () {
+            if (class_exists('\App\Cdn\Model\StorageDriver')) {
+                return new \App\Cdn\Model\StorageDriver();
+            } else {
+                return new \Nails\Cdn\Model\StorageDriver();
+            }
+        },
     )
 );

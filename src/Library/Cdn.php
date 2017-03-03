@@ -43,7 +43,7 @@ class Cdn
      * The active driver
      * @var string
      */
-    protected $oActiveDriver;
+    protected $oEnabledDriver;
 
     /**
      * The default list of allowed types for a bucket
@@ -77,32 +77,27 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Load the storage driver
-        // @todo - build a settings interface for setting and configuring the driver.
-        $sSlug    = defined('APP_CDN_DRIVER') ? strtolower(APP_CDN_DRIVER) : self::DEFAULT_DRIVER;
-        $aDrivers = _NAILS_GET_DRIVERS('nailsapp/module-cdn');
-        $oDriver  = null;
-
-        for ($i = 0; $i < count($aDrivers); $i++) {
-            if ($aDrivers[$i]->slug == $sSlug) {
-                $oDriver = $aDrivers[$i];
-                break;
-            }
-        }
+        $oStorageDriverModel = Factory::model('StorageDriver', 'nailsapp/module-cdn');
+        $aDrivers            = $oStorageDriverModel->getAll();
+        $oDriver             = $oStorageDriverModel->getEnabled();
 
         if (empty($oDriver)) {
-            throw new DriverException('"' . $sSlug . '" is not a valid CDN driver', 1);
+            $oDriver = $oStorageDriverModel->getBySlug(static::DEFAULT_DRIVER);
+            if (empty($oDriver)) {
+                throw new DriverException('Unable to load a CDN storage driver.');
+            }
         }
 
         //  Ensure driver implements the correct interface
         $sInterfaceName = 'Nails\Cdn\Interfaces\Driver';
-        if (!in_array($sInterfaceName, class_implements(_NAILS_GET_DRIVER_INSTANCE($oDriver)))) {
+        if (!in_array($sInterfaceName, class_implements($oDriver->data->namespace . $oDriver->data->class))) {
             throw new DriverException(
-                '"' . $sSlug . '" must implement ' . $sInterfaceName,
-                2
+                '"' . $oDriver->data->namespace . $oDriver->data->class . '" must implement ' . $sInterfaceName
             );
         }
 
-        $this->oActiveDriver = $oDriver;
+        //  Shortcuts for the rest of the class
+        $this->oEnabledDriver = $oDriver;
         foreach ($aDrivers as $oDriver) {
             $this->aDrivers[$oDriver->slug] = $oDriver;
         }
@@ -124,19 +119,21 @@ class Cdn
     {
         //  Work out which driver we need to use
         if (empty($sDriver)) {
-            $oDriver = $this->oActiveDriver;
+            $oDriver = $this->oEnabledDriver;
         } elseif (array_key_exists($sDriver, $this->aDrivers)) {
             $oDriver = $this->aDrivers[$sDriver];
         } else {
             throw new DriverException('"' . $sDriver . '" is not a valid CDN driver.');
         }
 
-        $oDriver = _NAILS_GET_DRIVER_INSTANCE($oDriver);
-        if (empty($oDriver)) {
+        $oStorageDriverModel = Factory::model('StorageDriver', 'nailsapp/module-cdn');
+        $oInstance           = $oStorageDriverModel->getInstance($oDriver->slug);
+
+        if (empty($oInstance)) {
             throw new DriverException('Failed to load CDN driver instance.');
         }
 
-        return call_user_func_array([$oDriver, $sMethod], $aArguments);
+        return call_user_func_array([$oInstance, $sMethod], $aArguments);
     }
 
     // --------------------------------------------------------------------------
@@ -1343,6 +1340,7 @@ class Cdn
             return $sLocalPath;
 
         } catch (\Exception $e) {
+            dumpanddie($e->getMessage());
             $this->setError($e->getMessage());
             return false;
         }
@@ -1366,7 +1364,7 @@ class Cdn
         $oDb->set('filename_display', $data->name);
         $oDb->set('mime', $data->mime);
         $oDb->set('filesize', $data->filesize);
-        $oDb->set('driver', $this->oActiveDriver->slug);
+        $oDb->set('driver', $this->oEnabledDriver->slug);
         $oDb->set('created', 'NOW()', false);
         $oDb->set('modified', 'NOW()', false);
 
@@ -3029,7 +3027,7 @@ class Cdn
             'bucket' => (object) [
                 'slug' => '',
             ],
-            'driver' => $this->oActiveDriver->slug,
+            'driver' => $this->oEnabledDriver->slug,
         ];
     }
 }
