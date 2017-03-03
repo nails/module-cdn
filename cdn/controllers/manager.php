@@ -10,8 +10,8 @@
  * @link
  */
 
-use Nails\Factory;
 use Nails\Cdn\Controller\Base;
+use Nails\Factory;
 
 class Manager extends Base
 {
@@ -80,7 +80,7 @@ class Manager extends Base
                                 //  Bucket doesn't exist - attempt to create it
                                 if ($this->oCdn->bucketCreate($bucket[0])) {
 
-                                    $testOk = true;
+                                    $testOk               = true;
                                     $this->data['bucket'] = $this->oCdn->getBucket($bucket[0]);
 
                                 } else {
@@ -131,8 +131,8 @@ class Manager extends Base
 
                     if (!$bucket_id) {
 
-                         $this->data['enabled']    = false;
-                         $this->data['badBucket'] = 'Unable to create upload bucket: ' . $this->oCdn->lastError();
+                        $this->data['enabled']   = false;
+                        $this->data['badBucket'] = 'Unable to create upload bucket: ' . $this->oCdn->lastError();
 
                     } else {
 
@@ -203,7 +203,7 @@ class Manager extends Base
         $oInput   = Factory::service('Input');
         $oSession = Factory::service('Session', 'nailsapp/module-auth');
         $return   = site_url('cdn/manager/browse', isPageSecure());
-        $return  .= $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
+        $return .= $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
@@ -238,7 +238,7 @@ class Manager extends Base
         $oSession = Factory::service('Session', 'nailsapp/module-auth');
         $oUri     = Factory::service('Uri');
         $return   = site_url('cdn/manager/browse', isPageSecure());
-        $return  .= $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
+        $return .= $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 
@@ -304,7 +304,7 @@ class Manager extends Base
         $oSession = Factory::service('Session', 'nailsapp/module-auth');
         $oUri     = Factory::service('Uri');
         $return   = site_url('cdn/manager/browse', isPageSecure());
-        $return  .= $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
+        $return .= $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_STRING') : '';
 
         // --------------------------------------------------------------------------
 

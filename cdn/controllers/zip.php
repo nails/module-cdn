@@ -10,8 +10,8 @@
  * @link
  */
 
-use Nails\Factory;
 use Nails\Cdn\Controller\Base;
+use Nails\Factory;
 
 class Zip extends Base
 {
@@ -68,14 +68,14 @@ class Zip extends Base
                      * file should fall over.
                      */
 
-                    $usefiles   = array();
+                    $usefiles   = [];
                     $useBuckets = false;
                     $prevBucket = '';
 
                     foreach ($objects as $obj) {
 
                         $temp           = new stdClass();
-                        $temp->path     = $oCdn->objectLocalPath($obj->bucket->slug, $obj->file->name->disk);
+                        $temp->path     = $oCdn->objectLocalPath($obj->id);
                         $temp->filename = $obj->file->name->human;
                         $temp->bucket   = $obj->bucket->label;
 
@@ -140,7 +140,9 @@ class Zip extends Base
 
     /**
      * Handles bad requests
+     *
      * @param  string $error The error which occurred
+     *
      * @return void
      */
     protected function serveBadSrc($error = '')
@@ -153,10 +155,10 @@ class Zip extends Base
 
         // --------------------------------------------------------------------------
 
-        $out = array(
+        $out = [
             'status'  => 400,
-            'message' => lang('cdn_error_serve_invalid_request')
-        );
+            'message' => lang('cdn_error_serve_invalid_request'),
+        ];
 
         if (!empty($error)) {
             $out['error'] = $error;

@@ -16,7 +16,6 @@ class Thumb extends Crop
 {
     /**
      * Generate a thumbnail
-     * @return  void
      **/
     public function index()
     {

@@ -32,8 +32,8 @@ class Blank_avatar extends Base
         // --------------------------------------------------------------------------
 
         //  'Constant' variables
-        $this->avatarMale   = $this->cdnRoot . '_resources/img/avatarMale.png';
-        $this->avatarFemale = $this->cdnRoot . '_resources/img/avatarFemale.png';
+        $this->avatarMale    = $this->cdnRoot . '_resources/img/avatarMale.png';
+        $this->avatarFemale  = $this->cdnRoot . '_resources/img/avatarFemale.png';
         $this->avatarNeutral = $this->cdnRoot . '_resources/img/avatarNeutral.png';
 
         // --------------------------------------------------------------------------
@@ -67,7 +67,7 @@ class Blank_avatar extends Base
         $width  = $this->width * $this->retinaMultiplier;
         $height = $this->height * $this->retinaMultiplier;
 
-        $this->cdnCacheFile  = 'blank_avatar';
+        $this->cdnCacheFile = 'blank_avatar';
         $this->cdnCacheFile .= '-' . $width . 'x' . $height;
         $this->cdnCacheFile .= '-' . $this->sex;
         $this->cdnCacheFile .= '.png';
@@ -142,7 +142,7 @@ class Blank_avatar extends Base
                 //  Object exists, time for manipulation fun times :>
 
                 //  Set some PHPThumb options
-                $options             = array();
+                $options             = [];
                 $options['resizeUp'] = true;
 
                 // --------------------------------------------------------------------------

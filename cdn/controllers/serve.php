@@ -10,8 +10,8 @@
  * @link
  */
 
-use Nails\Factory;
 use Nails\Cdn\Controller\Base;
+use Nails\Factory;
 
 class Serve extends Base
 {
@@ -43,7 +43,7 @@ class Serve extends Base
 
             if (count($token) == 5) {
 
-                $this->badToken   = false;
+                $this->badToken = false;
 
                 //  Seems to be ok, but verify the different parts
                 list($bucket, $object, $expires, $time, $hash) = $token;
@@ -131,15 +131,10 @@ class Serve extends Base
          */
 
         if ($this->serveNotModified($this->bucket . $this->object)) {
-
             if ($object) {
-
                 if ($oInput->get('dl')) {
-
                     $oCdn->objectIncrementCount('DOWNLOAD', $object->id);
-
                 } else {
-
                     $oCdn->objectIncrementCount('SERVE', $object->id);
                 }
             }
@@ -150,7 +145,7 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Fetch source
-        $usefile = $oCdn->objectLocalPath($this->bucket, $this->object);
+        $usefile = $oCdn->objectLocalPath($object->id);
 
         if (!$usefile) {
 
@@ -190,7 +185,7 @@ class Serve extends Base
         } else {
 
             //  Determine headers to send
-            header('Content-Type: ' .  $object->file->mime, true);
+            header('Content-Type: ' . $object->file->mime, true);
 
             $stats = stat($usefile);
             $this->setCacheHeaders($stats[9], $this->bucket . $this->object, false);
@@ -244,7 +239,9 @@ class Serve extends Base
 
     /**
      * Serves a response for bad requests
+     *
      * @param  string $error The error which occurred
+     *
      * @return void
      */
     protected function serveBadSrc($error = '')
@@ -257,10 +254,10 @@ class Serve extends Base
 
         // --------------------------------------------------------------------------
 
-        $out = array(
+        $out = [
             'status'  => 400,
-            'message' => lang('cdn_error_serve_invalid_request')
-        );
+            'message' => lang('cdn_error_serve_invalid_request'),
+        ];
 
         if (!empty($error)) {
 

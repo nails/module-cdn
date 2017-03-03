@@ -62,9 +62,9 @@ class Placeholder extends Base
         // --------------------------------------------------------------------------
 
         //  Apply limits (prevent DOS)
-        $this->width   = $this->width > 2000 ? 2000 : $this->width;
-        $this->height  = $this->height > 2000 ? 2000 : $this->height;
-        $this->border  = $this->border > 2000 ? 2000 : $this->border;
+        $this->width  = $this->width > 2000 ? 2000 : $this->width;
+        $this->height = $this->height > 2000 ? 2000 : $this->height;
+        $this->border = $this->border > 2000 ? 2000 : $this->border;
 
         // --------------------------------------------------------------------------
 
@@ -77,7 +77,7 @@ class Placeholder extends Base
         $height = $this->height * $this->retinaMultiplier;
         $border = $this->border * $this->retinaMultiplier;
 
-        $this->cdnCacheFile  = 'placeholder';
+        $this->cdnCacheFile = 'placeholder';
         $this->cdnCacheFile .= '-' . $width . 'x' . $height;
         $this->cdnCacheFile .= '-' . $border;
         $this->cdnCacheFile .= '.png';
@@ -142,16 +142,16 @@ class Placeholder extends Base
             for ($i = 0; $i < $border; $i++) {
 
                 //  Left
-                imageline($img, 0+$i, 0, 0+$i, $height, $borderColor);
+                imageline($img, 0 + $i, 0, 0 + $i, $height, $borderColor);
 
                 //  Top
-                imageline($img, 0, 0+$i, $width, 0+$i, $borderColor);
+                imageline($img, 0, 0 + $i, $width, 0 + $i, $borderColor);
 
                 //  Bottom
-                imageline($img, 0, $height-1-$i, $width, $height-1-$i, $borderColor);
+                imageline($img, 0, $height - 1 - $i, $width, $height - 1 - $i, $borderColor);
 
                 //  Right
-                imageline($img, $width-1-$i, 0, $width-1-$i, $height, $borderColor);
+                imageline($img, $width - 1 - $i, 0, $width - 1 - $i, $height, $borderColor);
 
             }
 

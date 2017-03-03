@@ -16,8 +16,7 @@ class Scale extends Crop
 {
     /**
      * Generate a thumbnail
-     * @return  void
-     **/
+     */
     public function index()
     {
         return parent::index('SCALE');

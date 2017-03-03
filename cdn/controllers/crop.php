@@ -49,9 +49,9 @@ class Crop extends Base
          */
 
         if (preg_match('/(.+)@2x(\..+)/', $this->object, $matches)) {
-            $this->isRetina = true;
+            $this->isRetina         = true;
             $this->retinaMultiplier = 2;
-            $this->object = $matches[1] . $matches[2];
+            $this->object           = $matches[1] . $matches[2];
         }
     }
 
@@ -59,7 +59,9 @@ class Crop extends Base
 
     /**
      * Generate the thumbnail
+     *
      * @param  string $cropMethod The crop method to use, either SCALE or CROP
+     *
      * @return void
      */
     public function index($cropMethod = 'CROP')
@@ -92,8 +94,9 @@ class Crop extends Base
             substr($this->object, 0, strrpos($this->object, '.')),
             $cropMethod,
             $width . 'x' . $height,
-            $oInput->get('filter') ? 'FILTER-' . $oInput->get('filter') : ''
+            $oInput->get('filter') ? 'FILTER-' . $oInput->get('filter') : '',
         ];
+
         $aCacheFile         = array_filter($aCacheFile);
         $this->cdnCacheFile = implode('-', $aCacheFile);
 
@@ -205,7 +208,7 @@ class Crop extends Base
              */
 
             //  Fetch the file to use
-            $filePath = $oCdn->objectLocalPath($this->bucket, $this->object);
+            $filePath = $oCdn->objectLocalPath($object->id);
 
             if (!$filePath) {
 
@@ -216,15 +219,15 @@ class Crop extends Base
             } elseif (!filesize($filePath)) {
 
                 /**
-                 * Hmm, empty, delete it and try one more time
-                 * @TODO: work out the reason why we do this
+                 * Sometimes a file is created but not tidied up properly resulting in a zero byte file.
+                 * If we see this, delete it and try again.
                  */
 
                 if (file_exists($filePath)) {
                     unlink($filePath);
                 }
 
-                $filePath = $oCdn->objectLocalPath($this->bucket, $this->object);
+                $filePath = $oCdn->objectLocalPath($object->id);
 
                 if (!$filePath) {
 
@@ -234,7 +237,7 @@ class Crop extends Base
 
                 } elseif (!filesize($filePath)) {
 
-                    log_message('error', 'CDN: ' . $cropMethod . ': local path exists, but has a zero filesize.');
+                    log_message('error', 'CDN: ' . $cropMethod . ': local path exists, but has a zero file size.');
                     $this->serveBadSrc($width, $height);
                 }
             }
@@ -270,15 +273,17 @@ class Crop extends Base
 
     /**
      * Resize a static image
-     * @param  string $filePath The file to resize
+     *
+     * @param  string $filePath      The file to resize
      * @param  string $phpCropMethod The PHPThumb method to use for resizing
+     *
      * @return void
      */
     private function resize($filePath, $phpCropMethod)
     {
         //  Set some PHPThumb options
-        $_options = array();
-        $_options['resizeUp'] = true;
+        $_options                = [];
+        $_options['resizeUp']    = true;
         $_options['jpegQuality'] = 80;
 
         // --------------------------------------------------------------------------
@@ -312,13 +317,13 @@ class Crop extends Base
             $PHPThumb = new \PHPThumb\GD($filePath, $_options);
 
             //  Prepare the parameters and call the method
-            $aParams = array(
+            $aParams = [
                 $width,
                 $height,
-                $this->cropQuadrant
-            );
+                $this->cropQuadrant,
+            ];
 
-            call_user_func_array(array($PHPThumb, $phpCropMethod), $aParams);
+            call_user_func_array([$PHPThumb, $phpCropMethod], $aParams);
 
             //  Save cache version
             $PHPThumb->save($this->cdnCacheDir . $this->cdnCacheFile, $ext);
@@ -352,16 +357,18 @@ class Crop extends Base
 
     /**
      * Resize an animated image
-     * @param  string $filePath The file to resize
+     *
+     * @param  string $filePath      The file to resize
      * @param  string $phpCropMethod The PHPThumb method to use for resizing
+     *
      * @return void
      */
     private function resizeAnimated($filePath, $phpCropMethod)
     {
         $hash       = md5(microtime(true) . uniqid()) . uniqid();
-        $frames     = array();
-        $cacheFiles = array();
-        $durations  = array();
+        $frames     = [];
+        $cacheFiles = [];
+        $durations  = [];
         $gfe        = new GifFrameExtractor\GifFrameExtractor();
         $gc         = new GifCreator\GifCreator();
         $width      = $this->width * $this->retinaMultiplier;
@@ -388,9 +395,9 @@ class Crop extends Base
             // --------------------------------------------------------------------------
 
             //  Set some PHPThumb options
-            $options = array(
-                'resizeUp' => true
-            );
+            $options = [
+                'resizeUp' => true,
+            ];
 
             // --------------------------------------------------------------------------
 
@@ -400,13 +407,13 @@ class Crop extends Base
             $PHPThumb = new \PHPThumb\GD($this->cdnCacheDir . $tempFilename, $options);
 
             //  Prepare the parameters and call the method
-            $aParams = array(
+            $aParams = [
                 $width,
                 $height,
-                $this->cropQuadrant
-            );
+                $this->cropQuadrant,
+            ];
 
-            call_user_func_array(array($PHPThumb, $phpCropMethod), $aParams);
+            call_user_func_array([$PHPThumb, $phpCropMethod], $aParams);
 
             // --------------------------------------------------------------------------
 
