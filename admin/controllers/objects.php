@@ -12,9 +12,9 @@
 
 namespace Nails\Admin\Cdn;
 
-use Nails\Factory;
 use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
+use Nails\Factory;
 
 class Objects extends BaseAdmin
 {
@@ -71,8 +71,8 @@ class Objects extends BaseAdmin
         $oInput = Factory::service('Input');
         $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
 
-        if ($oInput->get('bucketId')) {
-            $bucket = $oCdn->getBucket($oInput->get('bucketId'));
+        if ($oInput->get('bucket')) {
+            $bucket = $oCdn->getBucket($oInput->get('bucket'));
             if ($bucket) {
                 $this->data['page']->title .= ' &rsaquo; ' . $bucket->label;
             }
@@ -81,16 +81,16 @@ class Objects extends BaseAdmin
         // --------------------------------------------------------------------------
 
         //  Get pagination and search/sort variables
-        $page      = $oInput->get('page')      ? $oInput->get('page')      : 0;
-        $perPage   = $oInput->get('perPage')   ? $oInput->get('perPage')   : 50;
-        $sortOn    = $oInput->get('sortOn')    ? $oInput->get('sortOn')    : 'o.created';
+        $page      = $oInput->get('page') ? $oInput->get('page') : 0;
+        $perPage   = $oInput->get('perPage') ? $oInput->get('perPage') : 50;
+        $sortOn    = $oInput->get('sortOn') ? $oInput->get('sortOn') : 'o.created';
         $sortOrder = $oInput->get('sortOrder') ? $oInput->get('sortOrder') : 'desc';
-        $keywords  = $oInput->get('keywords')  ? $oInput->get('keywords')  : '';
+        $keywords  = $oInput->get('keywords') ? $oInput->get('keywords') : '';
 
         // --------------------------------------------------------------------------
 
         //  Define the sortable columns
-        $sortColumns = array(
+        $sortColumns = [
             'o.id'               => 'Object ID',
             'o.filename_display' => 'Filename',
             'b.label'            => 'Bucket',
@@ -98,26 +98,25 @@ class Objects extends BaseAdmin
             'o.filesize'         => 'File Size',
             'o.created'          => 'Date Uploaded',
             'o.serves'           => 'Number of serves',
-            'o.downloads'        => 'Number of downloads'
-        );
+            'o.downloads'        => 'Number of downloads',
+        ];
 
         // --------------------------------------------------------------------------
 
         //  Define the $data variable for the queries
-        $data = array(
-            'sort' => array(
-                array($sortOn, $sortOrder)
-            ),
-            'keywords' => $keywords
-        );
+        $data = [
+            'sort'     => [
+                [$sortOn, $sortOrder],
+            ],
+            'keywords' => $keywords,
+        ];
 
         // --------------------------------------------------------------------------
 
-        if ($oInput->get('bucketId')) {
-
-            $data['where'] = array(
-                array('o.bucket_id', $oInput->get('bucketId'))
-            );
+        if ($oInput->get('bucket')) {
+            $data['where'] = [
+                ['o.bucket_id', $oInput->get('bucket')],
+            ];
         }
 
         // --------------------------------------------------------------------------
@@ -132,14 +131,14 @@ class Objects extends BaseAdmin
 
         //  Work out the return variable
         parse_str($oInput->server('QUERY_STRING'), $query);
-        $query = array_filter($query);
-        $query = $query ? '?' . http_build_query($query) : '';
-        $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
+        $query                = array_filter($query);
+        $query                = $query ? '?' . http_build_query($query) : '';
+        $return               = $query ? '?return=' . urlencode(uri_string() . $query) : '';
         $this->data['return'] = $return;
 
         //  Add header buttons
         if (userHasPermission('admin:cdn:objects:create')) {
-            Helper::addHeaderButton('admin/cdn/objects/create' . $return, 'Upload Items');
+            Helper::addHeaderButton('admin/cdn/objects/create' . $return, 'Upload Items', 'success');
         }
 
         if (userHasPermission('admin:cdn:trash:browse')) {
