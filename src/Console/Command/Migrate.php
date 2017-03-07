@@ -63,33 +63,25 @@ class Migrate extends Base
         $oOutput->writeln('<info>--------------------</info>');
         $oOutput->writeln('Beginning...');
 
-        $oDb         = Factory::service('Database', 'nailsapp/module-console');
-        $oAppSetting = Factory::model('AppSetting');
+        $oStorageDriver = Factory::model('StorageDriver', 'nailsapp/module-cdn');
+        $sDriver        = $oInput->getArgument('driver');
+        $bRemove        = $aDriversRaw = $oInput->getOption('remove-src');
+        $aAllDrivers    = $oStorageDriver->getAll();
 
-        Factory::helper('string');
-
-        $sDriver = $oInput->getArgument('driver');
-        $bRemove = $aDriversRaw = $oInput->getOption('remove-src');
-
+        //  Auto-detect the driver if not specified
         if (empty($sDriver)) {
-            $oQuery = $oDb->query('
-                SELECT
-                    value
-                FROM `' . $oAppSetting->getTableName() . '`
-                WHERE
-                `grouping` = "nailsapp/module-cdn"
-                AND `key` = "enabled_driver_storage"
-            ');
-            if ($oQuery->rowCount()) {
-                $sDriver = json_decode($oQuery->fetchObject()->value);
+            $oEnabledDriver = $oStorageDriver->getEnabled();
+            if (empty($oEnabledDriver)) {
+                throw new \Exception('No CDN drivers are enabled');
+            } else {
+                $sDriver = $oEnabledDriver->slug;
             }
         }
 
         //  Validate driver
-        $aDriversRaw = _NAILS_GET_DRIVERS('nailsapp/module-cdn', 'storage');
         $aDrivers    = [];
         $aDriversOld = [];
-        foreach ($aDriversRaw as $oDriver) {
+        foreach ($aAllDrivers as $oDriver) {
             $aDrivers[$oDriver->slug] = $oDriver;
             if ($oDriver->slug != $sDriver) {
                 $aDriversOld[$oDriver->slug] = $oDriver;
@@ -103,32 +95,28 @@ class Migrate extends Base
         // --------------------------------------------------------------------------
 
         //  Work out what's going to happen
+        $oObjectModel = Factory::model('Object', 'nailsapp/module-cdn');
+
         //  How many objects are already migrated
-        $iMigrated = $oDb->query('
-            SELECT
-                COUNT(*) total
-            FROM `' . NAILS_DB_PREFIX . 'cdn_object`
-            WHERE
-            `driver` = "' . $sDriver . '"
-        ')->fetchObject()->total;
+        $iMigrated = $oObjectModel->countAll([
+            'where' => [
+                ['driver', $sDriver],
+            ],
+        ]);
 
         //  How many objects will be migrated
-        $iToMigrate = $oDb->query('
-            SELECT
-                COUNT(*) total
-            FROM `' . NAILS_DB_PREFIX . 'cdn_object`
-            WHERE
-            `driver` IN ("' . implode('","', array_keys($aDriversOld)) . '")
-        ')->fetchObject()->total;
+        $iToMigrate = $oObjectModel->countAll([
+            'where_in' => [
+                ['driver', array_keys($aDriversOld)],
+            ],
+        ]);
 
         //  How many objects which need to be migrated but won't be
-        $iCannotMigrate = $oDb->query('
-            SELECT
-                COUNT(*) total
-            FROM `' . NAILS_DB_PREFIX . 'cdn_object`
-            WHERE
-            `driver` NOT IN ("' . implode('","', array_keys($aDrivers)) . '")
-        ')->fetchObject()->total;
+        $iCannotMigrate = $oObjectModel->countAll([
+            'where_not_in' => [
+                ['driver', array_keys($aDrivers)],
+            ],
+        ]);
 
         //  Summarise for the user and seek confirmation
         $oOutput->writeln('');
@@ -175,8 +163,11 @@ class Migrate extends Base
 
     protected function doMigrate($sDriver, $bRemove, $aDrivers, $aDriversOld)
     {
-        $oOutput   = $this->oOutput;
-        $oDb       = Factory::service('Database', 'nailsapp/module-console');
+        $oOutput        = $this->oOutput;
+        $oDb            = Factory::service('Database');
+        $oObjectModel   = Factory::model('Object', 'nailsapp/module-cdn');
+        $oStorageDriver = Factory::model('StorageDriver', 'nailsapp/module-cdn');
+
         $oProgress = new ProgressBar($oOutput, 100);
         $oProgress->setFormat("\n%current%% [%bar%]\n\nElapsed:   %elapsed:6s%\nEstimated: %estimated:-6s%");
         $oProgress->setProgressCharacter('');
@@ -197,62 +188,44 @@ class Migrate extends Base
 
         while ($iProgress < 100) {
 
-            $sFailIdSql = !empty($aFailures) ? 'AND `o`.`id` NOT IN (' . implode(',', $aFailures) . ')' : '';
-
             //  Get total number of objects still to migrate
-            $sSql = 'SELECT
-                        COUNT(*) total
-                    FROM `' . NAILS_DB_PREFIX . 'cdn_object` o
-                    WHERE
-                   `o`.`driver` IN ("' . implode('","', array_keys($aDriversOld)) . '")
-                   ' . $sFailIdSql;
-
-            $iToMigrate = $oDb->query($sSql)->fetchObject()->total;
+            $aData = [
+                'where_in'     => [
+                    ['driver', array_keys($aDriversOld)],
+                ],
+                'where_not_in' => [
+                    ['id', $aFailures],
+                ],
+            ];
+            $iToMigrate = $oObjectModel->countAll($aData);
 
             if ($iToMigrate) {
 
-                $oInstanceNew = $this->driverInstance($aDrivers[$sDriver]);
-
                 try {
+
+                    $oInstanceNew = $oStorageDriver->getInstance($sDriver);
 
                     //  Migrate the next item and record any failures
                     //  Get the next item
-                    $oQuery = $oDb->query('
-                        SELECT
-                            o.id,
-                            o.filename,
-                            o.driver,
-                            b.slug bucket
-                        FROM `' . NAILS_DB_PREFIX . 'cdn_object` o
-                        LEFT JOIN `' . NAILS_DB_PREFIX . 'cdn_bucket` b ON b.id = o.bucket_id
-                        WHERE
-                        `driver` IN ("' . implode('","', array_keys($aDriversOld)) . '")
-                        ' . $sFailIdSql . '
-                        LIMIT 1
-                    ');
-
-                    if (!$oQuery->rowCount()) {
+                    $aObjects = $oObjectModel->getAll(0, 1, $aData + ['expand' => ['bucket']]);
+                    if (empty($aObjects)) {
                         throw new \Exception('FAILURE: No objects returned');
                     }
 
-                    $oObject = $oQuery->fetchObject();
+                    $oObject = $aObjects[0];
 
                     //  Attempt migration
-                    $oInstanceOld = $this->driverInstance($aDrivers[$oObject->driver]);
-                    $sLocalPath   = $oInstanceOld->objectLocalPath($oObject->bucket, $oObject->filename);
+                    $oInstanceOld = $oStorageDriver->getInstance($oObject->driver);
+                    $sLocalPath   = $oInstanceOld->objectLocalPath($oObject->bucket->slug, $oObject->file->name->disk);
                     if (!file_exists($sLocalPath)) {
                         throw new \Exception('File does not exist: ' . $sLocalPath);
                     }
 
                     //  @todo - use new driver to upload to target
 
+
                     //  If successful, update the record
-                    $oDb->query('
-                        UPDATE `' . NAILS_DB_PREFIX . 'cdn_object`
-                        SET 
-                        `driver` = "' . $sDriver . '"
-                        WHERE `id` = ' . $oObject->id . '
-                    ');
+                    $oObjectModel->update($oObject->id, ['driver' => $sDriver]);
 
                     fwrite($rLog, 'Object #' . $oObject->id . ': Migrated' . "\n");
                     $iMigrated++;

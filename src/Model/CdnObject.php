@@ -82,9 +82,9 @@ class CdnObject extends Base
 
         $oObj->file->size            = new \stdClass();
         $oObj->file->size->bytes     = $iFileSize;
-        $oObj->file->size->kilobytes = round($iFileSize / $oCdn::BYTE_MULTIPLIER_KB, $oCdn::FILESIZE_PRECISION);
-        $oObj->file->size->megabytes = round($iFileSize / $oCdn::BYTE_MULTIPLIER_MB, $oCdn::FILESIZE_PRECISION);
-        $oObj->file->size->gigabytes = round($iFileSize / $oCdn::BYTE_MULTIPLIER_GB, $oCdn::FILESIZE_PRECISION);
+        $oObj->file->size->kilobytes = round($iFileSize / $oCdn::BYTE_MULTIPLIER_KB, $oCdn::FILE_SIZE_PRECISION);
+        $oObj->file->size->megabytes = round($iFileSize / $oCdn::BYTE_MULTIPLIER_MB, $oCdn::FILE_SIZE_PRECISION);
+        $oObj->file->size->gigabytes = round($iFileSize / $oCdn::BYTE_MULTIPLIER_GB, $oCdn::FILE_SIZE_PRECISION);
         $oObj->file->size->human     = $oCdn->formatBytes($iFileSize);
         unset($oObj->filesize);
 

@@ -28,12 +28,6 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Reference to CI
-     * @var \CI_Controller
-     */
-    protected $oCi;
-
-    /**
      * All available CDN drivers
      * @var array
      */
@@ -67,11 +61,6 @@ class Cdn
      */
     public function __construct()
     {
-        $this->oCi = get_instance();
-        $this->oCi->lang->load('cdn/cdn');
-
-        // --------------------------------------------------------------------------
-
         $this->aDefaultAllowedTypes = Factory::property('bucketDefaultAllowedTypes', 'nailsapp/module-cdn');
 
         // --------------------------------------------------------------------------
@@ -613,7 +602,7 @@ class Cdn
             $isStream = true;
 
             if (empty($object)) {
-                $this->setError(lang('cdn_error_invalid_url'));
+                $this->setError('Invalid URL');
                 return false;
             }
         }
@@ -629,7 +618,7 @@ class Cdn
                 //  If it's not in $_FILES does that file exist on the file system?
                 if (!is_file($object)) {
 
-                    $this->setError(lang('cdn_error_no_file'));
+                    $this->setError('You did not select a file to upload');
                     return false;
                 } else {
 
@@ -664,40 +653,42 @@ class Cdn
 
                                 $maxFileSize = $this->returnBytes($maxFileSize);
                                 $maxFileSize = $this->formatBytes($maxFileSize);
+                                $error       = sprintf(
+                                    'The file exceeds the maximum size accepted by this server (which is %s).',
+                                    $maxFileSize
+                                );
 
-                                $error = lang('cdn_upload_err_ini_size', $maxFileSize);
                             } else {
-
-                                $error = lang('cdn_upload_err_ini_size_unknown');
+                                $error = 'The file exceeds the maximum size accepted by this server';
                             }
                             break;
 
                         case UPLOAD_ERR_FORM_SIZE:
-                            $error = lang('cdn_upload_err_form_size');
+                            $error = 'The file exceeds the maximum size accepted by this server';
                             break;
 
                         case UPLOAD_ERR_PARTIAL:
-                            $error = lang('cdn_upload_err_partial');
+                            $error = 'The file was only partially uploaded';
                             break;
 
                         case UPLOAD_ERR_NO_FILE:
-                            $error = lang('cdn_upload_err_no_file');
+                            $error = 'No file was uploaded';
                             break;
 
                         case UPLOAD_ERR_NO_TMP_DIR:
-                            $error = lang('cdn_upload_err_no_tmp_dir');
+                            $error = 'This server cannot accept uploads at this time';
                             break;
 
                         case UPLOAD_ERR_CANT_WRITE:
-                            $error = lang('cdn_upload_err_cant_write');
+                            $error = 'Failed to write uploaded file to disk, you can try again';
                             break;
 
                         case UPLOAD_ERR_EXTENSION:
-                            $error = lang('cdn_upload_err_extension');
+                            $error = 'The file failed to upload due to a server configuration';
                             break;
 
                         default:
-                            $error = lang('cdn_upload_err_unknown');
+                            $error = 'The file failed to upload';
                             break;
                     }
 
@@ -739,7 +730,7 @@ class Cdn
              */
 
             if (!isset($options['content-type'])) {
-                $this->setError(lang('cdn_stream_content_type'));
+                $this->setError('A Content-Type must be defined for data stream uploads');
                 return false;
             } else {
 
@@ -773,7 +764,7 @@ class Cdn
                     $_data->file = DEPLOY_CACHE_DIR . $cacheFile;
 
                 } else {
-                    $this->setError(lang('cdn_error_cache_write_fail'));
+                    $this->setError('Cache directory is not writable');
                     return false;
                 }
             }
@@ -783,7 +774,7 @@ class Cdn
 
         //  Valid extension for mime type?
         if (!$this->validExtForMime($_data->ext, $_data->mime)) {
-            $this->setError(lang('cdn_error_bad_extension_mime', $_data->ext));
+            $this->setError(sprintf('%s is not a valid extension for this file type', $_data->ext));
             return false;
         }
 
@@ -821,12 +812,12 @@ class Cdn
                 array_splice($_bucket->allowed_types, count($_bucket->allowed_types) - 1, 0, [' and ']);
                 $accepted = implode(', .', $_bucket->allowed_types);
                 $accepted = str_replace(', . and , ', ' and ', $accepted);
-                $this->setError(lang('cdn_error_bad_mime_plural', $accepted));
+                $this->setError(sprintf('The file type is not allowed, accepted file types are: %s', $accepted));
 
             } else {
 
                 $accepted = implode('', $_bucket->allowed_types);
-                $this->setError(lang('cdn_error_bad_mime', $accepted));
+                $this->setError(sprintf('The file type is not allowed, accepted file type is %s', $accepted));
             }
 
             return false;
@@ -840,7 +831,7 @@ class Cdn
         if ($_bucket->max_size) {
             if ($_data->filesize > $_bucket->max_size) {
                 $_fs_in_kb = $this->formatBytes($_bucket->max_size);
-                $this->setError(lang('cdn_error_filesize', $_fs_in_kb));
+                $this->setError(sprintf('The file is too large, maximum file size is %s', $_fs_in_kb));
                 return false;
             }
         }
@@ -888,28 +879,28 @@ class Cdn
 
                 if (isset($options['dimensions']['max_width'])) {
                     if ($_data->img->width > $options['dimensions']['max_width']) {
-                        $this->setError(lang('cdn_error_maxwidth', $options['dimensions']['max_width']));
+                        $this->setError(sprintf('Image is too wide (max %spx)', $options['dimensions']['max_width']));
                         $error++;
                     }
                 }
 
                 if (isset($options['dimensions']['max_height'])) {
                     if ($_data->img->height > $options['dimensions']['max_height']) {
-                        $this->setError(lang('cdn_error_maxheight', $options['dimensions']['max_height']));
+                        $this->setError(sprintf('Image is too tall (max %spx)', $options['dimensions']['max_height']));
                         $error++;
                     }
                 }
 
                 if (isset($options['dimensions']['min_width'])) {
                     if ($_data->img->width < $options['dimensions']['min_width']) {
-                        $this->setError(lang('cdn_error_minwidth', $options['dimensions']['min_width']));
+                        $this->setError(sprintf('Image is too narrow (min %spx)', $options['dimensions']['min_width']));
                         $error++;
                     }
                 }
 
                 if (isset($options['dimensions']['min_height'])) {
                     if ($_data->img->height < $options['dimensions']['min_height']) {
-                        $this->setError(lang('cdn_error_minheight', $options['dimensions']['min_height']));
+                        $this->setError(sprintf('Image is too short (min %spx)', $options['dimensions']['min_height']));
                         $error++;
                     }
                 }
@@ -977,13 +968,12 @@ class Cdn
     public function objectDelete($iObjectId)
     {
         $oDb = Factory::service('Database');
-
         try {
 
             log_message('error', 'delete; loaded with object Id ' . $iObjectId);
             $object = $this->getObject($iObjectId);
             if (empty($object)) {
-                throw new \Exception(lang('cdn_error_object_invalid'));
+                throw new \Exception('Not a valid object');
             }
 
             // --------------------------------------------------------------------------
@@ -1012,7 +1002,7 @@ class Cdn
             $oDb->set($objectData);
             $oDb->set('trashed', 'NOW()', false);
 
-            if ($this->oCi->user_model->isLoggedIn()) {
+            if (isLoggedIn()) {
                 $oDb->set('trashed_by', activeUser('id'));
             }
 
@@ -1064,7 +1054,7 @@ class Cdn
             log_message('error', 'restore; loaded with object Id ' . $iObjectId);
             $object = $this->getObjectFromTrash($iObjectId);
             if (empty($object)) {
-                throw new \Exception(lang('cdn_error_object_invalid'));
+                throw new \Exception('Not a valid object');
             }
 
             // --------------------------------------------------------------------------
@@ -1088,7 +1078,7 @@ class Cdn
             $objectData['created']          = $object->created;
             $objectData['created_by']       = $object->creator->id;
 
-            if (getUserObject()->isLoggedIn()) {
+            if (isLoggedIn()) {
                 $objectData['modified_by'] = activeUser('id');
             }
 
@@ -1134,7 +1124,7 @@ class Cdn
     public function objectDestroy($object)
     {
         if (!$object) {
-            $this->setError(lang('cdn_error_object_invalid'));
+            $this->setError('Not a valid object');
             return false;
         }
 
@@ -1368,7 +1358,7 @@ class Cdn
         $oDb->set('created', 'NOW()', false);
         $oDb->set('modified', 'NOW()', false);
 
-        if (getUserObject()->isLoggedIn()) {
+        if (isLoggedIn()) {
             $oDb->set('created_by', activeUser('id'));
             $oDb->set('modified_by', activeUser('id'));
         }
@@ -1698,7 +1688,7 @@ class Cdn
             $oDb->set('created', 'NOW()', false);
             $oDb->set('modified', 'NOW()', false);
 
-            if (getUserObject()->isLoggedIn()) {
+            if (isLoggedIn()) {
                 $oDb->set('created_by', activeUser('id'));
                 $oDb->set('modified_by', activeUser('id'));
             }
@@ -1717,7 +1707,7 @@ class Cdn
                 return $oDb->insert_id();
             } else {
                 $this->callDriver('destroy', [$sSlug]);
-                $this->setError(lang('cdn_error_bucket_insert'));
+                $this->setError('Failed to create bucket record');
                 return false;
             }
         } else {
@@ -1796,7 +1786,7 @@ class Cdn
         $oBucket = $this->getBucket($bucket);
 
         if (!$oBucket) {
-            $this->setError(lang('cdn_error_bucket_invalid'));
+            $this->setError('Not a valid bucket');
             return false;
         }
 
@@ -2535,7 +2525,8 @@ class Cdn
         if (empty($userId)) {
             $avatarUrl = $this->urlBlankAvatar($width, $height);
         } else {
-            $user = $this->oCi->user_model->getById($userId);
+            $oUserModel = Factory::model('User', 'nailsapp/module-auth');
+            $user       = $oUserModel->getById($userId);
             if (empty($user)) {
                 $avatarUrl = $this->urlBlankAvatar($width, $height);
             } elseif (empty($user->profile_img)) {
@@ -2566,7 +2557,8 @@ class Cdn
         if (empty($userId)) {
             $avatarScheme = $this->urlBlankAvatarScheme();
         } else {
-            $user = $this->oCi->user_model->getById($userId);
+            $oUserModel = Factory::model('User', 'nailsapp/module-auth');
+            $user       = $oUserModel->getById($userId);
             if (empty($user->profile_img)) {
                 $avatarScheme = $this->urlBlankAvatarScheme();
             } else {
@@ -2645,7 +2637,8 @@ class Cdn
             $userId = activeUser('id');
         }
 
-        $user = getUserObject()->getById($userId);
+        $oUserModel = Factory::model('User', 'nailsapp/module-auth');
+        $user       = $oUserModel->getById($userId);
         if (!$user) {
             $this->setError('Invalid user ID');
             return false;
@@ -2660,7 +2653,8 @@ class Cdn
         $token[] = time() + (int) $duration; //  Expire time (+2hours)
 
         if ($restrictIp) {
-            $token[] = get_instance()->input->ipAddress();
+            $oInput = Factory::service('Input');
+            $token[] = $oInput->ipAddress();
         } else {
             $token[] = false;
         }
@@ -2669,7 +2663,8 @@ class Cdn
         $token[] = md5(serialize($token) . APP_PRIVATE_KEY);
 
         //  Encrypt and return
-        return get_instance()->encrypt->encode(implode('|', $token), APP_PRIVATE_KEY);
+        $oEncrypt = Factory::service('Encrypt');
+        return $oEncrypt->encode(implode('|', $token), APP_PRIVATE_KEY);
     }
 
     // --------------------------------------------------------------------------
@@ -2683,7 +2678,8 @@ class Cdn
      */
     public function validateApiUploadToken($token)
     {
-        $token = get_instance()->encrypt->decode($token, APP_PRIVATE_KEY);
+        $oEncrypt = Factory::service('Encrypt');
+        $token = $oEncrypt->decode($token, APP_PRIVATE_KEY);
 
         if (!$token) {
             //  Error #1: Could not decrypt
@@ -2726,7 +2722,8 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Fetch and check user
-        $user = getUserObject()->getById($token[0]);
+        $oUserModel = Factory::model('User', 'nailsapp/module-auth');
+        $user       = $oUserModel->getById($token[0]);
 
         //  User exists?
         if (!$user) {
@@ -2757,7 +2754,8 @@ class Cdn
         }
 
         //  Valid IP?
-        if (!$token[4] && $token[4] != get_instance()->input->ipAddress()) {
+        $oInput = Factory::service('Input');
+        if (!$token[4] && $token[4] != $oInput->ipAddress()) {
             //  Error #9: Invalid IP
             $this->setError('Invalid Token (Error #9)');
             return false;
@@ -2784,9 +2782,6 @@ class Cdn
     {
         $_out = ['orphans' => [], 'elapsed_time' => 0];
 
-        //  Time how long this takes; start timer
-        $this->oCi->benchmark->mark('orphan_search_start');
-
         $oDb = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.mime, o.filesize, o.driver');
         $oDb->select('b.slug bucket_slug, b.label bucket');
@@ -2800,10 +2795,6 @@ class Cdn
                 $_out['orphans'][] = $row;
             }
         }
-
-        //  End timer
-        $this->oCi->benchmark->mark('orphan_search_end');
-        $_out['elapsed_time'] = $this->oCi->benchmark->elapsed_time('orphan_search_start', 'orphan_search_end');
 
         return $_out;
     }

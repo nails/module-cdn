@@ -59,11 +59,6 @@ class Base extends \App\Controller\Base
 
         $this->isRetina = false;
         $this->retinaMultiplier = 1;
-
-        // --------------------------------------------------------------------------
-
-        //  Load language file
-        $this->lang->load('cdn');
     }
 
     // --------------------------------------------------------------------------
