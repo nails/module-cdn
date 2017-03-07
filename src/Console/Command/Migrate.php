@@ -35,6 +35,12 @@ class Migrate extends Base
                 'Specify which driver to migrate to; will auto-detect if not specified'
             )
             ->addOption(
+                'overwrite',
+                'o',
+                InputOption::VALUE_NONE,
+                'Overwrite target objects if they exist'
+            )
+            ->addOption(
                 'remove-src',
                 'r',
                 InputOption::VALUE_NONE,
@@ -65,7 +71,8 @@ class Migrate extends Base
 
         $oStorageDriver = Factory::model('StorageDriver', 'nailsapp/module-cdn');
         $sDriver        = $oInput->getArgument('driver');
-        $bRemove        = $aDriversRaw = $oInput->getOption('remove-src');
+        $bOverwrite     = $oInput->getOption('overwrite');
+        $bRemove        = $oInput->getOption('remove-src');
         $aAllDrivers    = $oStorageDriver->getAll();
 
         //  Auto-detect the driver if not specified
@@ -131,6 +138,10 @@ class Migrate extends Base
                 );
             }
 
+            if ($bOverwrite) {
+                $oOutput->writeln('- <fg=red;options=bold>Target overwriting is enabled</>');
+            }
+
             if ($bRemove) {
                 $oOutput->writeln('- <fg=red;options=bold>The original file will be deleted</>');
             }
@@ -138,7 +149,7 @@ class Migrate extends Base
             $oOutput->writeln('');
             if ($this->confirm('Continue?', true)) {
                 $oOutput->writeln('<comment>Migrating...</comment>');
-                $this->doMigrate($sDriver, $bRemove, $aDrivers, $aDriversOld);
+                $this->doMigrate($sDriver, $bOverwrite, $bRemove, $aDriversOld);
             } else {
                 $oOutput->writeln('');
                 $oOutput->writeln('Aborting Migration');
@@ -161,10 +172,9 @@ class Migrate extends Base
 
     // --------------------------------------------------------------------------
 
-    protected function doMigrate($sDriver, $bRemove, $aDrivers, $aDriversOld)
+    protected function doMigrate($sDriver, $bOverwrite, $bRemove, $aDriversOld)
     {
         $oOutput        = $this->oOutput;
-        $oDb            = Factory::service('Database');
         $oObjectModel   = Factory::model('Object', 'nailsapp/module-cdn');
         $oStorageDriver = Factory::model('StorageDriver', 'nailsapp/module-cdn');
 
@@ -189,7 +199,7 @@ class Migrate extends Base
         while ($iProgress < 100) {
 
             //  Get total number of objects still to migrate
-            $aData = [
+            $aData      = [
                 'where_in'     => [
                     ['driver', array_keys($aDriversOld)],
                 ],
@@ -212,27 +222,47 @@ class Migrate extends Base
                         throw new \Exception('FAILURE: No objects returned');
                     }
 
-                    $oObject = $aObjects[0];
-
-                    //  Attempt migration
+                    $oObject      = $aObjects[0];
                     $oInstanceOld = $oStorageDriver->getInstance($oObject->driver);
-                    $sLocalPath   = $oInstanceOld->objectLocalPath($oObject->bucket->slug, $oObject->file->name->disk);
-                    if (!file_exists($sLocalPath)) {
-                        throw new \Exception('File does not exist: ' . $sLocalPath);
+
+                    //  Make sure the object doesn't exist already
+                    if ($bOverwrite || !$oInstanceNew->objectExists($oObject->file->name->disk, $oObject->bucket->slug)) {
+
+                        //  Attempt migration
+                        $sLocalPath = $oInstanceOld->objectLocalPath($oObject->bucket->slug, $oObject->file->name->disk);
+
+                        if (empty($sLocalPath)) {
+                            throw new \Exception('Failed to retrieve local path');
+                        } elseif (!file_exists($sLocalPath)) {
+                            throw new \Exception('File does not exist locally: ' . $sLocalPath);
+                        }
+
+                        $bResult = $oInstanceNew->objectCreate((object) [
+                            'bucket'   => (object) [
+                                'slug' => $oObject->bucket->slug,
+                            ],
+                            'filename' => $oObject->file->name->disk,
+                            'file'     => $sLocalPath,
+                            'mime'     => $oObject->file->mime,
+                        ]);
+
+                        if (!$bResult) {
+                            throw new \Exception(
+                                'Failed to upload to new storage driver. ' . $oInstanceNew->lastError()
+                            );
+                        }
                     }
 
-                    //  @todo - use new driver to upload to target
-
-
-                    //  If successful, update the record
                     $oObjectModel->update($oObject->id, ['driver' => $sDriver]);
-
                     fwrite($rLog, 'Object #' . $oObject->id . ': Migrated' . "\n");
                     $iMigrated++;
 
                     //  Remove source file
                     if ($bRemove) {
-                        //  @todo - remove source file
+                        $oInstanceOld->objectDestroy(
+                            $oObject->file->name->disk,
+                            $oObject->bucket->slug
+                        );
                         fwrite($rLog, 'Object #' . $oObject->id . ': Source Removed' . "\n");
                     }
 
@@ -250,6 +280,7 @@ class Migrate extends Base
                 $iTotalMigrated = $iMigrated + $iFailures;
                 $iProgress      = floor($iTotalMigrated / ($iToMigrate + $iTotalMigrated) * 100);
                 $oProgress->setProgress($iProgress);
+
             } else {
                 $oProgress->finish();
                 $iProgress = 100;
@@ -268,29 +299,5 @@ class Migrate extends Base
                 '- <fg=red>' . $iFailures . '</> objects failed to migrate; log file located at <comment>' . $sLog . '</comment>'
             );
         }
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Load an instance of the driver
-     *
-     * @param $oDriver
-     *
-     * @return mixed
-     * @throws \Exception
-     */
-    protected function driverInstance($oDriver)
-    {
-        if (!array_key_exists($oDriver->slug, $this->aDriverInstances)) {
-            $this->aDriverInstances[$oDriver->slug] = _NAILS_GET_DRIVER_INSTANCE($oDriver);
-            if (empty($this->aDriverInstances[$oDriver->slug])) {
-                throw new \Exception('Failed to load driver instance: ' . $oDriver->slug);
-            }
-
-            //  @todo - configure the driver
-        }
-
-        return $this->aDriverInstances[$oDriver->slug];
     }
 }

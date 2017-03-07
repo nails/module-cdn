@@ -1330,7 +1330,6 @@ class Cdn
             return $sLocalPath;
 
         } catch (\Exception $e) {
-            dumpanddie($e->getMessage());
             $this->setError($e->getMessage());
             return false;
         }
