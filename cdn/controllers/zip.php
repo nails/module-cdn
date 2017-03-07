@@ -157,7 +157,7 @@ class Zip extends Base
 
         $out = [
             'status'  => 400,
-            'message' => lang('cdn_error_serve_invalid_request'),
+            'message' => 'Invalid Request',
         ];
 
         if (!empty($error)) {
