@@ -28,7 +28,7 @@ class Migrate extends Base
     {
         $this
             ->setName('cdn:migrate')
-            ->setDescription('[WIP] Migrates CDN between drivers')
+            ->setDescription('Migrates CDN between drivers')
             ->addArgument(
                 'driver',
                 InputArgument::OPTIONAL,
