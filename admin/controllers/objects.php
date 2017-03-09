@@ -93,7 +93,6 @@ class Objects extends BaseAdmin
         $sortColumns = [
             'o.id'               => 'Object ID',
             'o.filename_display' => 'Filename',
-            'b.label'            => 'Bucket',
             'o.mime'             => 'File Type',
             'o.filesize'         => 'File Size',
             'o.created'          => 'Date Uploaded',
