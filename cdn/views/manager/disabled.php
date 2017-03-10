@@ -42,7 +42,7 @@ $oAsset = Factory::service('Asset');
                         <p>You don't have permission to view the media manager at the moment.</p>
                         <?php
 
-                        if (!$user->isLoggedIn()) {
+                        if (!isLoggedIn()) {
 
                             echo '<p>';
                             echo anchor(

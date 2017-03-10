@@ -196,7 +196,7 @@ class Object extends \Nails\Api\Controller\Base
 
         // --------------------------------------------------------------------------
 
-        if (!$this->user_model->isLoggedIn()) {
+        if (!isLoggedIn()) {
 
             //  User is not logged in, they must supply a valid upload token
             $token = $this->input->post('token');
