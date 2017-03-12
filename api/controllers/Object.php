@@ -218,7 +218,8 @@ class Object extends \Nails\Api\Controller\Base
 
             } else {
 
-                $this->user_model->setActiveUser($user);
+                $oUserModel = Factory::model('User', 'nailsapp/module-auth');
+                $oUserModel->setActiveUser($user);
             }
         }
 
