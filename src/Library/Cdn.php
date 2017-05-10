@@ -774,7 +774,7 @@ class Cdn
 
         //  Valid extension for mime type?
         if (!$this->validExtForMime($_data->ext, $_data->mime)) {
-            $this->setError(sprintf('%s is not a valid extension for this file type', $_data->ext));
+            $this->setError(sprintf('%s is not a valid extension for this file type (' . $_data->mime . ')', $_data->ext));
             return false;
         }
 
