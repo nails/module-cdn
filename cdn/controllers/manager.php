@@ -151,8 +151,10 @@ class Manager extends Base
      */
     public function browse()
     {
-        //  Unload all styles and load just the nails styles
+        $oView  = Factory::service('View');
         $oAsset = Factory::service('Asset');
+
+        //  Unload all styles and load just the nails styles
         $oAsset->clear();
         $oAsset->load('admin.manager.css', 'nailsapp/module-cdn');
 
@@ -183,11 +185,11 @@ class Manager extends Base
 
             // --------------------------------------------------------------------------
 
-            $this->load->view('manager/browse', $this->data);
+            $oView->load('manager/browse', $this->data);
 
         } else {
 
-            $this->load->view('manager/disabled', $this->data);
+            $oView->load('manager/disabled', $this->data);
         }
     }
 
