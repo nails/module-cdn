@@ -239,13 +239,14 @@ class Base extends \App\Controller\Base
 
     /**
      * Serve up the "fail whale" graphic
-     * @param  integer $width  The width of the graphic
-     * @param  integer $height The height of the graphic
-     * @param  string  $sError The error message
      * @return void
      */
-    protected function serveBadSrc($width = 100, $height = 100, $sError = '')
+    protected function serveBadSrc( array $params )
     {
+        $width = isset( $params['width'] ) ? $params['width'] : 100;
+        $height = isset( $params['height'] ) ? $params['height'] : 100;
+        $sError = isset( $params['error'] ) ? $params['error'] : '';
+
         //  Make sure this doesn't get cached
         $this->unsetCacheHeaders();
 

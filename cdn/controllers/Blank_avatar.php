@@ -161,7 +161,10 @@ class Blank_avatar extends Base
 
                 //  This object does not exist.
                 log_message('error', 'CDN: Blank Avatar: File not found; ' . $src);
-                return $this->serveBadSrc($width, $height);
+                return $this->serveBadSrc( [
+                    'width' => $width,
+                    'height' => $height
+                ] );
             }
         }
     }

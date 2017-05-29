@@ -91,7 +91,9 @@ class Serve extends Base
         //  Check if there was a bad token
         if ($this->badToken) {
             log_message('error', 'CDN: Serve: Bad Token');
-            $this->serveBadSrc('Bad Token');
+            $this->serveBadSrc([
+                'error' => 'Bad Token'
+            ] );
         }
 
         // --------------------------------------------------------------------------
@@ -113,13 +115,17 @@ class Serve extends Base
                 if (!$object) {
                     //  Cool, guess it really doesn't exist
                     log_message('error', 'CDN: Serve: Object not defined');
-                    $this->serveBadSrc('Object not defined');
+                    $this->serveBadSrc([
+                        'error' => 'Object not defined'
+                    ] );
                 }
 
             } else {
 
                 log_message('error', 'CDN: Serve: Object not defined');
-                $this->serveBadSrc('Object not defined');
+                $this->serveBadSrc([
+                    'error' => 'Object not defined'
+                ]);
             }
         }
 
@@ -153,9 +159,13 @@ class Serve extends Base
             log_message('error', 'CDN: Serve: ' . $oCdn->lastError());
 
             if (isSuperuser()) {
-                $this->serveBadSrc('File not found: ' . $usefile);
+                $this->serveBadSrc([
+                    'error' => 'File not found: ' . $usefile
+                ]);
             } else {
-                $this->serveBadSrc('File not found');
+                $this->serveBadSrc([
+                    'error' => 'File not found'
+                ]);
             }
         }
 
@@ -240,12 +250,14 @@ class Serve extends Base
     /**
      * Serves a response for bad requests
      *
-     * @param  string $error The error which occurred
+     * @param array $params
+     * @internal param string $error The error which occurred
      *
-     * @return void
      */
-    protected function serveBadSrc($error = '')
+    protected function serveBadSrc( array $params )
     {
+        $error = $params['error'];
+
         $oInput = Factory::service('Input');
         header('Cache-Control: no-cache, must-revalidate', true);
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
