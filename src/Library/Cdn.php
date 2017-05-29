@@ -1258,6 +1258,7 @@ class Cdn
      */
     public function objectIncrementCount($action, $object, $bucket = null)
     {
+        /** @var \CI_Db $oDb */
         $oDb = Factory::service('Database');
 
         switch (strtoupper($action)) {
@@ -1290,7 +1291,8 @@ class Cdn
             return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
         } elseif ($bucket) {
             $oDb->where('b.slug', $bucket);
-            return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o JOIN ' . NAILS_DB_PREFIX . 'cdn_bucket b ON b.id = o.bucket_id');
+            $oDb->join( NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id' );
+            return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
         } else {
             return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
         }

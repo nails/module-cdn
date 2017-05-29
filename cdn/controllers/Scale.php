@@ -10,14 +10,14 @@
  * @link
  */
 
-require_once 'crop.php';
+require_once 'Crop.php';
 
 class Scale extends Crop
 {
     /**
      * Generate a thumbnail
      */
-    public function index()
+    public function index( $cropMethod = 'SCALE' )
     {
         return parent::index('SCALE');
     }
