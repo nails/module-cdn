@@ -2951,7 +2951,7 @@ class Cdn
      *
      * @return string
      */
-    public function formatBytes($iBytes, $iPrecision = 2)
+    public static function formatBytes($iBytes, $iPrecision = 2)
     {
         $units  = ['B', 'KB', 'MB', 'GB', 'TB'];
         $iBytes = max($iBytes, 0);
