@@ -2791,7 +2791,7 @@ class Cdn
         $oDb->order_by('o.filename_display');
         $_orphans = $oDb->get(NAILS_DB_PREFIX . 'cdn_object o');
 
-        while ($row = $_orphans->_fetch_object()) {
+        while ($row = $_orphans->unbuffered_row()) {
             if (!$this->callDriver('objectExists', [$row->filename, $row->bucket_slug])) {
                 $_out['orphans'][] = $row;
             }
@@ -2876,6 +2876,7 @@ class Cdn
 
     public function purgeTrash($purgeIds = null)
     {
+        /** @var \CI_Db $oDb */
         $oDb = Factory::service('Database');
 
         //  Get all the ID's we'll be dealing with
@@ -2884,7 +2885,7 @@ class Cdn
             $oDb->select('id');
             $result   = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash');
             $purgeIds = [];
-            while ($object = $result->_fetch_object()) {
+            while ($object = $result->unbuffered_row()) {
                 $purgeIds[] = $object->id;
             }
 
