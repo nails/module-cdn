@@ -273,7 +273,7 @@ $queryString = $oInput->server('QUERY_STRING') ? '?' . $oInput->server('QUERY_ST
             </div>
         </div>
         <script type="text/javascript">
-            var ENVIRONMENT         = '<?=nailsEnvironment('get')?>';
+            var ENVIRONMENT         = '<?=\Nails\Environment::get()?>';
             window.SITE_URL         = '<?=site_url('', isPageSecure())?>';
             window.NAILS_ASSETS_URL = '<?=NAILS_ASSETS_URL?>';
             window.NAILS_LANG       = {};
