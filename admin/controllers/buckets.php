@@ -12,9 +12,9 @@
 
 namespace Nails\Admin\Cdn;
 
-use Nails\Factory;
 use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
+use Nails\Factory;
 
 class Buckets extends BaseAdmin
 {
@@ -35,7 +35,7 @@ class Buckets extends BaseAdmin
             $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
             $oNavGroup->setLabel('CDN');
             $oNavGroup->setIcon('fa-cloud-upload');
-            $oNavGroup->addAction('Browse Buckets');
+            $oNavGroup->addAction('Manage Buckets', 'index', [], 1);
             return $oNavGroup;
         }
     }
@@ -80,30 +80,30 @@ class Buckets extends BaseAdmin
 
         //  Get pagination and search/sort variables
         $oInput    = Factory::service('Input');
-        $page      = $oInput->get('page')      ? $oInput->get('page')      : 0;
-        $perPage   = $oInput->get('perPage')   ? $oInput->get('perPage')   : 50;
-        $sortOn    = $oInput->get('sortOn')    ? $oInput->get('sortOn')    : 'b.label';
+        $page      = $oInput->get('page') ? $oInput->get('page') : 0;
+        $perPage   = $oInput->get('perPage') ? $oInput->get('perPage') : 50;
+        $sortOn    = $oInput->get('sortOn') ? $oInput->get('sortOn') : 'b.label';
         $sortOrder = $oInput->get('sortOrder') ? $oInput->get('sortOrder') : 'asc';
-        $keywords  = $oInput->get('keywords')  ? $oInput->get('keywords')  : '';
+        $keywords  = $oInput->get('keywords') ? $oInput->get('keywords') : '';
 
         // --------------------------------------------------------------------------
 
         //  Define the sortable columns
-        $sortColumns = array(
+        $sortColumns = [
             'b.id'    => 'Bucket ID',
-            'b.label' => 'Label'
-        );
+            'b.label' => 'Label',
+        ];
 
         // --------------------------------------------------------------------------
 
         //  Define the $data variable for the queries
-        $data = array(
-            'sort' => array(
-                array($sortOn, $sortOrder)
-            ),
-            'keywords' => $keywords,
-            'includeObjectCount' => true
-        );
+        $data = [
+            'sort'               => [
+                [$sortOn, $sortOrder],
+            ],
+            'keywords'           => $keywords,
+            'includeObjectCount' => true,
+        ];
 
         //  Get the items for the page
         $oCdn                  = Factory::service('Cdn', 'nailsapp/module-cdn');
@@ -117,14 +117,14 @@ class Buckets extends BaseAdmin
         //  Work out the return variable
         $oInput = Factory::service('Input');
         parse_str($oInput->server('QUERY_STRING'), $query);
-        $query = array_filter($query);
-        $query = $query ? '?' . http_build_query($query) : '';
-        $return = $query ? '?return=' . urlencode(uri_string() . $query) : '';
+        $query                = array_filter($query);
+        $query                = $query ? '?' . http_build_query($query) : '';
+        $return               = $query ? '?return=' . urlencode(uri_string() . $query) : '';
         $this->data['return'] = $return;
 
         //  Add a header button
         if (userHasPermission('admin:cdn:buckets:create')) {
-             Helper::addHeaderButton('admin/cdn/buckets/create' . $return, 'Create Bucket');
+            Helper::addHeaderButton('admin/cdn/buckets/create' . $return, 'Create Bucket');
         }
 
         // --------------------------------------------------------------------------
@@ -243,22 +243,22 @@ class Buckets extends BaseAdmin
     {
         $oFormValidation = Factory::service('FormValidation');
         $oItemModel      = Factory::model('Bucket', 'nailsapp/module-cdn');
-        $sBucketTable    =  $oItemModel->getTableName();
+        $sBucketTable    = $oItemModel->getTableName();
 
-        $aRules = array(
+        $aRules = [
             'label'         => 'required|is_unique[' . $sBucketTable . '.label]',
             'allowed_types' => '',
             'max_size'      => 'is_natural_no_zero',
             'disk_quota'    => 'is_natural_no_zero',
-        );
+        ];
 
-        $aRulesFormValidation = array();
+        $aRulesFormValidation = [];
         foreach ($aRules as $sKey => $sRules) {
-            $aRulesFormValidation[] = array(
+            $aRulesFormValidation[] = [
                 'field' => $sKey,
                 'label' => '',
-                'rules' => $sRules
-            );
+                'rules' => $sRules,
+            ];
         }
 
         $oFormValidation->set_rules($aRulesFormValidation);
@@ -274,7 +274,9 @@ class Buckets extends BaseAdmin
 
     /**
      * Load data for the edit/create view
+     *
      * @param  \stdClass $oItem The main item object
+     *
      * @return void
      */
     private function loadViewData($oItem = null)
@@ -291,12 +293,12 @@ class Buckets extends BaseAdmin
     private function extractPost()
     {
         $oInput = Factory::service('Input');
-        return array(
+        return [
             'label'         => $oInput->post('label'),
             'allowed_types' => $oInput->post('allowed_types'),
             'max_size'      => (int) $oInput->post('max_size') ?: null,
             'disk_quota'    => (int) $oInput->post('disk_quota') ?: null,
-        );
+        ];
     }
 
     // --------------------------------------------------------------------------

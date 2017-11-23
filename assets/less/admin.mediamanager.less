@@ -1,0 +1,169 @@
+.manager {
+    position: relative;
+    border: 1px solid #cacaca;
+    border-radius: 2px;
+    background-color: rgba(0, 0, 0, 0.05);
+    max-width: 100%;
+
+    &__upload {
+        box-sizing: border-box;
+        padding: 2rem;
+        border: 1px solid #d8d8d8;
+        border-radius: 2px;
+        background-color: #fcfcfc;
+        box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.05);
+        color: #999;
+        font-size: 16px;
+        line-height: 22px;
+        text-align: center;
+        svg {
+            margin: 0.25rem;
+        }
+        p {
+            margin: 0;
+        }
+    }
+
+    &__browse {
+        width: 100%;
+        z-index: 1;
+        position: relative;
+        display: flex;
+
+        &__buckets {
+            flex: 0 0 250px;
+            &__list {
+                &__item {
+                    cursor: pointer;
+
+                    svg {
+                        float: right;
+                        margin-top: 5px;
+                    }
+                    &.selected {
+                        background-color: rgba(0, 0, 0, 0.05);
+                    }
+                }
+                &__item,
+                &__action {
+                    padding: 1rem;
+                }
+            }
+        }
+
+        &__objects {
+            background-color: #fcfcfc;
+            padding: 1rem;
+            display: block;
+            flex: 1 1 auto;
+            &__list {
+                display: flex;
+                flex-wrap: wrap;
+                padding: 0.5rem 0;
+                margin-left: -0.5rem;
+                margin-right: -0.5rem;
+
+                &:after {
+                    content: "";
+                    flex: auto;
+                }
+                &__item {
+                    padding: 0.5rem;
+                    width: 200px;
+                    height: 200px;
+                    margin: 0.5rem;
+                    background: #ececec;
+                    background-size: cover;
+                    background-position: center;
+                    position: relative;
+
+                    &__ext,
+                    &__label {
+                        position: absolute;
+                        left: 0;
+                        width: 100%;
+                    }
+
+                    &__ext {
+                        font-size: 20px;
+                        top: 0;
+                        height: 200px;
+                        line-height: 200px;
+                        text-align: center;
+                        text-transform: uppercase;
+                        color: rgba(0, 0, 0, 0.25);
+                    }
+
+                    &__label {
+                        bottom: 0;
+                        background: rgba(0, 0, 0, 0.5);
+                        padding: 0.5rem;
+                        color: #fff;
+                        word-break: break-all;
+                    }
+
+                    .actions {
+                        position: absolute;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        left: 0;
+                        padding: 1rem;
+                        display: flex;
+                        flex-direction: column;
+                        background-color: rgba(0, 0, 0, 0.5);
+                        opacity: 0;
+                        transition: all 0.2s;
+                        &:hover {
+                            opacity: 1;
+                        }
+                        .action {
+                            flex: 1;
+                            border: 0;
+                            &--delete,
+                            &--view {
+                                background: transparent;
+                            }
+
+                            &--delete {
+                                color: #ff002f;
+                            }
+
+                            &--view {
+                                color: #fff;
+                            }
+                        }
+                    }
+                }
+            }
+            &__more {
+                display: block;
+                width: 100%;
+                border: 0;
+                padding: 0.5rem;
+                border-radius: 0;
+                background-color: rgba(0, 0, 0, 0.02);
+                color: rgba(0, 0, 0, 0.4);
+                &:active,
+                &:focus {
+                    outline: none;
+                }
+            }
+            &__empty {
+                padding: 3rem 0;
+                color: #999;
+                font-size: 16px;
+                line-height: 22px;
+                text-align: center;
+            }
+        }
+    }
+    .action {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 0.3rem;
+        border: 1px solid #cacaca;
+        border-radius: 2px;
+        background-color: #fcfcfc;
+    }
+}

@@ -28,7 +28,7 @@ class Objects extends BaseAdmin
             $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
             $oNavGroup->setLabel('CDN');
             $oNavGroup->setIcon('fa-cloud-upload');
-            $oNavGroup->addAction('Browse Objects');
+            $oNavGroup->addAction('Manage Objects', 'index', [], 2);
             return $oNavGroup;
         }
     }

@@ -23,18 +23,18 @@ class Bucket extends Base
         parent::__construct();
         $this->table             = NAILS_DB_PREFIX . 'cdn_bucket';
         $this->tableAutoSetSlugs = true;
+        $this->defaultSortColumn = 'label';
     }
 
     // --------------------------------------------------------------------------
 
     protected function formatObject(
         &$oObj,
-        $aData = array(),
-        $aIntegers = array(),
-        $aBools = array(),
-        $aFloats = array()
-    )
-    {
+        $aData = [],
+        $aIntegers = [],
+        $aBools = [],
+        $aFloats = []
+    ) {
         $aIntegers[] = 'max_size';
         $aIntegers[] = 'disk_quota';
         parent::formatObject($oObj, $aData, $aIntegers, $aBools, $aFloats);
