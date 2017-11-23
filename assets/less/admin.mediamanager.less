@@ -16,11 +16,25 @@
         font-size: 16px;
         line-height: 22px;
         text-align: center;
+        position: relative;
         svg {
             margin: 0.25rem;
         }
         p {
             margin: 0;
+        }
+        input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        &.droppable {
+            background: #d8d8d8;
         }
     }
 
@@ -33,6 +47,12 @@
         &__buckets {
             flex: 0 0 250px;
             &__list {
+                &__item,
+                &__action,
+                &__add {
+                    padding: 1rem;
+                }
+
                 &__item {
                     cursor: pointer;
 
@@ -40,13 +60,27 @@
                         float: right;
                         margin-top: 5px;
                     }
+
                     &.selected {
                         background-color: rgba(0, 0, 0, 0.05);
                     }
                 }
-                &__item,
-                &__action {
-                    padding: 1rem;
+
+                &__add {
+                    input {
+                        border: 0;
+                        margin: 0;
+                        background: transparent;
+                        border-bottom: 1px solid #ccc !important;
+                        border-radius: 0;
+                        margin-top: 5px;
+                        &:active,
+                        &:focus {
+                            outline: 0;
+                            border: 0;
+                            box-shadow: none;
+                        }
+                    }
                 }
             }
         }
@@ -67,7 +101,9 @@
                     content: "";
                     flex: auto;
                 }
-                &__item {
+
+                &__item,
+                &__upload {
                     padding: 0.5rem;
                     width: 200px;
                     height: 200px;
@@ -76,7 +112,26 @@
                     background-size: cover;
                     background-position: center;
                     position: relative;
+                }
 
+                &__upload {
+                    div,
+                    svg {
+                        position: absolute;
+                        left: 50%;
+                        top: 50%;
+                        transform: translate3d(-50%, -50%, 0);
+                    }
+                    svg {
+                        width: 100px;
+                        height: 100px;
+                    }
+                    div {
+                        color: #aaa;
+                    }
+                }
+
+                &__item {
                     &__ext,
                     &__label {
                         position: absolute;
@@ -165,5 +220,18 @@
         border: 1px solid #cacaca;
         border-radius: 2px;
         background-color: #fcfcfc;
+        display: block;
+        text-align: center;
+        cursor: pointer;
+        text-decoration: none;
+        &:hover {
+            text-decoration: none;
+        }
+        &:active,
+        &:focus {
+            outline: 0;
+            border: 0;
+            box-shadow: none;
+        }
     }
 }

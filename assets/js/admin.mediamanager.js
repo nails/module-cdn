@@ -9,6 +9,14 @@ function MediaManager($container) {
     base.currentBucket = ko.observable();
     base.currentPage = ko.observable(1);
     base.showLoadMore = ko.observable(false);
+    base.showAddBucket = ko.observable(false);
+    base.droppable = ko.observable(false);
+
+    // --------------------------------------------------------------------------
+
+    base.keymap = {
+        'ESC': 13
+    };
 
     // --------------------------------------------------------------------------
 
@@ -46,7 +54,7 @@ function MediaManager($container) {
 
     /**
      * Adds a new bucket to the list
-     * @param {string} bucket The bucket details
+     * @param {object} bucket The bucket details
      */
     base.addBucket = function(bucket) {
         base.debug('Adding bucket:' + bucket.label);
@@ -54,7 +62,6 @@ function MediaManager($container) {
             'id': bucket.id || null,
             'slug': bucket.slug || null,
             'label': bucket.label || null,
-            'is_uploading': ko.observable(bucket.is_uploading || false),
             'is_selected': ko.computed(function() {
                 return bucket.id === base.currentBucket();
             })
@@ -63,8 +70,12 @@ function MediaManager($container) {
 
     // --------------------------------------------------------------------------
 
-    base.selectBucket = function() {
-        base.currentBucket(this.id);
+    base.selectBucket = function(bucket) {
+        if (typeof bucket === 'object') {
+            base.currentBucket(bucket.id);
+        } else {
+            base.currentBucket(bucket);
+        }
         base.currentPage(1);
         base.objects.removeAll();
         base.listObjects();
@@ -72,21 +83,131 @@ function MediaManager($container) {
 
     // --------------------------------------------------------------------------
 
+    base.createBucket = function(thisClass, event) {
+        if (event.which === base.keymap.ESC) {
+            $.ajax({
+                    'url': window.SITE_URL + 'api/cdn/bucket',
+                    'method': 'POST',
+                    'data': {
+                        'label': event.currentTarget.value
+                    }
+                })
+                .done(function(response) {
+                    base.showAddBucket(false);
+                    base.listBuckets();
+                    base.selectBucket(response.data.id);
+                })
+                .fail(function(response) {
+                    base.error('Failed to create bucket.', response);
+                });
+        }
+        return true;
+    };
+
+    // --------------------------------------------------------------------------
+
+    base.upload = function(thisClass, event) {
+
+        $.each(event.currentTarget.files, function(index, file) {
+            let element = base.addObject({'is_uploading': true}, true);
+            let bucket = base.getBucketById(base.currentBucket());
+
+            // Uploading - for Firefox, Google Chrome and Safari
+            let xhr = new XMLHttpRequest();
+
+            // Update progress bar
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    let percent = Math.floor((e.loaded / e.total) * 100);
+                    element.upload_progress(percent);
+                }
+            }, false);
+
+            //  Error
+            xhr.addEventListener('error', function(e) {
+                //  @todo (Pablo - 2017-11-23) - handle errors
+                alert('ERROR');
+            }, false);
+
+            // File uploaded
+            xhr.addEventListener('load', function(e) {
+                if (e.currentTarget.readyState === 4) {
+                    let data;
+                    if (e.currentTarget.status === 200) {
+                        try {
+                            data = JSON.parse(e.currentTarget.responseText);
+                        } catch (e) {
+                            data = {'error': 'An unknown error occurred.'};
+                        }
+
+                        //  Update the object
+                        element.id = data.object.id;
+                        element.label = data.object.object.name;
+                        element.ext = element.label.substr((element.label.lastIndexOf('.') + 1));
+                        element.url = {
+                            'src': data.object.url.src,
+                            'preview': data.object.is_img ? data.object.url['400x400-crop'] : null,
+                        };
+                        element.is_img = data.object.is_img;
+                        element.is_uploading(false);
+
+                    } else {
+                        try {
+                            data = JSON.parse(e.currentTarget.responseText);
+                        } catch (e) {
+                            data = {'error': 'An unknown error occurred.'};
+                        }
+                        //  @todo (Pablo - 2017-11-23) - handle errors
+                    }
+                } else {
+                    //  @todo (Pablo - 2017-11-23) - Handle other readyState, errors?
+                }
+            }, false);
+
+            xhr.open('post', window.SITE_URL + 'api/cdn/object/create', true);
+
+            // Set appropriate headers
+            xhr.setRequestHeader('X-cdn-bucket', bucket.slug);
+
+            //  If the request is for an image then let's get a preview
+            xhr.setRequestHeader('X-cdn-urls', '400x400-crop');
+
+            // Send the file
+            let formData = new FormData();
+            formData.append('upload', file);
+            xhr.send(formData);
+        });
+
+        event.currentTarget.value = null;
+        base.droppable(false);
+
+        return true;
+    };
+
+    // --------------------------------------------------------------------------
+
     /**
      * Adds a new object to the list
-     * @param {string} object The object details
+     * @param {object} object The object details
      */
-    base.addObject = function(object) {
+    base.addObject = function(object, unshift) {
         base.debug('Adding object');
-        base.objects.push({
+        let newObject = {
             'id': object.id || null,
-            'label': object.file.name.human || null,
-            'size': object.file.size.human || null,
-            'ext': object.file.ext || null,
+            'label': object.label || null,
+            'ext': object.ext || null,
             'url': object.url || null,
-            'is_img': object.is_img || false,
-            'is_uploading': ko.observable(object.is_uploading || false)
-        });
+            'is_img': object.is_img || null,
+            'is_uploading': ko.observable(object.is_uploading || false),
+            'upload_progress': ko.observable(0),
+            'upload_error': ko.observable()
+        };
+        if (unshift) {
+            base.objects.unshift(newObject);
+        } else {
+            base.objects.push(newObject);
+        }
+        return newObject;
     };
 
     // --------------------------------------------------------------------------
@@ -101,10 +222,9 @@ function MediaManager($container) {
                 'url': window.SITE_URL + 'api/cdn/bucket'
             })
             .done(function(response) {
+                base.buckets.removeAll();
                 $.each(response.data, function(index, bucket) {
-                    if (!base.getBucketById(bucket.id)) {
-                        base.addBucket(bucket);
-                    }
+                    base.addBucket(bucket);
                 });
                 $deferred.resolve();
             })
@@ -164,7 +284,14 @@ function MediaManager($container) {
             })
             .done(function(response) {
                 $.each(response.data, function(index, object) {
-                    base.addObject(object);
+                    base.addObject({
+                        'id': object.id || null,
+                        'label': object.file.name.human || null,
+                        'size': object.file.size.human || null,
+                        'ext': object.file.ext || null,
+                        'url': object.url || null,
+                        'is_img': object.is_img || false
+                    });
                 });
                 base.currentPage(response.page + 1);
                 base.showLoadMore(response.data.length >= response.per_page);
@@ -219,9 +346,11 @@ function MediaManager($container) {
     /**
      * Render an error message
      * @param {string} message The message to render
+     * @param {object} response The response, the `error` property it will be extracted and appended to the message
      * @return {promise} A promise, resolved when the message is closed
      */
-    base.error = function(message) {
+    base.error = function(message, response) {
+        console.log(response);
         return base.feedback('error', message || 'An unknown error occurred.');
     };
 
