@@ -13,12 +13,18 @@
                 <!-- /ko -->
                 <!-- ko if: $root.showAddBucket() -->
                 <li class="manager__browse__buckets__list__add">
-                    <input type="text" id="add-bucket" data-bind="event: {keydown: $root.createBucket}">
+                    <input type="text" id="add-bucket"
+                           data-bind="
+                            event: {
+                                keydown: $root.createBucket,
+                                blur: function() { $root.showAddBucket(false); }
+                            }
+                    ">
                 </li>
                 <!-- /ko -->
                 <!-- ko if: !$root.showAddBucket() -->
                 <li class="manager__browse__buckets__list__action">
-                    <button class="action" data-bind="click: function() { $root.showAddBucket(true); $('#add-bucket').focus(); }">
+                    <button class="action" data-bind="click: function() { $root.showAddBucket(true); $('#add-bucket').val('').focus(); }">
                         Add bucket
                     </button>
                 </li>
@@ -44,12 +50,19 @@
                 </svg>
                 <p>drag and drop your files here to upload</p>
                 <p>
-                    <small>or browse</small>
+                    <small>or click to browse</small>
                 </p>
             </div>
             <!-- ko if: objects().length -->
             <ul class="manager__browse__objects__list">
                 <!-- ko foreach: objects -->
+                <!-- ko if: error() -->
+                <li class="manager__browse__objects__list__error">
+                    <span data-bind="html: label"></span>:
+                    <span data-bind="html: error"></span>
+                </li>
+                <!-- /ko -->
+                <!-- ko if: !error() -->
                 <!-- ko if: is_uploading() -->
                 <li class="manager__browse__objects__list__upload">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="lds-ring" style="background: none;">
@@ -96,6 +109,7 @@
                         </button>
                     </div>
                 </li>
+                <!-- /ko -->
                 <!-- /ko -->
                 <!-- /ko -->
                 <!-- /ko -->

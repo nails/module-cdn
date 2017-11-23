@@ -15,7 +15,8 @@ function MediaManager($container) {
     // --------------------------------------------------------------------------
 
     base.keymap = {
-        'ESC': 13
+        'ENTER': 13,
+        'ESC': 27
     };
 
     // --------------------------------------------------------------------------
@@ -62,6 +63,8 @@ function MediaManager($container) {
             'id': bucket.id || null,
             'slug': bucket.slug || null,
             'label': bucket.label || null,
+            'max_size': bucket.max_size || null,
+            'max_size_human': bucket.max_size_human || null,
             'is_selected': ko.computed(function() {
                 return bucket.id === base.currentBucket();
             })
@@ -84,7 +87,7 @@ function MediaManager($container) {
     // --------------------------------------------------------------------------
 
     base.createBucket = function(thisClass, event) {
-        if (event.which === base.keymap.ESC) {
+        if (event.which === base.keymap.ENTER) {
             $.ajax({
                     'url': window.SITE_URL + 'api/cdn/bucket',
                     'method': 'POST',
@@ -100,6 +103,8 @@ function MediaManager($container) {
                 .fail(function(response) {
                     base.error('Failed to create bucket.', response);
                 });
+        } else if (event.which === base.keymap.ESC) {
+            base.showAddBucket(false);
         }
         return true;
     };
@@ -109,8 +114,19 @@ function MediaManager($container) {
     base.upload = function(thisClass, event) {
 
         $.each(event.currentTarget.files, function(index, file) {
-            let element = base.addObject({'is_uploading': true}, true);
+            let element = base.addObject({'label': file.name, 'is_uploading': true}, true);
             let bucket = base.getBucketById(base.currentBucket());
+
+            if (!bucket) {
+                element.error('Unable to determine upload bucket.');
+                return false;
+            }
+
+            //  Test file size
+            if (bucket.max_size && file.size > bucket.max_size) {
+                element.error('File is too big; maximum file size for this bucket is ' + bucket.max_size_human);
+                return false;
+            }
 
             // Uploading - for Firefox, Google Chrome and Safari
             let xhr = new XMLHttpRequest();
@@ -125,8 +141,8 @@ function MediaManager($container) {
 
             //  Error
             xhr.addEventListener('error', function(e) {
-                //  @todo (Pablo - 2017-11-23) - handle errors
-                alert('ERROR');
+                //  @todo (Pablo - 2017-11-23) - more verbose errors
+                element.error('An error occurred whilst uploading the file.');
             }, false);
 
             // File uploaded
@@ -146,7 +162,7 @@ function MediaManager($container) {
                         element.ext = element.label.substr((element.label.lastIndexOf('.') + 1));
                         element.url = {
                             'src': data.object.url.src,
-                            'preview': data.object.is_img ? data.object.url['400x400-crop'] : null,
+                            'preview': data.object.is_img ? data.object.url['400x400-crop'] : null
                         };
                         element.is_img = data.object.is_img;
                         element.is_uploading(false);
@@ -157,7 +173,7 @@ function MediaManager($container) {
                         } catch (e) {
                             data = {'error': 'An unknown error occurred.'};
                         }
-                        //  @todo (Pablo - 2017-11-23) - handle errors
+                        element.error(data.error);
                     }
                 } else {
                     //  @todo (Pablo - 2017-11-23) - Handle other readyState, errors?
@@ -200,7 +216,7 @@ function MediaManager($container) {
             'is_img': object.is_img || null,
             'is_uploading': ko.observable(object.is_uploading || false),
             'upload_progress': ko.observable(0),
-            'upload_error': ko.observable()
+            'error': ko.observable()
         };
         if (unshift) {
             base.objects.unshift(newObject);

@@ -69,10 +69,20 @@ class Bucket extends DefaultController
 
     protected function formatObject($oObj)
     {
+        if ($oObj->max_size) {
+            $sMaxSize      = $oObj->max_size;
+            $sMaxSizeHuman = formatBytes($oObj->max_size);
+        } else {
+            $sMaxSize      = maxUploadSize(false);
+            $sMaxSizeHuman = maxUploadSize();
+        }
+
         return [
-            'id'    => $oObj->id,
-            'slug'  => $oObj->slug,
-            'label' => $oObj->label,
+            'id'             => $oObj->id,
+            'slug'           => $oObj->slug,
+            'label'          => $oObj->label,
+            'max_size'       => $sMaxSize,
+            'max_size_human' => $sMaxSizeHuman,
         ];
     }
 }
