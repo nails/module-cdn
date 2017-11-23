@@ -40,6 +40,7 @@
 
     &__browse {
         width: 100%;
+        height: 100%;
         z-index: 1;
         position: relative;
         display: flex;
@@ -86,6 +87,7 @@
         }
 
         &__objects {
+            min-height: 75vh;
             background-color: #fcfcfc;
             padding: 1rem;
             display: block;
@@ -195,6 +197,16 @@
                 &__error {
                     background: #ffc5c5;
                     color: #a50808;
+
+                    .action {
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        border: 0 !important;
+                        border-radius: 0 !important;
+                        padding: .75rem 0 !important;
+                        background: #fda8a8 !important;
+                    }
                 }
             }
             &__more {
@@ -219,6 +231,7 @@
             }
         }
     }
+
     .action {
         box-sizing: border-box;
         width: 100%;

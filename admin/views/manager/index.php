@@ -32,6 +32,12 @@
             </ul>
         </div>
         <div class="manager__browse__objects">
+            <!-- ko if: !buckets().length -->
+            <div class="manager__browse__objects__empty">
+                Create a bucket, so you can upload files
+            </div>
+            <!-- /ko -->
+            <!-- ko if: buckets().length -->
             <div class="manager__upload" data-bind="
                     css: {droppable: $root.droppable},
                     event: {
@@ -40,7 +46,7 @@
                         drop: function() { $root.droppable(false); return true; },
                     }
                 ">
-                <input multiple type="file" data-bind="event: {change: $root.upload}">
+                <input multiple type="file" data-bind="event: {change: $root.uploadObject}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="17" viewBox="0 0 24 17">
                     <g fill="none" fill-rule="evenodd" stroke="#999999" transform="translate(1 1)">
                         <path d="M11,14 L11,6"/>
@@ -60,6 +66,9 @@
                 <li class="manager__browse__objects__list__error">
                     <span data-bind="html: label"></span>:
                     <span data-bind="html: error"></span>
+                    <button class="action action--delete" data-bind="click: $root.deleteObject">
+                        Delete
+                    </button>
                 </li>
                 <!-- /ko -->
                 <!-- ko if: !error() -->
@@ -81,7 +90,7 @@
                     data-bind="style: { 'background-image': url.preview ? 'url(' + url.preview + ')' : '' }">
 
                     <div class="actions">
-                        <button class="action action--delete">
+                        <button class="action action--delete" data-bind="click: $root.deleteObject">
                             delete
                         </button>
                         <a class="action action--view" target="_blank" data-bind="attr:{href: url.src}">
@@ -98,7 +107,7 @@
                     <div class="manager__browse__objects__list__item__ext" data-bind="html: ext"></div>
                     <div class="manager__browse__objects__list__item__label" data-bind="html: label"></div>
                     <div class="actions">
-                        <button class="action action--delete">
+                        <button class="action action--delete" data-bind="click: $root.deleteObject">
                             delete
                         </button>
                         <a class="action action--view" target="_blank" data-bind="attr:{href: url.src}">
@@ -122,6 +131,7 @@
             <!-- /ko -->
             <!-- ko if: !objects().length -->
             <div class="manager__browse__objects__empty">No objects in this bucket</div>
+            <!-- /ko -->
             <!-- /ko -->
         </div>
     </div>

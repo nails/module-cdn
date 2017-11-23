@@ -111,7 +111,7 @@ function MediaManager($container) {
 
     // --------------------------------------------------------------------------
 
-    base.upload = function(thisClass, event) {
+    base.uploadObject = function(thisClass, event) {
 
         $.each(event.currentTarget.files, function(index, file) {
             let element = base.addObject({'label': file.name, 'is_uploading': true}, true);
@@ -202,9 +202,37 @@ function MediaManager($container) {
 
     // --------------------------------------------------------------------------
 
+    base.deleteObject = function() {
+        let object = this;
+        if (object.id) {
+
+            if (confirm('Are you sure?')) {
+                $.ajax({
+                        'url': window.SITE_URL + 'api/cdn/object/delete',
+                        'method': 'POST',
+                        'data': {
+                            'object_id': object.id
+                        }
+                    })
+                    .done(function() {
+                        base.objects.remove(object);
+                    })
+                    .fail(function() {
+                        this.error('Failed to delete object. It may be in use.');
+                    });
+            }
+
+        } else {
+            base.objects.remove(object);
+        }
+    };
+
+    // --------------------------------------------------------------------------
+
     /**
      * Adds a new object to the list
      * @param {object} object The object details
+     * @param {boolean} unshift Whether to use unshift, or push
      */
     base.addObject = function(object, unshift) {
         base.debug('Adding object');
