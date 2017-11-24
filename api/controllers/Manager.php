@@ -30,6 +30,13 @@ class Manager extends Base
      */
     public function getUrl()
     {
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to use the Media Manager',
+            ];
+        }
+
         $oInput = Factory::service('Input');
         return [
             'data' => site_url(

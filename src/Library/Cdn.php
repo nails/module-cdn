@@ -399,7 +399,7 @@ class Cdn
         //  Check the cache
         $cacheKey = 'object-' . $objectIdSlug;
         $cacheKey .= $bucketIdSlug ? '-' . $bucketIdSlug : '';
-        $cache = $this->getCache($cacheKey);
+        $cache    = $this->getCache($cacheKey);
 
         if ($cache) {
             return $cache;
@@ -474,7 +474,7 @@ class Cdn
             //  Check the cache
             $cacheKey = 'object-trash-' . $object;
             $cacheKey .= !empty($bucket) ? '-' . $bucket : '';
-            $cache = $this->getCache($cacheKey);
+            $cache    = $this->getCache($cacheKey);
 
             if ($cache) {
                 return $cache;
@@ -1301,15 +1301,16 @@ class Cdn
     /**
      * Returns a local path for an object ID
      *
-     * @param  int $iId The object's ID
+     * @param  int    $iId      The object's ID
+     * @param boolean $bIsTrash Whether to look in the trash or not
      *
      * @return mixed
      */
-    public function objectLocalPath($iId)
+    public function objectLocalPath($iId, $bIsTrash = false)
     {
         try {
 
-            $oObj = $this->getObject($iId);
+            $oObj = $bIsTrash ? $this->getObjectFromTrash($iId) : $this->getObject($iId);
             if (!$oObj) {
                 throw new \Exception('Invalid Object ID');
             }
@@ -2344,7 +2345,6 @@ class Cdn
             $oObj = $objectId;
         }
 
-
         $url = $this->callDriver(
             'urlCrop',
             [$oObj->file->name->disk, $oObj->bucket->slug, $width, $height],
@@ -2387,7 +2387,7 @@ class Cdn
         if (empty($objectId)) {
 
             $object = $this->emptyObject();
-        } else if (is_numeric($objectId)) {
+        } elseif (is_numeric($objectId)) {
 
             $object = $this->getObject($objectId);
 
@@ -2652,7 +2652,7 @@ class Cdn
         $token[] = time() + (int) $duration; //  Expire time (+2hours)
 
         if ($restrictIp) {
-            $oInput = Factory::service('Input');
+            $oInput  = Factory::service('Input');
             $token[] = $oInput->ipAddress();
         } else {
             $token[] = false;
@@ -2678,7 +2678,7 @@ class Cdn
     public function validateApiUploadToken($token)
     {
         $oEncrypt = Factory::service('Encrypt');
-        $token = $oEncrypt->decode($token, APP_PRIVATE_KEY);
+        $token    = $oEncrypt->decode($token, APP_PRIVATE_KEY);
 
         if (!$token) {
             //  Error #1: Could not decrypt
@@ -2957,7 +2957,7 @@ class Cdn
 
         //  Uncomment one of the following alternatives
         //$iBytes /= pow(1024, $pow);
-        $iBytes /= (1 << (10 * $pow));
+        $iBytes  /= (1 << (10 * $pow));
         $var     = round($iBytes, $iPrecision) . ' ' . $units[$pow];
         $pattern = '/(.+?)\.(.*?)/';
 

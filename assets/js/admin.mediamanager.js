@@ -13,12 +13,19 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.showAddBucket = ko.observable(false);
     base.droppable = ko.observable(false);
     base.showInsert = ko.observable(callback.length > 0);
+    base.canUpload = ko.observable(true);
     base.isSearching = ko.observable(false);
+    base.searchTimeout = null;
     base.searchTerm = ko.observable();
     base.lastSearch = ko.observable();
+    base.isTrash = ko.observable(false);
 
     // --------------------------------------------------------------------------
 
+    /**
+     * An easy to read keymap
+     * @type {Object}
+     */
     base.keymap = {
         'ENTER': 13,
         'ESC': 27
@@ -26,23 +33,25 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Construct the Media Manager
+     * @returns {MediaManager} An instance of the class, for chaining
+     * @private
+     */
     base.__construct = function() {
         base.debug('Constructing');
-        base.bindEvents();
         base.init();
         return base;
     };
 
     // --------------------------------------------------------------------------
 
-    base.bindEvents = function() {
-        base.debug('Binding events');
-    };
-
-    // --------------------------------------------------------------------------
-
+    /**
+     * Initialises the manager, loading up the default or requested bucket
+     * @returns {void}
+     */
     base.init = function() {
-        base.debug('Initialsiing');
+        base.debug('Initialising');
         base.listBuckets()
             .done(function() {
                 //  If bucket is defined, then set it as current, else take the first bucket in the list
@@ -64,6 +73,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     /**
      * Adds a new bucket to the list
      * @param {object} bucket The bucket details
+     * @returns {void}
      */
     base.addBucket = function(bucket) {
         base.debug('Adding bucket:' + bucket.label);
@@ -74,19 +84,26 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             'max_size': bucket.max_size || null,
             'max_size_human': bucket.max_size_human || null,
             'is_selected': ko.computed(function() {
-                return !base.isSearching() && bucket.id === base.currentBucket();
+                return !base.isSearching() && !base.isTrash() && bucket.id === base.currentBucket();
             })
         });
     };
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Changes the actively selected bucket and re-renders the object list
+     * @param {object|number} bucket The bucket to select
+     * @returns {void}
+     */
     base.selectBucket = function(bucket) {
         if (typeof bucket === 'object') {
             base.currentBucket(bucket.id);
         } else {
             base.currentBucket(bucket);
         }
+        base.canUpload(true);
+        base.isTrash(false);
         base.currentPage(1);
         base.objects.removeAll();
         base.listObjects();
@@ -94,6 +111,12 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Watches the keyboard entry and creates a new bucket when ENTER is pressed
+     * @param {object} thisClass A reference to this class
+     * @param {object} event The event object
+     * @return {boolean} Return true to allow the key press to go through
+     */
     base.createBucket = function(thisClass, event) {
         if (event.which === base.keymap.ENTER) {
             $.ajax({
@@ -107,6 +130,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                     base.showAddBucket(false);
                     base.listBuckets();
                     base.selectBucket(response.data.id);
+                    base.success('Bucket created');
                 })
                 .fail(function(response) {
                     base.error('Failed to create bucket.', response);
@@ -119,6 +143,12 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Uploads new object(s)
+     * @param {object} thisClass A reference to this class
+     * @param {object} event The event object
+     * @return {boolean} Return true to allow the DOM element to behave properly
+     */
     base.uploadObject = function(thisClass, event) {
 
         $.each(event.currentTarget.files, function(index, file) {
@@ -212,24 +242,32 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     /**
      * Deletes an object both from the interface and the CDN if an ID is present
+     * @returns {void}
      */
     base.deleteObject = function() {
         let object = this;
         if (object.id) {
 
-            if (confirm('Are you sure?')) {
+            let message = 'Are you sure?';
+            if (base.isTrash()) {
+                message += ' You cannot undo this action.';
+            }
+
+            if (confirm(message)) {
                 $.ajax({
                         'url': window.SITE_URL + 'api/cdn/object/delete',
                         'method': 'POST',
                         'data': {
-                            'object_id': object.id
+                            'object_id': object.id,
+                            'is_trash': base.isTrash()
                         }
                     })
                     .done(function() {
                         base.objects.remove(object);
+                        base.success('Item deleted');
                     })
                     .fail(function() {
-                        this.error('Failed to delete object. It may be in use.');
+                        base.error('Failed to delete object. It may be in use.');
                     });
             }
 
@@ -241,7 +279,32 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     // --------------------------------------------------------------------------
 
     /**
+     * Restores an item from the trash
+     * @returns {void}
+     */
+    base.restoreObject = function() {
+        let object = this;
+        $.ajax({
+                'url': window.SITE_URL + 'api/cdn/object/restore',
+                'method': 'POST',
+                'data': {
+                    'object_id': object.id
+                }
+            })
+            .done(function() {
+                base.objects.remove(object);
+                base.success('Item restored');
+            })
+            .fail(function() {
+                base.error('Failed to restore object.');
+            });
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Calls the callback
+     * @returns {void}
      */
     base.executeCallback = function() {
         if (callbackHandler === 'ckeditor') {
@@ -255,12 +318,22 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Executes the CKEditor callback
+     * @param {object} object The selected object
+     * @returns {void}
+     */
     base.callbackCKEditor = function(object) {
         window.opener.CKEDITOR.tools.callFunction(callback[0], object.url.src);
     };
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Executes the Picker callback
+     * @param {object} object The selected object
+     * @returns {void}
+     */
     base.callbackPicker = function(object) {
         if (isModal) {
             window
@@ -279,6 +352,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * Adds a new object to the list
      * @param {object} object The object details
      * @param {boolean} unshift Whether to use unshift, or push
+     * @returns {object} the new object
      */
     base.addObject = function(object, unshift) {
         base.debug('Adding object');
@@ -304,6 +378,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     /**
      * Retrieves and stores the list of buckets from the server
+     * @returns {promise} A promise, to be resolved when the request is complete
      */
     base.listBuckets = function() {
         base.debug('Listing buckets');
@@ -361,22 +436,28 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     /**
      * List a page of objects in the current buckets
+     * @returns {promise} A promise, to be resolved when the request is complete
      */
     base.listObjects = function() {
         base.debug('Listing objects');
         let $deferred = new $.Deferred();
         let url, data;
 
-        if (!base.isSearching()) {
-            url = window.SITE_URL + 'api/cdn/bucket/list';
-            data = {
-                'bucket_id': base.currentBucket(),
-                'page': base.currentPage()
-            };
-        } else {
+        if (base.isSearching()) {
             url = window.SITE_URL + 'api/cdn/object/search';
             data = {
                 'keywords': base.searchTerm(),
+                'page': base.currentPage()
+            };
+        } else if (base.isTrash()) {
+            url = window.SITE_URL + 'api/cdn/object/trash';
+            data = {
+                'page': base.currentPage()
+            };
+        } else {
+            url = window.SITE_URL + 'api/cdn/bucket/list';
+            data = {
+                'bucket_id': base.currentBucket(),
                 'page': base.currentPage()
             };
         }
@@ -409,7 +490,10 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     // --------------------------------------------------------------------------
 
-    base.searchTimeout = null;
+    /**
+     * Executes a search
+     * @returns {boolean} Return true to allow the key press to go through
+     */
     base.search = function() {
         clearTimeout(base.searchTimeout);
         base.searchTimeout = setTimeout(function() {
@@ -417,6 +501,8 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             if (keywords.length) {
                 if (keywords !== base.lastSearch()) {
                     base.isSearching(true);
+                    base.isTrash(false);
+                    base.canUpload(false);
                     base.lastSearch(keywords);
                     base.objects.removeAll();
                     base.currentPage(1);
@@ -432,8 +518,27 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Stops searching and resets the previously loaded bucket
+     * @returns {void}
+     */
     base.stopSearch = function() {
         base.isSearching(false);
+        base.canUpload(true);
+        base.currentPage(1);
+        base.objects.removeAll();
+        base.listObjects();
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Lists items in the trash
+     * @returns {void}
+     */
+    base.browseTrash = function() {
+        base.canUpload(false);
+        base.isTrash(true);
         base.currentPage(1);
         base.objects.removeAll();
         base.listObjects();
@@ -481,23 +586,10 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     /**
      * Render an error message
      * @param {string} message The message to render
-     * @param {object} response The response, the `error` property it will be extracted and appended to the message
      * @return {promise} A promise, resolved when the message is closed
      */
-    base.error = function(message, response) {
-        console.log(response);
+    base.error = function(message) {
         return base.feedback('error', message || 'An unknown error occurred.');
-    };
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Render an info message
-     * @param {string} message The message to render
-     * @return {promise} A promise, resolved when the message is closed
-     */
-    base.info = function(message) {
-        return base.feedback('info', message);
     };
 
     // --------------------------------------------------------------------------

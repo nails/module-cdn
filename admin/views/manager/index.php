@@ -46,8 +46,15 @@
                     ">
                 </li>
                 <!-- /ko -->
+                <li class="manager__browse__buckets__list__item"
+                    data-bind="click: $root.browseTrash, css: {selected: $root.isTrash()}">
+                    Trash
+                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="12" viewBox="0 0 8 12">
+                        <polygon fill="#444444" points="218 35.4 216.6 34 220.6 30 216.6 26 218 24.6 223.4 30" transform="translate(-216 -24)"/>
+                    </svg>
+                </li>
                 <?php
-                if (userHasPermission('admin:cdn:buckets:create')) {
+                if (userHasPermission('admin:cdn:manager:bucket:create')) {
                     ?>
                     <!-- ko if: !$root.showAddBucket() -->
                     <li class="manager__browse__buckets__list__action">
@@ -75,9 +82,9 @@
             </div>
             <!-- /ko -->
             <?php
-            if (userHasPermission('admin:cdn:objects:create')) {
+            if (userHasPermission('admin:cdn:manager:object:create')) {
                 ?>
-                <!-- ko if: !isSearching() -->
+                <!-- ko if: canUpload() -->
                 <div class="manager__upload" data-bind="
                     css: {droppable: $root.droppable},
                     event: {
@@ -140,9 +147,14 @@
                         <a class="action action--view" target="_blank" data-bind="attr:{href: url.src}">
                             View
                         </a>
-                        <!-- ko if: $root.showInsert() -->
+                        <!-- ko if: !$root.isTrash() && $root.showInsert() -->
                         <button class="action action--insert" data-bind="click: $root.executeCallback">
                             Insert
+                        </button>
+                        <!-- /ko -->
+                        <!-- ko if: $root.isTrash() -->
+                        <button class="action action--restore" data-bind="click: $root.restoreObject">
+                            Restore
                         </button>
                         <!-- /ko -->
                     </div>
@@ -179,10 +191,10 @@
             <!-- /ko -->
             <!-- ko if: !objects().length -->
             <div class="manager__browse__objects__empty">
-                <!-- ko if: isSearching() -->
+                <!-- ko if: isSearching() || isTrash() -->
                 No objects found
                 <!-- /ko -->
-                <!-- ko if: !isSearching() -->
+                <!-- ko if: !isSearching() && !isTrash() -->
                 No objects in this bucket
                 <!-- /ko -->
             </div>
@@ -190,10 +202,9 @@
             <!-- /ko -->
         </div>
     </div>
+    <!-- /ko -->
     <div class="manager__feedback">
         <div class="manager__feedback__error"></div>
         <div class="manager__feedback__success"></div>
-        <div class="manager__feedback__info"></div>
     </div>
-    <!-- /ko -->
 </div>

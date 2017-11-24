@@ -262,6 +262,36 @@
         }
     }
 
+    &__feedback {
+        &__error,
+        &__success {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1;
+            height: 0;
+            overflow: hidden;
+            text-align: center;
+            color: #fff;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            line-height: 50px;
+
+            &.show {
+                height: 50px;
+            }
+        }
+
+        &__error {
+            background: #ff002f;
+        }
+
+        &__success {
+            background: #3ea720;
+        }
+    }
+
     .action {
         box-sizing: border-box;
         width: 100%;

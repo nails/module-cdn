@@ -24,7 +24,7 @@ class Manager extends BaseAdmin
      */
     public static function announce()
     {
-        if (userHasPermission('admin:cdn:objects:browse')) {
+        if (userHasPermission('admin:cdn:manager:object:browse')) {
             $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
             $oNavGroup
                 ->setLabel('Media')
@@ -39,13 +39,29 @@ class Manager extends BaseAdmin
 
     // --------------------------------------------------------------------------
 
+    public static function permissions()
+    {
+        $aPermissions = parent::permissions();
+
+        $aPermissions['object:browse']  = 'Can browse existing objects';
+        $aPermissions['object:create']  = 'Can create new objects';
+        $aPermissions['object:delete']  = 'Can delete existing objects';
+        $aPermissions['object:restore'] = 'Can restore deleted objects';
+        $aPermissions['object:purge']   = 'Can purge deleted objects';
+        $aPermissions['bucket:create']  = 'Can create new buckets';
+
+        return $aPermissions;
+    }
+
+    // --------------------------------------------------------------------------
+
     /**
      * Browse CDN Objects
      * @return void
      */
     public function index()
     {
-        if (!userHasPermission('admin:cdn:objects:browse')) {
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
             unauthorised();
         }
 

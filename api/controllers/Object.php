@@ -38,6 +38,13 @@ class Object extends Base
      */
     public function getIndex()
     {
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to browse objects',
+            ];
+        }
+
         $oInput = Factory::service('Input');
         $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
 
@@ -94,11 +101,18 @@ class Object extends Base
 
     /**
      * Upload a new object to the CDN
-     * @todo Think about security here; there's probably a huge issue allowing anyone to upload anything to anywhere
      * @return array
      */
     public function postCreate()
     {
+        //  @todo (Pablo - 2017-11-24) - Support token based uploading
+        if (!userHasPermission('admin:cdn:manager:object:create')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to create objects',
+            ];
+        }
+
         $oInput = Factory::service('Input');
         $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
         $aOut   = [];
@@ -156,33 +170,68 @@ class Object extends Base
      */
     public function postDelete()
     {
-        /**
-         * @todo Have a good think about security here, somehow verify that this
-         * person has permission to delete objects. Perhaps only an objects creator
-         * or a super user can delete. Maybe have a CDN permission?
-         */
-
-        $oInput = Factory::service('Input');
-        $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
-
-        //  Define $aOut array
-        $aOut = [];
-
-        // --------------------------------------------------------------------------
-
-        $objectId = $oInput->post('object_id');
-        $delete   = $oCdn->objectDelete($objectId);
-
-        if (!$delete) {
-            $aOut['status'] = 400;
-            $aOut['error']  = $oCdn->lastError();
+        if (!userHasPermission('admin:cdn:manager:object:delete')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to delete objects',
+            ];
         }
 
-        return $aOut;
+        $oInput    = Factory::service('Input');
+        $oCdn      = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $iObjectId = $oInput->post('object_id');
+
+        if (stringToBoolean($oInput->post('is_trash'))) {
+            $bDelete = $oCdn->purgeTrash([$iObjectId]);
+        } else {
+            $bDelete = $oCdn->objectDelete($iObjectId);
+        }
+
+        if (!$bDelete) {
+            return [
+                'status' => 400,
+                'error'  => $oCdn->lastError(),
+            ];
+        }
+
+        return [];
     }
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Restore an item form the trash
+     * @return array
+     */
+    public function postRestore()
+    {
+        if (!userHasPermission('admin:cdn:manager:object:restore')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to restore objects',
+            ];
+        }
+
+        $oInput    = Factory::service('Input');
+        $oCdn      = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $iObjectId = $oInput->post('object_id');
+
+        if (!$oCdn->objectRestore($iObjectId)) {
+            return [
+                'status' => 400,
+                'error'  => $oCdn->lastError(),
+            ];
+        }
+
+        return [];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Return an array of the requested URLs form the request
+     * @return array
+     */
     protected function getRequestedUrls()
     {
         $oInput = Factory::service('Input');
@@ -216,6 +265,14 @@ class Object extends Base
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Format an object object
+     *
+     * @param \stdClass $oObject the object to format
+     * @param array     $aUrls   The requested URLs
+     *
+     * @return object
+     */
     protected function formatObject($oObject, $aUrls = [])
     {
         return (object) [
@@ -241,6 +298,14 @@ class Object extends Base
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Generate the requested URLs
+     *
+     * @param \stdClass $oObject The object object
+     * @param array     $aUrls   The URLs to generate
+     *
+     * @return array
+     */
     protected function generateUrls($oObject, $aUrls)
     {
         $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
@@ -276,8 +341,19 @@ class Object extends Base
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Search across all objects
+     * @return array
+     */
     public function getSearch()
     {
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to search objects',
+            ];
+        }
+
         $oInput    = Factory::service('Input');
         $oModel    = Factory::model('Object', 'nailsapp/module-cdn');
         $sKeywords = $oInput->get('keywords');
@@ -299,7 +375,46 @@ class Object extends Base
                     return $oObj;
                 },
                 $oResults->data
-            )
+            ),
+        ];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * List items in the trash
+     * @return array
+     */
+    public function getTrash()
+    {
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to browse objects',
+            ];
+        }
+
+        $oInput   = Factory::service('Input');
+        $oModel   = Factory::model('ObjectTrash', 'nailsapp/module-cdn');
+        $iPage    = (int) $oInput->get('page') ?: 1;
+        $aResults = $oModel->getAll(
+            $iPage,
+            static::MAX_OBJECTS_PER_REQUEST,
+            ['sort' => [['trashed', 'desc']]]
+        );
+
+        return [
+            'data' => array_map(
+                function ($oObj) {
+                    $oObj->is_img = isset($oObj->img);
+                    $oObj->url    = (object) [
+                        'src'     => cdnServe($oObj->id),
+                        'preview' => isset($oObj->img) ? cdnCrop($oObj->id, 400, 400) : null,
+                    ];
+                    return $oObj;
+                },
+                $aResults
+            ),
         ];
     }
 }

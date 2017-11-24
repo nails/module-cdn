@@ -19,6 +19,7 @@ class Bucket extends DefaultController
 {
     const CONFIG_MODEL_NAME           = 'Bucket';
     const CONFIG_MODEL_PROVIDER       = 'nailsapp/module-cdn';
+    const REQUIRE_AUTH                = true;
     const CONFIG_MAX_ITEMS_PER_PAGE   = null;
     const CONFIG_MAX_OBJECTS_PER_PAGE = 50;
 
@@ -30,6 +31,13 @@ class Bucket extends DefaultController
      */
     public function getList()
     {
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to list buckets',
+            ];
+        }
+
         $oInput       = Factory::service('Input');
         $oObjectModel = Factory::model('Object', 'nailsapp/module-cdn');
         $iBucketId    = (int) $oInput->get('bucket_id') ?: null;
