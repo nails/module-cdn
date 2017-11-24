@@ -15,6 +15,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.showInsert = ko.observable(callback.length > 0);
     base.isSearching = ko.observable(false);
     base.searchTerm = ko.observable();
+    base.lastSearch = ko.observable();
 
     // --------------------------------------------------------------------------
 
@@ -414,10 +415,13 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         base.searchTimeout = setTimeout(function() {
             let keywords = $.trim(base.searchTerm());
             if (keywords.length) {
-                base.isSearching(true);
-                base.objects.removeAll();
-                base.currentPage(1);
-                base.listObjects();
+                if (keywords !== base.lastSearch()) {
+                    base.isSearching(true);
+                    base.lastSearch(keywords);
+                    base.objects.removeAll();
+                    base.currentPage(1);
+                    base.listObjects();
+                }
             } else {
                 base.stopSearch();
             }

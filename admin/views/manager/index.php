@@ -75,7 +75,7 @@
             </div>
             <!-- /ko -->
             <?php
-            if (!userHasPermission('admin:cdn:objects:create')) {
+            if (userHasPermission('admin:cdn:objects:create')) {
                 ?>
                 <!-- ko if: !isSearching() -->
                 <div class="manager__upload" data-bind="
