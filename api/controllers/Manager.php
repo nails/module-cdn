@@ -12,8 +12,8 @@
 
 namespace Nails\Api\Cdn;
 
-use Nails\Factory;
 use Nails\Api\Controller\Base;
+use Nails\Factory;
 
 class Manager extends Base
 {
@@ -21,22 +21,6 @@ class Manager extends Base
      * Require the user be authenticated to use any endpoint
      */
     const REQUIRE_AUTH = true;
-
-     // --------------------------------------------------------------------------
-
-    private $oCdn;
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Manager constructor.
-     * @param $apiRouter
-     */
-    public function __construct($apiRouter)
-    {
-        parent::__construct($apiRouter);
-        $this->oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-    }
 
     // --------------------------------------------------------------------------
 
@@ -46,13 +30,22 @@ class Manager extends Base
      */
     public function getUrl()
     {
-        $oInput    = Factory::service('Input');
-        $sBucket   = $oInput->get('bucket');
-        $aCallback = $oInput->get('callback');
-        $mPassback = $oInput->get('passback');
-        $bSecure   = $oInput->get('secure');
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to use the Media Manager',
+            ];
+        }
 
-
-        return array('data' => cdnManagerUrl($sBucket, $aCallback, $mPassback, $bSecure));
+        $oInput = Factory::service('Input');
+        return [
+            'data' => site_url(
+                'admin/cdn/manager?' .
+                http_build_query([
+                    'bucket'   => $oInput->get('bucket'),
+                    'callback' => $oInput->get('callback'),
+                ])
+            ),
+        ];
     }
 }

@@ -9,7 +9,7 @@
  * @author      Nails Dev Team <hello@nailsapp.co.uk>
  */
 
-namespace Nails\Cdn\Model\Object;
+namespace Nails\Cdn\Model\CdnObject;
 
 use Nails\Cdn\Model\CdnObject;
 
@@ -20,7 +20,7 @@ class Trash extends CdnObject
      */
     public function __construct()
     {
-        $this->table = NAILS_DB_PREFIX . 'cdn_object_trash';
         parent::__construct();
+        $this->table = NAILS_DB_PREFIX . 'cdn_object_trash';
     }
 }

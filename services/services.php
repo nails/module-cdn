@@ -44,6 +44,13 @@ return array(
                 return new \Nails\Cdn\Model\CdnObject();
             }
         },
+        'ObjectTrash' => function () {
+            if (class_exists('\App\Cdn\Model\CdnObject\Trash')) {
+                return new \App\Cdn\Model\CdnObject\Trash();
+            } else {
+                return new \Nails\Cdn\Model\CdnObject\Trash();
+            }
+        },
         'StorageDriver' => function () {
             if (class_exists('\App\Cdn\Model\StorageDriver')) {
                 return new \App\Cdn\Model\StorageDriver();
