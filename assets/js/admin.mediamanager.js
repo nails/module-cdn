@@ -13,6 +13,8 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.showAddBucket = ko.observable(false);
     base.droppable = ko.observable(false);
     base.showInsert = ko.observable(callback.length > 0);
+    base.isSearching = ko.observable(false);
+    base.searchTerm = ko.observable();
 
     // --------------------------------------------------------------------------
 
@@ -71,7 +73,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             'max_size': bucket.max_size || null,
             'max_size_human': bucket.max_size_human || null,
             'is_selected': ko.computed(function() {
-                return bucket.id === base.currentBucket();
+                return !base.isSearching() && bucket.id === base.currentBucket();
             })
         });
     };
@@ -362,12 +364,25 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.listObjects = function() {
         base.debug('Listing objects');
         let $deferred = new $.Deferred();
+        let url, data;
+
+        if (!base.isSearching()) {
+            url = window.SITE_URL + 'api/cdn/bucket/list';
+            data = {
+                'bucket_id': base.currentBucket(),
+                'page': base.currentPage()
+            };
+        } else {
+            url = window.SITE_URL + 'api/cdn/object/search';
+            data = {
+                'keywords': base.searchTerm(),
+                'page': base.currentPage()
+            };
+        }
+
         $.ajax({
-                'url': window.SITE_URL + 'api/cdn/bucket/list',
-                'data': {
-                    'bucket_id': base.currentBucket(),
-                    'page': base.currentPage()
-                }
+                'url': url,
+                'data': data
             })
             .done(function(response) {
                 $.each(response.data, function(index, object) {
@@ -389,6 +404,35 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 $deferred.reject();
             });
         return $deferred.promise();
+    };
+
+    // --------------------------------------------------------------------------
+
+    base.searchTimeout = null;
+    base.search = function() {
+        clearTimeout(base.searchTimeout);
+        base.searchTimeout = setTimeout(function() {
+            let keywords = $.trim(base.searchTerm());
+            if (keywords.length) {
+                base.isSearching(true);
+                base.objects.removeAll();
+                base.currentPage(1);
+                base.listObjects();
+            } else {
+                base.stopSearch();
+            }
+        }, 150);
+
+        return true;
+    };
+
+    // --------------------------------------------------------------------------
+
+    base.stopSearch = function() {
+        base.isSearching(false);
+        base.currentPage(1);
+        base.objects.removeAll();
+        base.listObjects();
     };
 
     // --------------------------------------------------------------------------

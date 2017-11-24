@@ -25,6 +25,12 @@ class CdnObject extends Base
         $this->table             = NAILS_DB_PREFIX . 'cdn_object';
         $this->defaultSortColumn = 'created';
         $this->defaultSortOrder  = 'desc';
+        $this->tableLabelColumn  = 'filename_display';
+        $this->searchableFields  = [
+            'id',
+            'filename',
+            'filename_display',
+        ];
         $this->addExpandableField([
             'trigger'     => 'bucket',
             'type'        => self::EXPANDABLE_TYPE_SINGLE,

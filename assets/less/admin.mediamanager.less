@@ -7,6 +7,7 @@
 
     &--loading {
         height: 100%;
+        min-height: 100px;
         svg {
             position: absolute;
             left: 50%;
@@ -58,10 +59,22 @@
         &__buckets {
             flex: 0 0 250px;
             &__list {
+                &__search,
                 &__item,
                 &__action,
                 &__add {
                     padding: 1rem;
+                }
+
+                &__search {
+                    input {
+                        margin: 0;
+                        width: 100%;
+                        border-radius: 5px;
+                        border: 0;
+                        padding: 0.5rem;
+                        box-sizing: border-box;
+                    }
                 }
 
                 &__item {
@@ -102,6 +115,13 @@
             padding: 1rem;
             display: block;
             flex: 1 1 auto;
+
+            &__search {
+                padding: 1rem;
+                text-align: center;
+                font-size: 16px;
+            }
+
             &__list {
                 display: flex;
                 flex-wrap: wrap;

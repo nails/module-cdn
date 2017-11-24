@@ -23,6 +23,9 @@
     <div class="manager__browse">
         <div class="manager__browse__buckets">
             <ul class="manager__browse__buckets__list">
+                <li class="manager__browse__buckets__list__search">
+                    <input type="search" placeholder="Search for an object" data-bind="event: {keydown: $root.search, keyup: $root.search}, textInput: $root.searchTerm">
+                </li>
                 <!-- ko foreach: buckets -->
                 <li class="manager__browse__buckets__list__item"
                     data-bind="click: $root.selectBucket, css: {selected: is_selected()}">
@@ -59,6 +62,13 @@
             </div>
             <!-- /ko -->
             <!-- ko if: buckets().length -->
+
+            <!-- ko if: isSearching() -->
+            <div class="manager__browse__objects__search">
+                Searching objects for "<span data-bind="html: $root.searchTerm"></span>"
+            </div>
+            <!-- /ko -->
+            <!-- ko if: !isSearching() -->
             <div class="manager__upload" data-bind="
                     css: {droppable: $root.droppable},
                     event: {
@@ -80,6 +90,7 @@
                     <small>or click to browse</small>
                 </p>
             </div>
+            <!-- /ko -->
             <!-- ko if: objects().length -->
             <ul class="manager__browse__objects__list">
                 <!-- ko foreach: objects -->
@@ -155,7 +166,14 @@
             <!-- /ko -->
             <!-- /ko -->
             <!-- ko if: !objects().length -->
-            <div class="manager__browse__objects__empty">No objects in this bucket</div>
+            <div class="manager__browse__objects__empty">
+                <!-- ko if: isSearching() -->
+                No objects found
+                <!-- /ko -->
+                <!-- ko if: !isSearching() -->
+                No objects in this bucket
+                <!-- /ko -->
+            </div>
             <!-- /ko -->
             <!-- /ko -->
         </div>

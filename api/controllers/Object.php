@@ -27,7 +27,7 @@ class Object extends Base
     /**
      * The maximum number of objects a user can request at any one time
      */
-    const MAX_OBJECTS_PER_REQUEST = 100;
+    const MAX_OBJECTS_PER_REQUEST = 50;
 
     // --------------------------------------------------------------------------
 
@@ -272,5 +272,34 @@ class Object extends Base
         }
 
         return $aOut;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function getSearch()
+    {
+        $oInput    = Factory::service('Input');
+        $oModel    = Factory::model('Object', 'nailsapp/module-cdn');
+        $sKeywords = $oInput->get('keywords');
+        $iPage     = (int) $oInput->get('page') ?: 1;
+        $oResults  = $oModel->search(
+            $sKeywords,
+            $iPage,
+            static::MAX_OBJECTS_PER_REQUEST
+        );
+
+        return [
+            'data' => array_map(
+                function ($oObj) {
+                    $oObj->is_img = isset($oObj->img);
+                    $oObj->url    = (object) [
+                        'src'     => cdnServe($oObj->id),
+                        'preview' => isset($oObj->img) ? cdnCrop($oObj->id, 400, 400) : null,
+                    ];
+                    return $oObj;
+                },
+                $oResults->data
+            )
+        ];
     }
 }
