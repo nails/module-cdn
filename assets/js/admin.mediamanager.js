@@ -1,5 +1,5 @@
 /* globals ko, $ */
-function MediaManager($container) {
+function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     let base = this;
 
     // --------------------------------------------------------------------------
@@ -41,8 +41,8 @@ function MediaManager($container) {
         base.listBuckets()
             .done(function() {
                 //  If bucket is defined, then set it as current, else take the first bucket in the list
-                if ($container.data('bucket-slug')) {
-                    let bucket = base.getBucketBySlug($container.data('bucket-slug'));
+                if (initialBucket) {
+                    let bucket = base.getBucketBySlug(initialBucket);
                     base.currentBucket(bucket.id);
                 } else {
                     base.currentBucket(base.buckets()[0].id);
@@ -202,6 +202,9 @@ function MediaManager($container) {
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Deletes an object both from the interface and the CDN if an ID is present
+     */
     base.deleteObject = function() {
         let object = this;
         if (object.id) {
@@ -224,6 +227,45 @@ function MediaManager($container) {
 
         } else {
             base.objects.remove(object);
+        }
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Calls the callback
+     */
+    base.executeCallback = function() {
+        if (callbackHandler === 'ckeditor') {
+            base.callbackCKEditor(this);
+        } else {
+            base.callbackPicker(this);
+        }
+
+        if (isModal) {
+            window.parent.$.fancybox.close();
+        } else {
+            window.close();
+        }
+    };
+
+    // --------------------------------------------------------------------------
+
+    base.callbackCKEditor = function(object) {
+        window.opener.CKEDITOR.tools.callFunction(callback[0], object.url.serve);
+    };
+
+    // --------------------------------------------------------------------------
+
+    base.callbackPicker = function(object) {
+        if (isModal) {
+            window
+                .parent[callback[0]][callback[1]]
+                .call(null, object.id);
+        } else {
+            window
+                .opener[callback[0]][callback[1]]
+                .call(null, object.id);
         }
     };
 
@@ -359,7 +401,7 @@ function MediaManager($container) {
     base.feedback = function(type, message) {
         base.debug('Feedback: ' + type + ': ' + message);
         let $deferred = new $.Deferred();
-        let $element = $('.manager__feedback__' + type, $container);
+        let $element = $('.manager__feedback__' + type);
 
         $element
             .html(message)
@@ -427,11 +469,3 @@ function MediaManager($container) {
 
     return base.__construct();
 }
-
-// --------------------------------------------------------------------------
-
-ko.applyBindings(
-    new MediaManager(
-        $('#module-cdn-manager')
-    )
-);

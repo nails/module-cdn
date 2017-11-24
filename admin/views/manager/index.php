@@ -1,4 +1,4 @@
-<div class="module-cdn manager" id="module-cdn-manager" data-bucket-slug="">
+<div class="module-cdn manager">
     <div class="manager__browse">
         <div class="manager__browse__buckets">
             <ul class="manager__browse__buckets__list">
@@ -96,7 +96,7 @@
                         <a class="action action--view" target="_blank" data-bind="attr:{href: url.src}">
                             View
                         </a>
-                        <button class="action action--insert">
+                        <button class="action action--insert" data-bind="click: $root.executeCallback">
                             Insert
                         </button>
                     </div>
@@ -113,7 +113,7 @@
                         <a class="action action--view" target="_blank" data-bind="attr:{href: url.src}">
                             View
                         </a>
-                        <button class="action action--insert">
+                        <button class="action action--insert" data-bind="click: $root.executeCallback">
                             Insert
                         </button>
                     </div>

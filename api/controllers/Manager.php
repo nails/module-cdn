@@ -22,7 +22,7 @@ class Manager extends Base
      */
     const REQUIRE_AUTH = true;
 
-     // --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
     private $oCdn;
 
@@ -30,6 +30,7 @@ class Manager extends Base
 
     /**
      * Manager constructor.
+     *
      * @param $apiRouter
      */
     public function __construct($apiRouter)
@@ -46,13 +47,17 @@ class Manager extends Base
      */
     public function getUrl()
     {
-        $oInput    = Factory::service('Input');
-        $sBucket   = $oInput->get('bucket');
-        $aCallback = $oInput->get('callback');
-        $mPassback = $oInput->get('passback');
-        $bSecure   = $oInput->get('secure');
-
-
-        return array('data' => cdnManagerUrl($sBucket, $aCallback, $mPassback, $bSecure));
+        $oInput = Factory::service('Input');
+        return [
+            'data' => site_url(
+                'admin/cdn/manager?' .
+                http_build_query([
+                    'bucket'   => $oInput->get('bucket'),
+                    'callback' => $oInput->get('callback'),
+                    'passback' => $oInput->get('passback'),
+                    'secure'   => $oInput->get('secure'),
+                ])
+            ),
+        ];
     }
 }
