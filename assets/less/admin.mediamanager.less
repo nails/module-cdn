@@ -5,6 +5,16 @@
     background-color: rgba(0, 0, 0, 0.05);
     max-width: 100%;
 
+    &--loading {
+        height: 100%;
+        svg {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate3d(-50%, -50%, 0);
+        }
+    }
+
     &__upload {
         box-sizing: border-box;
         padding: 2rem;

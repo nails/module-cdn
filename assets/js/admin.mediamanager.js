@@ -4,6 +4,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
     // --------------------------------------------------------------------------
 
+    base.ready = ko.observable(false);
     base.buckets = ko.observableArray();
     base.objects = ko.observableArray();
     base.currentBucket = ko.observable();
@@ -11,6 +12,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.showLoadMore = ko.observable(false);
     base.showAddBucket = ko.observable(false);
     base.droppable = ko.observable(false);
+    base.showInsert = ko.observable(callback.length > 0);
 
     // --------------------------------------------------------------------------
 
@@ -47,7 +49,10 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 } else {
                     base.currentBucket(base.buckets()[0].id);
                 }
-                base.listObjects();
+                base.listObjects()
+                    .done(function() {
+                        base.ready(true);
+                    });
             });
     };
 
@@ -238,21 +243,17 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.executeCallback = function() {
         if (callbackHandler === 'ckeditor') {
             base.callbackCKEditor(this);
+            window.close();
         } else {
             base.callbackPicker(this);
-        }
-
-        if (isModal) {
             window.parent.$.fancybox.close();
-        } else {
-            window.close();
         }
     };
 
     // --------------------------------------------------------------------------
 
     base.callbackCKEditor = function(object) {
-        window.opener.CKEDITOR.tools.callFunction(callback[0], object.url.serve);
+        window.opener.CKEDITOR.tools.callFunction(callback[0], object.url.src);
     };
 
     // --------------------------------------------------------------------------

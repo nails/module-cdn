@@ -63,7 +63,7 @@ class Manager extends BaseAdmin
         if ($sCallbackHandler === 'ckeditor') {
             $aCallback = [$oInput->get('CKEditorFuncNum')];
         } else {
-            $aCallback = (array) $oInput->get('callback');
+            $aCallback = array_filter((array) $oInput->get('callback'));
         }
 
         $oAsset->inline(
