@@ -46,13 +46,19 @@
                     ">
                 </li>
                 <!-- /ko -->
-                <!-- ko if: !$root.showAddBucket() -->
-                <li class="manager__browse__buckets__list__action">
-                    <button class="action" data-bind="click: function() { $root.showAddBucket(true); $('#add-bucket').val('').focus(); }">
-                        Add bucket
-                    </button>
-                </li>
-                <!-- /ko -->
+                <?php
+                if (userHasPermission('admin:cdn:buckets:create')) {
+                    ?>
+                    <!-- ko if: !$root.showAddBucket() -->
+                    <li class="manager__browse__buckets__list__action">
+                        <button class="action" data-bind="click: function() { $root.showAddBucket(true); $('#add-bucket').val('').focus(); }">
+                            Add bucket
+                        </button>
+                    </li>
+                    <!-- /ko -->
+                    <?php
+                }
+                ?>
             </ul>
         </div>
         <div class="manager__browse__objects">
@@ -68,8 +74,11 @@
                 Searching objects for "<span data-bind="html: $root.searchTerm"></span>"
             </div>
             <!-- /ko -->
-            <!-- ko if: !isSearching() -->
-            <div class="manager__upload" data-bind="
+            <?php
+            if (!userHasPermission('admin:cdn:objects:create')) {
+                ?>
+                <!-- ko if: !isSearching() -->
+                <div class="manager__upload" data-bind="
                     css: {droppable: $root.droppable},
                     event: {
                         dragenter: function() { $root.droppable(true); return true; },
@@ -77,20 +86,23 @@
                         drop: function() { $root.droppable(false); return true; },
                     }
                 ">
-                <input multiple type="file" data-bind="event: {change: $root.uploadObject}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="17" viewBox="0 0 24 17">
-                    <g fill="none" fill-rule="evenodd" stroke="#999999" transform="translate(1 1)">
-                        <path d="M11,14 L11,6"/>
-                        <polyline stroke-linecap="square" points="8 9 11 6 14 9"/>
-                        <path stroke-linecap="square" d="M16,15 L18,15 C20.209,15 22,13.207239 22,10.9985335 C22,8.80182642 20.218,6.98606852 17.975,7.00206639 C17.718,3.09358752 14.474,0 10.5,0 C6.481,0 3.21,3.16357819 3.018,7.13504866 C1.287,7.57399013 0,9.1297827 0,10.9985335 C0,13.207239 1.791,15 4,15 L6,15"/>
-                    </g>
-                </svg>
-                <p>drag and drop your files here to upload</p>
-                <p>
-                    <small>or click to browse</small>
-                </p>
-            </div>
-            <!-- /ko -->
+                    <input multiple type="file" data-bind="event: {change: $root.uploadObject}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="17" viewBox="0 0 24 17">
+                        <g fill="none" fill-rule="evenodd" stroke="#999999" transform="translate(1 1)">
+                            <path d="M11,14 L11,6"/>
+                            <polyline stroke-linecap="square" points="8 9 11 6 14 9"/>
+                            <path stroke-linecap="square" d="M16,15 L18,15 C20.209,15 22,13.207239 22,10.9985335 C22,8.80182642 20.218,6.98606852 17.975,7.00206639 C17.718,3.09358752 14.474,0 10.5,0 C6.481,0 3.21,3.16357819 3.018,7.13504866 C1.287,7.57399013 0,9.1297827 0,10.9985335 C0,13.207239 1.791,15 4,15 L6,15"/>
+                        </g>
+                    </svg>
+                    <p>drag and drop your files here to upload</p>
+                    <p>
+                        <small>or click to browse</small>
+                    </p>
+                </div>
+                <!-- /ko -->
+                <?php
+            }
+            ?>
             <!-- ko if: objects().length -->
             <ul class="manager__browse__objects__list">
                 <!-- ko foreach: objects -->

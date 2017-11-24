@@ -12,8 +12,8 @@
 
 namespace Nails\Api\Cdn;
 
-use Nails\Factory;
 use Nails\Api\Controller\Base;
+use Nails\Factory;
 
 class Manager extends Base
 {
@@ -21,23 +21,6 @@ class Manager extends Base
      * Require the user be authenticated to use any endpoint
      */
     const REQUIRE_AUTH = true;
-
-    // --------------------------------------------------------------------------
-
-    private $oCdn;
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Manager constructor.
-     *
-     * @param $apiRouter
-     */
-    public function __construct($apiRouter)
-    {
-        parent::__construct($apiRouter);
-        $this->oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-    }
 
     // --------------------------------------------------------------------------
 
@@ -54,8 +37,6 @@ class Manager extends Base
                 http_build_query([
                     'bucket'   => $oInput->get('bucket'),
                     'callback' => $oInput->get('callback'),
-                    'passback' => $oInput->get('passback'),
-                    'secure'   => $oInput->get('secure'),
                 ])
             ),
         ];

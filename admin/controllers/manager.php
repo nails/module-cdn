@@ -27,8 +27,8 @@ class Manager extends BaseAdmin
         if (userHasPermission('admin:cdn:objects:browse')) {
             $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
             $oNavGroup
-                ->setLabel('CDN')
-                ->setIcon('fa-cloud-upload')
+                ->setLabel('Media')
+                ->setIcon('fa-picture-o')
                 ->addAction('Media Manager', 'index', [], 0);
 
             return $oNavGroup;
