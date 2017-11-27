@@ -75,6 +75,25 @@ class Bucket extends DefaultController
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Overridden to check user permissions before creating buckets
+     *
+     * @return array
+     */
+    public function postIndex()
+    {
+        if (!userHasPermission('admin:cdn:manager:bucket:create')) {
+            return [
+                'status' => 401,
+                'error'  => 'You do not have permission to create buckets',
+            ];
+        }
+
+        return parent::postIndex();
+    }
+
+    // --------------------------------------------------------------------------
+
     protected function formatObject($oObj)
     {
         if ($oObj->max_size) {

@@ -51,21 +51,72 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {void}
      */
     base.init = function() {
+
+        let deferred = new $.Deferred();
+
+        deferred
+            .done(function() {
+                base.debug('Initialisation complete');
+                base.listObjects()
+                    .done(function() {
+                        deferred.resolve();
+                        base.ready(true);
+                    })
+                    .fail(function() {
+                        //  @todo (Pablo - 2017-11-27) - handle error
+                    });
+            })
+            .fail(function() {
+                base.debug('Initialisation failed');
+                //  @todo (Pablo - 2017-11-27) - handle error
+            });
+
         base.debug('Initialising');
         base.listBuckets()
             .done(function() {
                 //  If bucket is defined, then set it as current, else take the first bucket in the list
                 if (initialBucket) {
+                    base.debug('Initial bucket specified, attempting to load');
                     let bucket = base.getBucketBySlug(initialBucket);
-                    base.currentBucket(bucket.id);
+                    if (bucket) {
+                        base.debug('Initial bucket is valid, resolving');
+                        base.currentBucket(bucket.id);
+                        deferred.resolve();
+                    } else {
+                        base.debug('Initial bucket not found, attempting to create');
+                        let label = initialBucket;
+                        label = label.replace(/[_-]/g, ' ');
+                        label = label.replace(/\w\S*/g, function(txt) {
+                            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+                        });
+                        $.ajax({
+                                'url': window.SITE_URL + 'api/cdn/bucket',
+                                'method': 'POST',
+                                'data': {
+                                    'label': label
+                                }
+                            })
+                            .fail(function() {
+                                base.debug('Failed to create initial bucket');
+                                deferred.reject();
+                                //  @todo (Pablo - 2017-11-27) - error handling
+                            })
+                            .done(function(response) {
+                                base.debug('Initial bucket created, listing again...');
+                                base.currentBucket(response.data.id);
+                                base.listBuckets()
+                                    .done(function() {
+                                        deferred.resolve();
+                                    });
+                            });
+                    }
                 } else {
                     base.currentBucket(base.buckets()[0].id);
+                    deferred.resolve();
                 }
-                base.listObjects()
-                    .done(function() {
-                        base.ready(true);
-                    });
             });
+
+        return deferred.promise();
     };
 
     // --------------------------------------------------------------------------
@@ -555,7 +606,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.feedback = function(type, message) {
         base.debug('Feedback: ' + type + ': ' + message);
         let $deferred = new $.Deferred();
-        let $element = $('.manager__feedback__' + type);
+        let $element = $('.manager-feedback__' + type);
 
         $element
             .html(message)
