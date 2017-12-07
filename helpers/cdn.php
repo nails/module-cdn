@@ -210,7 +210,7 @@ if (!function_exists('cdnExpiringUrl')) {
      * Returns an expiring URL
      *
      * @param  integer $iObject        The ID of the object to server
-     * @param  integer $expires        The length of time the URL should be valid for, in seconds
+     * @param  integer $iExpires       The length of time the URL should be valid for, in seconds
      * @param  boolean $bForceDownload Whether or not the URL should stream to the browser, or forcibly download
      *
      * @return string
@@ -345,19 +345,32 @@ if (!function_exists('cdnObjectPicker')) {
     /**
      * Returns the markup required for cdn Object Pickers
      *
-     * @param  string $sKey      The name to give the input
-     * @param  string $sBucket   The bucket we're picking from
-     * @param  int    $iObjectId The object which has previously been chosen
-     * @param  string $sAttr     Any attrbutes to add to the containing element
+     * @param  string  $sKey       The name to give the input
+     * @param  string  $sBucket    The bucket we're picking from
+     * @param  int     $iObjectId  The object which has previously been chosen
+     * @param  string  $sAttr      Any attributes to add to the containing element
+     * @param  string  $sInputAttr Any attributes to add to the input element
+     * @param  boolean $bReadOnly  Whether picker is readonly
      *
      * @return string
      */
-    function cdnObjectPicker($sKey, $sBucket, $iObjectId = null, $sAttr = null)
+    function cdnObjectPicker($sKey, $sBucket, $iObjectId = null, $sAttr = '', $sInputAttr = '', $bReadOnly = false)
     {
-        $oCi = get_instance();
-        return $oCi->load->view(
+        if ($bReadOnly) {
+            $sAttr      .= ' data-readonly="true"';
+            $sInputAttr .= ' readonly';
+        }
+        $oView = Factory::service('View');
+        return $oView->load(
             'cdn/picker',
-            ['key' => $sKey, 'bucket' => $sBucket, 'object' => $iObjectId, 'attr' => $sAttr],
+            [
+                'sKey'       => $sKey,
+                'sBucket'    => $sBucket,
+                'iObjectId'  => $iObjectId,
+                'sAttr'      => $sAttr,
+                'sInputAttr' => $sInputAttr,
+                'bReadOnly'  => $bReadOnly,
+            ],
             true
         );
     }

@@ -204,6 +204,10 @@ _CDN_OBJECTPICKER = function() {
      */
     base.openManager = function(picker) {
 
+        if (picker.data('readonly')) {
+            return false;
+        }
+
         picker.addClass('cdn-object-picker--pending');
         base.log('Getting Manager URL');
         $.ajax({
