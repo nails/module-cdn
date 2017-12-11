@@ -153,6 +153,9 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         } else {
             base.currentBucket(bucket);
         }
+        base.isSearching(false);
+        base.lastSearch('');
+        base.searchTerm('');
         base.canUpload(true);
         base.isTrash(false);
         base.currentPage(1);
@@ -589,6 +592,9 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.browseTrash = function() {
         base.canUpload(false);
+        base.isSearching(false);
+        base.lastSearch('');
+        base.searchTerm('');
         base.isTrash(true);
         base.currentPage(1);
         base.objects.removeAll();

@@ -133,7 +133,7 @@
                 <!-- ko  if: is_img -->
                 <li class="manager__browse__objects__list__item"
                     data-bind="style: { 'background-image': url.preview ? 'url(' + url.preview + ')' : '' }">
-
+                    <div class="manager__browse__objects__list__item__label" data-bind="html: label"></div>
                     <div class="actions">
                         <button class="action action--delete" data-bind="click: $root.deleteObject">
                             delete
