@@ -19,13 +19,12 @@
     &-feedback {
         &__error,
         &__success {
-            position: absolute;
-            top: 3rem;
-            left: 3rem;
-            right: 3rem;
-            height: 50px;
+            position: fixed;
+            top: 65px;
+            height: 0;
+            width: calc(~"100% - 269px");
             line-height: 50px;
-            z-index: 1;
+            z-index: 200;
             overflow: hidden;
             text-align: center;
             color: #fff;
@@ -34,9 +33,18 @@
             visibility: hidden;
             transition: all .2s;
 
+            @media only screen and (min-width: 768px) and (max-width: 959px) {
+                width: calc(~"100% - 229px");
+            }
+
+            @media only screen and (max-width: 767px) {
+                width: calc(~"100% - 39px");
+            }
+
             &.show {
                 visibility: visible;
                 opacity: 1;
+                height: 50px;
             }
         }
 
