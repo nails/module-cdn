@@ -947,7 +947,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  If a cache file was created then we should remove it
-        if (!empty($cacheFile) && file_exists($cacheFile)) {
+        if (!empty($cacheFile) && file_exists(DEPLOY_CACHE_DIR . $cacheFile)) {
             unlink(DEPLOY_CACHE_DIR . $cacheFile);
         }
 
