@@ -772,6 +772,16 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
+        //  Calculate the MD5 hash, don't upload duplicates duplicates
+        $_data->md5_hash = md5_file($_data->file);
+        $oObjectModel    = Factory::model('Object', 'nailsapp/module-cdn');
+        $oExistingObject = $oObjectModel->getByMd5Hash($_data->md5_hash);
+        if (!empty($oExistingObject)) {
+            return $this->getObject($oExistingObject->id);
+        }
+
+        // --------------------------------------------------------------------------
+
         //  Valid extension for mime type?
         if (!$this->validExtForMime($_data->ext, $_data->mime)) {
             $this->setError(sprintf('%s is not a valid extension for this file type (' . $_data->mime . ')', $_data->ext));
@@ -1341,55 +1351,49 @@ class Cdn
     /**
      * Creates a new object record in the DB; called from various other methods
      *
-     * @param  \stdClass $data          The data to create the object with
-     * @param  boolean   $return_object Whether to return the object, or just it's ID
+     * @param  \stdClass $oData         The data to create the object with
+     * @param  boolean   $bReturnObject Whether to return the object, or just it's ID
      *
      * @return mixed
      */
-    protected function createObject($data, $return_object = false)
+    protected function createObject($oData, $bReturnObject = false)
     {
-        $oDb = Factory::service('Database');
-        $oDb->set('bucket_id', $data->bucket->id);
-        $oDb->set('filename', $data->filename);
-        $oDb->set('filename_display', $data->name);
-        $oDb->set('mime', $data->mime);
-        $oDb->set('filesize', $data->filesize);
-        $oDb->set('driver', $this->oEnabledDriver->slug);
-        $oDb->set('created', 'NOW()', false);
-        $oDb->set('modified', 'NOW()', false);
-
-        if (isLoggedIn()) {
-            $oDb->set('created_by', activeUser('id'));
-            $oDb->set('modified_by', activeUser('id'));
-        }
+        $aData = [
+            'bucket_id'        => $oData->bucket->id,
+            'filename'         => $oData->filename,
+            'filename_display' => $oData->name,
+            'mime'             => $oData->mime,
+            'filesize'         => $oData->filesize,
+            'md5_hash'         => $oData->md5_hash,
+            'driver'           => $this->oEnabledDriver->slug,
+        ];
 
         // --------------------------------------------------------------------------
 
-        if (isset($data->img->width) && isset($data->img->height) && isset($data->img->orientation)) {
-            $oDb->set('img_width', $data->img->width);
-            $oDb->set('img_height', $data->img->height);
-            $oDb->set('img_orientation', $data->img->orientation);
+        if (isset($oData->img->width) && isset($oData->img->height) && isset($oData->img->orientation)) {
+            $aData['img_width']       = $oData->img->width;
+            $aData['img_height']      = $oData->img->height;
+            $aData['img_orientation'] = $oData->img->orientation;
         }
 
         // --------------------------------------------------------------------------
 
         //  Check whether file is animated gif
-        if ($data->mime == 'image/gif') {
-            if (isset($data->img->is_animated)) {
-                $oDb->set('is_animated', $data->img->is_animated);
+        if ($oData->mime == 'image/gif') {
+            if (isset($oData->img->is_animated)) {
+                $aData['is_animated'] = $oData->img->is_animated;
             } else {
-                $oDb->set('is_animated', false);
+                $aData['is_animated'] = false;
             }
         }
 
         // --------------------------------------------------------------------------
 
-        $oDb->insert(NAILS_DB_PREFIX . 'cdn_object');
+        $oObjectModel = Factory::model('Object', 'nailsapp/module-cdn');
+        $iObjectId    = $oObjectModel->create($aData, true);
 
-        $objectId = $oDb->insert_id();
-
-        if ($oDb->affected_rows()) {
-            return $return_object ? $this->getObject($objectId) : $objectId;
+        if ($iObjectId) {
+            return $bReturnObject ? $this->getObject($iObjectId) : $iObjectId;
         } else {
             return false;
         }

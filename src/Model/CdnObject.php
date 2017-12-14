@@ -44,6 +44,21 @@ class CdnObject extends Base
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Returns an object by it's MD5 hash
+     *
+     * @param string $sHash The MD5 hash to look for
+     * @param array  $aData Any additional data to pass in
+     *
+     * @return \stdClass|null
+     */
+    public function getByMd5Hash($sHash, $aData = [])
+    {
+        return $this->getByColumn('md5_hash', $sHash, $aData);
+    }
+
+    // --------------------------------------------------------------------------
+
     protected function formatObject(
         &$oObj,
         $aData = [],
