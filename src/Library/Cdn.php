@@ -1390,7 +1390,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         $oObjectModel = Factory::model('Object', 'nailsapp/module-cdn');
-        $iObjectId    = $oObjectModel->create($aData, true);
+        $iObjectId    = $oObjectModel->create($aData);
 
         if ($iObjectId) {
             return $bReturnObject ? $this->getObject($iObjectId) : $iObjectId;
