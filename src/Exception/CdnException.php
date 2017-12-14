@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Driver Exception
+ * CDN Exception
  *
  * @package     Nails
  * @subpackage  module-cdn
@@ -12,6 +12,8 @@
 
 namespace Nails\Cdn\Exception;
 
-class DriverException extends CdnException
+use Nails\Common\Exception\NailsException;
+
+class CdnException extends NailsException
 {
 }

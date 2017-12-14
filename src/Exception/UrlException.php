@@ -12,8 +12,6 @@
 
 namespace Nails\Cdn\Exception;
 
-use Nails\Common\Exception\NailsException;
-
-class UrlException extends NailsException
+class UrlException extends CdnException
 {
 }
