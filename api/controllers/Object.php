@@ -38,13 +38,7 @@ class Object extends Base
      */
     public function getIndex()
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            return [
-                'status' => 401,
-                'error'  => 'You do not have permission to browse objects',
-            ];
-        }
-
+        //  @todo (Pablo - 2017-12-18) - this should be protected using admin permissions or the token uploader
         $oInput = Factory::service('Input');
         $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
 
@@ -91,7 +85,7 @@ class Object extends Base
         }
 
         if ($oInput->get('id')) {
-            return ['data' => $aOut[0]];
+            return ['data' => reset($aOut)];
         } else {
             return ['data' => $aOut];
         }
@@ -105,14 +99,7 @@ class Object extends Base
      */
     public function postCreate()
     {
-        //  @todo (Pablo - 2017-11-24) - Support token based uploading
-        if (!userHasPermission('admin:cdn:manager:object:create')) {
-            return [
-                'status' => 401,
-                'error'  => 'You do not have permission to create objects',
-            ];
-        }
-
+        //  @todo (Pablo - 2017-12-18) - this should be protected using admin permissions or the token uploader
         $oInput = Factory::service('Input');
         $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
         $aOut   = [];
@@ -122,13 +109,14 @@ class Object extends Base
         if (!isLoggedIn()) {
 
             //  User is not logged in, they must supply a valid upload token
-            $token = $oInput->post('token') ?: $oInput->get_request_header('X-cdn-token');
-            $oUser = $oCdn->validateApiUploadToken($token);
+            $sToken = $oInput->post('token') ?: $oInput->get_request_header('X-cdn-token');
+            $oUser  = $oCdn->validateApiUploadToken($sToken);
 
             if (!$oUser) {
-                $aOut['status'] = 400;
-                $aOut['error']  = $oCdn->lastError();
-                return $aOut;
+                return [
+                    'status' => 400,
+                    'error'  => $oCdn->lastError(),
+                ];
             } else {
                 $oUserModel = Factory::model('User', 'nailsapp/module-auth');
                 $oUserModel->setActiveUser($oUser);
@@ -141,9 +129,10 @@ class Object extends Base
         $sBucket = $oInput->post('bucket') ?: $oInput->get_request_header('X-cdn-bucket');
 
         if (!$sBucket) {
-            $aOut['status'] = 400;
-            $aOut['error']  = 'Bucket not defined.';
-            return $aOut;
+            return [
+                'status' => 400,
+                'error'  => 'Bucket not defined',
+            ];
         }
 
         // --------------------------------------------------------------------------
@@ -151,13 +140,15 @@ class Object extends Base
         //  Attempt upload
         $oObject = $oCdn->objectCreate('upload', $sBucket);
 
-        if ($oObject) {
-            $aUrls          = $this->getRequestedUrls();
-            $aOut['object'] = $this->formatObject($oObject, $aUrls);
-        } else {
-            $aOut['status'] = 400;
-            $aOut['error']  = $oCdn->lastError();
+        if (!$oObject) {
+            return [
+                'status' => 400,
+                'error'  => $oCdn->lastError(),
+            ];
         }
+
+        $aUrls          = $this->getRequestedUrls();
+        $aOut['object'] = $this->formatObject($oObject, $aUrls);
 
         return $aOut;
     }
