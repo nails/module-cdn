@@ -784,19 +784,28 @@ class Cdn
                     // --------------------------------------------------------------------------
 
                     //  Specify the file specifics
-                    $oData->name = empty($aOptions['filename_display']) ? $sCacheFile . '.' . $oData->ext : $aOptions['filename_display'];
+                    if (empty($aOptions['filename_display'])) {
+                        $oData->name = $sCacheFile . '.' . $oData->ext;
+                    } else {
+                        $oData->name = $aOptions['filename_display'];
+                    }
                     $oData->file = static::CACHE_DIR . $sCacheFile;
                 }
             }
 
             // --------------------------------------------------------------------------
 
-            //  Calculate the MD5 hash, don't upload duplicates duplicates
+            //  Calculate the MD5 hash, don't upload duplicates in the same bucket
             $oData->md5_hash = md5_file($oData->file);
             $oObjectModel    = Factory::model('Object', 'nailsapp/module-cdn');
-            $oExistingObject = $oObjectModel->getByMd5Hash($oData->md5_hash);
+            $oExistingObject = $oObjectModel->getByMd5Hash($oData->md5_hash, ['expand' => ['bucket']]);
+
             if (!empty($oExistingObject)) {
-                return $this->getObject($oExistingObject->id);
+                if (!empty($oExistingObject->bucket) && $oExistingObject->bucket->slug == $sBucket) {
+                    //  Update this item's modified date so that it appears further up the list
+                    $oObjectModel->update($oExistingObject->id);
+                    return $this->getObject($oExistingObject->id);
+                }
             }
 
             // --------------------------------------------------------------------------

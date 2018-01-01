@@ -23,7 +23,7 @@ class CdnObject extends Base
     {
         parent::__construct();
         $this->table             = NAILS_DB_PREFIX . 'cdn_object';
-        $this->defaultSortColumn = 'created';
+        $this->defaultSortColumn = 'modified';
         $this->defaultSortOrder  = 'desc';
         $this->tableLabelColumn  = 'filename_display';
         $this->searchableFields  = [
