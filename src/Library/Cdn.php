@@ -1966,6 +1966,21 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
+     * Extract the extension from a path
+     *
+     * @param string $sPath The path to extract from
+     *
+     * @return string
+     */
+    public function getExtFromPath($sPath)
+    {
+        $sExtension = strpos($sPath, '.') !== false ? substr($sPath, (int) strrpos($sPath, '.') + 1) : $sPath;
+        return $this->sanitiseExtension($sExtension);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Fetches the extension from the mime type
      *
      * @param string $mime The mime type to check
@@ -2010,10 +2025,7 @@ class Cdn
      */
     public function getMimeFromExt($ext)
     {
-        //  Prep $ext, make sure it has no dots
-        $ext = strpos($ext, '.') !== false ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
-        $ext = $this->sanitiseExtension($ext);
-
+        $ext   = $this->getExtFromPath($ext);
         $mimes = $this->getMimeMappings();
 
         foreach ($mimes as $_ext => $mime) {
@@ -2065,9 +2077,7 @@ class Cdn
     {
         $_assocs = [];
         $_mimes  = $this->getMimeMappings();
-
-        //  Prep $ext, make sure it has no dots
-        $ext = strpos($ext, '.') !== false ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
+        $ext     = $this->getExtFromPath($ext);
 
         foreach ($_mimes as $_ext => $_mime) {
             if (is_array($_mime)) {
@@ -2898,24 +2908,21 @@ class Cdn
      * overloaded by the developer to satisfy any OCD tenancies with regards file
      * extensions
      *
-     * @param  string $ext The extension to map
+     * @param  string $sExt The extension to map
      *
      * @return string
      */
-    public function sanitiseExtension($ext)
+    public function sanitiseExtension($sExt)
     {
-        //  Lower case and trim it
-        $ext = trim(strtolower($ext));
+        $sExt = trim(strtolower($sExt));
 
-        //  Perform mapping
-        switch ($ext) {
+        switch ($sExt) {
             case 'jpeg':
-                $ext = 'jpg';
+                $sExt = 'jpg';
                 break;
         }
 
-        //  And spit it back
-        return $ext;
+        return $sExt;
     }
 
     // --------------------------------------------------------------------------
