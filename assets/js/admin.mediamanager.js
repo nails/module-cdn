@@ -57,14 +57,19 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         deferred
             .done(function() {
                 base.debug('Initialisation complete');
-                base.listObjects()
-                    .done(function() {
-                        deferred.resolve();
-                        base.ready(true);
-                    })
-                    .fail(function() {
-                        //  @todo (Pablo - 2017-11-27) - handle error
-                    });
+                if (base.buckets().length > 1) {
+                    base.listObjects()
+                        .done(function() {
+                            deferred.resolve();
+                            base.ready(true);
+                        })
+                        .fail(function() {
+                            //  @todo (Pablo - 2017-11-27) - handle error
+                        });
+                } else {
+                    deferred.resolve();
+                    base.ready(true);
+                }
             })
             .fail(function() {
                 base.debug('Initialisation failed');
@@ -110,8 +115,10 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                                     });
                             });
                     }
-                } else {
+                } else if (base.buckets().length > 0) {
                     base.currentBucket(base.buckets()[0].id);
+                    deferred.resolve();
+                } else {
                     deferred.resolve();
                 }
             });

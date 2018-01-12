@@ -40,6 +40,7 @@
                     ">
                 </li>
                 <!-- /ko -->
+                <!-- ko if: $root.buckets().length -->
                 <li class="manager__browse__buckets__list__item"
                     data-bind="click: $root.browseTrash, css: {selected: $root.isTrash()}">
                     Trash
@@ -47,6 +48,7 @@
                         <polygon fill="#444444" points="218 35.4 216.6 34 220.6 30 216.6 26 218 24.6 223.4 30" transform="translate(-216 -24)"/>
                     </svg>
                 </li>
+                <!-- /ko -->
                 <?php
                 if (userHasPermission('admin:cdn:manager:bucket:create')) {
                     ?>
