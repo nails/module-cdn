@@ -1,6 +1,6 @@
 /* globals ko, $ */
 function MediaManager(initialBucket, callbackHandler, callback, isModal) {
-    let base = this;
+    var base = this;
 
     // --------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.init = function() {
 
-        let deferred = new $.Deferred();
+        var deferred = new $.Deferred();
 
         deferred
             .done(function() {
@@ -82,14 +82,14 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 //  If bucket is defined, then set it as current, else take the first bucket in the list
                 if (initialBucket) {
                     base.debug('Initial bucket specified, attempting to load');
-                    let bucket = base.getBucketBySlug(initialBucket);
+                    var bucket = base.getBucketBySlug(initialBucket);
                     if (bucket) {
                         base.debug('Initial bucket is valid, resolving');
                         base.currentBucket(bucket.id);
                         deferred.resolve();
                     } else {
                         base.debug('Initial bucket not found, attempting to create');
-                        let label = initialBucket;
+                        var label = initialBucket;
                         label = label.replace(/[_-]/g, ' ');
                         label = label.replace(/\w\S*/g, function(txt) {
                             return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
@@ -213,8 +213,8 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.uploadObject = function(thisClass, event) {
 
         $.each(event.currentTarget.files, function(index, file) {
-            let element = base.addObject({'label': file.name, 'is_uploading': true}, true);
-            let bucket = base.getBucketById(base.currentBucket());
+            var element = base.addObject({'label': file.name, 'is_uploading': true}, true);
+            var bucket = base.getBucketById(base.currentBucket());
 
             if (!bucket) {
                 element.error('Unable to determine upload bucket.');
@@ -228,18 +228,18 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             }
 
             // Uploading - for Firefox, Google Chrome and Safari
-            let xhr = new XMLHttpRequest();
+            var xhr = new XMLHttpRequest();
 
             // Update progress bar
             xhr.upload.addEventListener('progress', function(e) {
                 if (e.lengthComputable) {
-                    let percent = Math.floor((e.loaded / e.total) * 100);
+                    var percent = Math.floor((e.loaded / e.total) * 100);
                     element.upload_progress(percent);
                 }
             }, false);
 
             //  Error
-            xhr.addEventListener('error', function(e) {
+            xhr.addEventListener('error', function() {
                 //  @todo (Pablo - 2017-11-23) - more verbose errors
                 element.error('An error occurred whilst uploading the file.');
             }, false);
@@ -247,7 +247,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             // File uploaded
             xhr.addEventListener('load', function(e) {
                 if (e.currentTarget.readyState === 4) {
-                    let data;
+                    var data;
                     if (e.currentTarget.status === 200) {
                         try {
                             data = JSON.parse(e.currentTarget.responseText);
@@ -288,7 +288,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             xhr.setRequestHeader('X-cdn-urls', '400x400-crop');
 
             // Send the file
-            let formData = new FormData();
+            var formData = new FormData();
             formData.append('upload', file);
             xhr.send(formData);
         });
@@ -306,10 +306,10 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {void}
      */
     base.deleteObject = function() {
-        let object = this;
+        var object = this;
         if (object.id) {
 
-            let message = 'Are you sure?';
+            var message = 'Are you sure?';
             if (base.isTrash()) {
                 message += ' You cannot undo this action.';
             }
@@ -344,7 +344,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {void}
      */
     base.restoreObject = function() {
-        let object = this;
+        var object = this;
         $.ajax({
                 'url': window.SITE_URL + 'api/cdn/object/restore',
                 'method': 'POST',
@@ -417,7 +417,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.addObject = function(object, unshift) {
         base.debug('Adding object');
-        let newObject = {
+        var newObject = {
             'id': object.id || null,
             'label': object.label || null,
             'ext': object.ext || null,
@@ -443,7 +443,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.listBuckets = function() {
         base.debug('Listing buckets');
-        let $deferred = new $.Deferred();
+        var $deferred = new $.Deferred();
         $.ajax({
                 'url': window.SITE_URL + 'api/cdn/bucket'
             })
@@ -469,7 +469,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {object}|null
      */
     base.getBucketById = function(id) {
-        for (let i = 0, j = base.buckets().length; i < j; i++) {
+        for (var i = 0, j = base.buckets().length; i < j; i++) {
             if (base.buckets()[i].id === id) {
                 return base.buckets()[i];
             }
@@ -485,7 +485,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {object}|null
      */
     base.getBucketBySlug = function(slug) {
-        for (let i = 0, j = base.buckets().length; i < j; i++) {
+        for (var i = 0, j = base.buckets().length; i < j; i++) {
             if (base.buckets()[i].slug === slug) {
                 return base.buckets()[i];
             }
@@ -501,8 +501,8 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.listObjects = function() {
         base.debug('Listing objects');
-        let $deferred = new $.Deferred();
-        let url, data;
+        var $deferred = new $.Deferred();
+        var url, data;
 
         if (base.isSearching()) {
             url = window.SITE_URL + 'api/cdn/object/search';
@@ -558,7 +558,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.search = function() {
         clearTimeout(base.searchTimeout);
         base.searchTimeout = setTimeout(function() {
-            let keywords = $.trim(base.searchTerm());
+            var keywords = $.trim(base.searchTerm());
             if (keywords.length) {
                 if (keywords !== base.lastSearch()) {
                     base.isSearching(true);
@@ -618,8 +618,8 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.feedback = function(type, message) {
         base.debug('Feedback: ' + type + ': ' + message);
-        let $deferred = new $.Deferred();
-        let $element = $('.manager-feedback__' + type);
+        var $deferred = new $.Deferred();
+        var $element = $('.manager-feedback__' + type);
 
         $element
             .html(message)

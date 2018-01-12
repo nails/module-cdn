@@ -71,7 +71,7 @@ class Manager extends BaseAdmin
         $oAsset = Factory::service('Asset');
         $oAsset->library('KNOCKOUT');
         $oAsset->load('admin.mediamanager.css', 'nailsapp/module-cdn');
-        $oAsset->load('admin.mediamanager.js', 'nailsapp/module-cdn');
+        $oAsset->load('admin.mediamanager.min.js', 'nailsapp/module-cdn');
 
         $sBucketSlug      = $oInput->get('bucket');
         $sCallbackHandler = $oInput->get('CKEditor') ? 'ckeditor' : 'picker';
