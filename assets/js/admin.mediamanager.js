@@ -57,7 +57,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         deferred
             .done(function() {
                 base.debug('Initialisation complete');
-                if (base.buckets().length > 1) {
+                if (base.buckets().length > 0) {
                     base.listObjects()
                         .done(function() {
                             deferred.resolve();
