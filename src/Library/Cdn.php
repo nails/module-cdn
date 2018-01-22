@@ -249,7 +249,7 @@ class Cdn
     public function getObjects($page = null, $perPage = null, $data = [])
     {
         $oDb = Factory::service('Database');
-        $oDb->select('o.id, o.filename, o.filename_display, o.serves, o.downloads, o.thumbs, o.scales, o.driver');
+        $oDb->select('o.id, o.filename, o.filename_display, o.serves, o.downloads, o.thumbs, o.scales, o.driver, o.md5_hash');
         $oDb->Select('o.created, o.created_by, o.modified, o.modified_by');
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
         $oDb->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
@@ -1473,6 +1473,9 @@ class Cdn
                 'megabytes' => round($iFileSize / self::BYTE_MULTIPLIER_MB, self::FILE_SIZE_PRECISION),
                 'gigabytes' => round($iFileSize / self::BYTE_MULTIPLIER_GB, self::FILE_SIZE_PRECISION),
                 'human'     => $this->formatBytes($iFileSize),
+            ],
+            'hash' => (object) [
+                'md5' => $oObj->md5_hash,
             ],
         ];
 
