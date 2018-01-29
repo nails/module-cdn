@@ -333,7 +333,7 @@ class Cdn
     {
         $oDb = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.serves, o.downloads, ');
-        $oDb->select('o.thumbs, o.scales, o.driver, o.created, o.created_by, o.modified, o.modified_by');
+        $oDb->select('o.thumbs, o.scales, o.driver, o.md5_hash, o.created, o.created_by, o.modified, o.modified_by');
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
         $oDb->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
         $oDb->select('uet.email trasher_email, ut.first_name trasher_first_name, ut.last_name trasher_last_name');
