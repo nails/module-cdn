@@ -2138,8 +2138,8 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Try to work it out using Nail's mapping
-        if (file_exists(FCPATH . APPPATH . 'config/mimes.php')) {
-            require FCPATH . APPPATH . 'config/mimes.php';
+        if (file_exists(APPPATH . 'config/mimes.php')) {
+            require APPPATH . 'config/mimes.php';
         } else {
             require NAILS_COMMON_PATH . 'config/mimes.php';
         }
