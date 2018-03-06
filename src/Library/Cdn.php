@@ -1302,6 +1302,7 @@ class Cdn
      */
     public function objectIncrementCount($action, $object, $bucket = null)
     {
+        /** @var \CI_Db $oDb */
         $oDb = Factory::service('Database');
 
         switch (strtoupper($action)) {
@@ -1334,7 +1335,8 @@ class Cdn
             return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
         } elseif ($bucket) {
             $oDb->where('b.slug', $bucket);
-            return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o JOIN ' . NAILS_DB_PREFIX . 'cdn_bucket b ON b.id = o.bucket_id');
+            $oDb->join( NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id' );
+            return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
         } else {
             return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
         }
@@ -2849,9 +2851,9 @@ class Cdn
         $oDb->order_by('o.filename_display');
         $oQuery = $oDb->get(NAILS_DB_PREFIX . 'cdn_object o');
 
-        while ($row = $oQuery->_fetch_object()) {
-            if (!$this->callDriver('objectExists', [$row->filename, $row->bucket_slug])) {
-                $aOut['orphans'][] = $row;
+        while ($oRow = $oQuery->unbuffered_row()) {
+            if (!$this->callDriver('objectExists', [$oRow->filename, $oRow->bucket_slug])) {
+                $aOut['orphans'][] = $oRow;
             }
         }
 
@@ -2932,6 +2934,7 @@ class Cdn
 
     public function purgeTrash($purgeIds = null)
     {
+        /** @var \CI_Db $oDb */
         $oDb = Factory::service('Database');
 
         //  Get all the ID's we'll be dealing with
@@ -2940,7 +2943,7 @@ class Cdn
             $oDb->select('id');
             $result   = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash');
             $purgeIds = [];
-            while ($object = $result->_fetch_object()) {
+            while ($object = $result->unbuffered_row()) {
                 $purgeIds[] = $object->id;
             }
 
@@ -3011,7 +3014,7 @@ class Cdn
      *
      * @return string
      */
-    public function formatBytes($iBytes, $iPrecision = 2)
+    public static function formatBytes($iBytes, $iPrecision = 2)
     {
         $units  = ['B', 'KB', 'MB', 'GB', 'TB'];
         $iBytes = max($iBytes, 0);

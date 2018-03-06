@@ -79,8 +79,8 @@
                         ?>
                         <tr>
                             <td><?=$orphan->bucket?></td>
-                            <td><?=$orphan->file->name->human?></td>
-                            <td><?=$orphan->file->size->human?></td>
+                            <td><?=$orphan->filename_display?></td>
+                            <td><?= \Nails\Cdn\Library\Cdn::formatBytes( $orphan->filesize ) ?></td>
                             <td>
                             <?php
 

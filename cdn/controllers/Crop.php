@@ -105,7 +105,10 @@ class Crop extends Base
         //  We must have a bucket, object and extension in order to work with this
         if (!$this->bucket || !$this->object || !$this->extension) {
             log_message('error', 'CDN: ' . $cropMethod . ': Missing _bucket, _object or _extension');
-            $this->serveBadSrc($this->width, $this->height);
+            $this->serveBadSrc([
+                'width' => $this->width,
+                'height' => $this->height
+            ] );
         }
 
         // --------------------------------------------------------------------------
@@ -139,12 +142,18 @@ class Crop extends Base
 
                 if (!$object) {
                     //  Cool, guess it really doesn't exist
-                    $this->serveBadSrc($width, $height);
+                    $this->serveBadSrc([
+                        'width' => $width,
+                        'height' => $height
+                    ]);
                 }
 
             } else {
 
-                $this->serveBadSrc($width, $height);
+                $this->serveBadSrc([
+                    'width' => $width,
+                    'height' => $height
+                ]);
             }
         }
 
@@ -152,7 +161,11 @@ class Crop extends Base
 
         //  Only images
         if (empty($object->is_img)) {
-            $this->serveBadSrc($width, $height, 'Not an image');
+            $this->serveBadSrc([
+                'width' => $width,
+                'height' => $height,
+                'error' => 'Not an image'
+            ] );
         }
 
         // --------------------------------------------------------------------------
@@ -216,7 +229,10 @@ class Crop extends Base
 
                 log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned.');
                 log_message('error', 'CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
-                $this->serveBadSrc($width, $height);
+                $this->serveBadSrc([
+                    'width' => $width,
+                    'height' => $height
+                ]);
 
             } elseif (!filesize($filePath)) {
 
@@ -235,12 +251,18 @@ class Crop extends Base
 
                     log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned, second attempt.');
                     log_message('error', 'CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
-                    $this->serveBadSrc($width, $height);
+                    $this->serveBadSrc([
+                        'width' => $width,
+                        'height' => $height
+                    ]);
 
                 } elseif (!filesize($filePath)) {
 
                     log_message('error', 'CDN: ' . $cropMethod . ': local path exists, but has a zero file size.');
-                    $this->serveBadSrc($width, $height);
+                    $this->serveBadSrc([
+                        'width' => $width,
+                        'height' => $height
+                    ]);
                 }
             }
 
@@ -345,7 +367,10 @@ class Crop extends Base
             ob_end_clean();
 
             //  Bad SRC
-            $this->serveBadSrc($width, $height);
+            $this->serveBadSrc([
+                'width' => $width,
+                'height' => $height
+            ]);
         }
 
         $this->serveFromCache($this->cdnCacheFile, false);

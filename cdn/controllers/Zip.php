@@ -80,7 +80,9 @@ class Zip extends Base
                         $temp->bucket   = $obj->bucket->label;
 
                         if (!$temp->path) {
-                            $this->serveBadSrc('Object "' . $obj->filename . '" does not exist');
+                            $this->serveBadSrc( [
+                                'error' => 'Object "' . $obj->filename . '" does not exist'
+                            ] );
                         }
 
                         if (!$useBuckets && $prevBucket && $prevBucket !== $obj->bucket->id) {
@@ -128,11 +130,15 @@ class Zip extends Base
                 }
 
             } else {
-                $this->serveBadSrc('Could not verify token');
+                $this->serveBadSrc([
+                    'error' => 'Could not verify token'
+                ]);
             }
 
         } else {
-            $this->serveBadSrc('Missing parameters');
+            $this->serveBadSrc( [
+                'error' => 'Missing parameters'
+            ]);
         }
     }
 
@@ -141,12 +147,12 @@ class Zip extends Base
     /**
      * Handles bad requests
      *
-     * @param  string $error The error which occurred
-     *
-     * @return void
+     * @param array $params
      */
-    protected function serveBadSrc($error = '')
+    protected function serveBadSrc( array $params )
     {
+        $error = $params['error'];
+
         $oInput = Factory::service('Input');
         header('Cache-Control: no-cache, must-revalidate', true);
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
