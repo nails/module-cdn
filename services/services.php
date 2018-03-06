@@ -11,7 +11,7 @@ return array(
             //  Images
             'png', 'jpg', 'gif',
             //  Documents & Text
-            'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'rtf', 'txt', 'csv', 'xml',
+            'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'rtf', 'txt', 'csv', 'xml', 'json',
             //  Video
             'mp4', 'mov', 'm4v', 'mpg', 'mpeg', 'avi', 'ogv',
             //  Audio
@@ -42,6 +42,13 @@ return array(
                 return new \App\Cdn\Model\CdnObject();
             } else {
                 return new \Nails\Cdn\Model\CdnObject();
+            }
+        },
+        'ObjectTrash' => function () {
+            if (class_exists('\App\Cdn\Model\CdnObject\Trash')) {
+                return new \App\Cdn\Model\CdnObject\Trash();
+            } else {
+                return new \Nails\Cdn\Model\CdnObject\Trash();
             }
         },
         'StorageDriver' => function () {

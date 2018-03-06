@@ -13,6 +13,7 @@
 namespace Nails\Cdn\Library;
 
 use Nails\Cdn\Exception\DriverException;
+use Nails\Cdn\Exception\ObjectCreateException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Common\Traits\Caching;
 use Nails\Common\Traits\ErrorHandling;
@@ -24,6 +25,41 @@ class Cdn
     use ErrorHandling;
     use Caching;
     use GetCountCommon;
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * The default CDN driver to use
+     * @var string
+     */
+    const DEFAULT_DRIVER = 'nailsapp/driver-cdn-local';
+
+    /**
+     * Byte Multipliers
+     * @var integer
+     */
+    const BYTE_MULTIPLIER_KB = 1024;
+    const BYTE_MULTIPLIER_MB = self::BYTE_MULTIPLIER_KB * 1024;
+    const BYTE_MULTIPLIER_GB = self::BYTE_MULTIPLIER_MB * 1024;
+
+    /**
+     * How precise to make human friendly file sizes
+     * @var integer
+     */
+    const FILE_SIZE_PRECISION = 6;
+
+    /**
+     * The various orientation constants
+     */
+    const ORIENTATION_PORTRAIT  = 'PORTRAIT';
+    const ORIENTATION_LANDSCAPE = 'LANDSCAPE';
+    const ORIENTATION_SQUARE    = 'SQUARE';
+
+    /**
+     * The cache directory to use
+     * @var string
+     */
+    const CACHE_DIR = DEPLOY_CACHE_DIR;
 
     // --------------------------------------------------------------------------
 
@@ -44,14 +80,6 @@ class Cdn
      * @var array
      */
     protected $aDefaultAllowedTypes;
-
-    // --------------------------------------------------------------------------
-
-    const DEFAULT_DRIVER      = 'nailsapp/driver-cdn-local';
-    const BYTE_MULTIPLIER_KB  = 1024;
-    const BYTE_MULTIPLIER_MB  = self::BYTE_MULTIPLIER_KB * 1024;
-    const BYTE_MULTIPLIER_GB  = self::BYTE_MULTIPLIER_MB * 1024;
-    const FILE_SIZE_PRECISION = 6;
 
     // --------------------------------------------------------------------------
 
@@ -154,7 +182,7 @@ class Cdn
 
             // Create a handler for the directory
             $pattern = '#^' . $bucketSlug . '-' . substr($objectFilename, 0, strrpos($objectFilename, '.')) . '#';
-            $fh      = @opendir(DEPLOY_CACHE_DIR);
+            $fh      = @opendir(static::CACHE_DIR);
 
             if ($fh !== false) {
 
@@ -165,10 +193,8 @@ class Cdn
                     if ($file != '.' && $file != '..') {
 
                         // Check with regex that the file format is what we're expecting and not something else
-                        if (preg_match($pattern, $file) && file_exists(DEPLOY_CACHE_DIR . $file)) {
-
-                            // DESTROY!
-                            unlink(DEPLOY_CACHE_DIR . $file);
+                        if (preg_match($pattern, $file) && file_exists(static::CACHE_DIR . $file)) {
+                            unlink(static::CACHE_DIR . $file);
                         }
                     }
                 }
@@ -223,7 +249,7 @@ class Cdn
     public function getObjects($page = null, $perPage = null, $data = [])
     {
         $oDb = Factory::service('Database');
-        $oDb->select('o.id, o.filename, o.filename_display, o.serves, o.downloads, o.thumbs, o.scales, o.driver');
+        $oDb->select('o.id, o.filename, o.filename_display, o.serves, o.downloads, o.thumbs, o.scales, o.driver, o.md5_hash');
         $oDb->Select('o.created, o.created_by, o.modified, o.modified_by');
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
         $oDb->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
@@ -307,7 +333,7 @@ class Cdn
     {
         $oDb = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.serves, o.downloads, ');
-        $oDb->select('o.thumbs, o.scales, o.driver, o.created, o.created_by, o.modified, o.modified_by');
+        $oDb->select('o.thumbs, o.scales, o.driver, o.md5_hash, o.created, o.created_by, o.modified, o.modified_by');
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
         $oDb->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
         $oDb->select('uet.email trasher_email, ut.first_name trasher_first_name, ut.last_name trasher_last_name');
@@ -399,7 +425,7 @@ class Cdn
         //  Check the cache
         $cacheKey = 'object-' . $objectIdSlug;
         $cacheKey .= $bucketIdSlug ? '-' . $bucketIdSlug : '';
-        $cache = $this->getCache($cacheKey);
+        $cache    = $this->getCache($cacheKey);
 
         if ($cache) {
             return $cache;
@@ -474,7 +500,7 @@ class Cdn
             //  Check the cache
             $cacheKey = 'object-trash-' . $object;
             $cacheKey .= !empty($bucket) ? '-' . $bucket : '';
-            $cache = $this->getCache($cacheKey);
+            $cache    = $this->getCache($cacheKey);
 
             if ($cache) {
                 return $cache;
@@ -565,395 +591,413 @@ class Cdn
     /**
      * Create a new object
      *
-     * @param  mixed   $object   The object to create: $_FILE key, path or data stream
-     * @param  string  $bucket   The bucket to upload to
-     * @param  array   $options  Upload options
-     * @param  boolean $isStream Whether the upload is a stream or not
+     * @param  mixed   $object    The object to create: $_FILE key, path or data stream
+     * @param  string  $sBucket   The bucket to upload to
+     * @param  array   $aOptions  Upload options
+     * @param  boolean $bIsStream Whether the upload is a stream or not
      *
      * @return mixed             stdClass on success, false on failure
      */
-    public function objectCreate($object, $bucket, $options = [], $isStream = false)
+    public function objectCreate($object, $sBucket, $aOptions = [], $bIsStream = false)
     {
-        //  Define variables we'll need
-        $_data = new \stdClass();
+        try {
 
-        // --------------------------------------------------------------------------
+            //  Define variables we'll need
+            $oData = new \stdClass();
 
-        //  Clear errors
-        $this->clearErrors();
+            // --------------------------------------------------------------------------
 
-        // --------------------------------------------------------------------------
+            //  Clear errors
+            $this->clearErrors();
 
-        //  Are we uploading a URL?
-        if (!$isStream && (substr($object, 0, 7) == 'http://' || substr($object, 0, 8) == 'https://')) {
+            // --------------------------------------------------------------------------
 
-            if (!isset($options['content-type'])) {
+            //  Are we uploading a URL?
+            if (!$bIsStream && preg_match('/^https?:\/\//', $object)) {
 
-                $_headers                = get_headers($object, 1);
-                $options['content-type'] = $_headers['Content-Type'];
+                if (!isset($aOptions['content-type'])) {
 
-                if (empty($options['content-type'])) {
-                    $options['content-type'] = 'application/octet-stream';
+                    $aHeaders                 = get_headers($object, 1);
+                    $aOptions['content-type'] = $aHeaders['Content-Type'];
+
+                    if (empty($aOptions['content-type'])) {
+                        $aOptions['content-type'] = 'application/octet-stream';
+                    }
+                }
+
+                //  This is a URL, treat as stream
+                $object    = @file_get_contents($object);
+                $bIsStream = true;
+
+                if (empty($object)) {
+                    throw new UrlException('Invalid URL');
                 }
             }
 
-            //  This is a URL, treat as stream
-            $object   = @file_get_contents($object);
-            $isStream = true;
+            // --------------------------------------------------------------------------
 
-            if (empty($object)) {
-                $this->setError('Invalid URL');
-                return false;
-            }
-        }
+            //  Fetch the contents of the file
+            if (!$bIsStream) {
 
-        // --------------------------------------------------------------------------
+                //  Check file exists in $_FILES
+                if (!isset($_FILES[$object])) {
 
-        //  Fetch the contents of the file
-        if (!$isStream) {
+                    //  If it's not in $_FILES does that file exist on the file system?
+                    if (!is_file($object)) {
 
-            //  Check file exists in $_FILES
-            if (!isset($_FILES[$object])) {
+                        throw new ObjectCreateException('You did not select a file to upload');
 
-                //  If it's not in $_FILES does that file exist on the file system?
-                if (!is_file($object)) {
+                    } else {
 
-                    $this->setError('You did not select a file to upload');
-                    return false;
-                } else {
+                        $oData->file = $object;
+                        $oData->name = empty($aOptions['filename_display']) ? basename($object) : $aOptions['filename_display'];
 
-                    $_data->file = $object;
-                    $_data->name = empty($options['filename_display']) ? basename($object) : $options['filename_display'];
-
-                    //  Determine the extension
-                    $_data->ext = substr(strrchr($_data->file, '.'), 1);
-                    $_data->ext = $this->sanitiseExtension($_data->ext);
-                }
-            } else {
-
-                //  It's in $_FILES, check the upload was successful
-                if ($_FILES[$object]['error'] == UPLOAD_ERR_OK) {
-
-                    $_data->file = $_FILES[$object]['tmp_name'];
-                    $_data->name = empty($options['filename_display']) ? $_FILES[$object]['name'] : $options['filename_display'];
-
-                    //  Determine the supplied extension
-                    $_data->ext = substr(strrchr($_FILES[$object]['name'], '.'), 1);
-                    $_data->ext = $this->sanitiseExtension($_data->ext);
-                } else {
-
-                    //  Upload was aborted, I wonder why?
-                    switch ($_FILES[$object]['error']) {
-
-                        case UPLOAD_ERR_INI_SIZE:
-
-                            $maxFileSize = function_exists('ini_get') ? ini_get('upload_max_filesize') : null;
-
-                            if (!is_null($maxFileSize)) {
-
-                                $maxFileSize = $this->returnBytes($maxFileSize);
-                                $maxFileSize = $this->formatBytes($maxFileSize);
-                                $error       = sprintf(
-                                    'The file exceeds the maximum size accepted by this server (which is %s).',
-                                    $maxFileSize
-                                );
-
-                            } else {
-                                $error = 'The file exceeds the maximum size accepted by this server';
-                            }
-                            break;
-
-                        case UPLOAD_ERR_FORM_SIZE:
-                            $error = 'The file exceeds the maximum size accepted by this server';
-                            break;
-
-                        case UPLOAD_ERR_PARTIAL:
-                            $error = 'The file was only partially uploaded';
-                            break;
-
-                        case UPLOAD_ERR_NO_FILE:
-                            $error = 'No file was uploaded';
-                            break;
-
-                        case UPLOAD_ERR_NO_TMP_DIR:
-                            $error = 'This server cannot accept uploads at this time';
-                            break;
-
-                        case UPLOAD_ERR_CANT_WRITE:
-                            $error = 'Failed to write uploaded file to disk, you can try again';
-                            break;
-
-                        case UPLOAD_ERR_EXTENSION:
-                            $error = 'The file failed to upload due to a server configuration';
-                            break;
-
-                        default:
-                            $error = 'The file failed to upload';
-                            break;
+                        //  Determine the extension
+                        $oData->ext = substr(strrchr($oData->file, '.'), 1);
+                        $oData->ext = $this->sanitiseExtension($oData->ext);
                     }
 
-                    $this->setError($error);
+                } else {
 
-                    return false;
+                    //  It's in $_FILES, check the upload was successful
+                    if ($_FILES[$object]['error'] == UPLOAD_ERR_OK) {
+
+                        $oData->file = $_FILES[$object]['tmp_name'];
+                        $oData->name = getFromArray('filename_display', $aOptions, $_FILES[$object]['name']);
+
+                        //  Determine the supplied extension
+                        $oData->ext = substr(strrchr($_FILES[$object]['name'], '.'), 1);
+                        $oData->ext = $this->sanitiseExtension($oData->ext);
+
+                    } else {
+
+                        //  Upload was aborted, I wonder why?
+                        switch ($_FILES[$object]['error']) {
+
+                            case UPLOAD_ERR_INI_SIZE:
+
+                                $iMaxFileSize = function_exists('ini_get') ? ini_get('upload_max_filesize') : null;
+
+                                if (!is_null($iMaxFileSize)) {
+
+                                    $iMaxFileSize = $this->returnBytes($iMaxFileSize);
+                                    $iMaxFileSize = $this->formatBytes($iMaxFileSize);
+                                    $sError       = sprintf(
+                                        'The file exceeds the maximum size accepted by this server (which is %s)',
+                                        $iMaxFileSize
+                                    );
+
+                                } else {
+                                    $sError = 'The file exceeds the maximum size accepted by this server';
+                                }
+                                break;
+
+                            case UPLOAD_ERR_FORM_SIZE:
+                                $sError = 'The file exceeds the maximum size accepted by this server';
+                                break;
+
+                            case UPLOAD_ERR_PARTIAL:
+                                $sError = 'The file was only partially uploaded';
+                                break;
+
+                            case UPLOAD_ERR_NO_FILE:
+                                $sError = 'No file was uploaded';
+                                break;
+
+                            case UPLOAD_ERR_NO_TMP_DIR:
+                                $sError = 'This server cannot accept uploads at this time';
+                                break;
+
+                            case UPLOAD_ERR_CANT_WRITE:
+                                $sError = 'Failed to write uploaded file to disk, you can try again';
+                                break;
+
+                            case UPLOAD_ERR_EXTENSION:
+                                $sError = 'The file failed to upload due to a server configuration';
+                                break;
+
+                            default:
+                                $sError = 'The file failed to upload';
+                                break;
+                        }
+
+                        throw new ObjectCreateException($sError);
+                    }
                 }
-            }
 
-            // --------------------------------------------------------------------------
+                // --------------------------------------------------------------------------
 
-            /**
-             * Specify the file specifics
-             * ==========================
-             *
-             * Content-type; using finfo because the $_FILES variable can't be trusted
-             * (uploads from Uploadify always report as application/octet-stream;
-             * stupid flash. Unless, of course, the content-type has been set explicitly
-             * by the developer
-             */
+                /**
+                 * Specify the file specifics
+                 * ==========================
+                 *
+                 * Content-type; using finfo because the $_FILES variable can't be trusted
+                 * (uploads from Uploadify always report as application/octet-stream;
+                 * stupid flash. Unless, of course, the content-type has been set explicitly
+                 * by the developer
+                 */
 
-            if (isset($options['content-type'])) {
-                $_data->mime = $options['content-type'];
-            } else {
-                $_data->mime = $this->getMimeFromFile($_data->file);
-            }
+                if (isset($aOptions['content-type'])) {
+                    $oData->mime = $aOptions['content-type'];
+                } else {
+                    $oData->mime = $this->getMimeFromFile($oData->file);
+                }
 
-            // --------------------------------------------------------------------------
+                // --------------------------------------------------------------------------
 
-            //  If no extension, then guess it
-            if (empty($_data->ext)) {
-                $_data->ext = $this->getExtFromMime($_data->mime);
-            }
-        } else {
+                //  If no extension, then guess it
+                if (empty($oData->ext)) {
+                    $oData->ext = $this->getExtFromMime($oData->mime);
+                }
 
-            /**
-             * We've been given a data stream, use that. If no content-type has been set
-             * then fall over - we need to know what we're dealing with.
-             */
-
-            if (!isset($options['content-type'])) {
-                $this->setError('A Content-Type must be defined for data stream uploads');
-                return false;
             } else {
 
-                //  Write the file to the cache temporarily
-                if (is_writable(DEPLOY_CACHE_DIR)) {
+                /**
+                 * We've been given a data stream, use that. If no content-type has been set
+                 * then fall over - we need to know what we're dealing with.
+                 */
 
-                    $cacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
-                    $fh        = fopen(DEPLOY_CACHE_DIR . $cacheFile, 'w');
+                if (!isset($aOptions['content-type'])) {
+                    throw new ObjectCreateException('A Content-Type must be defined for data stream uploads');
+                } else {
+
+                    $sCacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
+                    $fh         = fopen(static::CACHE_DIR . $sCacheFile, 'w');
                     fwrite($fh, $object);
                     fclose($fh);
 
                     // --------------------------------------------------------------------------
 
                     //  File mime types
-                    $_data->mime = $options['content-type'];
+                    $oData->mime = $aOptions['content-type'];
 
                     // --------------------------------------------------------------------------
 
                     //  If an extension has been supplied use that, if not detect from mime type
-                    if (!empty($options['extension'])) {
-                        $_data->ext = $options['extension'];
-                        $_data->ext = $this->sanitiseExtension($_data->ext);
+                    if (!empty($aOptions['extension'])) {
+                        $oData->ext = $aOptions['extension'];
+                        $oData->ext = $this->sanitiseExtension($oData->ext);
                     } else {
-                        $_data->ext = $this->getExtFromMime($_data->mime);
+                        $oData->ext = $this->getExtFromMime($oData->mime);
                     }
 
                     // --------------------------------------------------------------------------
 
                     //  Specify the file specifics
-                    $_data->name = empty($options['filename_display']) ? $cacheFile . '.' . $_data->ext : $options['filename_display'];
-                    $_data->file = DEPLOY_CACHE_DIR . $cacheFile;
+                    if (empty($aOptions['filename_display'])) {
+                        $oData->name = $sCacheFile . '.' . $oData->ext;
+                    } else {
+                        $oData->name = $aOptions['filename_display'];
+                    }
+                    $oData->file = static::CACHE_DIR . $sCacheFile;
+                }
+            }
+
+            // --------------------------------------------------------------------------
+
+            //  Calculate the MD5 hash, don't upload duplicates in the same bucket
+            $oData->md5_hash = md5_file($oData->file);
+            $oObjectModel    = Factory::model('Object', 'nailsapp/module-cdn');
+            $oExistingObject = $oObjectModel->getByMd5Hash($oData->md5_hash, ['expand' => ['bucket']]);
+
+            if (!empty($oExistingObject)) {
+                if (!empty($oExistingObject->bucket) && $oExistingObject->bucket->slug == $sBucket) {
+                    //  Update this item's modified date so that it appears further up the list
+                    $oObjectModel->update($oExistingObject->id);
+                    return $this->getObject($oExistingObject->id);
+                }
+            }
+
+            // --------------------------------------------------------------------------
+
+            //  Valid extension for mime type?
+            if (!$this->validExtForMime($oData->ext, $oData->mime)) {
+                throw new ObjectCreateException(
+                    sprintf('%s is not a valid extension for this file type (%s)', $oData->ext, $oData->mime)
+                );
+            }
+
+            // --------------------------------------------------------------------------
+
+            //  Test and set the bucket, if it doesn't exist, create it
+            if (is_numeric($sBucket) || is_string($sBucket)) {
+                $oBucket = $this->getBucket($sBucket);
+            } else {
+                $oBucket = $sBucket;
+            }
+
+            if (!$oBucket) {
+                if ($this->bucketCreate($sBucket)) {
+                    $oBucket       = $this->getBucket($sBucket);
+                    $oData->bucket = (object) [
+                        'id'   => $oBucket->id,
+                        'slug' => $oBucket->slug,
+                    ];
+                } else {
+                    throw new ObjectCreateException();
+                }
+            } else {
+                $oData->bucket = (object) [
+                    'id'   => $oBucket->id,
+                    'slug' => $oBucket->slug,
+                ];
+            }
+
+            // --------------------------------------------------------------------------
+
+            //  Is this an acceptable file? Check against the allowed_types array (if present)
+            if (!$this->isAllowedExt($oData->ext, $oBucket->allowed_types)) {
+
+                if (count($oBucket->allowed_types) > 1) {
+
+                    array_splice($oBucket->allowed_types, count($oBucket->allowed_types) - 1, 0, [' and ']);
+                    $sAccepted = implode(', .', $oBucket->allowed_types);
+                    $sAccepted = str_replace(', . and , ', ' and ', $sAccepted);
+                    throw new ObjectCreateException(
+                        sprintf('The file type is not allowed, accepted file types are: %s', $sAccepted)
+                    );
 
                 } else {
-                    $this->setError('Cache directory is not writable');
-                    return false;
+                    $sAccepted = implode('', $oBucket->allowed_types);
+                    throw new ObjectCreateException(
+                        sprintf('The file type is not allowed, accepted file type is %s', $sAccepted)
+                    );
                 }
-            }
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Valid extension for mime type?
-        if (!$this->validExtForMime($_data->ext, $_data->mime)) {
-            $this->setError(sprintf('%s is not a valid extension for this file type (' . $_data->mime . ')', $_data->ext));
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Test and set the bucket, if it doesn't exist, create it
-        if (is_numeric($bucket) || is_string($bucket)) {
-            $_bucket = $this->getBucket($bucket);
-        } else {
-            $_bucket = $bucket;
-        }
-
-        if (!$_bucket) {
-            if ($this->bucketCreate($bucket)) {
-                $_bucket             = $this->getBucket($bucket);
-                $_data->bucket       = new \stdClass();
-                $_data->bucket->id   = $_bucket->id;
-                $_data->bucket->slug = $_bucket->slug;
-            } else {
-                return false;
-            }
-        } else {
-            $_data->bucket       = new \stdClass();
-            $_data->bucket->id   = $_bucket->id;
-            $_data->bucket->slug = $_bucket->slug;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Is this an acceptable file? Check against the allowed_types array (if present)
-        if (!$this->isAllowedExt($_data->ext, $_bucket->allowed_types)) {
-
-            if (count($_bucket->allowed_types) > 1) {
-
-                array_splice($_bucket->allowed_types, count($_bucket->allowed_types) - 1, 0, [' and ']);
-                $accepted = implode(', .', $_bucket->allowed_types);
-                $accepted = str_replace(', . and , ', ' and ', $accepted);
-                $this->setError(sprintf('The file type is not allowed, accepted file types are: %s', $accepted));
-
-            } else {
-
-                $accepted = implode('', $_bucket->allowed_types);
-                $this->setError(sprintf('The file type is not allowed, accepted file type is %s', $accepted));
-            }
-
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Is the file within the file size limit?
-        $_data->filesize = filesize($_data->file);
-
-        if ($_bucket->max_size) {
-            if ($_data->filesize > $_bucket->max_size) {
-                $_fs_in_kb = $this->formatBytes($_bucket->max_size);
-                $this->setError(sprintf('The file is too large, maximum file size is %s', $_fs_in_kb));
-                return false;
-            }
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Is the object an image?
-        $_images   = [];
-        $_images[] = 'image/jpg';
-        $_images[] = 'image/jpeg';
-        $_images[] = 'image/png';
-        $_images[] = 'image/gif';
-
-        if (in_array($_data->mime, $_images)) {
-
-            list($width, $height) = getimagesize($_data->file);
-
-            $_data->img              = new \stdClass();
-            $_data->img->width       = $width;
-            $_data->img->height      = $height;
-            $_data->img->is_animated = null;
-
-            // --------------------------------------------------------------------------
-
-            if ($_data->img->width > $_data->img->height) {
-                $_data->img->orientation = 'LANDSCAPE';
-            } elseif ($_data->img->width < $_data->img->height) {
-                $_data->img->orientation = 'PORTRAIT';
-            } elseif ($_data->img->width == $_data->img->height) {
-                $_data->img->orientation = 'SQUARE';
             }
 
             // --------------------------------------------------------------------------
 
-            if ($_data->mime == 'image/gif') {
-                $_data->img->is_animated = $this->detectAnimatedGif($_data->file);
+            //  Is the file within the file size limit?
+            $oData->filesize = filesize($oData->file);
+
+            if ($oBucket->max_size) {
+                if ($oData->filesize > $oBucket->max_size) {
+                    throw new ObjectCreateException(
+                        sprintf(
+                            'The file is too large, maximum file size is %s',
+                            $this->formatBytes($oBucket->max_size)
+                        )
+                    );
+                }
             }
 
             // --------------------------------------------------------------------------
 
-            //  Image dimension limits
-            if (isset($options['dimensions'])) {
+            //  Is the object an image?
+            $aImageMimeTypes = [
+                'image/jpg',
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+            ];
 
-                $error = 0;
+            if (in_array($oData->mime, $aImageMimeTypes)) {
 
-                if (isset($options['dimensions']['max_width'])) {
-                    if ($_data->img->width > $options['dimensions']['max_width']) {
-                        $this->setError(sprintf('Image is too wide (max %spx)', $options['dimensions']['max_width']));
-                        $error++;
-                    }
+                list($width, $height) = getimagesize($oData->file);
+                $oData->img = (object) [
+                    'width'       => $width,
+                    'height'      => $height,
+                    'is_animated' => null,
+                ];
+
+                // --------------------------------------------------------------------------
+
+                if ($oData->img->width > $oData->img->height) {
+                    $oData->img->orientation = static::ORIENTATION_LANDSCAPE;
+                } elseif ($oData->img->width < $oData->img->height) {
+                    $oData->img->orientation = static::ORIENTATION_PORTRAIT;
+                } elseif ($oData->img->width == $oData->img->height) {
+                    $oData->img->orientation = static::ORIENTATION_SQUARE;
                 }
 
-                if (isset($options['dimensions']['max_height'])) {
-                    if ($_data->img->height > $options['dimensions']['max_height']) {
-                        $this->setError(sprintf('Image is too tall (max %spx)', $options['dimensions']['max_height']));
-                        $error++;
-                    }
+                // --------------------------------------------------------------------------
+
+                if ($oData->mime == 'image/gif') {
+                    $oData->img->is_animated = $this->detectAnimatedGif($oData->file);
                 }
 
-                if (isset($options['dimensions']['min_width'])) {
-                    if ($_data->img->width < $options['dimensions']['min_width']) {
-                        $this->setError(sprintf('Image is too narrow (min %spx)', $options['dimensions']['min_width']));
-                        $error++;
-                    }
-                }
+                // --------------------------------------------------------------------------
 
-                if (isset($options['dimensions']['min_height'])) {
-                    if ($_data->img->height < $options['dimensions']['min_height']) {
-                        $this->setError(sprintf('Image is too short (min %spx)', $options['dimensions']['min_height']));
-                        $error++;
-                    }
-                }
+                //  Image dimension limits
+                if (isset($aOptions['dimensions'])) {
 
-                if ($error > 0) {
-                    return false;
+                    if (isset($aOptions['dimensions']['max_width'])) {
+                        if ($oData->img->width > $aOptions['dimensions']['max_width']) {
+                            throw new ObjectCreateException(
+                                sprintf('Image is too wide (max %spx)', $aOptions['dimensions']['max_width'])
+                            );
+                        }
+                    }
+
+                    if (isset($aOptions['dimensions']['max_height'])) {
+                        if ($oData->img->height > $aOptions['dimensions']['max_height']) {
+                            throw new ObjectCreateException(
+                                sprintf('Image is too tall (max %spx)', $aOptions['dimensions']['max_height'])
+                            );
+                        }
+                    }
+
+                    if (isset($aOptions['dimensions']['min_width'])) {
+                        if ($oData->img->width < $aOptions['dimensions']['min_width']) {
+                            throw new ObjectCreateException(
+                                sprintf('Image is too narrow (min %spx)', $aOptions['dimensions']['min_width'])
+                            );
+                        }
+                    }
+
+                    if (isset($aOptions['dimensions']['min_height'])) {
+                        if ($oData->img->height < $aOptions['dimensions']['min_height']) {
+                            throw new ObjectCreateException(
+                                sprintf('Image is too short (min %spx)', $aOptions['dimensions']['min_height'])
+                            );
+                        }
+                    }
                 }
             }
-        }
 
-        // --------------------------------------------------------------------------
+            // --------------------------------------------------------------------------
 
-        /**
-         * If a certain filename has been specified then send that to the CDN (this
-         * will overwrite any existing file so use with caution).
-         */
-
-        if (isset($options['filename']) && $options['filename']) {
-            $_data->filename = $options['filename'];
-        } else {
-            //  Generate a filename
-            $_data->filename = time() . '-' . md5(activeUser('id') . microtime(true) . rand(0, 999)) . '.' . $_data->ext;
-        }
-
-        // --------------------------------------------------------------------------
-
-        $upload = $this->callDriver('objectCreate', [$_data]);
-
-        // --------------------------------------------------------------------------
-
-        if ($upload) {
-            $object = $this->createObject($_data, true);
-            if ($object) {
-                $status = $object;
+            /**
+             * If a certain filename has been specified then send that to the CDN (this
+             * will overwrite any existing file so use with caution).
+             */
+            if (isset($aOptions['filename']) && $aOptions['filename']) {
+                $oData->filename = $aOptions['filename'];
             } else {
-                $this->callDriver('destroy', [$_data->filename, $_data->bucket_slug]);
-                $status = false;
+                //  Generate a filename
+                $oData->filename = time() . '-' . md5(activeUser('id') . microtime(true) . rand(0, 999)) . '.' . $oData->ext;
             }
-        } else {
-            $this->setError($this->callDriver('lastError'));
-            $status = false;
+
+            // --------------------------------------------------------------------------
+
+            $upload = $this->callDriver('objectCreate', [$oData]);
+
+            // --------------------------------------------------------------------------
+
+            if ($upload) {
+                $object = $this->createObject($oData, true);
+                if ($object) {
+                    return $object;
+                } else {
+                    $this->callDriver('destroy', [$oData->filename, $oData->bucket_slug]);
+                    throw new ObjectCreateException();
+                }
+            } else {
+                throw new ObjectCreateException($this->callDriver('lastError'));
+            }
+
+        } catch (\Exception $e) {
+
+            $this->setError($e->getMessage());
+
+        } finally {
+            //  If a cache file was created then we should remove it
+            if (!empty($sCacheFile) && file_exists(static::CACHE_DIR . $sCacheFile)) {
+                unlink(static::CACHE_DIR . $sCacheFile);
+            }
         }
 
-        // --------------------------------------------------------------------------
-
-        //  If a cache file was created then we should remove it
-        if (!empty($cacheFile) && file_exists($cacheFile)) {
-            unlink(DEPLOY_CACHE_DIR . $cacheFile);
-        }
-
-        // --------------------------------------------------------------------------
-
-        return $status;
+        return false;
     }
 
     // --------------------------------------------------------------------------
@@ -1221,14 +1265,14 @@ class Cdn
      * @param  mixed   $bucket      The bucket's ID or slug
      * @param  mixed   $replaceWith The replacement: $_FILE key, path or data stream
      * @param  array   $options     An array of options to apply to the upload
-     * @param  boolean $isStream    Whether the replacement object is a data stream or not
+     * @param  boolean $bIsStream   Whether the replacement object is a data stream or not
      *
      * @return mixed                stdClass on success, false on failure
      */
-    public function objectReplace($object, $bucket, $replaceWith, $options = [], $isStream = false)
+    public function objectReplace($object, $bucket, $replaceWith, $options = [], $bIsStream = false)
     {
         //  Firstly, attempt the upload
-        $upload = $this->objectCreate($replaceWith, $bucket, $options, $isStream);
+        $upload = $this->objectCreate($replaceWith, $bucket, $options, $bIsStream);
 
         if ($upload) {
 
@@ -1303,15 +1347,16 @@ class Cdn
     /**
      * Returns a local path for an object ID
      *
-     * @param  int $iId The object's ID
+     * @param  int    $iId      The object's ID
+     * @param boolean $bIsTrash Whether to look in the trash or not
      *
      * @return mixed
      */
-    public function objectLocalPath($iId)
+    public function objectLocalPath($iId, $bIsTrash = false)
     {
         try {
 
-            $oObj = $this->getObject($iId);
+            $oObj = $bIsTrash ? $this->getObjectFromTrash($iId) : $this->getObject($iId);
             if (!$oObj) {
                 throw new \Exception('Invalid Object ID');
             }
@@ -1342,55 +1387,49 @@ class Cdn
     /**
      * Creates a new object record in the DB; called from various other methods
      *
-     * @param  \stdClass $data          The data to create the object with
-     * @param  boolean   $return_object Whether to return the object, or just it's ID
+     * @param  \stdClass $oData         The data to create the object with
+     * @param  boolean   $bReturnObject Whether to return the object, or just it's ID
      *
      * @return mixed
      */
-    protected function createObject($data, $return_object = false)
+    protected function createObject($oData, $bReturnObject = false)
     {
-        $oDb = Factory::service('Database');
-        $oDb->set('bucket_id', $data->bucket->id);
-        $oDb->set('filename', $data->filename);
-        $oDb->set('filename_display', $data->name);
-        $oDb->set('mime', $data->mime);
-        $oDb->set('filesize', $data->filesize);
-        $oDb->set('driver', $this->oEnabledDriver->slug);
-        $oDb->set('created', 'NOW()', false);
-        $oDb->set('modified', 'NOW()', false);
-
-        if (isLoggedIn()) {
-            $oDb->set('created_by', activeUser('id'));
-            $oDb->set('modified_by', activeUser('id'));
-        }
+        $aData = [
+            'bucket_id'        => $oData->bucket->id,
+            'filename'         => $oData->filename,
+            'filename_display' => $oData->name,
+            'mime'             => $oData->mime,
+            'filesize'         => $oData->filesize,
+            'md5_hash'         => $oData->md5_hash,
+            'driver'           => $this->oEnabledDriver->slug,
+        ];
 
         // --------------------------------------------------------------------------
 
-        if (isset($data->img->width) && isset($data->img->height) && isset($data->img->orientation)) {
-            $oDb->set('img_width', $data->img->width);
-            $oDb->set('img_height', $data->img->height);
-            $oDb->set('img_orientation', $data->img->orientation);
+        if (isset($oData->img->width) && isset($oData->img->height) && isset($oData->img->orientation)) {
+            $aData['img_width']       = $oData->img->width;
+            $aData['img_height']      = $oData->img->height;
+            $aData['img_orientation'] = $oData->img->orientation;
         }
 
         // --------------------------------------------------------------------------
 
         //  Check whether file is animated gif
-        if ($data->mime == 'image/gif') {
-            if (isset($data->img->is_animated)) {
-                $oDb->set('is_animated', $data->img->is_animated);
+        if ($oData->mime == 'image/gif') {
+            if (isset($oData->img->is_animated)) {
+                $aData['is_animated'] = $oData->img->is_animated;
             } else {
-                $oDb->set('is_animated', false);
+                $aData['is_animated'] = false;
             }
         }
 
         // --------------------------------------------------------------------------
 
-        $oDb->insert(NAILS_DB_PREFIX . 'cdn_object');
+        $oObjectModel = Factory::model('Object', 'nailsapp/module-cdn');
+        $iObjectId    = $oObjectModel->create($aData);
 
-        $objectId = $oDb->insert_id();
-
-        if ($oDb->affected_rows()) {
-            return $return_object ? $this->getObject($objectId) : $objectId;
+        if ($iObjectId) {
+            return $bReturnObject ? $this->getObject($iObjectId) : $iObjectId;
         } else {
             return false;
         }
@@ -1415,7 +1454,7 @@ class Cdn
         $oObj->downloads   = (int) $oObj->downloads;
         $oObj->thumbs      = (int) $oObj->thumbs;
         $oObj->scales      = (int) $oObj->scales;
-        $oObj->modified_by = $oObj->modified_by ? (int) $oObj->modified_by : null;
+        $oObj->modified_by = (int) $oObj->modified_by ?: null;
 
         // --------------------------------------------------------------------------
 
@@ -1423,35 +1462,40 @@ class Cdn
         $sFileNameHuman = $oObj->filename_display;
         $iFileSize      = (int) $oObj->filesize;
 
-        $oObj->file = new \stdClass();
+        $oObj->file = (object) [
+            'name' => (object) [
+                'disk'  => $sFileNameDisk,
+                'human' => $sFileNameHuman,
+            ],
+            'mime' => $oObj->mime,
+            'ext'  => strtolower(pathinfo($sFileNameDisk, PATHINFO_EXTENSION)),
+            'size' => (object) [
+                'bytes'     => $iFileSize,
+                'kilobytes' => round($iFileSize / self::BYTE_MULTIPLIER_KB, self::FILE_SIZE_PRECISION),
+                'megabytes' => round($iFileSize / self::BYTE_MULTIPLIER_MB, self::FILE_SIZE_PRECISION),
+                'gigabytes' => round($iFileSize / self::BYTE_MULTIPLIER_GB, self::FILE_SIZE_PRECISION),
+                'human'     => $this->formatBytes($iFileSize),
+            ],
+            'hash' => (object) [
+                'md5' => $oObj->md5_hash,
+            ],
+        ];
 
-        $oObj->file->name        = new \stdClass();
-        $oObj->file->name->disk  = $sFileNameDisk;
-        $oObj->file->name->human = $sFileNameHuman;
         unset($oObj->filename);
         unset($oObj->filename_display);
-
-        $oObj->file->mime = $oObj->mime;
-        $oObj->file->ext  = strtolower(pathinfo($oObj->file->name->disk, PATHINFO_EXTENSION));
         unset($oObj->mime);
-
-        $oObj->file->size            = new \stdClass();
-        $oObj->file->size->bytes     = $iFileSize;
-        $oObj->file->size->kilobytes = round($iFileSize / self::BYTE_MULTIPLIER_KB, self::FILE_SIZE_PRECISION);
-        $oObj->file->size->megabytes = round($iFileSize / self::BYTE_MULTIPLIER_MB, self::FILE_SIZE_PRECISION);
-        $oObj->file->size->gigabytes = round($iFileSize / self::BYTE_MULTIPLIER_GB, self::FILE_SIZE_PRECISION);
-        $oObj->file->size->human     = $this->formatBytes($iFileSize);
         unset($oObj->filesize);
 
         // --------------------------------------------------------------------------
 
-        $oObj->creator              = new \stdClass();
-        $oObj->creator->id          = $oObj->created_by ? (int) $oObj->created_by : null;
-        $oObj->creator->first_name  = $oObj->first_name;
-        $oObj->creator->last_name   = $oObj->last_name;
-        $oObj->creator->email       = $oObj->email;
-        $oObj->creator->profile_img = $oObj->profile_img;
-        $oObj->creator->gender      = $oObj->gender;
+        $oObj->creator = (object) [
+            'id'          => (int) $oObj->created_by ?: null,
+            'first_name'  => $oObj->first_name,
+            'last_name'   => $oObj->last_name,
+            'email'       => $oObj->email,
+            'profile_img' => $oObj->profile_img,
+            'gender'      => $oObj->gender,
+        ];
 
         unset($oObj->created_by);
         unset($oObj->first_name);
@@ -1462,10 +1506,11 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $oObj->bucket        = new \stdClass();
-        $oObj->bucket->id    = (int) $oObj->bucket_id;
-        $oObj->bucket->label = $oObj->bucket_label;
-        $oObj->bucket->slug  = $oObj->bucket_slug;
+        $oObj->bucket = (object) [
+            'id'    => (int) $oObj->bucket_id,
+            'label' => $oObj->bucket_label,
+            'slug'  => $oObj->bucket_slug,
+        ];
 
         unset($oObj->bucket_id);
         unset($oObj->bucket_label);
@@ -1488,13 +1533,14 @@ class Cdn
         // --------------------------------------------------------------------------
 
         if (isset($oObj->trashed)) {
-            $oObj->trasher              = new \stdClass();
-            $oObj->trasher->id          = $oObj->trashed_by ? (int) $oObj->trashed_by : null;
-            $oObj->trasher->first_name  = $oObj->trasher_first_name;
-            $oObj->trasher->last_name   = $oObj->trasher_last_name;
-            $oObj->trasher->email       = $oObj->trasher_email;
-            $oObj->trasher->profile_img = $oObj->trasher_profile_img;
-            $oObj->trasher->gender      = $oObj->trasher_gender;
+            $oObj->trasher = (object) [
+                'id'          => (int) $oObj->trashed_by ?: null,
+                'first_name'  => $oObj->trasher_first_name,
+                'last_name'   => $oObj->trasher_last_name,
+                'email'       => $oObj->trasher_email,
+                'profile_img' => $oObj->trasher_profile_img,
+                'gender'      => $oObj->trasher_gender,
+            ];
 
             unset($oObj->trashed_by);
             unset($oObj->trasher_first_name);
@@ -1837,7 +1883,7 @@ class Cdn
     {
         $bucket->id          = (int) $bucket->id;
         $bucket->max_size    = (int) $bucket->max_size;
-        $bucket->modified_by = $bucket->modified_by ? (int) $bucket->modified_by : null;
+        $bucket->modified_by = (int) $bucket->modified_by ?: null;
 
         // --------------------------------------------------------------------------
 
@@ -1860,13 +1906,14 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $bucket->creator              = new \stdClass();
-        $bucket->creator->id          = $bucket->created_by ? (int) $bucket->created_by : null;
-        $bucket->creator->first_name  = $bucket->first_name;
-        $bucket->creator->last_name   = $bucket->last_name;
-        $bucket->creator->email       = $bucket->email;
-        $bucket->creator->profile_img = $bucket->profile_img;
-        $bucket->creator->gender      = $bucket->gender;
+        $bucket->creator = (object) [
+            'id'          => (int) $bucket->created_by ?: null,
+            'first_name'  => $bucket->first_name,
+            'last_name'   => $bucket->last_name,
+            'email'       => $bucket->email,
+            'profile_img' => $bucket->profile_img,
+            'gender'      => $bucket->gender,
+        ];
 
         unset($bucket->created_by);
         unset($bucket->first_name);
@@ -1924,6 +1971,21 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
+     * Extract the extension from a path
+     *
+     * @param string $sPath The path to extract from
+     *
+     * @return string
+     */
+    public function getExtFromPath($sPath)
+    {
+        $sExtension = strpos($sPath, '.') !== false ? substr($sPath, (int) strrpos($sPath, '.') + 1) : $sPath;
+        return $this->sanitiseExtension($sExtension);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Fetches the extension from the mime type
      *
      * @param string $mime The mime type to check
@@ -1968,10 +2030,7 @@ class Cdn
      */
     public function getMimeFromExt($ext)
     {
-        //  Prep $ext, make sure it has no dots
-        $ext = strpos($ext, '.') !== false ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
-        $ext = $this->sanitiseExtension($ext);
-
+        $ext   = $this->getExtFromPath($ext);
         $mimes = $this->getMimeMappings();
 
         foreach ($mimes as $_ext => $mime) {
@@ -2023,9 +2082,7 @@ class Cdn
     {
         $_assocs = [];
         $_mimes  = $this->getMimeMappings();
-
-        //  Prep $ext, make sure it has no dots
-        $ext = strpos($ext, '.') !== false ? substr($ext, (int) strrpos($ext, '.') + 1) : $ext;
+        $ext     = $this->getExtFromPath($ext);
 
         foreach ($_mimes as $_ext => $_mime) {
             if (is_array($_mime)) {
@@ -2081,8 +2138,8 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Try to work it out using Nail's mapping
-        if (file_exists(APPPATH . 'config/mimes.php')) {
-            require APPPATH . 'config/mimes.php';
+        if (file_exists(FCPATH . APPPATH . 'config/mimes.php')) {
+            require FCPATH . APPPATH . 'config/mimes.php';
         } else {
             require NAILS_COMMON_PATH . 'config/mimes.php';
         }
@@ -2346,7 +2403,6 @@ class Cdn
             $oObj = $objectId;
         }
 
-
         $url = $this->callDriver(
             'urlCrop',
             [$oObj->file->name->disk, $oObj->bucket->slug, $width, $height],
@@ -2389,7 +2445,7 @@ class Cdn
         if (empty($objectId)) {
 
             $object = $this->emptyObject();
-        } else if (is_numeric($objectId)) {
+        } elseif (is_numeric($objectId)) {
 
             $object = $this->getObject($objectId);
 
@@ -2589,13 +2645,18 @@ class Cdn
 
             if (!$oObj) {
                 //  Let the renderer show a bad_src graphic
-                $oObj                   = new \stdClass();
-                $oObj->file             = new \stdClass();
-                $oObj->file->name       = new \stdClass();
-                $oObj->file->name->disk = '';
-                $oObj->bucket           = new \stdClass();
-                $oObj->bucket->slug     = '';
+                $oObj = (object) [
+                    'file'   => (object) [
+                        'name' => (object) [
+                            'disk' => '',
+                        ],
+                    ],
+                    'bucket' => (object) [
+                        'slug' => '',
+                    ],
+                ];
             }
+
         } else {
             $oObj = $objectId;
         }
@@ -2654,7 +2715,7 @@ class Cdn
         $token[] = time() + (int) $duration; //  Expire time (+2hours)
 
         if ($restrictIp) {
-            $oInput = Factory::service('Input');
+            $oInput  = Factory::service('Input');
             $token[] = $oInput->ipAddress();
         } else {
             $token[] = false;
@@ -2680,7 +2741,7 @@ class Cdn
     public function validateApiUploadToken($token)
     {
         $oEncrypt = Factory::service('Encrypt');
-        $token = $oEncrypt->decode($token, APP_PRIVATE_KEY);
+        $token    = $oEncrypt->decode($token, APP_PRIVATE_KEY);
 
         if (!$token) {
             //  Error #1: Could not decrypt
@@ -2777,37 +2838,37 @@ class Cdn
 
     /**
      * Finds objects which have no file counterparts
-     * @return  string
+     * @return  array
      **/
     public function findOrphanedObjects()
     {
-        $_out = ['orphans' => [], 'elapsed_time' => 0];
-
-        $oDb = Factory::service('Database');
+        $aOut = ['orphans' => [], 'elapsed_time' => 0];
+        $oDb  = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.mime, o.filesize, o.driver');
         $oDb->select('b.slug bucket_slug, b.label bucket');
         $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
         $oDb->order_by('b.label');
         $oDb->order_by('o.filename_display');
-        $_orphans = $oDb->get(NAILS_DB_PREFIX . 'cdn_object o');
+        $oQuery = $oDb->get(NAILS_DB_PREFIX . 'cdn_object o');
 
-        while ($row = $_orphans->unbuffered_row()) {
-            if (!$this->callDriver('objectExists', [$row->filename, $row->bucket_slug])) {
-                $_out['orphans'][] = $row;
+        while ($oRow = $oQuery->unbuffered_row()) {
+            if (!$this->callDriver('objectExists', [$oRow->filename, $oRow->bucket_slug])) {
+                $aOut['orphans'][] = $oRow;
             }
         }
 
-        return $_out;
+        return $aOut;
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Finds files which have no object counterparts
-     * @return  string
+     * @return  array
      **/
     public function findOrphanedFiles()
     {
+        //  @todo (Pablo - 2017-12-14) - Complete this
         return [];
     }
 
@@ -2852,24 +2913,21 @@ class Cdn
      * overloaded by the developer to satisfy any OCD tenancies with regards file
      * extensions
      *
-     * @param  string $ext The extension to map
+     * @param  string $sExt The extension to map
      *
      * @return string
      */
-    public function sanitiseExtension($ext)
+    public function sanitiseExtension($sExt)
     {
-        //  Lower case and trim it
-        $ext = trim(strtolower($ext));
+        $sExt = trim(strtolower($sExt));
 
-        //  Perform mapping
-        switch ($ext) {
+        switch ($sExt) {
             case 'jpeg':
-                $ext = 'jpg';
+                $sExt = 'jpg';
                 break;
         }
 
-        //  And spit it back
-        return $ext;
+        return $sExt;
     }
 
     // --------------------------------------------------------------------------
@@ -2921,13 +2979,18 @@ class Cdn
                     // --------------------------------------------------------------------------
 
                     //  Clear the caches
-                    $cacheObject               = new \stdClass();
-                    $cacheObject->id           = $object->id;
-                    $cacheObject->filename     = $object->filename;
-                    $cacheObject->bucket       = new \stdClass();
-                    $cacheObject->bucket->id   = $object->bucket_id;
-                    $cacheObject->bucket->slug = $object->bucket_slug;
-                    $this->unsetCacheObject($object);
+                    $this->unsetCacheObject((object) [
+                        'id'     => $object->id,
+                        'file'   => (object) [
+                            'name' => (object) [
+                                'disk' => $object->filename,
+                            ],
+                        ],
+                        'bucket' => (object) [
+                            'id'   => $object->bucket_id,
+                            'slug' => $object->bucket_slug,
+                        ],
+                    ]);
 
                 } else {
                     //  @todo - Rollback? Warn?
@@ -2960,7 +3023,7 @@ class Cdn
 
         //  Uncomment one of the following alternatives
         //$iBytes /= pow(1024, $pow);
-        $iBytes /= (1 << (10 * $pow));
+        $iBytes  /= (1 << (10 * $pow));
         $var     = round($iBytes, $iPrecision) . ' ' . $units[$pow];
         $pattern = '/(.+?)\.(.*?)/';
 

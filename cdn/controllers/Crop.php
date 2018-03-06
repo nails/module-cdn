@@ -125,7 +125,8 @@ class Crop extends Base
 
         // --------------------------------------------------------------------------
 
-        $object = $oCdn->getObject($this->object, $this->bucket);
+        $object   = $oCdn->getObject($this->object, $this->bucket);
+        $bIsTrash = false;
 
         if (!$object) {
 
@@ -136,7 +137,8 @@ class Crop extends Base
 
             if ($oInput->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
 
-                $object = $oCdn->getObjectFromTrash($this->object, $this->bucket);
+                $object   = $oCdn->getObjectFromTrash($this->object, $this->bucket);
+                $bIsTrash = true;
 
                 if (!$object) {
                     //  Cool, guess it really doesn't exist
@@ -221,7 +223,7 @@ class Crop extends Base
              */
 
             //  Fetch the file to use
-            $filePath = $oCdn->objectLocalPath($object->id);
+            $filePath = $oCdn->objectLocalPath($object->id, $bIsTrash);
 
             if (!$filePath) {
 

@@ -22,31 +22,50 @@ class CdnObject extends Base
     public function __construct()
     {
         parent::__construct();
-        $this->table = NAILS_DB_PREFIX . 'cdn_object';
+        $this->table             = NAILS_DB_PREFIX . 'cdn_object';
+        $this->defaultSortColumn = 'modified';
+        $this->defaultSortOrder  = 'desc';
+        $this->tableLabelColumn  = 'filename_display';
+        $this->searchableFields  = [
+            'id',
+            'filename',
+            'filename_display',
+        ];
+        $this->addExpandableField([
+            'trigger'     => 'bucket',
+            'type'        => self::EXPANDABLE_TYPE_SINGLE,
+            'property'    => 'bucket',
+            'model'       => 'Bucket',
+            'provider'    => 'nailsapp/module-cdn',
+            'id_column'   => 'bucket_id',
+            'auto_expand' => true,
+        ]);
+    }
 
-        $this->addExpandableField(
-            array(
-                'trigger'     => 'bucket',
-                'type'        => self::EXPANDABLE_TYPE_SINGLE,
-                'property'    => 'bucket',
-                'model'       => 'Bucket',
-                'provider'    => 'nailsapp/module-cdn',
-                'id_column'   => 'bucket_id',
-                'auto_expand' => true
-            )
-        );
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns an object by it's MD5 hash
+     *
+     * @param string $sHash The MD5 hash to look for
+     * @param array  $aData Any additional data to pass in
+     *
+     * @return \stdClass|null
+     */
+    public function getByMd5Hash($sHash, $aData = [])
+    {
+        return $this->getByColumn('md5_hash', $sHash, $aData);
     }
 
     // --------------------------------------------------------------------------
 
     protected function formatObject(
         &$oObj,
-        $aData = array(),
-        $aIntegers = array(),
-        $aBools = array(),
-        $aFloats = array()
-    )
-    {
+        $aData = [],
+        $aIntegers = [],
+        $aBools = [],
+        $aFloats = []
+    ) {
         $aIntegers[] = 'img_width';
         $aIntegers[] = 'img_height';
         $aIntegers[] = 'serves';
@@ -68,16 +87,16 @@ class CdnObject extends Base
         $sFileNameHuman = $oObj->filename_display;
         $iFileSize      = (int) $oObj->filesize;
 
-        $oObj->file                  = new \stdClass();
+        $oObj->file = new \stdClass();
 
-        $oObj->file->name            = new \stdClass();
-        $oObj->file->name->disk      = $sFileNameDisk;
-        $oObj->file->name->human     = $sFileNameHuman;
+        $oObj->file->name        = new \stdClass();
+        $oObj->file->name->disk  = $sFileNameDisk;
+        $oObj->file->name->human = $sFileNameHuman;
         unset($oObj->filename);
         unset($oObj->filename_display);
 
-        $oObj->file->mime            = $oObj->mime;
-        $oObj->file->ext             = strtolower(pathinfo($oObj->file->name->disk, PATHINFO_EXTENSION));
+        $oObj->file->mime = $oObj->mime;
+        $oObj->file->ext  = strtolower(pathinfo($oObj->file->name->disk, PATHINFO_EXTENSION));
         unset($oObj->mime);
 
         $oObj->file->size            = new \stdClass();
@@ -104,12 +123,12 @@ class CdnObject extends Base
         }
 
         if ($bIsImg) {
-            $oObj->img = (object) array(
+            $oObj->img = (object) [
                 'width'       => $oObj->img_width,
                 'height'      => $oObj->img_height,
                 'orientation' => $oObj->img_orientation,
-                'animated'    => $oObj->is_animated
-            );
+                'animated'    => $oObj->is_animated,
+            ];
         }
 
         unset($oObj->img_width);

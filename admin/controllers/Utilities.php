@@ -12,9 +12,9 @@
 
 namespace Nails\Admin\Cdn;
 
-use Nails\Factory;
 use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
+use Nails\Factory;
 
 class Utilities extends BaseAdmin
 {
@@ -43,7 +43,7 @@ class Utilities extends BaseAdmin
      */
     public static function permissions()
     {
-        $permissions = parent::permissions();
+        $permissions               = parent::permissions();
         $permissions['findOrphan'] = 'Can find orphans';
         return $permissions;
     }
@@ -63,21 +63,20 @@ class Utilities extends BaseAdmin
         // --------------------------------------------------------------------------
 
         $oInput = Factory::service('Input');
-        if ($oInput->is_cli_request()) {
+        if ($oInput->isCli()) {
             $this->indexCli();
         } else {
 
             if ($oInput->post()) {
 
                 //  A little form validation
-                $type = $oInput->post('type');
+                $type   = $oInput->post('type');
                 $parser = $oInput->post('parser');
-                $error = '';
+                $error  = '';
 
                 if ($type == 'db' && $parser == 'create') {
                     $error = 'Cannot use "Add to database" results parser when finding orphaned database objects.';
                 }
-
 
                 if (empty($error)) {
 
@@ -85,7 +84,7 @@ class Utilities extends BaseAdmin
 
                         case 'db':
 
-                            $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+                            $oCdn                  = Factory::service('Cdn', 'nailsapp/module-cdn');
                             $this->data['orphans'] = $oCdn->findOrphanedObjects();
                             break;
 

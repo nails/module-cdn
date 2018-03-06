@@ -1,7 +1,7 @@
 /* globals console */
 var _CDN_OBJECTPICKER;
-_CDN_OBJECTPICKER = function()
-{
+_CDN_OBJECTPICKER = function() {
+
     var base = this;
 
     // --------------------------------------------------------------------------
@@ -22,7 +22,7 @@ _CDN_OBJECTPICKER = function()
 
     // --------------------------------------------------------------------------
 
-    base.__construct =function() {
+    base.__construct = function() {
 
         base.log('Constructing');
         base.setupListeners();
@@ -34,7 +34,7 @@ _CDN_OBJECTPICKER = function()
 
     /**
      * Binds the listeners
-     * @return {Void}
+     * @return {void}
      */
     base.setupListeners = function() {
 
@@ -82,7 +82,7 @@ _CDN_OBJECTPICKER = function()
 
     /**
      * Processes CDN pickers and populates them if they have an object ID
-     * @return {Void}
+     * @return {void}
      */
     base.initPickers = function() {
 
@@ -97,7 +97,7 @@ _CDN_OBJECTPICKER = function()
     /**
      * Refresh the matched pickers
      * @param  {Object} elements A jQuery object of pickers
-     * @return {Void}
+     * @return {void}
      */
     base.refreshPicker = function(elements) {
 
@@ -107,11 +107,8 @@ _CDN_OBJECTPICKER = function()
             $(this).addClass('cdn-object-picker--pending');
             var iObjectId = $(this).find('.cdn-object-picker__input').val();
             if (iObjectId) {
-
                 fetchIds.push(iObjectId);
-
             } else {
-
                 $(this).removeClass('cdn-object-picker--pending');
             }
         });
@@ -119,43 +116,40 @@ _CDN_OBJECTPICKER = function()
         if (fetchIds.length > 0) {
 
             $.ajax({
-                'url': window.SITE_URL + 'api/cdn/object',
-                'data' : {
-                    'ids': fetchIds.join(','),
-                    'urls': '150x150-crop'
-                }
-            })
-            .done(function(data) {
-
-                elements.each(function() {
-                    var iObjectId = parseInt($(this).find('.cdn-object-picker__input').val(), 10);
-                    for (var i = data.data.length - 1; i >= 0; i--) {
-                        if (iObjectId === data.data[i].id) {
-                            base.setPickerObject($(this), data.data[i]);
-                            return;
-                        }
+                    'url': window.SITE_URL + 'api/cdn/object',
+                    'data': {
+                        'ids': fetchIds.join(','),
+                        'urls': '150x150-crop'
                     }
+                })
+                .done(function(data) {
+
+                    elements.each(function() {
+                        var iObjectId = parseInt($(this).find('.cdn-object-picker__input').val(), 10);
+                        for (var i = data.data.length - 1; i >= 0; i--) {
+                            if (iObjectId === data.data[i].id) {
+                                base.setPickerObject($(this), data.data[i]);
+                                return;
+                            }
+                        }
+                    });
+
+                    elements.removeClass('cdn-object-picker--pending');
+                })
+                .fail(function(data) {
+
+                    var _data;
+                    try {
+                        _data = JSON.parse(data.responseText);
+                    } catch (e) {
+                        _data = {
+                            'status': 500,
+                            'error': 'An unknown error occurred.'
+                        };
+                    }
+
+                    base.warn(_data.error);
                 });
-
-                elements.removeClass('cdn-object-picker--pending');
-            })
-            .fail(function(data) {
-
-                var _data;
-                try {
-
-                    _data = JSON.parse(data.responseText);
-
-                } catch (e) {
-
-                    _data = {
-                        'status': 500,
-                        'error': 'An unknown error occurred.'
-                    };
-                }
-
-                base.warn(_data.error);
-            });
         }
     };
 
@@ -169,14 +163,12 @@ _CDN_OBJECTPICKER = function()
         picker.find('.cdn-object-picker__input').val(object.id);
         picker.trigger('picked');
 
-        if (object.isImg) {
+        if (object.is_img) {
             picker.addClass('cdn-object-picker--has-image');
             picker.find('.cdn-object-picker__preview-link').attr('href', object.url.src);
-            picker.find('.cdn-object-picker__preview').css(
-                {
-                    'background-image': 'url(' + object.url['CROP-150x150'] + ')'
-                }
-            );
+            picker.find('.cdn-object-picker__preview').css({
+                'background-image': 'url(' + object.url['150x150-crop'] + ')'
+            });
         } else {
 
             var sizeHuman = base.getReadableFileSizeString(object.object.size.bytes);
@@ -208,73 +200,75 @@ _CDN_OBJECTPICKER = function()
 
     /**
      * Opens the CDN Manager window
-     * @return {Void}
+     * @return {void}
      */
     base.openManager = function(picker) {
 
-        picker.addClass('cdn-object-picker--pending');
+        if (picker.data('readonly')) {
+            return false;
+        }
 
+        picker.addClass('cdn-object-picker--pending');
         base.log('Getting Manager URL');
         $.ajax({
-            'url': window.SITE_URL + 'api/cdn/manager/url',
-            'data' : {
-                'bucket': picker.data('bucket'),
-                'callback': ['_CDN_OBJECTPICKER', 'receiveFromManager']
-            }
-        })
-        .done(function(data) {
-            if ($.fancybox) {
-                base.log('Showing Manager');
-                base.activePicker = picker;
-                $('body').addClass('noscroll');
-                $.fancybox.open(
-                    data.data + '&isModal=1',
-                    {
-                        'type': 'iframe',
-                        'width': '95%',
-                        'height': '95%',
-                        'iframe': {
-                            'preload': false // fixes issue with iframe and IE
-                        },
-                        'helpers': {
-                            'overlay': {
-                                'locked': false
-                            }
-                        },
-                        'beforeClose': function()
+                'url': window.SITE_URL + 'api/cdn/manager/url',
+                'data': {
+                    'bucket': picker.data('bucket'),
+                    'callback': ['_CDN_OBJECTPICKER', 'receiveFromManager']
+                }
+            })
+            .done(function(data) {
+                if ($.fancybox) {
+                    base.log('Showing Manager');
+                    base.activePicker = picker;
+                    $('body').addClass('noscroll');
+                    $.fancybox.open(
+                        data.data + '&isModal=1',
                         {
-                            $('body').removeClass('noscroll');
+                            'type': 'iframe',
+                            'width': '95%',
+                            'height': '95%',
+                            'iframe': {
+                                'preload': false // fixes issue with iframe and IE
+                            },
+                            'helpers': {
+                                'overlay': {
+                                    'locked': false
+                                }
+                            },
+                            'beforeClose': function() {
+                                $('body').removeClass('noscroll');
+                            }
                         }
-                    }
-                );
-            } else {
-                base.warn('Fancybox not enabled.');
-            }
-        })
-        .fail(function(data) {
-            var _data;
-            try {
+                    );
+                } else {
+                    base.warn('Fancybox not enabled.');
+                }
+            })
+            .fail(function(data) {
+                var _data;
+                try {
 
-                _data = JSON.parse(data.responseText);
+                    _data = JSON.parse(data.responseText);
 
-            } catch (e) {
+                } catch (e) {
 
-                _data = {
-                    'status': 500,
-                    'error': 'An unknown error occurred.'
-                };
-            }
+                    _data = {
+                        'status': 500,
+                        'error': 'An unknown error occurred.'
+                    };
+                }
 
-            base.warn(_data.error);
-        })
-        .always(function() {
-            picker.removeClass('cdn-object-picker--pending');
-        });
+                base.warn(_data.error);
+            })
+            .always(function() {
+                picker.removeClass('cdn-object-picker--pending');
+            });
     };
 
     // --------------------------------------------------------------------------
 
-    base.receiveFromManager = function(bucket, filename, id) {
+    base.receiveFromManager = function(id) {
 
         base.log('Received data from manager');
         base.activePicker.addClass('cdn-object-picker--pending');
@@ -293,37 +287,34 @@ _CDN_OBJECTPICKER = function()
 
             base.log('Requesting Object data');
             $.ajax({
-                'url': window.SITE_URL + 'api/cdn/object',
-                'data' : {
-                    'id': id,
-                    'urls': '150x150-crop'
-                }
-            })
-            .done(function(data) {
-                base.setObjectCache(data.data);
-                base.setPickerObject(base.activePicker, data.data);
-            })
-            .fail(function(data) {
+                    'url': window.SITE_URL + 'api/cdn/object',
+                    'data': {
+                        'id': id,
+                        'urls': '150x150-crop'
+                    }
+                })
+                .done(function(data) {
+                    base.setObjectCache(data.data);
+                    base.setPickerObject(base.activePicker, data.data);
+                })
+                .fail(function(data) {
 
-                var _data;
-                try {
+                    var _data;
+                    try {
+                        _data = JSON.parse(data.responseText);
+                    } catch (e) {
+                        _data = {
+                            'status': 500,
+                            'error': 'An unknown error occurred.'
+                        };
+                    }
 
-                    _data = JSON.parse(data.responseText);
-
-                } catch (e) {
-
-                    _data = {
-                        'status': 500,
-                        'error': 'An unknown error occurred.'
-                    };
-                }
-
-                base.warn(_data.error);
-            })
-            .always(function() {
-                base.activePicker.removeClass('cdn-object-picker--pending');
-                base.activePicker = null;
-            });
+                    base.warn(_data.error);
+                })
+                .always(function() {
+                    base.activePicker.removeClass('cdn-object-picker--pending');
+                    base.activePicker = null;
+                });
         }
     };
 
@@ -378,19 +369,14 @@ _CDN_OBJECTPICKER = function()
     /**
      * Write a log to the console
      * @param  {String} message The message to log
-     * @param  {Mixed}  payload Any additional data to display in the console
-     * @return {Void}
+     * @param  {mixed}  payload Any additional data to display in the console
+     * @return {void}
      */
-    base.log = function(message, payload)
-    {
+    base.log = function(message, payload) {
         if (typeof(console.log) === 'function') {
-
             if (payload !== undefined) {
-
                 console.log('CDN Object Picker:', message, payload);
-
             } else {
-
                 console.log('CDN Object Picker:', message);
             }
         }
@@ -401,11 +387,10 @@ _CDN_OBJECTPICKER = function()
     /**
      * Write a warning to the console
      * @param  {String} message The message to warn
-     * @param  {Mixed}  payload Any additional data to display in the console
-     * @return {Void}
+     * @param  {mixed}  payload Any additional data to display in the console
+     * @return {void}
      */
-    base.warn = function(message, payload)
-    {
+    base.warn = function(message, payload) {
         if (typeof(console.warn) === 'function') {
 
             if (payload !== undefined) {
