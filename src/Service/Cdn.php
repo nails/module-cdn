@@ -10,7 +10,7 @@
  * @link
  */
 
-namespace Nails\Cdn\Library;
+namespace Nails\Cdn\Service;
 
 use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;

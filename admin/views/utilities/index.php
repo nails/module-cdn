@@ -13,36 +13,36 @@
         you are experiencing timeouts consider increasing the timeout limit for PHP temporarily or executing
         <u rel="tipsy" title="Use command: `php index.php admin cdn utilities index`">via the command line</u>.
     </p>
-    <hr />
-    <?=form_open(NULL, 'id="search-form"')?>
+    <hr/>
+    <?=form_open(null, 'id="search-form"')?>
     <fieldset>
         <legend>Search Options</legend>
         <?php
 
-        $aField          = array();
+        $aField          = [];
         $aField['key']   = 'type';
         $aField['label'] = 'Search For';
         $aField['class'] = 'select2';
 
-        $aOptions = array(
+        $aOptions = [
             'db'   => 'Database objects for which the file does not exist.',
-            'file' => 'Files which do not exist in the database.'
-       );
+            'file' => 'Files which do not exist in the database.',
+        ];
 
         echo form_field_dropdown($aField, $aOptions);
 
         // --------------------------------------------------------------------------
 
-        $aField          = array();
+        $aField          = [];
         $aField['key']   = 'parser';
         $aField['label'] = 'With the results';
         $aField['class'] = 'select2';
 
-        $aOptions = array(
+        $aOptions = [
             'list'   => 'Show list of results',
             'purge'  => 'Permanently delete',
-            'create' => 'Add to database (applicable to File search only)'
-       );
+            'create' => 'Add to database (applicable to File search only)',
+        ];
 
         echo form_field_dropdown($aField, $aOptions);
 
@@ -55,7 +55,7 @@
     if (isset($orphans)) {
 
         ?>
-        <hr />
+        <hr/>
         <h2>
             Results <?=!empty($orphans['elapsed_time']) ? '(search took ' . $orphans['elapsed_time'] . ' seconds)' : '' ?>
         </h2>
@@ -70,62 +70,64 @@
                     </tr>
                 </thead>
                 <tbody>
-                <?php
+                    <?php
 
-                if (!empty($orphans['orphans'])) {
+                    if (!empty($orphans['orphans'])) {
 
-                    foreach ($orphans['orphans'] as $orphan) {
+                        foreach ($orphans['orphans'] as $orphan) {
+
+                            $oCdn = \Nails\Factory::service('Cdn', 'nailsapp/module-cdn');
+
+                            ?>
+                            <tr>
+                                <td><?=$orphan->bucket?></td>
+                                <td><?=$orphan->filename_display?></td>
+                                <td><?=$oCdn::formatBytes($orphan->filesize)?></td>
+                                <td>
+                                    <?php
+
+                                    $aAttr = [
+                                        'data-title="Are you sure?"',
+                                        'data-body="This action is permanent and cannot be undone."',
+                                        'class="confirm btn btn-xs btn-danger"',
+                                    ];
+
+                                    if (!empty($orphan->id)) {
+
+                                        echo anchor(
+                                            '#',
+                                            lang('action_delete'),
+                                            implode(' ', $aAttr)
+                                        );
+
+                                    } else {
+
+                                        echo anchor(
+                                            '#',
+                                            lang('action_delete'),
+                                            implode(' ', $aAttr)
+                                        );
+
+                                    }
+
+                                    ?>
+                                </td>
+                            </tr>
+                            <?php
+                        }
+
+                    } else {
 
                         ?>
                         <tr>
-                            <td><?=$orphan->bucket?></td>
-                            <td><?=$orphan->filename_display?></td>
-                            <td><?= \Nails\Cdn\Library\Cdn::formatBytes( $orphan->filesize ) ?></td>
-                            <td>
-                            <?php
-
-                            $aAttr = array(
-                                'data-title="Are you sure?"',
-                                'data-body="This action is permanent and cannot be undone."',
-                                'class="confirm btn btn-xs btn-danger"'
-                            );
-
-                            if (!empty($orphan->id)) {
-
-                                echo anchor(
-                                    '#',
-                                    lang('action_delete'),
-                                    implode(' ', $aAttr)
-                                );
-
-                            } else {
-
-                                echo anchor(
-                                    '#',
-                                    lang('action_delete'),
-                                    implode(' ', $aAttr)
-                                );
-
-                            }
-
-                            ?>
+                            <td colspan="4" class="no-data">
+                                No orphaned items were found.
                             </td>
                         </tr>
                         <?php
                     }
 
-                } else {
-
                     ?>
-                    <tr>
-                        <td colspan="4" class="no-data">
-                            No orphaned items were found.
-                        </td>
-                    </tr>
-                    <?php
-                }
-
-                ?>
                 </tbody>
             </table>
         </div>

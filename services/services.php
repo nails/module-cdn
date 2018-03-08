@@ -22,10 +22,10 @@ return array(
     ),
     'services' => array(
         'Cdn' => function () {
-            if (class_exists('\App\Cdn\Library\Cdn')) {
-                return new \App\Cdn\Library\Cdn();
+            if (class_exists('\App\Cdn\Service\Cdn')) {
+                return new \App\Cdn\Service\Cdn();
             } else {
-                return new \Nails\Cdn\Library\Cdn();
+                return new \Nails\Cdn\Service\Cdn();
             }
         }
     ),
