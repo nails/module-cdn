@@ -1,6 +1,6 @@
 <?php
 
-namespace Nails\Cdn\Library;
+namespace Nails\Cdn\Service;
 
 class CdnTest extends \PHPUnit_Framework_TestCase
 {
