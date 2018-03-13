@@ -43,7 +43,7 @@ class Base extends \App\Controller\Base
 
         //  Define variables
         $this->cdnRoot     = NAILS_PATH . 'module-cdn/cdn/';
-        $this->cdnCacheDir = DEPLOY_CACHE_DIR;
+        $this->cdnCacheDir = CACHE_PATH;
 
         $this->cdnCacheHeadersSet = false;
 

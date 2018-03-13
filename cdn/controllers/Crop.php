@@ -73,36 +73,19 @@ class Crop extends Base
         $oInput = Factory::service('Input');
         $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
 
-        //  Sanitize the crop method
-        $cropMethod = strtoupper($cropMethod);
-
         switch ($cropMethod) {
             case 'SCALE':
                 $phpCropMethod = 'resize';
                 break;
 
             case 'CROP':
-            default:
                 $phpCropMethod = 'adaptiveResizeQuadrant';
                 break;
+
+            default:
+                throw new \Nails\Cdn\Exception\CdnException('"' . $cropMethod . '" is not a valid crop method.');
+                break;
         }
-
-        // --------------------------------------------------------------------------
-
-        //  Begin defining the cache file
-        $width  = $this->width * $this->retinaMultiplier;
-        $height = $this->height * $this->retinaMultiplier;
-
-        $aCacheFile = [
-            $this->bucket,
-            substr($this->object, 0, strrpos($this->object, '.')),
-            $cropMethod,
-            $width . 'x' . $height,
-            $oInput->get('filter') ? 'FILTER-' . $oInput->get('filter') : '',
-        ];
-
-        $aCacheFile         = array_filter($aCacheFile);
-        $this->cdnCacheFile = implode('-', $aCacheFile);
 
         // --------------------------------------------------------------------------
 
@@ -110,21 +93,9 @@ class Crop extends Base
         if (!$this->bucket || !$this->object || !$this->extension) {
             log_message('error', 'CDN: ' . $cropMethod . ': Missing _bucket, _object or _extension');
             $this->serveBadSrc([
-                'width' => $this->width,
-                'height' => $this->height
-            ] );
-        }
-
-        // --------------------------------------------------------------------------
-
-        /**
-         * Check the request headers; avoid hitting the disk at all if possible. If the
-         * Etag matches then send a Not-Modified header and terminate execution.
-         */
-
-        if ($this->serveNotModified($this->cdnCacheFile . $this->extension)) {
-            $oCdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
-            return;
+                'width'  => $this->width,
+                'height' => $this->height,
+            ]);
         }
 
         // --------------------------------------------------------------------------
@@ -147,16 +118,16 @@ class Crop extends Base
                 if (!$object) {
                     //  Cool, guess it really doesn't exist
                     $this->serveBadSrc([
-                        'width' => $width,
-                        'height' => $height
+                        'width'  => $width,
+                        'height' => $height,
                     ]);
                 }
 
             } else {
 
                 $this->serveBadSrc([
-                    'width' => $width,
-                    'height' => $height
+                    'width'  => $width,
+                    'height' => $height,
                 ]);
             }
         }
@@ -166,45 +137,44 @@ class Crop extends Base
         //  Only images
         if (empty($object->is_img)) {
             $this->serveBadSrc([
-                'width' => $width,
+                'width'  => $width,
                 'height' => $height,
-                'error' => 'Not an image'
-            ] );
+                'error'  => 'Not an image',
+            ]);
         }
 
         // --------------------------------------------------------------------------
 
+        //  Define the cache file
+        $width  = $this->width * $this->retinaMultiplier;
+        $height = $this->height * $this->retinaMultiplier;
+
         //  Take a note of the image's orientation, and work out the quadrant accordingly
         if ($phpCropMethod == 'adaptiveResizeQuadrant') {
-
-            switch ($object->img_orientation) {
-                case 'PORTRAIT':
-                    $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_PORTRAIT') ? APP_CDN_CROP_QUADRANT_PORTRAIT : 'C';
-                    break;
-
-                case 'LANDSCAPE':
-                    $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_LANDSCAPE') ? APP_CDN_CROP_QUADRANT_LANDSCAPE : 'C';
-                    break;
-
-                default:
-                    $sCropQuadrant = 'C';
-                    break;
-            }
-
-            $sCropQuadrant      = strtoupper($sCropQuadrant);
-            $this->cropQuadrant = $sCropQuadrant;
-
-            /**
-             * The default quadrant is C, so leave that blank. This is mostly for backwards compatibility as old
-             * caches will have images which are cropped from the center, but not got `-C` in the cache filename.
-             */
-            if ($sCropQuadrant != 'C') {
-                $this->cdnCacheFile .= '-' . $sCropQuadrant;
-            }
+            $this->cropQuadrant = static::getCropQuadrant($object->img_orientation);
         }
 
-        //  Finally, bang the extension on the end
-        $this->cdnCacheFile .= $this->extension;
+        $this->cdnCacheFile = static::cachePath(
+            $this->bucket,
+            $this->object,
+            $this->extension,
+            $cropMethod,
+            $object->img_orientation,
+            $width,
+            $height
+        );
+
+        // --------------------------------------------------------------------------
+
+        /**
+         * Check the request headers; avoid hitting the disk at all if possible. If the
+         * Etag matches then send a Not-Modified header and terminate execution.
+         */
+
+        if ($this->serveNotModified($this->cdnCacheFile)) {
+            $oCdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
+            return;
+        }
 
         // --------------------------------------------------------------------------
 
@@ -234,8 +204,8 @@ class Crop extends Base
                 log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned.');
                 log_message('error', 'CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
                 $this->serveBadSrc([
-                    'width' => $width,
-                    'height' => $height
+                    'width'  => $width,
+                    'height' => $height,
                 ]);
 
             } elseif (!filesize($filePath)) {
@@ -256,16 +226,16 @@ class Crop extends Base
                     log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned, second attempt.');
                     log_message('error', 'CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
                     $this->serveBadSrc([
-                        'width' => $width,
-                        'height' => $height
+                        'width'  => $width,
+                        'height' => $height,
                     ]);
 
                 } elseif (!filesize($filePath)) {
 
                     log_message('error', 'CDN: ' . $cropMethod . ': local path exists, but has a zero file size.');
                     $this->serveBadSrc([
-                        'width' => $width,
-                        'height' => $height
+                        'width'  => $width,
+                        'height' => $height,
                     ]);
                 }
             }
@@ -300,6 +270,63 @@ class Crop extends Base
     // --------------------------------------------------------------------------
 
     /**
+     * Returns the crop quadrant being used for the orientation
+     *
+     * @param string $sOrientation The image's orientation
+     *
+     * @return string
+     */
+    public static function getCropQuadrant($sOrientation)
+    {
+        switch ($sOrientation) {
+            case 'PORTRAIT':
+                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_PORTRAIT') ? APP_CDN_CROP_QUADRANT_PORTRAIT : 'C';
+                break;
+
+            case 'LANDSCAPE':
+                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_LANDSCAPE') ? APP_CDN_CROP_QUADRANT_LANDSCAPE : 'C';
+                break;
+
+            default:
+                $sCropQuadrant = 'C';
+                break;
+        }
+
+        return strtoupper($sCropQuadrant);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Generate the name of the cache file for the image
+     *
+     * @param string  $sBucket     The bucket slug
+     * @param string  $sObject     The name on disk
+     * @param string  $sExtension  The file extension
+     * @param string  $sCropMethod The crop method
+     * @param integer $iWidth      The width
+     * @param integer $iHeight     The height
+     *
+     * @return string
+     */
+    public static function cachePath($sBucket, $sObject, $sExtension, $sCropMethod, $sOrientation, $iWidth, $iHeight)
+    {
+        $sCropQuadrant = static::getCropQuadrant($sOrientation);
+        return implode(
+                '-',
+                array_filter([
+                    $sBucket,
+                    substr($sObject, 0, strrpos($sObject, '.')),
+                    strtoupper($sCropMethod),
+                    $iWidth . 'x' . $iHeight,
+                    $sCropQuadrant !== 'C' ? $sCropQuadrant : '',
+                ])
+            )  . '.' . trim($sExtension, '.');
+    }
+
+// --------------------------------------------------------------------------
+
+    /**
      * Resize a static image
      *
      * @param  string $filePath      The file to resize
@@ -307,8 +334,11 @@ class Crop extends Base
      *
      * @return void
      */
-    private function resize($filePath, $phpCropMethod)
-    {
+    private
+    function resize(
+        $filePath,
+        $phpCropMethod
+    ) {
         //  Set some PHPThumb options
         $_options                = [];
         $_options['resizeUp']    = true;
@@ -372,8 +402,8 @@ class Crop extends Base
 
             //  Bad SRC
             $this->serveBadSrc([
-                'width' => $width,
-                'height' => $height
+                'width'  => $width,
+                'height' => $height,
             ]);
         }
 
@@ -383,8 +413,7 @@ class Crop extends Base
         error_reporting($oldErrorReporting);
     }
 
-
-    // --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 
     /**
      * Resize an animated image
@@ -394,8 +423,11 @@ class Crop extends Base
      *
      * @return void
      */
-    private function resizeAnimated($filePath, $phpCropMethod)
-    {
+    private
+    function resizeAnimated(
+        $filePath,
+        $phpCropMethod
+    ) {
         $hash       = md5(microtime(true) . uniqid()) . uniqid();
         $frames     = [];
         $cacheFiles = [];
@@ -500,13 +532,14 @@ class Crop extends Base
         exit(0);
     }
 
-    // --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 
     /**
      * Map all requests to index()
      * @return void
      */
-    public function _remap()
+    public
+    function _remap()
     {
         $this->index();
     }

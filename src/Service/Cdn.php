@@ -12,7 +12,6 @@
 
 namespace Nails\Cdn\Service;
 
-use Facebook\Facebook;
 use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
 use Nails\Cdn\Exception\PermittedDimensionException;
@@ -61,7 +60,13 @@ class Cdn
      * The cache directory to use
      * @var string
      */
-    const CACHE_DIR = DEPLOY_CACHE_DIR;
+    const CACHE_PATH = CACHE_PUBLIC_PATH;
+
+    /**
+     * The cache directory to use
+     * @var string
+     */
+    const CACHE_URL = CACHE_PUBLIC_URL;
 
     // --------------------------------------------------------------------------
 
@@ -246,7 +251,7 @@ class Cdn
 
             // Create a handler for the directory
             $pattern = '#^' . $bucketSlug . '-' . substr($objectFilename, 0, strrpos($objectFilename, '.')) . '#';
-            $fh      = @opendir(static::CACHE_DIR);
+            $fh      = @opendir(static::CACHE_PATH);
 
             if ($fh !== false) {
 
@@ -257,8 +262,8 @@ class Cdn
                     if ($file != '.' && $file != '..') {
 
                         // Check with regex that the file format is what we're expecting and not something else
-                        if (preg_match($pattern, $file) && file_exists(static::CACHE_DIR . $file)) {
-                            unlink(static::CACHE_DIR . $file);
+                        if (preg_match($pattern, $file) && file_exists(static::CACHE_PATH . $file)) {
+                            unlink(static::CACHE_PATH . $file);
                         }
                     }
                 }
@@ -821,7 +826,7 @@ class Cdn
                 } else {
 
                     $sCacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
-                    $fh         = fopen(static::CACHE_DIR . $sCacheFile, 'w');
+                    $fh         = fopen(static::CACHE_PATH . $sCacheFile, 'w');
                     fwrite($fh, $object);
                     fclose($fh);
 
@@ -848,7 +853,7 @@ class Cdn
                     } else {
                         $oData->name = $aOptions['filename_display'];
                     }
-                    $oData->file = static::CACHE_DIR . $sCacheFile;
+                    $oData->file = static::CACHE_PATH . $sCacheFile;
                 }
             }
 
@@ -1051,8 +1056,8 @@ class Cdn
 
         } finally {
             //  If a cache file was created then we should remove it
-            if (!empty($sCacheFile) && file_exists(static::CACHE_DIR . $sCacheFile)) {
-                unlink(static::CACHE_DIR . $sCacheFile);
+            if (!empty($sCacheFile) && file_exists(static::CACHE_PATH . $sCacheFile)) {
+                unlink(static::CACHE_PATH . $sCacheFile);
             }
         }
 
@@ -2470,14 +2475,23 @@ class Cdn
             $oObj = $iObjectId;
         }
 
-        $url = $this->callDriver(
+        // --------------------------------------------------------------------------
+
+        $sCacheUrl = $this->getCacheUrl($oObj, 'CROP', $iWidth, $iHeight);
+        if (!empty($sCacheUrl)) {
+            return $sCacheUrl;
+        }
+
+        // --------------------------------------------------------------------------
+
+        $sUrl = $this->callDriver(
             'urlCrop',
             [$oObj->file->name->disk, $oObj->bucket->slug, $iWidth, $iHeight],
             $oObj->driver
         );
-        $url .= $isTrashed ? '?trashed=1' : '';
+        $sUrl .= $isTrashed ? '?trashed=1' : '';
 
-        return $url;
+        return $sUrl;
     }
 
     // --------------------------------------------------------------------------
@@ -2518,13 +2532,12 @@ class Cdn
         $isTrashed = false;
 
         if (empty($iObjectId)) {
-
-            $object = $this->emptyObject();
+            $oObj = $this->emptyObject();
         } elseif (is_numeric($iObjectId)) {
 
-            $object = $this->getObject($iObjectId);
+            $oObj = $this->getObject($iObjectId);
 
-            if (!$object) {
+            if (!$oObj) {
 
                 /**
                  * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
@@ -2532,36 +2545,45 @@ class Cdn
 
                 if (userHasPermission('admin:cdn:trash:browse')) {
 
-                    $object = $this->getObjectFromTrash($iObjectId);
+                    $oObj = $this->getObjectFromTrash($iObjectId);
 
-                    if (!$object) {
+                    if (!$oObj) {
                         //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
-                        $object = $this->emptyObject();
+                        $oObj = $this->emptyObject();
                     } else {
                         $isTrashed = true;
                     }
                 } else {
                     //  Let the renderer show a bad_src graphic
-                    $object = $this->emptyObject();
+                    $oObj = $this->emptyObject();
                 }
             }
         } else {
-            $object = $iObjectId;
+            $oObj = $iObjectId;
         }
 
-        $url = $this->callDriver(
+        // --------------------------------------------------------------------------
+
+        $sCacheUrl = $this->getCacheUrl($oObj, 'SCALE', $iWidth, $iHeight);
+        if (!empty($sCacheUrl)) {
+            return $sCacheUrl;
+        }
+
+        // --------------------------------------------------------------------------
+
+        $sUrl = $this->callDriver(
             'urlScale',
             [
-                $object->file->name->disk,
-                $object->bucket->slug,
+                $oObj->file->name->disk,
+                $oObj->bucket->slug,
                 $iWidth,
                 $iHeight,
             ],
-            $object->driver
+            $oObj->driver
         );
-        $url .= $isTrashed ? '?trashed=1' : '';
+        $sUrl .= $isTrashed ? '?trashed=1' : '';
 
-        return $url;
+        return $sUrl;
     }
 
     // --------------------------------------------------------------------------
@@ -2576,6 +2598,39 @@ class Cdn
     public function urlScaleScheme()
     {
         return $this->callDriver('urlScaleScheme');
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Checks the public cache for an image, and if it's there will return it's URL
+     *
+     * @param \stdClass $oObj    The object being requested
+     * @param string    $sMethod The request type
+     * @param integer   $iWidth  The requested width
+     * @param integer   $iHeight The requested height
+     *
+     * @return null|string
+     */
+    protected function getCacheUrl($oObj, $sMethod, $iWidth, $iHeight)
+    {
+        //  Is there a cached version of the file on disk we can serve up instead?
+        //  @todo (Pablo - 2018-03-13) - This won't be reliable in multi-server environments unless the cache is shared
+        require_once FCPATH . 'vendor/nailsapp/module-cdn/cdn/controllers/Crop.php';
+        $sCachePath = \Crop::cachePath(
+            $oObj->bucket->slug,
+            $oObj->file->name->disk,
+            $oObj->file->ext,
+            $sMethod,
+            $oObj->img_orientation,
+            $iWidth,
+            $iHeight
+        );
+        if (file_exists(static::CACHE_PATH . $sCachePath)) {
+            return static::CACHE_URL . $sCachePath;
+        }
+
+        return null;
     }
 
     // --------------------------------------------------------------------------
@@ -3171,12 +3226,12 @@ class Cdn
                 'name' => (object) [
                     'disk' => '',
                 ],
-    ],
-    'bucket' => (object) [
-    'slug' => '',
-    ],
-    'driver' => $this->oEnabledDriver->slug,
-    ];
+            ],
+            'bucket' => (object) [
+                'slug' => '',
+            ],
+            'driver' => $this->oEnabledDriver->slug,
+        ];
     }
 
     // --------------------------------------------------------------------------

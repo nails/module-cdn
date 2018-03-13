@@ -113,7 +113,7 @@ class Placeholder extends Base
          * it up if it has.
          */
 
-        if (file_exists(DEPLOY_CACHE_DIR . $this->cdnCacheFile)) {
+        if (file_exists(CACHE_PATH . $this->cdnCacheFile)) {
 
             $this->serveFromCache($this->cdnCacheFile);
 
@@ -173,7 +173,7 @@ class Placeholder extends Base
             // --------------------------------------------------------------------------
 
             //  Save local version, make sure cache is writable
-            imagepng($img, DEPLOY_CACHE_DIR . $this->cdnCacheFile);
+            imagepng($img, CACHE_PATH . $this->cdnCacheFile);
 
             // --------------------------------------------------------------------------
 
