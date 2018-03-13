@@ -101,7 +101,7 @@ class Blank_avatar extends Base
          * to see if this image has been processed already; serve it up if it has.
          */
 
-        if (file_exists(CACHE_PATH . $this->cdnCacheFile)) {
+        if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) {
 
             $this->serveFromCache($this->cdnCacheFile);
 
@@ -157,7 +157,7 @@ class Blank_avatar extends Base
                 // --------------------------------------------------------------------------
 
                 //  Save local version and serve
-                $PHPThumb->save(CACHE_PATH . $this->cdnCacheFile);
+                $PHPThumb->save($this->cdnCacheDir . $this->cdnCacheFile);
                 $this->serveFromCache($this->cdnCacheFile);
 
             } else {
