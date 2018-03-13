@@ -334,8 +334,7 @@ class Crop extends Base
      *
      * @return void
      */
-    private
-    function resize(
+    private function resize(
         $filePath,
         $phpCropMethod
     ) {
@@ -413,7 +412,7 @@ class Crop extends Base
         error_reporting($oldErrorReporting);
     }
 
-// --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
     /**
      * Resize an animated image
@@ -423,8 +422,7 @@ class Crop extends Base
      *
      * @return void
      */
-    private
-    function resizeAnimated(
+    private function resizeAnimated(
         $filePath,
         $phpCropMethod
     ) {
@@ -532,14 +530,13 @@ class Crop extends Base
         exit(0);
     }
 
-// --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
     /**
      * Map all requests to index()
      * @return void
      */
-    public
-    function _remap()
+    public function _remap()
     {
         $this->index();
     }
