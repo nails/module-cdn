@@ -39,9 +39,13 @@ class Blank_avatar extends Base
         // --------------------------------------------------------------------------
 
         //  Determine dynamic values
-        $this->width  = $this->uri->segment(3, 100);
-        $this->height = $this->uri->segment(4, 100);
+        $this->width  = (int) $this->uri->segment(3, 100);
+        $this->height = (int) $this->uri->segment(4, 100);
         $this->sex    = strtolower($this->uri->segment(5, 'neutral'));
+
+        // --------------------------------------------------------------------------
+
+        $this->checkDimensions($this->width, $this->height);
 
         // --------------------------------------------------------------------------
 
@@ -87,7 +91,6 @@ class Blank_avatar extends Base
          */
 
         if ($this->serveNotModified($this->cdnCacheFile)) {
-
             return;
         }
 
@@ -161,10 +164,10 @@ class Blank_avatar extends Base
 
                 //  This object does not exist.
                 log_message('error', 'CDN: Blank Avatar: File not found; ' . $src);
-                return $this->serveBadSrc( [
-                    'width' => $width,
-                    'height' => $height
-                ] );
+                return $this->serveBadSrc([
+                    'width'  => $width,
+                    'height' => $height,
+                ]);
             }
         }
     }

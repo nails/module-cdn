@@ -34,9 +34,13 @@ class Placeholder extends Base
         $this->tile = $this->cdnRoot . '_resources/img/placeholder.png';
 
         //  Determine dynamic values
-        $this->width  = $this->uri->segment(3, 100);
-        $this->height = $this->uri->segment(4, 100);
+        $this->width  = (int) $this->uri->segment(3, 100);
+        $this->height = (int) $this->uri->segment(4, 100);
         $this->border = $this->uri->segment(5, 1);
+
+        // --------------------------------------------------------------------------
+
+        $this->checkDimensions($this->width, $this->height);
 
         // --------------------------------------------------------------------------
 
