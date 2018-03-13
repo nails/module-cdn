@@ -35,11 +35,15 @@ class Crop extends Base
 
         //  Determine dynamic values
         $oUri            = Factory::service('Uri');
-        $this->width     = $oUri->segment(3, 100);
-        $this->height    = $oUri->segment(4, 100);
+        $this->width     = (int) $oUri->segment(3, 100);
+        $this->height    = (int) $oUri->segment(4, 100);
         $this->bucket    = $oUri->segment(5);
         $this->object    = urldecode($oUri->segment(6));
         $this->extension = !empty($this->object) ? strtolower(substr($this->object, strrpos($this->object, '.'))) : '';
+
+        // --------------------------------------------------------------------------
+
+        $this->checkDimensions($this->width, $this->height);
 
         // --------------------------------------------------------------------------
 

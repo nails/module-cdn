@@ -67,8 +67,15 @@
                             ]
                         }
                     }
+                },
+                "nailsapp/module-cdn": {
+                    "permitted-image-dimensions": [
+                        "100x100",
+                        "400x400"
+                    ]
                 }
             }
+
         }
     }
 }

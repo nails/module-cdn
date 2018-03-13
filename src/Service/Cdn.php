@@ -12,8 +12,10 @@
 
 namespace Nails\Cdn\Service;
 
+use Facebook\Facebook;
 use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
+use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Common\Traits\Caching;
 use Nails\Common\Traits\ErrorHandling;
@@ -81,6 +83,12 @@ class Cdn
      */
     protected $aDefaultAllowedTypes;
 
+    /**
+     * The image transformations which the CDN will satisfy
+     * @var array
+     */
+    protected $aPermittedDimensions = [];
+
     // --------------------------------------------------------------------------
 
     /**
@@ -118,6 +126,62 @@ class Cdn
         foreach ($aDrivers as $oDriver) {
             $this->aDrivers[$oDriver->slug] = $oDriver;
         }
+
+        // --------------------------------------------------------------------------
+
+        //  Determine permitted image dimensions from modules
+        $aComponents          = _NAILS_GET_COMPONENTS();
+        $aPermittedDimensions = [];
+        foreach ($aComponents as $oComponent) {
+            if (!empty($oComponent->data->{'nailsapp/module-cdn'}->{'permitted-image-dimensions'})) {
+                $aPermittedDimensions = array_merge(
+                    $aPermittedDimensions,
+                    $oComponent->data->{'nailsapp/module-cdn'}->{'permitted-image-dimensions'}
+                );
+            }
+        }
+
+        //  Determine permitted dimensions from app
+        $oApp = _NAILS_GET_APP();
+
+        if (!empty($oApp->data->{'nailsapp/module-cdn'}->{'permitted-image-dimensions'})) {
+            $aPermittedDimensions = array_merge(
+                $aPermittedDimensions,
+                $oApp->data->{'nailsapp/module-cdn'}->{'permitted-image-dimensions'}
+            );
+        }
+
+        /**
+         * Parse dimensions; supported formats
+         * - array [width/height] [0/1]
+         * - string [000x000, 000X000, 000]
+         */
+        $aPermittedDimensions = array_map(
+            function ($sDimensions) {
+                if (is_array($sDimensions)) {
+                    return [
+                        (int) getFromArray('width', $sDimensions, getFromArray(0, $sDimensions)),
+                        (int) getFromArray('height', $sDimensions, getFromArray(1, $sDimensions)),
+                    ];
+                } elseif (preg_match('/^\d+x\d+$/i', $sDimensions)) {
+                    return explode('x', strtolower($sDimensions));
+                } elseif (preg_match('/^\d+$/', $sDimensions)) {
+                    return [(int) $sDimensions, (int) $sDimensions];
+                } else {
+                    throw new PermittedDimensionException(
+                        'Permitted dimension "' . $sDimensions . '" could not be parsed'
+                    );
+                }
+            },
+            $aPermittedDimensions
+        );
+
+        $this->aPermittedDimensions = array_map(
+            function ($aDimension) {
+                return implode('x', $aDimension);
+            },
+            $aPermittedDimensions
+        );
     }
 
     // --------------------------------------------------------------------------
@@ -207,30 +271,25 @@ class Cdn
     /**
      * Catches calls made to shortcuts
      *
-     * @param string $method    The method being called
-     * @param mixed  $arguments The arguments to pass to the method
+     * @param string $sMethod    The method being called
+     * @param mixed  $mArguments The arguments to pass to the method
      *
      * @return mixed
      * @throws \Exception
      */
-    public function __call($method, $arguments)
+    public function __call($sMethod, $mArguments)
     {
         //  Shortcut methods
-        $shortcuts = [
+        $aShortcuts = [
             'upload' => 'objectCreate',
             'delete' => 'objectDelete',
         ];
 
-        if (isset($shortcuts[$method])) {
-            return call_user_func_array([$this, $shortcuts[$method]], $arguments);
+        if (isset($aShortcuts[$sMethod])) {
+            return call_user_func_array([$this, $aShortcuts[$sMethod]], $mArguments);
         }
 
-        //  Test the driver
-        try {
-            return $this->callDriver($method, $arguments);
-        } catch (\Exception $e) {
-            throw new \Exception('Call to undefined method Cdn::' . $method . '()');
-        }
+        return $this->callDriver($sMethod, $mArguments);
     }
 
     // --------------------------------------------------------------------------
@@ -893,10 +952,10 @@ class Cdn
 
             if (in_array($oData->mime, $aImageMimeTypes)) {
 
-                list($width, $height) = getimagesize($oData->file);
+                list($iWidth, $iHeight) = getimagesize($oData->file);
                 $oData->img = (object) [
-                    'width'       => $width,
-                    'height'      => $height,
+                    'width'       => $iWidth,
+                    'height'      => $iHeight,
                     'is_animated' => null,
                 ];
 
@@ -1335,7 +1394,7 @@ class Cdn
             return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
         } elseif ($bucket) {
             $oDb->where('b.slug', $bucket);
-            $oDb->join( NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id' );
+            $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id');
             return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
         } else {
             return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
@@ -2362,21 +2421,29 @@ class Cdn
     /**
      * Calls the driver's public urlCrop method
      *
-     * @param   string $objectId The ID of the object we're cropping
-     * @param   string $width    The width of the crop
-     * @param   string $height   The height of the crop
+     * @param   int $iObjectId The ID of the object we're cropping
+     * @param   int $iWidth    The width of the crop
+     * @param   int $iHeight   The height of the crop
      *
      * @return  string
      **/
-    public function urlCrop($objectId, $width, $height)
+    public function urlCrop($iObjectId, $iWidth, $iHeight)
     {
+        if (!$this->isPermittedDimension($iWidth, $iHeight)) {
+            throw new PermittedDimensionException(
+                'CDN::urlCrop() - Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
+            );
+        }
+
+        // --------------------------------------------------------------------------
+
         $isTrashed = false;
 
-        if (empty($objectId)) {
+        if (empty($iObjectId)) {
             $oObj = $this->emptyObject();
-        } elseif (is_numeric($objectId)) {
+        } elseif (is_numeric($iObjectId)) {
 
-            $oObj = $this->getObject($objectId);
+            $oObj = $this->getObject($iObjectId);
 
             if (!$oObj) {
 
@@ -2386,7 +2453,7 @@ class Cdn
 
                 if (userHasPermission('admin:cdn:trash:browse')) {
 
-                    $oObj = $this->getObjectFromTrash($objectId);
+                    $oObj = $this->getObjectFromTrash($iObjectId);
 
                     if (!$oObj) {
                         //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
@@ -2400,12 +2467,12 @@ class Cdn
                 }
             }
         } else {
-            $oObj = $objectId;
+            $oObj = $iObjectId;
         }
 
         $url = $this->callDriver(
             'urlCrop',
-            [$oObj->file->name->disk, $oObj->bucket->slug, $width, $height],
+            [$oObj->file->name->disk, $oObj->bucket->slug, $iWidth, $iHeight],
             $oObj->driver
         );
         $url .= $isTrashed ? '?trashed=1' : '';
@@ -2432,22 +2499,30 @@ class Cdn
     /**
      * Calls the driver's public urlScale method
      *
-     * @param   string $objectId The ID of the object we're cropping
-     * @param   string $width    The width of the scaled image
-     * @param   string $height   The height of the scaled image
+     * @param   int $iObjectId The ID of the object we're cropping
+     * @param   int $iWidth    The width of the scaled image
+     * @param   int $iHeight   The height of the scaled image
      *
      * @return  string
      **/
-    public function urlScale($objectId, $width, $height)
+    public function urlScale($iObjectId, $iWidth, $iHeight)
     {
+        if (!$this->isPermittedDimension($iWidth, $iHeight)) {
+            throw new PermittedDimensionException(
+                'CDN::urlScale() - Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
+            );
+        }
+
+        // --------------------------------------------------------------------------
+
         $isTrashed = false;
 
-        if (empty($objectId)) {
+        if (empty($iObjectId)) {
 
             $object = $this->emptyObject();
-        } elseif (is_numeric($objectId)) {
+        } elseif (is_numeric($iObjectId)) {
 
-            $object = $this->getObject($objectId);
+            $object = $this->getObject($iObjectId);
 
             if (!$object) {
 
@@ -2457,7 +2532,7 @@ class Cdn
 
                 if (userHasPermission('admin:cdn:trash:browse')) {
 
-                    $object = $this->getObjectFromTrash($objectId);
+                    $object = $this->getObjectFromTrash($iObjectId);
 
                     if (!$object) {
                         //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
@@ -2471,7 +2546,7 @@ class Cdn
                 }
             }
         } else {
-            $object = $objectId;
+            $object = $iObjectId;
         }
 
         $url = $this->callDriver(
@@ -2479,7 +2554,8 @@ class Cdn
             [
                 $object->file->name->disk,
                 $object->bucket->slug,
-                $width, $height,
+                $iWidth,
+                $iHeight,
             ],
             $object->driver
         );
@@ -2507,15 +2583,23 @@ class Cdn
     /**
      * Calls the driver's public urlPlaceholder method
      *
-     * @param   int $width  The width of the placeholder
-     * @param   int $height The height of the placeholder
-     * @param   int $border The width of the border round the placeholder
+     * @param   int $iWidth  The width of the placeholder
+     * @param   int $iHeight The height of the placeholder
+     * @param   int $border  The width of the border round the placeholder
      *
      * @return  string
      **/
-    public function urlPlaceholder($width = 100, $height = 100, $border = 0)
+    public function urlPlaceholder($iWidth = 100, $iHeight = 100, $border = 0)
     {
-        return $this->callDriver('urlPlaceholder', [$width, $height, $border]);
+        if (!$this->isPermittedDimension($iWidth, $iHeight)) {
+            throw new PermittedDimensionException(
+                'CDN::urlPlaceholder() - Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
+            );
+        }
+
+        // --------------------------------------------------------------------------
+
+        return $this->callDriver('urlPlaceholder', [$iWidth, $iHeight, $border]);
     }
 
     // --------------------------------------------------------------------------
@@ -2537,15 +2621,23 @@ class Cdn
     /**
      * Calls the driver's public urlBlankAvatar method
      *
-     * @param   int   $width  The width of the placeholder
-     * @param   int   $height The height of the placeholder
-     * @param   mixed $sex    The gender of the blank avatar to show
+     * @param   int   $iWidth  The width of the placeholder
+     * @param   int   $iHeight The height of the placeholder
+     * @param   mixed $sex     The gender of the blank avatar to show
      *
      * @return  string
      **/
-    public function urlBlankAvatar($width = 100, $height = 100, $sex = '')
+    public function urlBlankAvatar($iWidth = 100, $iHeight = 100, $sex = '')
     {
-        return $this->callDriver('urlBlankAvatar', [$width, $height, $sex]);
+        if (!$this->isPermittedDimension($iWidth, $iHeight)) {
+            throw new PermittedDimensionException(
+                'CDN::urlBlankAvatar() - Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
+            );
+        }
+
+        // --------------------------------------------------------------------------
+
+        return $this->callDriver('urlBlankAvatar', [$iWidth, $iHeight, $sex]);
     }
 
     // --------------------------------------------------------------------------
@@ -2567,29 +2659,29 @@ class Cdn
     /**
      * Returns the appropriate avatar for a user
      *
-     * @param   int $userId The user's ID
-     * @param   int $width  The width of the avatar
-     * @param   int $height The height of the avatar
+     * @param   int $iUserId The user's ID
+     * @param   int $iWidth  The width of the avatar
+     * @param   int $iHeight The height of the avatar
      *
      * @return  string
      **/
-    public function urlAvatar($userId = null, $width = 100, $height = 100)
+    public function urlAvatar($iUserId = null, $iWidth = 100, $iHeight = 100)
     {
-        if (is_null($userId)) {
-            $userId = activeUser('id');
+        if (is_null($iUserId)) {
+            $iUserId = activeUser('id');
         }
 
-        if (empty($userId)) {
-            $avatarUrl = $this->urlBlankAvatar($width, $height);
+        if (empty($iUserId)) {
+            $avatarUrl = $this->urlBlankAvatar($iWidth, $iHeight);
         } else {
             $oUserModel = Factory::model('User', 'nailsapp/module-auth');
-            $user       = $oUserModel->getById($userId);
+            $user       = $oUserModel->getById($iUserId);
             if (empty($user)) {
-                $avatarUrl = $this->urlBlankAvatar($width, $height);
+                $avatarUrl = $this->urlBlankAvatar($iWidth, $iHeight);
             } elseif (empty($user->profile_img)) {
-                $avatarUrl = $this->urlBlankAvatar($width, $height, $user->gender);
+                $avatarUrl = $this->urlBlankAvatar($iWidth, $iHeight, $user->gender);
             } else {
-                $avatarUrl = $this->urlCrop($user->profile_img, $width, $height);
+                $avatarUrl = $this->urlCrop($user->profile_img, $iWidth, $iHeight);
             }
         }
 
@@ -2601,21 +2693,21 @@ class Cdn
     /**
      * Determines which scheme to use for a user's avatar and returns the appropriate one
      *
-     * @param  integer $userId The User ID to check
+     * @param  integer $iUserId The User ID to check
      *
      * @return string
      */
-    public function urlAvatarScheme($userId = null)
+    public function urlAvatarScheme($iUserId = null)
     {
-        if (is_null($userId)) {
-            $userId = activeUser('id');
+        if (is_null($iUserId)) {
+            $iUserId = activeUser('id');
         }
 
-        if (empty($userId)) {
+        if (empty($iUserId)) {
             $avatarScheme = $this->urlBlankAvatarScheme();
         } else {
             $oUserModel = Factory::model('User', 'nailsapp/module-auth');
-            $user       = $oUserModel->getById($userId);
+            $user       = $oUserModel->getById($iUserId);
             if (empty($user->profile_img)) {
                 $avatarScheme = $this->urlBlankAvatarScheme();
             } else {
@@ -2631,17 +2723,17 @@ class Cdn
     /**
      * Generates an expiring URL for an object
      *
-     * @param  integer $objectId      The object's ID
+     * @param  integer $iObjectId     The object's ID
      * @param  integer $expires       The length of time the URL should be valid for, in seconds
      * @param  boolean $forceDownload Whether to force the download or not
      *
      * @return string
      */
-    public function urlExpiring($objectId, $expires, $forceDownload = false)
+    public function urlExpiring($iObjectId, $expires, $forceDownload = false)
     {
-        if (is_numeric($objectId)) {
+        if (is_numeric($iObjectId)) {
 
-            $oObj = $this->getObject($objectId);
+            $oObj = $this->getObject($iObjectId);
 
             if (!$oObj) {
                 //  Let the renderer show a bad_src graphic
@@ -2658,7 +2750,7 @@ class Cdn
             }
 
         } else {
-            $oObj = $objectId;
+            $oObj = $iObjectId;
         }
 
         return $this->callDriver(
@@ -2687,20 +2779,20 @@ class Cdn
     /**
      * Generate an API upload token
      *
-     * @param  integer $userId     The user to generate the upload token for
-     * @param  integer $duration   How long the token should be valid for
-     * @param  boolean $restrictIp Whether or not to restrict to a particular IP
+     * @param  integer $iUserId     The user to generate the upload token for
+     * @param  integer $iDuration   How long the token should be valid for
+     * @param  boolean $bRestrictIp Whether or not to restrict to a particular IP
      *
      * @return mixed               String on success, false on failure
      */
-    public function generateApiUploadToken($userId = null, $duration = 7200, $restrictIp = true)
+    public function generateApiUploadToken($iUserId = null, $iDuration = 7200, $bRestrictIp = true)
     {
-        if (is_null($userId)) {
-            $userId = activeUser('id');
+        if (is_null($iUserId)) {
+            $iUserId = activeUser('id');
         }
 
         $oUserModel = Factory::model('User', 'nailsapp/module-auth');
-        $user       = $oUserModel->getById($userId);
+        $user       = $oUserModel->getById($iUserId);
         if (!$user) {
             $this->setError('Invalid user ID');
             return false;
@@ -2712,9 +2804,9 @@ class Cdn
         $token[] = (int) $user->id;          //  User ID
         $token[] = $user->password_md5;      //  User Password
         $token[] = $user->email;             //  User Email
-        $token[] = time() + (int) $duration; //  Expire time (+2hours)
+        $token[] = time() + (int) $iDuration; //  Expire time (+2hours)
 
-        if ($restrictIp) {
+        if ($bRestrictIp) {
             $oInput  = Factory::service('Input');
             $token[] = $oInput->ipAddress();
         } else {
@@ -2958,11 +3050,11 @@ class Cdn
             return false;
         }
 
-        foreach ($purgeIds as $objectId) {
+        foreach ($purgeIds as $iObjectId) {
 
             $oDb->select('o.id,o.filename,b.id bucket_id,b.slug bucket_slug');
             $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
-            $oDb->where('o.id', $objectId);
+            $oDb->where('o.id', $iObjectId);
             $object = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->row();
 
             if (!empty($object)) {
@@ -3079,11 +3171,29 @@ class Cdn
                 'name' => (object) [
                     'disk' => '',
                 ],
-            ],
-            'bucket' => (object) [
-                'slug' => '',
-            ],
-            'driver' => $this->oEnabledDriver->slug,
-        ];
+    ],
+    'bucket' => (object) [
+    'slug' => '',
+    ],
+    'driver' => $this->oEnabledDriver->slug,
+    ];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Determines whether the dimensions are permitted by the CDN
+     *
+     * @param $iWidth
+     * @param $iHeight
+     */
+    public function isPermittedDimension($iWidth, $iHeight)
+    {
+        if (Factory::property('allowDangerousImageTransformation', 'nailsapp/module-cdn')) {
+            return true;
+        } else {
+            $sDimension = $iWidth . 'x' . $iHeight;
+            return in_array($sDimension, $this->aPermittedDimensions);
+        }
     }
 }

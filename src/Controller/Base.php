@@ -12,6 +12,8 @@
 
 namespace Nails\Cdn\Controller;
 
+use Nails\Cdn\Exception\PermittedDimensionException;
+use Nails\Environment;
 use Nails\Factory;
 
 class Base extends \App\Controller\Base
@@ -51,13 +53,13 @@ class Base extends \App\Controller\Base
          * more than 1 year.
          */
 
-        $this->cdnCacheHeadersMaxAge = defined('APP_CDN_CACHE_MAX_AGE') ? APP_CDN_CACHE_MAX_AGE : 31536000;
+        $this->cdnCacheHeadersMaxAge       = defined('APP_CDN_CACHE_MAX_AGE') ? APP_CDN_CACHE_MAX_AGE : 31536000;
         $this->cdnCacheHeadersLastModified = '';
-        $this->cdnCacheHeadersExpires = '';
-        $this->cdnCacheHeadersFile = '';
-        $this->cdnCacheHeadersHit = 'MISS';
+        $this->cdnCacheHeadersExpires      = '';
+        $this->cdnCacheHeadersFile         = '';
+        $this->cdnCacheHeadersHit          = 'MISS';
 
-        $this->isRetina = false;
+        $this->isRetina         = false;
         $this->retinaMultiplier = 1;
     }
 
@@ -65,9 +67,11 @@ class Base extends \App\Controller\Base
 
     /**
      * Serve a file from the app's cache
+     *
      * @param  string  $file            The file to serve
      * @param  boolean $hit             Whether or not the request was a cache hit or not
      * @param  boolean $setCacheHeaders Whether tos et the cache headers or not
+     *
      * @return void
      */
     protected function serveFromCache($file, $hit = true, $setCacheHeaders = true)
@@ -77,21 +81,19 @@ class Base extends \App\Controller\Base
          * contents of the file.
          **/
 
-        $stats = stat($this->cdnCacheDir . $file);
+        $aStats = stat($this->cdnCacheDir . $file);
 
         //  Set cache headers
         if ($setCacheHeaders) {
-            $this->setCacheHeaders($stats['mtime'], $file, $hit);
+            $this->setCacheHeaders($aStats['mtime'], $file, $hit);
         }
 
         //  Work out content type
-        $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
-        $mime = $oCdn->getMimeFromFile($this->cdnCacheDir . $file);
+        $oCdn  = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $sMime = $oCdn->getMimeFromFile($this->cdnCacheDir . $file);
 
-        header('Content-Type: ' . $mime, true);
-
-        //  Send Filesize
-        header('Content-Length: ' . $stats['size']);
+        header('Content-Type: ' . $sMime, true);
+        header('Content-Length: ' . $aStats['size']);
 
         // --------------------------------------------------------------------------
 
@@ -112,6 +114,7 @@ class Base extends \App\Controller\Base
 
     /**
      * Set the cache headers of an object
+     *
      * @param string  $lastModified The last modified date of the file
      * @param string  $file         The file we're serving
      * @param boolean $hit          Whether or not the request was a cache hit or not
@@ -172,7 +175,9 @@ class Base extends \App\Controller\Base
 
     /**
      * Serve the "304 Not Modified" headers for an object
+     *
      * @param  string $file The file we're sending the headers for
+     *
      * @return boolean
      */
     protected function serveNotModified($file)
@@ -184,7 +189,7 @@ class Base extends \App\Controller\Base
 
         } elseif ($oInput->server('HTTP_IF_NONE_MATCH')) {
 
-            $headers                  = array();
+            $headers                  = [];
             $headers['If-None-Match'] = $oInput->server('HTTP_IF_NONE_MATCH');
 
         } elseif (isset($_SERVER)) {
@@ -194,8 +199,8 @@ class Base extends \App\Controller\Base
              * Credit: http://www.php.net/manual/en/function.apache-request-headers.php#70810
              **/
 
-            $headers = array();
-            $rxHttp = '/\AHTTP_/';
+            $headers = [];
+            $rxHttp  = '/\AHTTP_/';
             foreach ($_SERVER as $key => $val) {
 
                 if (preg_match($rxHttp, $key)) {
@@ -241,11 +246,11 @@ class Base extends \App\Controller\Base
      * Serve up the "fail whale" graphic
      * @return void
      */
-    protected function serveBadSrc( array $params )
+    protected function serveBadSrc(array $params)
     {
-        $width = isset( $params['width'] ) ? $params['width'] : 100;
-        $height = isset( $params['height'] ) ? $params['height'] : 100;
-        $sError = isset( $params['error'] ) ? $params['error'] : '';
+        $width  = isset($params['width']) ? $params['width'] : 100;
+        $height = isset($params['height']) ? $params['height'] : 100;
+        $sError = isset($params['error']) ? $params['error'] : '';
 
         //  Make sure this doesn't get cached
         $this->unsetCacheHeaders();
@@ -306,5 +311,30 @@ class Base extends \App\Controller\Base
          **/
 
         exit(0);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Determines if the requested dimensions can be satisfied, throws an exception
+     * on non-production environments
+     *
+     * @param $iWidth
+     * @param $iHeight
+     *
+     * @throws PermittedDimensionException
+     */
+    protected function checkDimensions($iWidth, $iHeight)
+    {
+        $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+        if (!$oCdn->isPermittedDimension($iWidth, $iHeight)) {
+            if (Environment::not('PRODUCTION')) {
+                throw new PermittedDimensionException(
+                    'Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
+                );
+            } else {
+                show_404();
+            }
+        }
     }
 }
