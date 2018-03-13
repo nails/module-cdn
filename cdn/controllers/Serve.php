@@ -261,7 +261,7 @@ class Serve extends Base
         $oInput = Factory::service('Input');
         header('Cache-Control: no-cache, must-revalidate', true);
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
-        header('Content-type: application/json', true);
+        header('Content-Type: application/json', true);
         header($oInput->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
 
         // --------------------------------------------------------------------------

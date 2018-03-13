@@ -679,13 +679,13 @@ class Cdn
             //  Are we uploading a URL?
             if (!$bIsStream && preg_match('/^https?:\/\//', $object)) {
 
-                if (!isset($aOptions['content-type'])) {
+                if (!isset($aOptions['Content-Type'])) {
 
                     $aHeaders                 = get_headers($object, 1);
-                    $aOptions['content-type'] = $aHeaders['Content-Type'];
+                    $aOptions['Content-Type'] = $aHeaders['Content-Type'];
 
-                    if (empty($aOptions['content-type'])) {
-                        $aOptions['content-type'] = 'application/octet-stream';
+                    if (empty($aOptions['Content-Type'])) {
+                        $aOptions['Content-Type'] = 'application/octet-stream';
                     }
                 }
 
@@ -795,14 +795,14 @@ class Cdn
                  * Specify the file specifics
                  * ==========================
                  *
-                 * Content-type; using finfo because the $_FILES variable can't be trusted
+                 * Content-Type; using finfo because the $_FILES variable can't be trusted
                  * (uploads from Uploadify always report as application/octet-stream;
-                 * stupid flash. Unless, of course, the content-type has been set explicitly
+                 * stupid flash. Unless, of course, the Content-Type has been set explicitly
                  * by the developer
                  */
 
-                if (isset($aOptions['content-type'])) {
-                    $oData->mime = $aOptions['content-type'];
+                if (isset($aOptions['Content-Type'])) {
+                    $oData->mime = $aOptions['Content-Type'];
                 } else {
                     $oData->mime = $this->getMimeFromFile($oData->file);
                 }
@@ -817,11 +817,11 @@ class Cdn
             } else {
 
                 /**
-                 * We've been given a data stream, use that. If no content-type has been set
+                 * We've been given a data stream, use that. If no Content-Type has been set
                  * then fall over - we need to know what we're dealing with.
                  */
 
-                if (!isset($aOptions['content-type'])) {
+                if (!isset($aOptions['Content-Type'])) {
                     throw new ObjectCreateException('A Content-Type must be defined for data stream uploads');
                 } else {
 
@@ -833,7 +833,7 @@ class Cdn
                     // --------------------------------------------------------------------------
 
                     //  File mime types
-                    $oData->mime = $aOptions['content-type'];
+                    $oData->mime = $aOptions['Content-Type'];
 
                     // --------------------------------------------------------------------------
 

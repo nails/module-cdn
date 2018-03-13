@@ -109,7 +109,7 @@ class Object extends Base
         if (!isLoggedIn()) {
 
             //  User is not logged in, they must supply a valid upload token
-            $sToken = $oInput->post('token') ?: $oInput->header('X-cdn-token');
+            $sToken = $oInput->post('token') ?: $oInput->header('X-Cdn-Token');
             $oUser  = $oCdn->validateApiUploadToken($sToken);
 
             if (!$oUser) {
@@ -126,7 +126,7 @@ class Object extends Base
         // --------------------------------------------------------------------------
 
         //  Uploader verified; bucket defined?
-        $sBucket = $oInput->post('bucket') ?: $oInput->header('X-cdn-bucket');
+        $sBucket = $oInput->post('bucket') ?: $oInput->header('X-Cdn-Bucket');
 
         if (!$sBucket) {
             return [
@@ -226,7 +226,7 @@ class Object extends Base
     protected function getRequestedUrls()
     {
         $oInput = Factory::service('Input');
-        $sUrls  = $oInput->get('urls') ?: $oInput->header('X-cdn-urls');
+        $sUrls  = $oInput->get('urls') ?: $oInput->header('X-Cdn-Urls');
         $aUrls  = !is_array($sUrls) ? explode(',', $sUrls) : $sUrls;
         $aUrls  = array_map('strtolower', $aUrls);
 

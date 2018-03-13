@@ -282,10 +282,10 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             xhr.open('post', window.SITE_URL + 'api/cdn/object/create', true);
 
             // Set appropriate headers
-            xhr.setRequestHeader('X-cdn-bucket', bucket.slug);
+            xhr.setRequestHeader('X-Cdn-Bucket', bucket.slug);
 
             //  If the request is for an image then let's get a preview
-            xhr.setRequestHeader('X-cdn-urls', '400x400-crop');
+            xhr.setRequestHeader('X-Cdn-Urls', '400x400-crop');
 
             // Send the file
             var formData = new FormData();

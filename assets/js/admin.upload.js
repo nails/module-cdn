@@ -18,7 +18,7 @@ NAILS_Admin_CDN_Upload = function()
 	{
 		var _this = this;
 		$('#bucket-chooser').on('change', function(){
-			_this._dropzone.options.headers['X-cdn-bucket'] = $(this).val();
+			_this._dropzone.options.headers['X-Cdn-Bucket'] = $(this).val();
 		});
 	};
 
@@ -34,7 +34,7 @@ NAILS_Admin_CDN_Upload = function()
 			autoProcessQueue: true,
 			headers:
 			{
-				'X-cdn-bucket' : $('#bucket-chooser').val()
+				'X-Cdn-Bucket' : $('#bucket-chooser').val()
 			},
 			paramName: 'upload',
 			addRemoveLinks: true
