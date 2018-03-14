@@ -316,11 +316,8 @@ class Cdn
         $oDb->select('o.id, o.filename, o.filename_display, o.serves, o.downloads, o.thumbs, o.scales, o.driver, o.md5_hash');
         $oDb->Select('o.created, o.created_by, o.modified, o.modified_by');
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
-        $oDb->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
         $oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
-        $oDb->join(NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT');
-        $oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT');
         $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
 
         // --------------------------------------------------------------------------
@@ -399,18 +396,7 @@ class Cdn
         $oDb->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.serves, o.downloads, ');
         $oDb->select('o.thumbs, o.scales, o.driver, o.md5_hash, o.created, o.created_by, o.modified, o.modified_by');
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
-        $oDb->select('ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
-        $oDb->select('uet.email trasher_email, ut.first_name trasher_first_name, ut.last_name trasher_last_name');
-        $oDb->select('ut.profile_img trasher_profile_img, ut.gender trasher_gender');
         $oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
-
-        //  Uploader
-        $oDb->join(NAILS_DB_PREFIX . 'user u', 'u.id = o.created_by', 'LEFT');
-        $oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = o.created_by AND ue.is_primary = 1', 'LEFT');
-
-        //  Trasher
-        $oDb->join(NAILS_DB_PREFIX . 'user ut', 'ut.id = o.trashed_by', 'LEFT');
-        $oDb->join(NAILS_DB_PREFIX . 'user_email uet', 'uet.user_id = o.trashed_by AND ue.is_primary = 1', 'LEFT');
 
         $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
 
@@ -1103,7 +1089,7 @@ class Cdn
             $objectData['scales']           = $object->scales;
             $objectData['driver']           = $object->driver;
             $objectData['created']          = $object->created;
-            $objectData['created_by']       = $object->creator->id;
+            $objectData['created_by']       = $object->created_by;
             $objectData['modified']         = $object->modified;
             $objectData['modified_by']      = $object->modified_by;
 
@@ -1184,7 +1170,7 @@ class Cdn
             $objectData['scales']           = $object->scales;
             $objectData['driver']           = $object->driver;
             $objectData['created']          = $object->created;
-            $objectData['created_by']       = $object->creator->id;
+            $objectData['created_by']       = $object->created_id;
 
             if (isLoggedIn()) {
                 $objectData['modified_by'] = activeUser('id');
@@ -1552,24 +1538,6 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $oObj->creator = (object) [
-            'id'          => (int) $oObj->created_by ?: null,
-            'first_name'  => $oObj->first_name,
-            'last_name'   => $oObj->last_name,
-            'email'       => $oObj->email,
-            'profile_img' => $oObj->profile_img,
-            'gender'      => $oObj->gender,
-        ];
-
-        unset($oObj->created_by);
-        unset($oObj->first_name);
-        unset($oObj->last_name);
-        unset($oObj->email);
-        unset($oObj->profile_img);
-        unset($oObj->gender);
-
-        // --------------------------------------------------------------------------
-
         $oObj->bucket = (object) [
             'id'    => (int) $oObj->bucket_id,
             'label' => $oObj->bucket_label,
@@ -1593,26 +1561,6 @@ class Cdn
                 $oObj->is_img = true;
                 break;
         }
-
-        // --------------------------------------------------------------------------
-
-        if (isset($oObj->trashed)) {
-            $oObj->trasher = (object) [
-                'id'          => (int) $oObj->trashed_by ?: null,
-                'first_name'  => $oObj->trasher_first_name,
-                'last_name'   => $oObj->trasher_last_name,
-                'email'       => $oObj->trasher_email,
-                'profile_img' => $oObj->trasher_profile_img,
-                'gender'      => $oObj->trasher_gender,
-            ];
-
-            unset($oObj->trashed_by);
-            unset($oObj->trasher_first_name);
-            unset($oObj->trasher_last_name);
-            unset($oObj->trasher_email);
-            unset($oObj->trasher_profile_img);
-            unset($oObj->trasher_gender);
-        }
     }
 
     // --------------------------------------------------------------------------
@@ -1632,10 +1580,7 @@ class Cdn
     {
         $oDb = Factory::service('Database');
         $oDb->select('b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by');
-        $oDb->select('b.modified,b.modified_by,ue.email, u.first_name, u.last_name, u.profile_img, u.gender');
-
-        $oDb->join(NAILS_DB_PREFIX . 'user u', 'u.id = b.created_by', 'LEFT');
-        $oDb->join(NAILS_DB_PREFIX . 'user_email ue', 'ue.user_id = b.created_by AND ue.is_primary = 1', 'LEFT');
+        $oDb->select('b.modified,b.modified_by');
 
         //  Apply common items; pass $data
         $this->getCountCommonBuckets($data);
@@ -1967,24 +1912,6 @@ class Cdn
         $aAllowedTypes = array_values($aAllowedTypes);
 
         $bucket->allowed_types = $aAllowedTypes;
-
-        // --------------------------------------------------------------------------
-
-        $bucket->creator = (object) [
-            'id'          => (int) $bucket->created_by ?: null,
-            'first_name'  => $bucket->first_name,
-            'last_name'   => $bucket->last_name,
-            'email'       => $bucket->email,
-            'profile_img' => $bucket->profile_img,
-            'gender'      => $bucket->gender,
-        ];
-
-        unset($bucket->created_by);
-        unset($bucket->first_name);
-        unset($bucket->last_name);
-        unset($bucket->email);
-        unset($bucket->profile_img);
-        unset($bucket->gender);
 
         if (isset($bucket->objectCount)) {
             $bucket->objectCount = (int) $bucket->objectCount;
