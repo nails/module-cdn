@@ -2477,7 +2477,16 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $sCacheUrl = $this->getCacheUrl($oObj, 'CROP', $iWidth, $iHeight);
+        $sCacheUrl = $this->getCacheUrl(
+            $oObj->bucket->slug,
+            $oObj->file->name->disk,
+            $oObj->file->ext,
+            'CROP',
+            $oObj->img_orientation,
+            $iWidth,
+            $iHeight
+        );
+
         if (!empty($sCacheUrl)) {
             return $sCacheUrl;
         }
@@ -2564,7 +2573,16 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $sCacheUrl = $this->getCacheUrl($oObj, 'SCALE', $iWidth, $iHeight);
+        $sCacheUrl = $this->getCacheUrl(
+            $oObj->bucket->slug,
+            $oObj->file->name->disk,
+            $oObj->file->ext,
+            'SCALE',
+            $oObj->img_orientation,
+            $iWidth,
+            $iHeight
+        );
+
         if (!empty($sCacheUrl)) {
             return $sCacheUrl;
         }
@@ -2605,32 +2623,105 @@ class Cdn
     /**
      * Checks the public cache for an image, and if it's there will return it's URL
      *
-     * @param \stdClass $oObj    The object being requested
-     * @param string    $sMethod The request type
-     * @param integer   $iWidth  The requested width
-     * @param integer   $iHeight The requested height
+     * @param string  $sBucket     The bucket slug
+     * @param string  $sObject     The name on disk
+     * @param string  $sExtension  The file extension
+     * @param string  $sCropMethod The crop method
+     * @param integer $iWidth      The width
+     * @param integer $iHeight     The height
      *
      * @return null|string
      */
-    protected function getCacheUrl($oObj, $sMethod, $iWidth, $iHeight)
-    {
+    protected function getCacheUrl(
+        $sBucket,
+        $sObject,
+        $sExtension,
+        $sCropMethod,
+        $sOrientation,
+        $iWidth,
+        $iHeight
+    ) {
         //  Is there a cached version of the file on disk we can serve up instead?
         //  @todo (Pablo - 2018-03-13) - This won't be reliable in multi-server environments unless the cache is shared
-        require_once FCPATH . 'vendor/nailsapp/module-cdn/cdn/controllers/Crop.php';
-        $sCachePath = \Crop::cachePath(
-            $oObj->bucket->slug,
-            $oObj->file->name->disk,
-            $oObj->file->ext,
-            $sMethod,
-            $oObj->img_orientation,
+        $sCachePath = static::getCachePath(
+            $sBucket,
+            $sObject,
+            $sExtension,
+            $sCropMethod,
+            $sCropMethod,
             $iWidth,
             $iHeight
         );
+
         if (file_exists(static::CACHE_PATH . $sCachePath)) {
             return static::CACHE_URL . $sCachePath;
         }
 
         return null;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Generate the name of the cache file for the image
+     *
+     * @param string  $sBucket     The bucket slug
+     * @param string  $sObject     The name on disk
+     * @param string  $sExtension  The file extension
+     * @param string  $sCropMethod The crop method
+     * @param integer $iWidth      The width
+     * @param integer $iHeight     The height
+     *
+     * @return string
+     */
+    public function getCachePath(
+        $sBucket,
+        $sObject,
+        $sExtension,
+        $sCropMethod,
+        $sOrientation,
+        $iWidth,
+        $iHeight
+    ) {
+        $sCropQuadrant = static::getCropQuadrant($sOrientation);
+        return implode(
+                '-',
+                array_filter([
+                    $sBucket,
+                    substr($sObject, 0, strrpos($sObject, '.')),
+                    strtoupper($sCropMethod),
+                    $iWidth . 'x' . $iHeight,
+                    $sCropQuadrant !== 'C' ? $sCropQuadrant : '',
+                ])
+            ) . '.' . trim($sExtension, '.');
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the crop quadrant being used for the orientation
+     *
+     * @param string $sOrientation The image's orientation
+     *
+     * @return string
+     */
+    public static function getCropQuadrant($sOrientation)
+    {
+        switch ($sOrientation) {
+            case 'PORTRAIT':
+                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_PORTRAIT') ? APP_CDN_CROP_QUADRANT_PORTRAIT : 'C';
+                break;
+
+            case 'LANDSCAPE':
+                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_LANDSCAPE') ? APP_CDN_CROP_QUADRANT_LANDSCAPE : 'C';
+                break;
+
+            default:
+                $sCropQuadrant = 'C';
+                break;
+        }
+
+        return strtoupper($sCropQuadrant);
     }
 
     // --------------------------------------------------------------------------

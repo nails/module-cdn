@@ -154,7 +154,7 @@ class Crop extends Base
             $this->cropQuadrant = static::getCropQuadrant($object->img_orientation);
         }
 
-        $this->cdnCacheFile = static::cachePath(
+        $this->cdnCacheFile = $oCdn::getCachePath(
             $this->bucket,
             $this->object,
             $this->extension,
@@ -268,63 +268,6 @@ class Crop extends Base
     }
 
     // --------------------------------------------------------------------------
-
-    /**
-     * Returns the crop quadrant being used for the orientation
-     *
-     * @param string $sOrientation The image's orientation
-     *
-     * @return string
-     */
-    public static function getCropQuadrant($sOrientation)
-    {
-        switch ($sOrientation) {
-            case 'PORTRAIT':
-                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_PORTRAIT') ? APP_CDN_CROP_QUADRANT_PORTRAIT : 'C';
-                break;
-
-            case 'LANDSCAPE':
-                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_LANDSCAPE') ? APP_CDN_CROP_QUADRANT_LANDSCAPE : 'C';
-                break;
-
-            default:
-                $sCropQuadrant = 'C';
-                break;
-        }
-
-        return strtoupper($sCropQuadrant);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Generate the name of the cache file for the image
-     *
-     * @param string  $sBucket     The bucket slug
-     * @param string  $sObject     The name on disk
-     * @param string  $sExtension  The file extension
-     * @param string  $sCropMethod The crop method
-     * @param integer $iWidth      The width
-     * @param integer $iHeight     The height
-     *
-     * @return string
-     */
-    public static function cachePath($sBucket, $sObject, $sExtension, $sCropMethod, $sOrientation, $iWidth, $iHeight)
-    {
-        $sCropQuadrant = static::getCropQuadrant($sOrientation);
-        return implode(
-                '-',
-                array_filter([
-                    $sBucket,
-                    substr($sObject, 0, strrpos($sObject, '.')),
-                    strtoupper($sCropMethod),
-                    $iWidth . 'x' . $iHeight,
-                    $sCropQuadrant !== 'C' ? $sCropQuadrant : '',
-                ])
-            )  . '.' . trim($sExtension, '.');
-    }
-
-// --------------------------------------------------------------------------
 
     /**
      * Resize a static image
