@@ -16,7 +16,24 @@ use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Environment;
 use Nails\Factory;
 
-class Base extends \App\Controller\Base
+// --------------------------------------------------------------------------
+
+/**
+ * Allow the app to add functionality, if needed
+ */
+if (class_exists('\App\Cdn\Controller\Base')) {
+    class BaseMiddle extends \App\Cdn\Controller\Base
+    {
+    }
+} else {
+    class BaseMiddle extends \Nails\Common\Controller\Base
+    {
+    }
+}
+
+// --------------------------------------------------------------------------
+
+class Base extends BaseMiddle
 {
     protected $cdnRoot;
     protected $cdnCacheDir;
