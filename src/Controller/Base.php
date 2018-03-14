@@ -42,8 +42,9 @@ class Base extends \App\Controller\Base
         // --------------------------------------------------------------------------
 
         //  Define variables
+        $oCdn                     = Factory::service('Cdn', 'nailsapp/module-cdn');
         $this->cdnRoot            = NAILS_PATH . 'module-cdn/cdn/';
-        $this->cdnCacheDir        = Factory::service('Cdn', 'nailsapp/module-cdn')::CACHE_PATH;
+        $this->cdnCacheDir        = $oCdn::CACHE_PATH;
         $this->cdnCacheHeadersSet = false;
 
         /**
