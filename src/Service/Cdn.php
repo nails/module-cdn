@@ -2404,7 +2404,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $sCacheUrl = $this->getCacheUrl(
+        $sCacheUrl = static::getCacheUrl(
             $oObj->bucket->slug,
             $oObj->file->name->disk,
             $oObj->file->ext,
@@ -2500,7 +2500,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $sCacheUrl = $this->getCacheUrl(
+        $sCacheUrl = static::getCacheUrl(
             $oObj->bucket->slug,
             $oObj->file->name->disk,
             $oObj->file->ext,
@@ -2575,7 +2575,7 @@ class Cdn
             $sObject,
             $sExtension,
             $sCropMethod,
-            $sCropMethod,
+            $sOrientation,
             $iWidth,
             $iHeight
         );
