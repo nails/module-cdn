@@ -3240,15 +3240,17 @@ class Cdn
     protected function emptyObject()
     {
         return (object) [
-            'file'   => (object) [
+            'file'            => (object) [
                 'name' => (object) [
                     'disk' => '',
                 ],
+                'ext'  => '',
             ],
-            'bucket' => (object) [
+            'bucket'          => (object) [
                 'slug' => '',
             ],
-            'driver' => $this->oEnabledDriver->slug,
+            'driver'          => $this->oEnabledDriver->slug,
+            'img_orientation' => '',
         ];
     }
 
