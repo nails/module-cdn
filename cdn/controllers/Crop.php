@@ -151,7 +151,7 @@ class Crop extends Base
 
         //  Take a note of the image's orientation, and work out the quadrant accordingly
         if ($phpCropMethod == 'adaptiveResizeQuadrant') {
-            $this->cropQuadrant = static::getCropQuadrant($object->img_orientation);
+            $this->cropQuadrant = $oCdn::getCropQuadrant($object->img_orientation);
         }
 
         $this->cdnCacheFile = $oCdn::getCachePath(

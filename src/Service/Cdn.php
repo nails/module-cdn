@@ -2632,7 +2632,7 @@ class Cdn
      *
      * @return null|string
      */
-    protected function getCacheUrl(
+    public static function getCacheUrl(
         $sBucket,
         $sObject,
         $sExtension,
@@ -2674,7 +2674,7 @@ class Cdn
      *
      * @return string
      */
-    public function getCachePath(
+    public static function getCachePath(
         $sBucket,
         $sObject,
         $sExtension,
