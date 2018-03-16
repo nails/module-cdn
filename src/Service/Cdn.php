@@ -720,58 +720,9 @@ class Cdn
                         $oData->ext = $this->sanitiseExtension($oData->ext);
 
                     } else {
-
-                        //  Upload was aborted, I wonder why?
-                        switch ($_FILES[$object]['error']) {
-
-                            case UPLOAD_ERR_INI_SIZE:
-
-                                $iMaxFileSize = function_exists('ini_get') ? ini_get('upload_max_filesize') : null;
-
-                                if (!is_null($iMaxFileSize)) {
-
-                                    $iMaxFileSize = $this->returnBytes($iMaxFileSize);
-                                    $iMaxFileSize = $this->formatBytes($iMaxFileSize);
-                                    $sError       = sprintf(
-                                        'The file exceeds the maximum size accepted by this server (which is %s)',
-                                        $iMaxFileSize
-                                    );
-
-                                } else {
-                                    $sError = 'The file exceeds the maximum size accepted by this server';
-                                }
-                                break;
-
-                            case UPLOAD_ERR_FORM_SIZE:
-                                $sError = 'The file exceeds the maximum size accepted by this server';
-                                break;
-
-                            case UPLOAD_ERR_PARTIAL:
-                                $sError = 'The file was only partially uploaded';
-                                break;
-
-                            case UPLOAD_ERR_NO_FILE:
-                                $sError = 'No file was uploaded';
-                                break;
-
-                            case UPLOAD_ERR_NO_TMP_DIR:
-                                $sError = 'This server cannot accept uploads at this time';
-                                break;
-
-                            case UPLOAD_ERR_CANT_WRITE:
-                                $sError = 'Failed to write uploaded file to disk, you can try again';
-                                break;
-
-                            case UPLOAD_ERR_EXTENSION:
-                                $sError = 'The file failed to upload due to a server configuration';
-                                break;
-
-                            default:
-                                $sError = 'The file failed to upload';
-                                break;
-                        }
-
-                        throw new ObjectCreateException($sError);
+                        throw new ObjectCreateException(
+                            static::getUploadError($_FILES[$object]['error'])
+                        );
                     }
                 }
 
@@ -925,7 +876,7 @@ class Cdn
                     throw new ObjectCreateException(
                         sprintf(
                             'The file is too large, maximum file size is %s',
-                            $this->formatBytes($oBucket->max_size)
+                            static::formatBytes($oBucket->max_size)
                         )
                     );
                 }
@@ -1048,6 +999,70 @@ class Cdn
         }
 
         return false;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns a string representation of an upload error number
+     *
+     * @param integer $iErrorNumber The error number
+     *
+     * @return string
+     */
+    static function getUploadError($iErrorNumber)
+    {
+        //  Upload was aborted, I wonder why?
+        switch ($iErrorNumber) {
+
+            case UPLOAD_ERR_INI_SIZE:
+
+                $iMaxFileSize = function_exists('ini_get') ? ini_get('upload_max_filesize') : null;
+
+                if (!is_null($iMaxFileSize)) {
+
+                    $iMaxFileSize = static::returnBytes($iMaxFileSize);
+                    $iMaxFileSize = static::formatBytes($iMaxFileSize);
+                    $sError       = sprintf(
+                        'The file exceeds the maximum size accepted by this server (which is %s).',
+                        $iMaxFileSize
+                    );
+
+                } else {
+                    $sError = 'The file exceeds the maximum size accepted by this server.';
+                }
+                break;
+
+            case UPLOAD_ERR_FORM_SIZE:
+                $sError = 'The file exceeds the maximum size accepted by this server.';
+                break;
+
+            case UPLOAD_ERR_PARTIAL:
+                $sError = 'The file was only partially uploaded.';
+                break;
+
+            case UPLOAD_ERR_NO_FILE:
+                $sError = 'No file was uploaded.';
+                break;
+
+            case UPLOAD_ERR_NO_TMP_DIR:
+                $sError = 'This server cannot accept uploads at this time.';
+                break;
+
+            case UPLOAD_ERR_CANT_WRITE:
+                $sError = 'Failed to write uploaded file to disk, you can try again.';
+                break;
+
+            case UPLOAD_ERR_EXTENSION:
+                $sError = 'The file failed to upload due to a server configuration.';
+                break;
+
+            default:
+                $sError = 'The file failed to upload.';
+                break;
+        }
+
+        return $sError;
     }
 
     // --------------------------------------------------------------------------
@@ -1524,7 +1539,7 @@ class Cdn
                 'kilobytes' => round($iFileSize / self::BYTE_MULTIPLIER_KB, self::FILE_SIZE_PRECISION),
                 'megabytes' => round($iFileSize / self::BYTE_MULTIPLIER_MB, self::FILE_SIZE_PRECISION),
                 'gigabytes' => round($iFileSize / self::BYTE_MULTIPLIER_GB, self::FILE_SIZE_PRECISION),
-                'human'     => $this->formatBytes($iFileSize),
+                'human'     => static::formatBytes($iFileSize),
             ],
             'hash' => (object) [
                 'md5' => $oObj->md5_hash,
@@ -3211,7 +3226,7 @@ class Cdn
      *
      * @return integer
      */
-    public function returnBytes($sSize)
+    public static function returnBytes($sSize)
     {
         switch (strtoupper(substr($sSize, -1))) {
             case 'M':
