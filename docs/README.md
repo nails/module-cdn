@@ -6,7 +6,7 @@ This module brings file management and image manipulation to Nails. Can be confi
 
 - [Drivers](drivers/README.md)
 - [Console](console/README.md)
-- [Image Transformation](console/README.md)
+- [Image Transformation](transformation/README.md)
     - [Cropping](transformation/cropping.md)
     - [Scaling](transformation/scaling.md)
     - [Security](transformation/security.md)

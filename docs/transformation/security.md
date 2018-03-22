@@ -17,7 +17,7 @@ All components, including the application, must explicitly announce the image di
                     "permitted-image-dimensions": [
                         "120x120",
                         "250x250"
-                    }
+                    ]
                 }
             }
         }
