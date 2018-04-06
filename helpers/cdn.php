@@ -279,58 +279,6 @@ if (!function_exists('getMimeFromFile')) {
 // --------------------------------------------------------------------------
 
 /**
- * @todo These should be loaded for admin, BUT also work via the API - i.e CMS Page widgets
- */
-
-if (!function_exists('cdnManagerUrl')) {
-
-    /**
-     * Generate a valid URL for the CDN Manager
-     *
-     * @param  string  $sBucket   The bucket the manager should use
-     * @param  array   $aCallback The callback the manager should use for "insert" buttons
-     * @param  mixed   $mPassback Any data to pass back to the callback
-     * @param  boolean $bSecure   Whether or not the link should be secure
-     *
-     * @return string
-     */
-    function cdnManagerUrl($sBucket, $aCallback = [], $mPassback = null, $bSecure = false)
-    {
-        $aParams = [];
-
-        /**
-         * The callback should be a two element array, the first being the
-         * instance variable, the second being the method name.
-         */
-        $aParams['callback'] = $aCallback;
-
-        /**
-         * Passback is any data that the caller wishes to be sent back to the callback
-         */
-
-        $aParams['passback'] = json_encode($mPassback);
-
-        /**
-         * The bucket should be hashed up and paired with an irreversible hash for
-         * verification. Why? So that it's not trivial to mess about with buckets
-         * willy nilly.
-         */
-        $iNonce   = time();
-        $oEncrypt = Factory::service('Encrypt');
-
-        $aParams['bucket'] = $oEncrypt->encode($sBucket . '|' . $iNonce, APP_PRIVATE_KEY);
-        $aParams['hash']   = md5($sBucket . '|' . $iNonce . '|' . APP_PRIVATE_KEY);
-
-        //  Prep the query string
-        $aParams = http_build_query($aParams);
-
-        return site_url('admin/cdn/?' . $aParams, $bSecure);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-/**
  * This file provides some CDN related helpers for admin
  *
  * @package     Nails

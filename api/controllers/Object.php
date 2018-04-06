@@ -106,26 +106,6 @@ class Object extends Base
 
         // --------------------------------------------------------------------------
 
-        if (!isLoggedIn()) {
-
-            //  User is not logged in, they must supply a valid upload token
-            $sToken = $oInput->post('token') ?: $oInput->header('X-Cdn-Token');
-            $oUser  = $oCdn->validateApiUploadToken($sToken);
-
-            if (!$oUser) {
-                return [
-                    'status' => 400,
-                    'error'  => $oCdn->lastError(),
-                ];
-            } else {
-                $oUserModel = Factory::model('User', 'nailsapp/module-auth');
-                $oUserModel->setActiveUser($oUser);
-            }
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Uploader verified; bucket defined?
         $sBucket = $oInput->post('bucket') ?: $oInput->header('X-Cdn-Bucket');
 
         if (!$sBucket) {
