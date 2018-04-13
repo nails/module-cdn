@@ -15,7 +15,7 @@ namespace Nails\Api\Cdn;
 use Nails\Api\Controller\Base;
 use Nails\Factory;
 
-class Object extends Base
+class CdnObject extends Base
 {
     /**
      * Require the user be authenticated to use any endpoint
