@@ -26,6 +26,23 @@ class Bucket extends DefaultController
     // --------------------------------------------------------------------------
 
     /**
+     * Get multiple items; exclude hidden buckets
+     *
+     * @param  array   $aData    Any data to pass to the model
+     * @param  integer $iPage    The page to display
+     * @param  integer $iPerPage The number of items to display at the moment
+     *
+     * @return array
+     */
+    public function getIndex($aData = [], $iPage = null, $iPerPage = null)
+    {
+        $aData = ['where' => [['is_hidden', false]]];
+        return parent::getIndex($aData, $iPage, $iPerPage);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Returns a paginated list of a bucket's contents
      * @return array
      */
