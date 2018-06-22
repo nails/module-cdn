@@ -118,16 +118,16 @@ class Crop extends Base
                 if (!$object) {
                     //  Cool, guess it really doesn't exist
                     $this->serveBadSrc([
-                        'width'  => $width,
-                        'height' => $height,
+                        'width'  => $this->width,
+                        'height' => $this->height,
                     ]);
                 }
 
             } else {
 
                 $this->serveBadSrc([
-                    'width'  => $width,
-                    'height' => $height,
+                    'width'  => $this->width,
+                    'height' => $this->height,
                 ]);
             }
         }
@@ -137,8 +137,8 @@ class Crop extends Base
         //  Only images
         if (empty($object->is_img)) {
             $this->serveBadSrc([
-                'width'  => $width,
-                'height' => $height,
+                'width'  => $this->width,
+                'height' => $this->height,
                 'error'  => 'Not an image',
             ]);
         }
