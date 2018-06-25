@@ -1185,7 +1185,7 @@ class Cdn
             $objectData['scales']           = $object->scales;
             $objectData['driver']           = $object->driver;
             $objectData['created']          = $object->created;
-            $objectData['created_by']       = $object->created_id;
+            $objectData['created_by']       = $object->created_by;
 
             if (isLoggedIn()) {
                 $objectData['modified_by'] = activeUser('id');

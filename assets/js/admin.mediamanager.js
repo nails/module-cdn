@@ -319,8 +319,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                         'url': window.SITE_URL + 'api/cdn/object/delete',
                         'method': 'POST',
                         'data': {
-                            'object_id': object.id,
-                            'is_trash': base.isTrash()
+                            'object_id': object.id
                         }
                     })
                     .done(function() {
@@ -538,8 +537,8 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                         'is_img': object.is_img || false
                     });
                 });
-                base.currentPage(response.page + 1);
-                base.showLoadMore(response.data.length >= response.per_page);
+                base.currentPage(response.meta.page + 1);
+                base.showLoadMore(response.data.length >= response.meta.per_page);
                 $deferred.resolve();
             })
             .fail(function() {

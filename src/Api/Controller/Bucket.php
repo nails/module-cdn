@@ -10,9 +10,10 @@
  * @link
  */
 
-namespace Nails\Api\Cdn;
+namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api\Controller\DefaultController;
+use Nails\Api\Exception\ApiException;
 use Nails\Factory;
 
 class Bucket extends DefaultController
@@ -49,10 +50,10 @@ class Bucket extends DefaultController
     public function getList()
     {
         if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            return [
-                'status' => 401,
-                'error'  => 'You do not have permission to list buckets',
-            ];
+            throw new ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
         }
 
         $oInput       = Factory::service('Input');
@@ -61,10 +62,10 @@ class Bucket extends DefaultController
         $iPage        = (int) $oInput->get('page') ?: 1;
 
         if (empty($iBucketId)) {
-            return [
-                'status' => 400,
-                'error'  => '`bucket_id` is a required field',
-            ];
+            throw new ApiException(
+                '`bucket_id` is a required field',
+                $oHttpCodes::STATUS_BAD_REQUEST
+            );
         }
 
         $aObjects = $oObjectModel->getAll(
@@ -73,21 +74,22 @@ class Bucket extends DefaultController
             ['where' => [['bucket_id', $iBucketId]]]
         );
 
-        return [
-            'page'     => $iPage,
-            'per_page' => static::CONFIG_MAX_OBJECTS_PER_PAGE,
-            'data'     => array_map(
-                function ($oObj) {
-                    $oObj->is_img = isset($oObj->img);
-                    $oObj->url    = (object) [
-                        'src'     => cdnServe($oObj->id),
-                        'preview' => isset($oObj->img) ? cdnCrop($oObj->id, 400, 400) : null,
-                    ];
-                    return $oObj;
-                },
-                $aObjects
-            ),
-        ];
+        return Factory::factory('ApiResponse', 'nailsapp/module-api')
+                      ->setData(array_map(
+                          function ($oObj) {
+                              $oObj->is_img = isset($oObj->img);
+                              $oObj->url    = (object) [
+                                  'src'     => cdnServe($oObj->id),
+                                  'preview' => isset($oObj->img) ? cdnCrop($oObj->id, 400, 400) : null,
+                              ];
+                              return $oObj;
+                          },
+                          $aObjects
+                      ))
+                      ->setMeta([
+                          'page'     => $iPage,
+                          'per_page' => static::CONFIG_MAX_OBJECTS_PER_PAGE,
+                      ]);
     }
 
     // --------------------------------------------------------------------------
@@ -97,16 +99,26 @@ class Bucket extends DefaultController
      *
      * @return array
      */
-    public function postIndex()
+    public function postRemap()
     {
+        $oInput     = Factory::service('Input');
+        $oHttpCodes = Factory::service('HttpCodes');
+
         if (!userHasPermission('admin:cdn:manager:bucket:create')) {
-            return [
-                'status' => 401,
-                'error'  => 'You do not have permission to create buckets',
-            ];
+            throw new ApiException(
+                'You do not have permission to create this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
         }
 
-        return parent::postIndex();
+        if (!$oInput->post('label')) {
+            throw new ApiException(
+                '`label is a required field',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
+
+        return parent::postRemap();
     }
 
     // --------------------------------------------------------------------------

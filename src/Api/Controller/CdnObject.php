@@ -10,9 +10,10 @@
  * @link
  */
 
-namespace Nails\Api\Cdn;
+namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api\Controller\Base;
+use Nails\Api\Exception\ApiException;
 use Nails\Factory;
 
 class CdnObject extends Base
@@ -57,10 +58,10 @@ class CdnObject extends Base
         $aIds = array_unique($aIds);
 
         if (count($aIds) > 100) {
-            return [
-                'status' => 400,
-                'error'  => 'You can request a maximum of ' . self::MAX_OBJECTS_PER_REQUEST . ' objects per request',
-            ];
+            throw new ApiException(
+                'You can request a maximum of ' . self::MAX_OBJECTS_PER_REQUEST . ' objects per request',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
         }
         // --------------------------------------------------------------------------
 
@@ -84,11 +85,8 @@ class CdnObject extends Base
             $aOut[] = $this->formatObject($oObject, $aUrls);
         }
 
-        if ($oInput->get('id')) {
-            return ['data' => reset($aOut)];
-        } else {
-            return ['data' => $aOut];
-        }
+        return Factory::factory('ApiResponse', 'nailsapp/module-api')
+                      ->setData($oInput->get('id') ? reset($aOut) : $aOut);
     }
 
     // --------------------------------------------------------------------------
@@ -100,19 +98,20 @@ class CdnObject extends Base
     public function postCreate()
     {
         //  @todo (Pablo - 2017-12-18) - this should be protected using admin permissions or the token uploader
-        $oInput = Factory::service('Input');
-        $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
-        $aOut   = [];
+        $oHttpCodes = Factory::service('HttpCodes');
+        $oInput     = Factory::service('Input');
+        $oCdn       = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $aOut       = [];
 
         // --------------------------------------------------------------------------
 
         $sBucket = $oInput->post('bucket') ?: $oInput->header('X-Cdn-Bucket');
 
         if (!$sBucket) {
-            return [
-                'status' => 400,
-                'error'  => 'Bucket not defined',
-            ];
+            throw new ApiException(
+                'Bucket not defined',
+                $oHttpCodes::STATUS_BAD_REQUEST
+            );
         }
 
         // --------------------------------------------------------------------------
@@ -121,16 +120,20 @@ class CdnObject extends Base
         $oObject = $oCdn->objectCreate('upload', $sBucket);
 
         if (!$oObject) {
-            return [
-                'status' => 400,
-                'error'  => $oCdn->lastError(),
-            ];
+            throw new ApiException(
+                $oCdn->lastError(),
+                $oHttpCodes::STATUS_BAD_REQUEST
+            );
         }
 
-        $aUrls          = $this->getRequestedUrls();
-        $aOut['object'] = $this->formatObject($oObject, $aUrls);
-
-        return $aOut;
+        //  @todo (Pablo - 2018-06-25) - Reduce the namespace here (i.e remove `object`)
+        return Factory::factory('ApiResponse', 'nailsapp/module-api')
+                      ->setData([
+                          'object' => $this->formatObject(
+                              $oObject,
+                              $this->getRequestedUrls()
+                          ),
+                      ]);
     }
 
     // --------------------------------------------------------------------------
@@ -141,31 +144,54 @@ class CdnObject extends Base
      */
     public function postDelete()
     {
+        $oHttpCodes = Factory::service('HttpCodes');
+
         if (!userHasPermission('admin:cdn:manager:object:delete')) {
-            return [
-                'status' => 401,
-                'error'  => 'You do not have permission to delete objects',
-            ];
+            throw new ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
         }
 
         $oInput    = Factory::service('Input');
         $oCdn      = Factory::service('Cdn', 'nailsapp/module-cdn');
         $iObjectId = $oInput->post('object_id');
 
-        if (stringToBoolean($oInput->post('is_trash'))) {
+        if (empty($iObjectId)) {
+            throw new ApiException(
+                '`object_id` is a required field',
+                $oHttpCodes::STATUS_BAD_REQUEST
+            );
+        }
+
+        $oObject  = $oCdn->getObject($iObjectId);
+        $bIsTrash = false;
+        if (empty($oObject)) {
+            $oObject  = $oCdn->getObjectFromTrash($iObjectId);
+            $bIsTrash = true;
+        }
+
+        if (empty($oObject)) {
+            throw new ApiException(
+                'Invalid object ID',
+                $oHttpCodes::STATUS_NOT_FOUND
+            );
+        }
+
+        if ($bIsTrash) {
             $bDelete = $oCdn->purgeTrash([$iObjectId]);
         } else {
             $bDelete = $oCdn->objectDelete($iObjectId);
         }
 
         if (!$bDelete) {
-            return [
-                'status' => 400,
-                'error'  => $oCdn->lastError(),
-            ];
+            throw new ApiException(
+                $oCdn->lastError(),
+                $oHttpCodes::STATUS_BAD_REQUEST
+            );
         }
 
-        return [];
+        return Factory::factory('ApiResponse', 'nailsapp/module-api');
     }
 
     // --------------------------------------------------------------------------
@@ -176,11 +202,13 @@ class CdnObject extends Base
      */
     public function postRestore()
     {
+        $oHttpCodes = Factory::service('HttpCodes');
+
         if (!userHasPermission('admin:cdn:manager:object:restore')) {
-            return [
-                'status' => 401,
-                'error'  => 'You do not have permission to restore objects',
-            ];
+            throw new ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
         }
 
         $oInput    = Factory::service('Input');
@@ -188,13 +216,96 @@ class CdnObject extends Base
         $iObjectId = $oInput->post('object_id');
 
         if (!$oCdn->objectRestore($iObjectId)) {
-            return [
-                'status' => 400,
-                'error'  => $oCdn->lastError(),
-            ];
+            throw new ApiException(
+                $oCdn->lastError(),
+                $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR
+            );
         }
 
-        return [];
+        return Factory::factory('ApiResponse', 'nailsapp/module-api');
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Search across all objects
+     * @return array
+     */
+    public function getSearch()
+    {
+        $oHttpCodes = Factory::service('HttpCodes');
+
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            throw new ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
+
+        $oInput    = Factory::service('Input');
+        $oModel    = Factory::model('Object', 'nailsapp/module-cdn');
+        $sKeywords = $oInput->get('keywords');
+        $iPage     = (int) $oInput->get('page') ?: 1;
+        $oResult   = $oModel->search(
+            $sKeywords,
+            $iPage,
+            static::MAX_OBJECTS_PER_REQUEST
+        );
+
+        $oResponse = Factory::factory('ApiResponse', 'nailsapp/module-api');
+        $oResponse->setData(array_map(
+            function ($oObj) {
+                $oObj->is_img = isset($oObj->img);
+                $oObj->url    = (object) [
+                    'src'     => cdnServe($oObj->id),
+                    'preview' => isset($oObj->img) ? cdnCrop($oObj->id, 400, 400) : null,
+                ];
+                return $oObj;
+            },
+            $oResult->data
+        ));
+        return $oResponse;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * List items in the trash
+     * @return array
+     */
+    public function getTrash()
+    {
+        $oHttpCodes = Factory::service('HttpCodes');
+
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            throw new ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
+
+        $oInput   = Factory::service('Input');
+        $oModel   = Factory::model('ObjectTrash', 'nailsapp/module-cdn');
+        $iPage    = (int) $oInput->get('page') ?: 1;
+        $aResults = $oModel->getAll(
+            $iPage,
+            static::MAX_OBJECTS_PER_REQUEST,
+            ['sort' => [['trashed', 'desc']]]
+        );
+
+        $oResponse = Factory::factory('ApiResponse', 'nailsapp/module-api');
+        $oResponse->setData(array_map(
+            function ($oObj) {
+                $oObj->is_img = isset($oObj->img);
+                $oObj->url    = (object) [
+                    'src'     => cdnServe($oObj->id),
+                    'preview' => isset($oObj->img) ? cdnCrop($oObj->id, 400, 400) : null,
+                ];
+                return $oObj;
+            },
+            $aResults
+        ));
+        return $oResponse;
     }
 
     // --------------------------------------------------------------------------
@@ -308,84 +419,5 @@ class CdnObject extends Base
         }
 
         return $aOut;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Search across all objects
-     * @return array
-     */
-    public function getSearch()
-    {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            return [
-                'status' => 401,
-                'error'  => 'You do not have permission to search objects',
-            ];
-        }
-
-        $oInput    = Factory::service('Input');
-        $oModel    = Factory::model('Object', 'nailsapp/module-cdn');
-        $sKeywords = $oInput->get('keywords');
-        $iPage     = (int) $oInput->get('page') ?: 1;
-        $oResults  = $oModel->search(
-            $sKeywords,
-            $iPage,
-            static::MAX_OBJECTS_PER_REQUEST
-        );
-
-        return [
-            'data' => array_map(
-                function ($oObj) {
-                    $oObj->is_img = isset($oObj->img);
-                    $oObj->url    = (object) [
-                        'src'     => cdnServe($oObj->id),
-                        'preview' => isset($oObj->img) ? cdnCrop($oObj->id, 400, 400) : null,
-                    ];
-                    return $oObj;
-                },
-                $oResults->data
-            ),
-        ];
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * List items in the trash
-     * @return array
-     */
-    public function getTrash()
-    {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            return [
-                'status' => 401,
-                'error'  => 'You do not have permission to browse objects',
-            ];
-        }
-
-        $oInput   = Factory::service('Input');
-        $oModel   = Factory::model('ObjectTrash', 'nailsapp/module-cdn');
-        $iPage    = (int) $oInput->get('page') ?: 1;
-        $aResults = $oModel->getAll(
-            $iPage,
-            static::MAX_OBJECTS_PER_REQUEST,
-            ['sort' => [['trashed', 'desc']]]
-        );
-
-        return [
-            'data' => array_map(
-                function ($oObj) {
-                    $oObj->is_img = isset($oObj->img);
-                    $oObj->url    = (object) [
-                        'src'     => cdnServe($oObj->id),
-                        'preview' => isset($oObj->img) ? cdnCrop($oObj->id, 400, 400) : null,
-                    ];
-                    return $oObj;
-                },
-                $aResults
-            ),
-        ];
     }
 }
