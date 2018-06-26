@@ -249,22 +249,24 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 if (e.currentTarget.readyState === 4) {
                     var data;
                     if (e.currentTarget.status === 200) {
+
                         try {
                             data = JSON.parse(e.currentTarget.responseText);
+                            //  Update the object
+                            element.id = data.data.object.id;
+                            element.label = data.data.object.object.name;
+                            element.ext = element.label.substr((element.label.lastIndexOf('.') + 1));
+                            element.url = {
+                                'src': data.data.object.url.src,
+                                'preview': data.data.object.is_img ? data.data.object.url['400x400-crop'] : null
+                            };
+                            element.is_img = data.data.object.is_img;
+                            element.is_uploading(false);
+
                         } catch (e) {
                             data = {'error': 'An unknown error occurred.'};
+                            element.error(data.error);
                         }
-
-                        //  Update the object
-                        element.id = data.object.id;
-                        element.label = data.object.object.name;
-                        element.ext = element.label.substr((element.label.lastIndexOf('.') + 1));
-                        element.url = {
-                            'src': data.object.url.src,
-                            'preview': data.object.is_img ? data.object.url['400x400-crop'] : null
-                        };
-                        element.is_img = data.object.is_img;
-                        element.is_uploading(false);
 
                     } else {
                         try {
