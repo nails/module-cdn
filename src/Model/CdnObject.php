@@ -52,7 +52,7 @@ class CdnObject extends Base
      *
      * @return \stdClass|null
      */
-    public function getByMd5Hash($sHash, $aData = [])
+    public function getByMd5Hash($sHash, array $aData = [])
     {
         return $this->getByColumn('md5_hash', $sHash, $aData);
     }
