@@ -30,10 +30,10 @@ class Bucket extends Base
 
     protected function formatObject(
         &$oObj,
-        $aData = [],
-        $aIntegers = [],
-        $aBools = [],
-        $aFloats = []
+        array $aData = [],
+        array $aIntegers = [],
+        array $aBools = [],
+        array $aFloats = []
     ) {
         $aIntegers[] = 'max_size';
         $aIntegers[] = 'disk_quota';

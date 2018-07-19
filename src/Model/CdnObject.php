@@ -61,10 +61,10 @@ class CdnObject extends Base
 
     protected function formatObject(
         &$oObj,
-        $aData = [],
-        $aIntegers = [],
-        $aBools = [],
-        $aFloats = []
+        array $aData = [],
+        array $aIntegers = [],
+        array $aBools = [],
+        array $aFloats = []
     ) {
         $aIntegers[] = 'img_width';
         $aIntegers[] = 'img_height';
