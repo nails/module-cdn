@@ -14,6 +14,7 @@ namespace Nails\Admin\Cdn;
 
 use Nails\Admin\Controller\Base;
 use Nails\Admin\Helper;
+use Nails\Common\Exception\ValidationException;
 use Nails\Factory;
 
 class Settings extends Base
@@ -65,31 +66,23 @@ class Settings extends Base
         $oInput              = Factory::service('Input');
         $oStorageDriverModel = Factory::model('StorageDriver', 'nailsapp/module-cdn');
 
-        //  Process POST
         if ($oInput->post()) {
 
-            //  Settings keys
-            $sKeyStorageDriver = $oStorageDriverModel->getSettingKey();
+            try {
 
-            //  Validation
-            $oFormValidation = Factory::service('FormValidation');
-            $oFormValidation->set_rules($sKeyStorageDriver, '', '');
-            $oFormValidation->set_message('valid_email', lang('fv_valid_email'));
+                $sKeyStorageDriver = $oStorageDriverModel->getSettingKey();
+                $oFormValidation   = Factory::service('FormValidation');
+                $oFormValidation->set_rules($sKeyStorageDriver, '', 'required');
 
-            if ($oFormValidation->run()) {
-
-                try {
-
-                    $oStorageDriverModel->saveEnabled($oInput->post($sKeyStorageDriver));
-                    $this->data['success'] = 'CDN settings were saved.';
-
-                } catch (\Exception $e) {
-                    $this->data['error'] = 'There was a problem saving settings. ' . $e->getMessage();
+                if (!$oFormValidation->run()) {
+                    throw new ValidationException(lang('fv_there_were_errors'));
                 }
 
-            } else {
+                $oStorageDriverModel->saveEnabled($oInput->post($sKeyStorageDriver));
+                $this->data['success'] = 'CDN settings were saved.';
 
-                $this->data['error'] = lang('fv_there_were_errors');
+            } catch (\Exception $e) {
+                $this->data['error'] = 'There was a problem saving settings: ' . $e->getMessage();
             }
         }
 
