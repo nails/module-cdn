@@ -2988,40 +2988,46 @@ class Cdn
 
         foreach ($purgeIds as $iObjectId) {
 
-            $oDb->select('o.id,o.filename,b.id bucket_id,b.slug bucket_slug');
+            $oDb->select('o.id,o.filename,b.id bucket_id,b.slug bucket_slug, o.driver');
             $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
             $oDb->where('o.id', $iObjectId);
-            $object = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->row();
+            $oObject = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->row();
 
-            if (!empty($object)) {
+            if (!empty($oObject)) {
 
-                if ($this->callDriver('objectDestroy', [$object->filename, $object->bucket_slug])) {
+                $bResult = $this->callDriver(
+                    'objectDestroy',
+                    [$oObject->filename, $oObject->bucket_slug],
+                    $oObject->driver);
+
+                if ($bResult) {
 
                     //  Remove the database entries
-                    $oDb->where('id', $object->id);
+                    $oDb->where('id', $oObject->id);
                     $oDb->delete(NAILS_DB_PREFIX . 'cdn_object');
 
-                    $oDb->where('id', $object->id);
+                    $oDb->where('id', $oObject->id);
                     $oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
 
                     // --------------------------------------------------------------------------
 
                     //  Clear the caches
                     $this->unsetCacheObject((object) [
-                        'id'     => $object->id,
+                        'id'     => $oObject->id,
                         'file'   => (object) [
                             'name' => (object) [
-                                'disk' => $object->filename,
+                                'disk' => $oObject->filename,
                             ],
                         ],
                         'bucket' => (object) [
-                            'id'   => $object->bucket_id,
-                            'slug' => $object->bucket_slug,
+                            'id'   => $oObject->bucket_id,
+                            'slug' => $oObject->bucket_slug,
                         ],
                     ]);
 
                 } else {
-                    //  @todo - Rollback? Warn?
+                    $this->setError($this->callDriver('lastError'));
+                    return false;
                 }
             }
 
