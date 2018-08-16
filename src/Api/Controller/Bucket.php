@@ -127,7 +127,7 @@ class Bucket extends CrudController
             'label'          => $oObj->label,
             'max_size'       => $sMaxSize,
             'max_size_human' => $sMaxSizeHuman,
-            'object_count'   => number_format($oObj->objects),
+            'object_count'   => $oObj->objects,
         ];
     }
 }

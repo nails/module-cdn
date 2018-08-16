@@ -32,13 +32,12 @@ class CdnObject extends Base
             'filename_display',
         ];
         $this->addExpandableField([
-            'trigger'     => 'bucket',
-            'type'        => self::EXPANDABLE_TYPE_SINGLE,
-            'property'    => 'bucket',
-            'model'       => 'Bucket',
-            'provider'    => 'nailsapp/module-cdn',
-            'id_column'   => 'bucket_id',
-            'auto_expand' => true,
+            'trigger'   => 'bucket',
+            'type'      => self::EXPANDABLE_TYPE_SINGLE,
+            'property'  => 'bucket',
+            'model'     => 'Bucket',
+            'provider'  => 'nailsapp/module-cdn',
+            'id_column' => 'bucket_id',
         ]);
     }
 

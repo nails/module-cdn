@@ -141,7 +141,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             'label': bucket.label || null,
             'max_size': bucket.max_size || null,
             'max_size_human': bucket.max_size_human || null,
-            'object_count': bucket.object_count || 0,
+            'object_count': ko.observable(bucket.object_count || 0),
             'is_selected': ko.computed(function() {
                 return !base.isSearching() && !base.isTrash() && bucket.id === base.currentBucket();
             })
@@ -264,6 +264,10 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                             element.is_img = data.data.object.is_img;
                             element.is_uploading(false);
 
+                            //  Bump the bucket's counter
+                            var bucket = base.getBucketById(base.currentBucket());
+                            bucket.object_count(bucket.object_count() + 1);
+
                         } catch (e) {
                             data = {'error': 'An unknown error occurred.'};
                             element.error(data.error);
@@ -328,6 +332,9 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                     .done(function() {
                         base.objects.remove(object);
                         base.success('Item deleted');
+                        //  Reduce the bucket's counter
+                        var bucket = base.getBucketById(base.currentBucket());
+                        bucket.object_count(bucket.object_count() - 1);
                     })
                     .fail(function() {
                         base.error('Failed to delete object. It may be in use.');
