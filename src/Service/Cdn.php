@@ -1653,13 +1653,6 @@ class Cdn
             ];
         }
 
-        if (!empty($aData['includeObjectCount'])) {
-            $oDb = Factory::service('Database');
-            $oDb->select(
-                '(SELECT COUNT(*) FROM ' . NAILS_DB_PREFIX . 'cdn_object WHERE bucket_id = b.id) objectCount'
-            );
-        }
-
         $this->getCountCommon($aData);
     }
 
