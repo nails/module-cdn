@@ -24,6 +24,14 @@ class Bucket extends Base
         $this->table             = NAILS_DB_PREFIX . 'cdn_bucket';
         $this->tableAutoSetSlugs = true;
         $this->defaultSortColumn = 'label';
+        $this->addExpandableField([
+            'trigger'   => 'objects',
+            'type'      => self::EXPANDABLE_TYPE_MANY,
+            'property'  => 'objects',
+            'model'     => 'Object',
+            'provider'  => 'nailsapp/module-cdn',
+            'id_column' => 'bucket_id',
+        ]);
     }
 
     // --------------------------------------------------------------------------

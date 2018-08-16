@@ -141,6 +141,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             'label': bucket.label || null,
             'max_size': bucket.max_size || null,
             'max_size_human': bucket.max_size_human || null,
+            'object_count': bucket.object_count || 0,
             'is_selected': ko.computed(function() {
                 return !base.isSearching() && !base.isTrash() && bucket.id === base.currentBucket();
             })
@@ -445,12 +446,11 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.listBuckets = function() {
         base.debug('Listing buckets');
         var $deferred = new $.Deferred();
-        $.ajax({
-                'url': window.SITE_URL + 'api/cdn/bucket'
-            })
-            .done(function(response) {
+
+        base.apiFetchBuckets(window.SITE_URL + 'api/cdn/bucket')
+            .done(function(buckets) {
                 base.buckets.removeAll();
-                $.each(response.data, function(index, bucket) {
+                $.each(buckets, function(index, bucket) {
                     base.addBucket(bucket);
                 });
                 $deferred.resolve();
@@ -459,6 +459,52 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 base.error('Failed to retrieve list of buckets from the server.');
                 $deferred.reject();
             });
+
+        return $deferred.promise();
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Recursively fetches buckets
+     *
+     * @param {String} url The URL to query
+     * @param {Array}  buckets the array of buckets to pupulate
+     * @return {jQuery.Deferred}
+     */
+    base.apiFetchBuckets = function(url, buckets) {
+
+        var $deferred = new $.Deferred();
+
+        if (typeof buckets === 'undefined') {
+            buckets = [];
+        }
+
+        base.debug('Calling: ' + url);
+        $.ajax({'url': url})
+            .done(function(response) {
+
+                $.each(response.data, function(index, bucket) {
+                    buckets.push(bucket);
+                });
+
+                if (response.meta.pagination.next) {
+                    base.apiFetchBuckets(response.meta.pagination.next, buckets)
+                        .done(function() {
+                            $deferred.resolve();
+                        })
+                        .fail(function() {
+                            $deferred.reject();
+                        });
+                }
+
+                $deferred.resolve(buckets);
+            })
+            .fail(function(response) {
+                base.error('Failed to retrieve list of buckets from the server.');
+                $deferred.reject();
+            });
+
         return $deferred.promise();
     };
 

@@ -12,34 +12,21 @@
 
 namespace Nails\Cdn\Api\Controller;
 
-use Nails\Api\Controller\DefaultController;
+use Nails\Api\Controller\CrudController;
 use Nails\Api\Exception\ApiException;
 use Nails\Factory;
 
-class Bucket extends DefaultController
+class Bucket extends CrudController
 {
-    const CONFIG_MODEL_NAME           = 'Bucket';
-    const CONFIG_MODEL_PROVIDER       = 'nailsapp/module-cdn';
-    const REQUIRE_AUTH                = true;
-    const CONFIG_MAX_ITEMS_PER_PAGE   = null;
-    const CONFIG_MAX_OBJECTS_PER_PAGE = 50;
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Get multiple items; exclude hidden buckets
-     *
-     * @param  array   $aData    Any data to pass to the model
-     * @param  integer $iPage    The page to display
-     * @param  integer $iPerPage The number of items to display at the moment
-     *
-     * @return array
-     */
-    public function getIndex($aData = [], $iPage = null, $iPerPage = null)
-    {
-        $aData = ['where' => [['is_hidden', false]]];
-        return parent::getIndex($aData, $iPage, $iPerPage);
-    }
+    const CONFIG_MODEL_NAME       = 'Bucket';
+    const CONFIG_MODEL_PROVIDER   = 'nailsapp/module-cdn';
+    const REQUIRE_AUTH            = true;
+    const CONFIG_PER_PAGE         = 50;
+    const CONFIG_OBJECTS_PER_PAGE = 25;
+    const CONFIG_LOOKUP_DATA      = [
+        'expand' => ['objects:count'],
+        'where'  => [['is_hidden', false]],
+    ];
 
     // --------------------------------------------------------------------------
 
@@ -70,7 +57,7 @@ class Bucket extends DefaultController
 
         $aObjects = $oObjectModel->getAll(
             $iPage,
-            static::CONFIG_MAX_OBJECTS_PER_PAGE,
+            static::CONFIG_OBJECTS_PER_PAGE,
             ['where' => [['bucket_id', $iBucketId]]]
         );
 
@@ -88,7 +75,7 @@ class Bucket extends DefaultController
                       ))
                       ->setMeta([
                           'page'     => $iPage,
-                          'per_page' => static::CONFIG_MAX_OBJECTS_PER_PAGE,
+                          'per_page' => static::CONFIG_OBJECTS_PER_PAGE,
                       ]);
     }
 
@@ -99,7 +86,7 @@ class Bucket extends DefaultController
      *
      * @return array
      */
-    public function postRemap()
+    public function postIndex()
     {
         $oInput     = Factory::service('Input');
         $oHttpCodes = Factory::service('HttpCodes');
@@ -111,14 +98,15 @@ class Bucket extends DefaultController
             );
         }
 
+        //  @todo (Pablo - 2018-08-16) - Remove once CrudController validates properly itself
         if (!$oInput->post('label')) {
             throw new ApiException(
-                '`label is a required field',
+                '`label` is a required field',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
         }
 
-        return parent::postRemap();
+        return parent::postIndex();
     }
 
     // --------------------------------------------------------------------------
@@ -139,6 +127,7 @@ class Bucket extends DefaultController
             'label'          => $oObj->label,
             'max_size'       => $sMaxSize,
             'max_size_human' => $sMaxSizeHuman,
+            'object_count'   => number_format($oObj->objects),
         ];
     }
 }

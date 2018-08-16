@@ -23,7 +23,8 @@
                 <!-- ko foreach: buckets -->
                 <li class="manager__browse__buckets__list__item"
                     data-bind="click: $root.selectBucket, css: {selected: is_selected()}">
-                    <span data-bind="html:label"></span>
+                    <span class="manager__browse__buckets__list__item__label" data-bind="html:label"></span>
+                    <span class="manager__browse__buckets__list__item__count" data-bind="html:object_count + ' Objects'"></span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="8" height="12" viewBox="0 0 8 12">
                         <polygon fill="#444444" points="218 35.4 216.6 34 220.6 30 216.6 26 218 24.6 223.4 30" transform="translate(-216 -24)"/>
                     </svg>
@@ -191,7 +192,12 @@
                 No objects found
                 <!-- /ko -->
                 <!-- ko if: !isSearching() && !isTrash() -->
-                No objects in this bucket
+                    <!-- ko if: !$root.currentBucket() -->
+                    No objects in this bucket
+                    <!-- /ko -->
+                    <!-- ko if: $root.currentBucket() -->
+                    No objects in "<span data-bind="html: $root.getBucketById($root.currentBucket()).label"></span>"
+                    <!-- /ko -->
                 <!-- /ko -->
             </div>
             <!-- /ko -->
