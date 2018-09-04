@@ -81,7 +81,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             .done(function() {
                 //  If bucket is defined, then set it as current, else take the first bucket in the list
                 if (initialBucket) {
-                    base.debug('Initial bucket specified, attempting to load');
+                    base.debug('Initial bucket specified: "' + initialBucket + '", attempting to load');
                     var bucket = base.getBucketBySlug(initialBucket);
                     if (bucket) {
                         base.debug('Initial bucket is valid, resolving');
@@ -134,7 +134,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {void}
      */
     base.addBucket = function(bucket) {
-        base.debug('Adding bucket:' + bucket.label);
+        base.debug('Adding bucket: ' + bucket.label);
         base.buckets.push({
             'id': bucket.id || null,
             'slug': bucket.slug || null,
@@ -539,11 +539,15 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {object}|null
      */
     base.getBucketBySlug = function(slug) {
+        base.debug('Fetching bucket by slug: ' + slug);
         for (var i = 0, j = base.buckets().length; i < j; i++) {
             if (base.buckets()[i].slug === slug) {
+                base.debug('Bucket found');
+                base.debug(base.buckets()[i]);
                 return base.buckets()[i];
             }
         }
+        base.debug('Bucket not found');
         return null;
     };
 
