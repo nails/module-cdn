@@ -835,7 +835,7 @@ class Cdn
                         'slug' => $oBucket->slug,
                     ];
                 } else {
-                    throw new ObjectCreateException();
+                    throw new ObjectCreateException('Failed to create bucket. ' . $this->lastError());
                 }
             } else {
                 $oData->bucket = (object) [
@@ -981,10 +981,10 @@ class Cdn
                     return $object;
                 } else {
                     $this->callDriver('destroy', [$oData->filename, $oData->bucket_slug]);
-                    throw new ObjectCreateException();
+                    throw new ObjectCreateException('Failed to create object in database. ' . $this->lastError());
                 }
             } else {
-                throw new ObjectCreateException($this->callDriver('lastError'));
+                throw new ObjectCreateException('Failed to create object on storage service. ' . $this->callDriver('lastError'));
             }
 
         } catch (\Exception $e) {
