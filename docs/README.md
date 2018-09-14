@@ -1,4 +1,4 @@
-# Docs for `nailsapp/module-cdn`
+# Docs for `nails/module-cdn`
 > Documentation is a WIP.
 
 

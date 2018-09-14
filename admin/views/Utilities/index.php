@@ -76,7 +76,7 @@
 
                         foreach ($orphans['orphans'] as $orphan) {
 
-                            $oCdn = \Nails\Factory::service('Cdn', 'nailsapp/module-cdn');
+                            $oCdn = \Nails\Factory::service('Cdn', 'nails/module-cdn');
 
                             ?>
                             <tr>

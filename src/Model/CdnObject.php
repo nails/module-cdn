@@ -36,7 +36,7 @@ class CdnObject extends Base
             'type'      => self::EXPANDABLE_TYPE_SINGLE,
             'property'  => 'bucket',
             'model'     => 'Bucket',
-            'provider'  => 'nailsapp/module-cdn',
+            'provider'  => 'nails/module-cdn',
             'id_column' => 'bucket_id',
         ]);
     }
@@ -80,7 +80,7 @@ class CdnObject extends Base
 
         // --------------------------------------------------------------------------
 
-        $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
 
         $sFileNameDisk  = $oObj->filename;
         $sFileNameHuman = $oObj->filename_display;

@@ -30,7 +30,7 @@ class Zip extends Base
         if ($ids && $hash) {
 
             //  Check the hash
-            $oCdn    = Factory::service('Cdn', 'nailsapp/module-cdn');
+            $oCdn    = Factory::service('Cdn', 'nails/module-cdn');
             $objects = $oCdn->verifyUrlServeZippedHash($hash, $ids, $filename);
 
             if ($objects) {

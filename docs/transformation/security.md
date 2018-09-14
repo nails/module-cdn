@@ -13,7 +13,7 @@ All components, including the application, must explicitly announce the image di
     "extra": {
         "nails": {
             "data": {
-                "nailsapp/module-cdn": {
+                "nails/module-cdn": {
                     "permitted-image-dimensions": [
                         "120x120",
                         "250x250"

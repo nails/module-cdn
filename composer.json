@@ -1,5 +1,5 @@
 {
-    "name": "nailsapp/module-cdn",
+    "name": "nails/module-cdn",
     "keywords": ["Nails", "Shed Collective", "CodeIgniter", "CDN Module"],
     "homepage": "http://nailsapp.co.uk/modules/cdn",
     "description": "This is the \"CDN\" module for Nails.",
@@ -31,8 +31,8 @@
     }],
     "require":
     {
-        "nailsapp/common": "dev-develop",
-        "nailsapp/driver-cdn-local": "dev-develop",
+        "nails/common": "dev-develop",
+        "nails/driver-cdn-local": "dev-develop",
         "sybio/gif-creator": "~1.0.0",
         "sybio/gif-frame-extractor": "~1.0.0",
         "masterexploder/phpthumb": "dev-master"
@@ -56,25 +56,25 @@
                 "helpers": ["cdn"]
             },
             "data": {
-                "nailsapp/module-admin": {
+                "nails/module-admin": {
                     "autoload": {
                         "assets": {
                             "js": [
-                                ["admin.objectpicker.min.js", "nailsapp/module-cdn"]
+                                ["admin.objectpicker.min.js", "nails/module-cdn"]
                             ],
                             "css": [
-                                ["admin.objectpicker.css", "nailsapp/module-cdn"]
+                                ["admin.objectpicker.css", "nails/module-cdn"]
                             ]
                         }
                     }
                 },
-                "nailsapp/module-api": {
+                "nails/module-api": {
                     "namespace": "cdn",
                     "controller-map": {
                         "Object": "CdnObject"
                     }
                 },
-                "nailsapp/module-cdn": {
+                "nails/module-cdn": {
                     "permitted-image-dimensions": [
                         "100x100",
                         "150x150",

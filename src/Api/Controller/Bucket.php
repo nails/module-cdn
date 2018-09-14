@@ -19,7 +19,7 @@ use Nails\Factory;
 class Bucket extends CrudController
 {
     const CONFIG_MODEL_NAME       = 'Bucket';
-    const CONFIG_MODEL_PROVIDER   = 'nailsapp/module-cdn';
+    const CONFIG_MODEL_PROVIDER   = 'nails/module-cdn';
     const REQUIRE_AUTH            = true;
     const CONFIG_PER_PAGE         = 50;
     const CONFIG_OBJECTS_PER_PAGE = 25;
@@ -44,7 +44,7 @@ class Bucket extends CrudController
         }
 
         $oInput       = Factory::service('Input');
-        $oObjectModel = Factory::model('Object', 'nailsapp/module-cdn');
+        $oObjectModel = Factory::model('Object', 'nails/module-cdn');
         $iBucketId    = (int) $oInput->get('bucket_id') ?: null;
         $iPage        = (int) $oInput->get('page') ?: 1;
 
@@ -61,7 +61,7 @@ class Bucket extends CrudController
             ['where' => [['bucket_id', $iBucketId]]]
         );
 
-        return Factory::factory('ApiResponse', 'nailsapp/module-api')
+        return Factory::factory('ApiResponse', 'nails/module-api')
                       ->setData(array_map(
                           function ($oObj) {
                               $oObj->is_img = isset($oObj->img);

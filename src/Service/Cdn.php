@@ -33,7 +33,7 @@ class Cdn
      * The default CDN driver to use
      * @var string
      */
-    const DEFAULT_DRIVER = 'nailsapp/driver-cdn-local';
+    const DEFAULT_DRIVER = 'nails/driver-cdn-local';
 
     /**
      * Byte Multipliers
@@ -102,12 +102,12 @@ class Cdn
      */
     public function __construct()
     {
-        $this->aDefaultAllowedTypes = Factory::property('bucketDefaultAllowedTypes', 'nailsapp/module-cdn');
+        $this->aDefaultAllowedTypes = Factory::property('bucketDefaultAllowedTypes', 'nails/module-cdn');
 
         // --------------------------------------------------------------------------
 
         //  Load the storage driver
-        $oStorageDriverModel = Factory::model('StorageDriver', 'nailsapp/module-cdn');
+        $oStorageDriverModel = Factory::model('StorageDriver', 'nails/module-cdn');
         $aDrivers            = $oStorageDriverModel->getAll();
         $oDriver             = $oStorageDriverModel->getEnabled();
 
@@ -138,10 +138,10 @@ class Cdn
         $aComponents          = _NAILS_GET_COMPONENTS();
         $aPermittedDimensions = [];
         foreach ($aComponents as $oComponent) {
-            if (!empty($oComponent->data->{'nailsapp/module-cdn'}->{'permitted-image-dimensions'})) {
+            if (!empty($oComponent->data->{'nails/module-cdn'}->{'permitted-image-dimensions'})) {
                 $aPermittedDimensions = array_merge(
                     $aPermittedDimensions,
-                    $oComponent->data->{'nailsapp/module-cdn'}->{'permitted-image-dimensions'}
+                    $oComponent->data->{'nails/module-cdn'}->{'permitted-image-dimensions'}
                 );
             }
         }
@@ -149,10 +149,10 @@ class Cdn
         //  Determine permitted dimensions from app
         $oApp = _NAILS_GET_APP();
 
-        if (!empty($oApp->data->{'nailsapp/module-cdn'}->{'permitted-image-dimensions'})) {
+        if (!empty($oApp->data->{'nails/module-cdn'}->{'permitted-image-dimensions'})) {
             $aPermittedDimensions = array_merge(
                 $aPermittedDimensions,
-                $oApp->data->{'nailsapp/module-cdn'}->{'permitted-image-dimensions'}
+                $oApp->data->{'nails/module-cdn'}->{'permitted-image-dimensions'}
             );
         }
 
@@ -212,7 +212,7 @@ class Cdn
             throw new DriverException('"' . $sDriver . '" is not a valid CDN driver.');
         }
 
-        $oStorageDriverModel = Factory::model('StorageDriver', 'nailsapp/module-cdn');
+        $oStorageDriverModel = Factory::model('StorageDriver', 'nails/module-cdn');
         $oInstance           = $oStorageDriverModel->getInstance($oDriver->slug);
 
         if (empty($oInstance)) {
@@ -798,7 +798,7 @@ class Cdn
 
             //  Calculate the MD5 hash, don't upload duplicates in the same bucket
             $oData->md5_hash = md5_file($oData->file);
-            $oObjectModel    = Factory::model('Object', 'nailsapp/module-cdn');
+            $oObjectModel    = Factory::model('Object', 'nails/module-cdn');
             $oExistingObject = $oObjectModel->getByMd5Hash($oData->md5_hash, ['expand' => ['bucket']]);
 
             if (!empty($oExistingObject)) {
@@ -1490,7 +1490,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $oObjectModel = Factory::model('Object', 'nailsapp/module-cdn');
+        $oObjectModel = Factory::model('Object', 'nails/module-cdn');
         $iObjectId    = $oObjectModel->create($aData);
 
         if ($iObjectId) {
@@ -2755,7 +2755,7 @@ class Cdn
         if (empty($iUserId)) {
             $avatarUrl = $this->urlBlankAvatar($iWidth, $iHeight);
         } else {
-            $oUserModel = Factory::model('User', 'nailsapp/module-auth');
+            $oUserModel = Factory::model('User', 'nails/module-auth');
             $user       = $oUserModel->getById($iUserId);
             if (empty($user)) {
                 $avatarUrl = $this->urlBlankAvatar($iWidth, $iHeight);
@@ -2787,7 +2787,7 @@ class Cdn
         if (empty($iUserId)) {
             $avatarScheme = $this->urlBlankAvatarScheme();
         } else {
-            $oUserModel = Factory::model('User', 'nailsapp/module-auth');
+            $oUserModel = Factory::model('User', 'nails/module-auth');
             $user       = $oUserModel->getById($iUserId);
             if (empty($user->profile_img)) {
                 $avatarScheme = $this->urlBlankAvatarScheme();
@@ -3126,7 +3126,7 @@ class Cdn
      */
     public function isPermittedDimension($iWidth, $iHeight)
     {
-        if (Factory::property('allowDangerousImageTransformation', 'nailsapp/module-cdn')) {
+        if (Factory::property('allowDangerousImageTransformation', 'nails/module-cdn')) {
             return true;
         } else {
             $sDimension = $iWidth . 'x' . $iHeight;

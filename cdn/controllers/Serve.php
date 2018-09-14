@@ -86,7 +86,7 @@ class Serve extends Base
      */
     public function index()
     {
-        $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $oCdn   = Factory::service('Cdn', 'nails/module-cdn');
         $oInput = Factory::service('Input');
         //  Check if there was a bad token
         if ($this->badToken) {

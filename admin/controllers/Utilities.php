@@ -24,7 +24,7 @@ class Utilities extends BaseAdmin
      */
     public static function announce()
     {
-        $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
+        $oNavGroup = Factory::factory('Nav', 'nails/module-admin');
         $oNavGroup->setLabel('Utilities');
         $oNavGroup->setIcon('fa-sliders');
 
@@ -84,7 +84,7 @@ class Utilities extends BaseAdmin
 
                         case 'db':
 
-                            $oCdn                  = Factory::service('Cdn', 'nailsapp/module-cdn');
+                            $oCdn                  = Factory::service('Cdn', 'nails/module-cdn');
                             $this->data['orphans'] = $oCdn->findOrphanedObjects();
                             break;
 
@@ -145,7 +145,7 @@ class Utilities extends BaseAdmin
             // --------------------------------------------------------------------------
 
             $oAsset = Factory::service('Asset');
-            $oAsset->load('admin.utilities.orphans.min.js', 'nailsapp/module-cdn');
+            $oAsset->load('admin.utilities.orphans.min.js', 'nails/module-cdn');
             $oAsset->inline(
                 'var _Admin_Utilities_Cdn_Orphans = new NAILS_Admin_Utilities_Cdn_Orphans();
                 _Admin_Utilities_Cdn_Orphans.init();',

@@ -71,7 +71,7 @@ class Crop extends Base
     public function index($cropMethod = 'CROP')
     {
         $oInput = Factory::service('Input');
-        $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $oCdn   = Factory::service('Cdn', 'nails/module-cdn');
 
         switch ($cropMethod) {
             case 'SCALE':

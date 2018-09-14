@@ -41,7 +41,7 @@ class CdnObject extends Base
     {
         //  @todo (Pablo - 2017-12-18) - this should be protected using admin permissions or the token uploader
         $oInput = Factory::service('Input');
-        $oCdn   = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $oCdn   = Factory::service('Cdn', 'nails/module-cdn');
 
         $sIds = '';
 
@@ -85,7 +85,7 @@ class CdnObject extends Base
             $aOut[] = $this->formatObject($oObject, $aUrls);
         }
 
-        return Factory::factory('ApiResponse', 'nailsapp/module-api')
+        return Factory::factory('ApiResponse', 'nails/module-api')
                       ->setData($oInput->get('id') ? reset($aOut) : $aOut);
     }
 
@@ -100,7 +100,7 @@ class CdnObject extends Base
         //  @todo (Pablo - 2017-12-18) - this should be protected using admin permissions or the token uploader
         $oHttpCodes = Factory::service('HttpCodes');
         $oInput     = Factory::service('Input');
-        $oCdn       = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $oCdn       = Factory::service('Cdn', 'nails/module-cdn');
         $aOut       = [];
 
         // --------------------------------------------------------------------------
@@ -127,7 +127,7 @@ class CdnObject extends Base
         }
 
         //  @todo (Pablo - 2018-06-25) - Reduce the namespace here (i.e remove `object`)
-        return Factory::factory('ApiResponse', 'nailsapp/module-api')
+        return Factory::factory('ApiResponse', 'nails/module-api')
                       ->setData([
                           'object' => $this->formatObject(
                               $oObject,
@@ -154,7 +154,7 @@ class CdnObject extends Base
         }
 
         $oInput    = Factory::service('Input');
-        $oCdn      = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $oCdn      = Factory::service('Cdn', 'nails/module-cdn');
         $iObjectId = $oInput->post('object_id');
 
         if (empty($iObjectId)) {
@@ -191,7 +191,7 @@ class CdnObject extends Base
             );
         }
 
-        return Factory::factory('ApiResponse', 'nailsapp/module-api');
+        return Factory::factory('ApiResponse', 'nails/module-api');
     }
 
     // --------------------------------------------------------------------------
@@ -212,7 +212,7 @@ class CdnObject extends Base
         }
 
         $oInput    = Factory::service('Input');
-        $oCdn      = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $oCdn      = Factory::service('Cdn', 'nails/module-cdn');
         $iObjectId = $oInput->post('object_id');
 
         if (!$oCdn->objectRestore($iObjectId)) {
@@ -222,7 +222,7 @@ class CdnObject extends Base
             );
         }
 
-        return Factory::factory('ApiResponse', 'nailsapp/module-api');
+        return Factory::factory('ApiResponse', 'nails/module-api');
     }
 
     // --------------------------------------------------------------------------
@@ -243,7 +243,7 @@ class CdnObject extends Base
         }
 
         $oInput    = Factory::service('Input');
-        $oModel    = Factory::model('Object', 'nailsapp/module-cdn');
+        $oModel    = Factory::model('Object', 'nails/module-cdn');
         $sKeywords = $oInput->get('keywords');
         $iPage     = (int) $oInput->get('page') ?: 1;
         $oResult   = $oModel->search(
@@ -252,7 +252,7 @@ class CdnObject extends Base
             static::MAX_OBJECTS_PER_REQUEST
         );
 
-        $oResponse = Factory::factory('ApiResponse', 'nailsapp/module-api');
+        $oResponse = Factory::factory('ApiResponse', 'nails/module-api');
         $oResponse->setData(array_map(
             function ($oObj) {
                 $oObj->is_img = isset($oObj->img);
@@ -285,7 +285,7 @@ class CdnObject extends Base
         }
 
         $oInput   = Factory::service('Input');
-        $oModel   = Factory::model('ObjectTrash', 'nailsapp/module-cdn');
+        $oModel   = Factory::model('ObjectTrash', 'nails/module-cdn');
         $iPage    = (int) $oInput->get('page') ?: 1;
         $aResults = $oModel->getAll(
             $iPage,
@@ -293,7 +293,7 @@ class CdnObject extends Base
             ['sort' => [['trashed', 'desc']]]
         );
 
-        $oResponse = Factory::factory('ApiResponse', 'nailsapp/module-api');
+        $oResponse = Factory::factory('ApiResponse', 'nails/module-api');
         $oResponse->setData(array_map(
             function ($oObj) {
                 $oObj->is_img = isset($oObj->img);
@@ -390,7 +390,7 @@ class CdnObject extends Base
      */
     protected function generateUrls($oObject, $aUrls)
     {
-        $oCdn = Factory::service('Cdn', 'nailsapp/module-cdn');
+        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
         $aOut = ['src' => $oCdn->urlServe($oObject)];
 
         if (!empty($aUrls) && $oObject->is_img) {

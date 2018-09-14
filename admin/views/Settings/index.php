@@ -30,7 +30,7 @@
                 <?=adminHelper(
                     'loadSettingsDriverTable',
                     'StorageDriver',
-                    'nailsapp/module-cdn'
+                    'nails/module-cdn'
                 )?>
             </div>
             <?php

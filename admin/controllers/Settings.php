@@ -25,7 +25,7 @@ class Settings extends Base
      */
     public static function announce()
     {
-        $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
+        $oNavGroup = Factory::factory('Nav', 'nails/module-admin');
         $oNavGroup->setLabel('Settings');
         $oNavGroup->setIcon('fa-wrench');
 
@@ -64,7 +64,7 @@ class Settings extends Base
         }
 
         $oInput              = Factory::service('Input');
-        $oStorageDriverModel = Factory::model('StorageDriver', 'nailsapp/module-cdn');
+        $oStorageDriverModel = Factory::model('StorageDriver', 'nails/module-cdn');
 
         if ($oInput->post()) {
 
@@ -89,7 +89,7 @@ class Settings extends Base
         // --------------------------------------------------------------------------
 
         //  Get data
-        $this->data['settings'] = appSetting(null, 'nailsapp/module-cdn', true);
+        $this->data['settings'] = appSetting(null, 'nails/module-cdn', true);
 
         Helper::loadView('index');
     }

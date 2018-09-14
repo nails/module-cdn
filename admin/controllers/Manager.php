@@ -25,7 +25,7 @@ class Manager extends BaseAdmin
     public static function announce()
     {
         if (userHasPermission('admin:cdn:manager:object:browse')) {
-            $oNavGroup = Factory::factory('Nav', 'nailsapp/module-admin');
+            $oNavGroup = Factory::factory('Nav', 'nails/module-admin');
             $oNavGroup
                 ->setLabel('Media')
                 ->setIcon('fa-picture-o')
@@ -70,8 +70,8 @@ class Manager extends BaseAdmin
 
         $oAsset = Factory::service('Asset');
         $oAsset->library('KNOCKOUT');
-        $oAsset->load('admin.mediamanager.css', 'nailsapp/module-cdn');
-        $oAsset->load('admin.mediamanager.min.js', 'nailsapp/module-cdn');
+        $oAsset->load('admin.mediamanager.css', 'nails/module-cdn');
+        $oAsset->load('admin.mediamanager.min.js', 'nails/module-cdn');
 
         $sBucketSlug      = $oInput->get('bucket');
         $sCallbackHandler = $oInput->get('CKEditor') ? 'ckeditor' : 'picker';

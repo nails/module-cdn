@@ -16,7 +16,7 @@ use Nails\Common\Model\BaseDriver;
 
 class StorageDriver extends BaseDriver
 {
-    protected $sModule         = 'nailsapp/module-cdn';
+    protected $sModule         = 'nails/module-cdn';
     protected $sType           = 'storage';
     protected $bEnableMultiple = false;
 }

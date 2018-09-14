@@ -69,7 +69,7 @@ class Migrate extends Base
         $oOutput->writeln('<info>--------------------</info>');
         $oOutput->writeln('Beginning...');
 
-        $oStorageDriver = Factory::model('StorageDriver', 'nailsapp/module-cdn');
+        $oStorageDriver = Factory::model('StorageDriver', 'nails/module-cdn');
         $sDriver        = $oInput->getArgument('driver');
         $bOverwrite     = $oInput->getOption('overwrite');
         $bRemove        = $oInput->getOption('remove-src');
@@ -102,7 +102,7 @@ class Migrate extends Base
         // --------------------------------------------------------------------------
 
         //  Work out what's going to happen
-        $oObjectModel = Factory::model('Object', 'nailsapp/module-cdn');
+        $oObjectModel = Factory::model('Object', 'nails/module-cdn');
 
         //  How many objects are already migrated
         $iMigrated = $oObjectModel->countAll([
@@ -175,8 +175,8 @@ class Migrate extends Base
     protected function doMigrate($sDriver, $bOverwrite, $bRemove, $aDriversOld)
     {
         $oOutput        = $this->oOutput;
-        $oObjectModel   = Factory::model('Object', 'nailsapp/module-cdn');
-        $oStorageDriver = Factory::model('StorageDriver', 'nailsapp/module-cdn');
+        $oObjectModel   = Factory::model('Object', 'nails/module-cdn');
+        $oStorageDriver = Factory::model('StorageDriver', 'nails/module-cdn');
 
         $oProgress = new ProgressBar($oOutput, 100);
         $oProgress->setFormat("\n%current%% [%bar%]\n\nElapsed:   %elapsed:6s%\nEstimated: %estimated:-6s%");

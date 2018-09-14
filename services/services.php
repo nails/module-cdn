@@ -22,7 +22,7 @@ return [
 
         /**
          * Allow images to be manipulated to any size via the URL. Not recommended.
-         * https://github.com/nailsapp/module-cdn/blob/develop/docs/transformation/security.md
+         * https://github.com/nails/module-cdn/blob/develop/docs/transformation/security.md
          */
         'allowDangerousImageTransformation' => false,
     ],
