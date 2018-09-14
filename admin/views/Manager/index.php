@@ -192,12 +192,7 @@
                 No objects found
                 <!-- /ko -->
                 <!-- ko if: !isSearching() && !isTrash() -->
-                    <!-- ko if: !$root.currentBucket() -->
                     No objects in this bucket
-                    <!-- /ko -->
-                    <!-- ko if: $root.currentBucket() -->
-                    No objects in "<span data-bind="html: $root.getBucketById($root.currentBucket()).label"></span>"
-                    <!-- /ko -->
                 <!-- /ko -->
             </div>
             <!-- /ko -->

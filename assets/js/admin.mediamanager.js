@@ -134,7 +134,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {void}
      */
     base.addBucket = function(bucket) {
-        base.debug('Adding bucket: ' + bucket.label);
+        base.debug('Adding bucket: ', bucket);
         base.buckets.push({
             'id': bucket.id || null,
             'slug': bucket.slug || null,
@@ -157,8 +157,10 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.selectBucket = function(bucket) {
         if (typeof bucket === 'object') {
+            base.debug('Selecting bucket: ', bucket.id);
             base.currentBucket(bucket.id);
         } else {
+            base.debug('Selecting bucket: ', bucket);
             base.currentBucket(bucket);
         }
         base.isSearching(false);
@@ -181,6 +183,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.createBucket = function(thisClass, event) {
         if (event.which === base.keymap.ENTER) {
+            base.showAddBucket(false);
             $.ajax({
                     'url': window.SITE_URL + 'api/cdn/bucket',
                     'method': 'POST',
@@ -189,10 +192,16 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                     }
                 })
                 .done(function(response) {
-                    base.showAddBucket(false);
-                    base.listBuckets();
-                    base.selectBucket(response.data.id);
                     base.success('Bucket created');
+                    base.debug('Bucket created');
+                    base.debug(response);
+                    base.listBuckets()
+                        .done(function() {
+                            base.selectBucket(response.data.id);
+                        })
+                        .fail(function() {
+                            base.error('Failed to retrieve list of buckets from the server.');
+                        });
                 })
                 .fail(function(response) {
                     base.error('Failed to create bucket.', response);
@@ -460,6 +469,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 $.each(buckets, function(index, bucket) {
                     base.addBucket(bucket);
                 });
+                base.debug('Finished listing buckets');
                 $deferred.resolve();
             })
             .fail(function() {
@@ -507,7 +517,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
                 $deferred.resolve(buckets);
             })
-            .fail(function(response) {
+            .fail(function() {
                 base.error('Failed to retrieve list of buckets from the server.');
                 $deferred.reject();
             });
@@ -528,6 +538,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 return base.buckets()[i];
             }
         }
+        base.debug('Could not find bucket with ID: ' + id, base.buckets());
         return null;
     };
 
@@ -547,7 +558,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 return base.buckets()[i];
             }
         }
-        base.debug('Bucket not found');
+        base.debug('Could not find bucket with slug: ' + slug, base.buckets());
         return null;
     };
 
@@ -699,8 +710,8 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @param {string} message The message to render
      * @return {promise} A promise, resolved when the message is closed
      */
-    base.success = function(message) {
-        return base.feedback('success', message);
+    base.success = function(message, payload) {
+        return base.feedback('success', message, payload);
     };
 
     // --------------------------------------------------------------------------
@@ -710,8 +721,8 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @param {string} message The message to render
      * @return {promise} A promise, resolved when the message is closed
      */
-    base.error = function(message) {
-        return base.feedback('error', message || 'An unknown error occurred.');
+    base.error = function(message, payload) {
+        return base.feedback('error', message || 'An unknown error occurred.', payload);
     };
 
     // --------------------------------------------------------------------------
@@ -721,9 +732,13 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @param {string} message The message to render
      * @return {promise} A promise, resolved when the message is closed
      */
-    base.debug = function(message) {
+    base.debug = function(message, payload) {
         if (typeof console === 'object') {
-            console.log('[Media Manager] ', message);
+            if (typeof payload !== 'undefined') {
+                console.log('[Media Manager] ', message, payload);
+            } else {
+                console.log('[Media Manager] ', message);
+            }
         }
         return base;
     };
