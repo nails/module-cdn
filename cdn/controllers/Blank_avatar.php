@@ -39,9 +39,10 @@ class Blank_avatar extends Base
         // --------------------------------------------------------------------------
 
         //  Determine dynamic values
-        $this->width  = (int) $this->uri->segment(3, 100);
-        $this->height = (int) $this->uri->segment(4, 100);
-        $this->sex    = strtolower($this->uri->segment(5, 'neutral'));
+        $oUri         = Factory::service('Uri');
+        $this->width  = (int) $oUri->segment(3, 100);
+        $this->height = (int) $oUri->segment(4, 100);
+        $this->sex    = strtolower($oUri->segment(5, 'neutral'));
 
         // --------------------------------------------------------------------------
 
