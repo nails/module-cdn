@@ -11,6 +11,7 @@
  */
 
 use Nails\Cdn\Controller\Base;
+use Nails\Factory;
 
 class Blank_avatar extends Base
 {
