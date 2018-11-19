@@ -345,7 +345,7 @@ abstract class Base extends BaseMiddle
     {
         $oCdn = Factory::service('Cdn', 'nails/module-cdn');
         if (!$oCdn->isPermittedDimension($iWidth, $iHeight)) {
-            if (Environment::not('PRODUCTION')) {
+            if (Environment::not(Environment::ENV_PROD)) {
                 throw new PermittedDimensionException(
                     'Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
                 );
