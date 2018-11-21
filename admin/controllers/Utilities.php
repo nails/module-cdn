@@ -63,7 +63,7 @@ class Utilities extends BaseAdmin
         // --------------------------------------------------------------------------
 
         $oInput = Factory::service('Input');
-        if ($oInput->isCli()) {
+        if ($oInput::isCli()) {
             $this->indexCli();
         } else {
 

@@ -350,7 +350,7 @@ abstract class Base extends BaseMiddle
                     'Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
                 );
             } else {
-                show_404();
+                show404();
             }
         }
     }

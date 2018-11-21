@@ -19,6 +19,7 @@ use Nails\Cdn\Exception\UrlException;
 use Nails\Common\Traits\Caching;
 use Nails\Common\Traits\ErrorHandling;
 use Nails\Common\Traits\GetCountCommon;
+use Nails\Components;
 use Nails\Factory;
 
 class Cdn
@@ -31,12 +32,14 @@ class Cdn
 
     /**
      * The default CDN driver to use
+     *
      * @var string
      */
     const DEFAULT_DRIVER = 'nails/driver-cdn-local';
 
     /**
      * Byte Multipliers
+     *
      * @var integer
      */
     const BYTE_MULTIPLIER_KB = 1024;
@@ -45,6 +48,7 @@ class Cdn
 
     /**
      * How precise to make human friendly file sizes
+     *
      * @var integer
      */
     const FILE_SIZE_PRECISION = 6;
@@ -58,12 +62,14 @@ class Cdn
 
     /**
      * The cache directory to use
+     *
      * @var string
      */
     const CACHE_PATH = CACHE_PUBLIC_PATH;
 
     /**
      * The cache directory to use
+     *
      * @var string
      */
     const CACHE_URL = CACHE_PUBLIC_URL;
@@ -72,24 +78,28 @@ class Cdn
 
     /**
      * All available CDN drivers
+     *
      * @var array
      */
     protected $aDrivers;
 
     /**
      * The active driver
+     *
      * @var string
      */
     protected $oEnabledDriver;
 
     /**
      * The default list of allowed types for a bucket
+     *
      * @var array
      */
     protected $aDefaultAllowedTypes;
 
     /**
      * The image transformations which the CDN will satisfy
+     *
      * @var array
      */
     protected $aPermittedDimensions = [];
@@ -98,6 +108,7 @@ class Cdn
 
     /**
      * Cdn constructor.
+     *
      * @throws DriverException
      */
     public function __construct()
@@ -135,9 +146,8 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Determine permitted image dimensions from modules
-        $aComponents          = _NAILS_GET_COMPONENTS();
         $aPermittedDimensions = [];
-        foreach ($aComponents as $oComponent) {
+        foreach (Components::list() as $oComponent) {
             if (!empty($oComponent->data->{'nails/module-cdn'}->{'permitted-image-dimensions'})) {
                 $aPermittedDimensions = array_merge(
                     $aPermittedDimensions,
@@ -147,7 +157,7 @@ class Cdn
         }
 
         //  Determine permitted dimensions from app
-        $oApp = _NAILS_GET_APP();
+        $oApp = Components::getApp();
 
         if (!empty($oApp->data->{'nails/module-cdn'}->{'permitted-image-dimensions'})) {
             $aPermittedDimensions = array_merge(
@@ -2123,6 +2133,7 @@ class Cdn
 
     /**
      * Returns an array of file extension to mime types
+     *
      * @return array
      */
     protected function getMimeMappings()
@@ -2859,6 +2870,7 @@ class Cdn
 
     /**
      * Finds objects which have no file counterparts
+     *
      * @return  array
      **/
     public function findOrphanedObjects()
@@ -2885,6 +2897,7 @@ class Cdn
 
     /**
      * Finds files which have no object counterparts
+     *
      * @return  array
      **/
     public function findOrphanedFiles()
@@ -3097,6 +3110,7 @@ class Cdn
 
     /**
      * Returns an empty object
+     *
      * @return object
      */
     protected function emptyObject()
