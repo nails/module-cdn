@@ -147,7 +147,7 @@ class Cdn
 
         //  Determine permitted image dimensions from modules
         $aPermittedDimensions = [];
-        foreach (Components::list() as $oComponent) {
+        foreach (Components::available() as $oComponent) {
             if (!empty($oComponent->data->{'nails/module-cdn'}->{'permitted-image-dimensions'})) {
                 $aPermittedDimensions = array_merge(
                     $aPermittedDimensions,
