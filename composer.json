@@ -60,10 +60,10 @@
                     "autoload": {
                         "assets": {
                             "js": [
-                                ["admin.objectpicker.min.js", "nails/module-cdn"]
+                                "admin.objectpicker.min.js"
                             ],
                             "css": [
-                                ["admin.objectpicker.css", "nails/module-cdn"]
+                                "admin.objectpicker.css"
                             ]
                         }
                     }
