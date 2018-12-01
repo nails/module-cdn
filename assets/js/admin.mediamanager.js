@@ -1,3 +1,7 @@
+'use strict';
+
+import '../sass/admin.mediamanager.scss';
+
 /* globals ko, $ */
 function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     var base = this;

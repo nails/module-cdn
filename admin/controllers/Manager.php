@@ -70,8 +70,9 @@ class Manager extends BaseAdmin
 
         $oAsset = Factory::service('Asset');
         $oAsset->library('KNOCKOUT');
-        $oAsset->load('admin.mediamanager.css', 'nails/module-cdn');
-        $oAsset->load('admin.mediamanager.min.js', 'nails/module-cdn');
+        $oAsset->load('admin.mediamanager.min.css', 'nails/module-cdn');
+        //  @todo (Pablo - 2018-12-01) - Update/Remove/Use minified once JS is refactored to be a module
+        $oAsset->load('admin.mediamanager.js', 'nails/module-cdn');
 
         $sBucketSlug      = $oInput->get('bucket');
         $sCallbackHandler = $oInput->get('CKEditor') ? 'ckeditor' : 'picker';

@@ -1,3 +1,7 @@
+'use strict';
+
+import '../sass/admin.objectpicker.scss';
+
 /* globals console */
 var _CDN_OBJECTPICKER;
 _CDN_OBJECTPICKER = function() {

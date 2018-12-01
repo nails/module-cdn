@@ -22,7 +22,7 @@
             position: fixed;
             top: 65px;
             height: 0;
-            width: calc(~"100% - 269px");
+            width: calc(100% - 269px);
             line-height: 50px;
             z-index: 200;
             overflow: hidden;
@@ -34,11 +34,11 @@
             transition: all .2s;
 
             @media only screen and (min-width: 768px) and (max-width: 959px) {
-                width: calc(~"100% - 229px");
+                width: calc(100% - 229px);
             }
 
             @media only screen and (max-width: 767px) {
-                width: calc(~"100% - 39px");
+                width: calc(100% - 39px);
             }
 
             &.show {

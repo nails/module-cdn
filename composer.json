@@ -60,10 +60,10 @@
                     "autoload": {
                         "assets": {
                             "js": [
-                                "admin.objectpicker.min.js"
+                                "admin.objectpicker.js"
                             ],
                             "css": [
-                                "admin.objectpicker.css"
+                                "admin.objectpicker.min.css"
                             ]
                         }
                     }

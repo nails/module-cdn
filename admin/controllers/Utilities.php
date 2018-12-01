@@ -145,7 +145,8 @@ class Utilities extends BaseAdmin
             // --------------------------------------------------------------------------
 
             $oAsset = Factory::service('Asset');
-            $oAsset->load('admin.utilities.orphans.min.js', 'nails/module-cdn');
+            //  @todo (Pablo - 2018-12-01) - Update/Remove/Use minified once JS is refactored to be a module
+            $oAsset->load('admin.utilities.orphans.js', 'nails/module-cdn');
             $oAsset->inline(
                 'var _Admin_Utilities_Cdn_Orphans = new NAILS_Admin_Utilities_Cdn_Orphans();
                 _Admin_Utilities_Cdn_Orphans.init();',
