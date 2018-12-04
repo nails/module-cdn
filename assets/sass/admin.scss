@@ -2,6 +2,10 @@
    Nails CDN Module Admin Styles
 -------------------------------------------------------------- */
 
+@import './components/mediamanager.scss';
+@import './components/objectpicker.scss';
+@import './components/utilities.scss';
+
 .group-cdn {
     &.browse {
         th.id,
@@ -49,107 +53,6 @@
                 max-width: 100%;
                 overflow: hidden;
                 text-overflow: ellipsis;
-            }
-        }
-    }
-    &.object {
-        &.create {
-            .dropzone {
-                .dz-preview {
-                    display: block;
-                    &.dz-image-preview {
-                        .dz-details {
-                            height: 100px;
-                            .dz-filename,
-                            .dz-size {
-                                margin-left: 105px;
-                            }
-                            img {
-                                opacity: 1 !important;
-                            }
-                        }
-                        &.dz-error,
-                        &.dz-succes {
-                            .dz-success-mark,
-                            .dz-error-mark {
-                                left: 40px;
-                                top: 40px;
-                            }
-                        }
-                    }
-                    &.dz-error,
-                    &.dz-succes {
-                        .dz-filename,
-                        .dz-size {
-                            margin-left: 55px;
-                        }
-                        .dz-success-mark,
-                        .dz-error-mark {
-                            position: absolute;
-                            left: 14px;
-                            top: 14px;
-                        }
-                    }
-                    &.dz-error {
-                        .dz-error-message {
-                            display: block;
-                            opacity: 1;
-                        }
-                    }
-                    .dz-details {
-                        width: 100%;
-                        height: auto;
-                        margin-bottom: 0;
-                        .dz-filename {
-                            height: auto;
-                        }
-                        .dz-size {
-                            position: relative;
-                            bottom: 0;
-                            left: 0;
-                            height: auto;
-                            line-height: inherit;
-                        }
-                    }
-                    .dz-progress {
-                        top: auto;
-                        .dz-upload {
-                            -webkit-border-radius: 0;
-                            border-radius: 0;
-                        }
-                    }
-                    .dz-error-message {
-                        position: relative;
-                        max-width: 100%;
-                        left: 0;
-                        top: 14px;
-                        padding: 5px;
-                        margin-bottom: 21px;
-                        border: 1px solid #EE1E2D;
-                        color: #EE1E2D;
-                    }
-                    .dz-remove {
-                        margin-top: 5px;
-                    }
-                }
-            }
-        }
-    }
-}
-
-.group-utilities {
-    &.cdn {
-        &.orphans {
-            position: relative;
-            .mask {
-                position: absolute;
-                left: 0;
-                top: 0;
-                right: 0;
-                bottom: 0;
-                background: #FFFFFF url(../img/loader/20px-FFFFFF.gif) center no-repeat;
-                opacity: 0.75;
-                display: none;
             }
         }
     }

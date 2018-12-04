@@ -14,7 +14,7 @@
         <u rel="tipsy" title="Use command: `php index.php admin cdn utilities index`">via the command line</u>.
     </p>
     <hr/>
-    <?=form_open(null, 'id="search-form"')?>
+    <?=form_open(null, 'id="cdn-orphan-search-form"')?>
     <fieldset>
         <legend>Search Options</legend>
         <?php
@@ -123,7 +123,7 @@
                             <td colspan="4" class="no-data">
                                 No orphaned items were found.
                             </td>
-                        </tr>
+                        </tr>n
                         <?php
                     }
 
@@ -136,5 +136,5 @@
     }
 
     ?>
-    <div id="search-mask" class="mask"></div>
+    <div id="cdn-orphan-search-mask" class="mask"></div>
 </div>

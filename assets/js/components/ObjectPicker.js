@@ -1,37 +1,27 @@
-'use strict';
-
-import '../sass/admin.objectpicker.scss';
-
-/* globals console */
-var _CDN_OBJECTPICKER;
-_CDN_OBJECTPICKER = function() {
-
-    var base = this;
+class ObjectPicker {
 
     // --------------------------------------------------------------------------
 
-    /**
-     * Contains reference to the active picker - i.e., the one which the CDN manager is attached to
-     * @type {Object}
-     */
-    base.activePicker = null;
+    constructor() {
 
-    // --------------------------------------------------------------------------
+        this.log('Constructing');
+        /**
+         * Contains reference to the active picker - i.e., the one which the CDN manager is attached to
+         * @type {Object}
+         */
+        this.activePicker = null;
 
-    /**
-     * A cache of objects to avoid hitting the API again
-     * @type {Array}
-     */
-    base.objectCache = [];
+        // --------------------------------------------------------------------------
 
-    // --------------------------------------------------------------------------
+        /**
+         * A cache of objects to avoid hitting the API again
+         * @type {Array}
+         */
+        this.objectCache = [];
 
-    base.__construct = function() {
-
-        base.log('Constructing');
-        base.setupListeners();
-        base.initPickers();
-        return base;
+        //  Set things up
+        this.setupListeners();
+        this.initPickers();
     };
 
     // --------------------------------------------------------------------------
@@ -40,46 +30,48 @@ _CDN_OBJECTPICKER = function() {
      * Binds the listeners
      * @return {void}
      */
-    base.setupListeners = function() {
+    setupListeners() {
 
-        base.log('Setting up listeners');
+        this.log('Setting up listeners');
 
-        $(document).on('click', '.cdn-object-picker', function() {
-            base.openManager($(this));
-            $(this).trigger('opened');
-            return false;
-        });
-
-        $(document).on('click', '.cdn-object-picker .cdn-object-picker__remove', function() {
-            $(this).closest('.cdn-object-picker').trigger('removed');
-            base.resetPicker($(this).closest('.cdn-object-picker'));
-            return false;
-        });
-
-        $(document).on('click', '.cdn-object-picker .cdn-object-picker__preview-link', function() {
-            if ($.fn.fancybox) {
-                $(this).closest('.cdn-object-picker').trigger('preview');
-                $.fancybox.open(
-                    $(this).attr('href'),
-                    {
-                        'helpers': {
-                            'overlay': {
-                                'locked': false
+        $(document)
+            .on('click', '.cdn-object-picker', (e) => {
+                let $el = $(e.currentTarget);
+                this.openManager($el);
+                $el.trigger('opened');
+                return false;
+            })
+            .on('click', '.cdn-object-picker .cdn-object-picker__remove', (e) => {
+                let $el = $(e.currentTarget);
+                $el.closest('.cdn-object-picker').trigger('removed');
+                this.resetPicker($el.closest('.cdn-object-picker'));
+                return false;
+            })
+            .on('click', '.cdn-object-picker .cdn-object-picker__preview-link', (e) => {
+                let $el = $(e.currentTarget);
+                if ($.fn.fancybox) {
+                    $el.closest('.cdn-object-picker').trigger('preview');
+                    $.fancybox.open(
+                        $el.attr('href'),
+                        {
+                            'helpers': {
+                                'overlay': {
+                                    'locked': false
+                                }
                             }
                         }
-                    }
-                );
-            } else {
-                $(this).closest('.cdn-object-picker').trigger('opened');
-                base.openManager($(this).closest('.cdn-object-picker'));
-            }
-            return false;
-        });
-
-        $(document).on('refresh', '.cdn-object-picker', function() {
-            base.refreshPicker($(this));
-            return false;
-        });
+                    );
+                } else {
+                    $el.closest('.cdn-object-picker').trigger('opened');
+                    this.openManager($el.closest('.cdn-object-picker'));
+                }
+                return false;
+            })
+            .on('refresh', '.cdn-object-picker', (e) => {
+                let $el = $(e.currentTarget);
+                this.refreshPicker($el);
+                return false;
+            });
     };
 
     // --------------------------------------------------------------------------
@@ -88,10 +80,9 @@ _CDN_OBJECTPICKER = function() {
      * Processes CDN pickers and populates them if they have an object ID
      * @return {void}
      */
-    base.initPickers = function() {
-
-        base.log('Processing new CDN Pickers');
-        base.refreshPicker(
+    initPickers() {
+        this.log('Processing new CDN Pickers');
+        this.refreshPicker(
             $('.cdn-object-picker:not(.cdn-object-picker--pending)')
         );
     };
@@ -103,17 +94,18 @@ _CDN_OBJECTPICKER = function() {
      * @param  {Object} elements A jQuery object of pickers
      * @return {void}
      */
-    base.refreshPicker = function(elements) {
+    refreshPicker(elements) {
 
-        var fetchIds = [];
+        let fetchIds = [];
 
-        elements.each(function() {
-            $(this).addClass('cdn-object-picker--pending');
-            var iObjectId = $(this).find('.cdn-object-picker__input').val();
+        elements.each((index, el) => {
+            let $el = $(el);
+            $el.addClass('cdn-object-picker--pending');
+            let iObjectId = $el.find('.cdn-object-picker__input').val();
             if (iObjectId) {
                 fetchIds.push(iObjectId);
             } else {
-                $(this).removeClass('cdn-object-picker--pending');
+                $el.removeClass('cdn-object-picker--pending');
             }
         });
 
@@ -126,13 +118,14 @@ _CDN_OBJECTPICKER = function() {
                         'urls': '150x150-crop'
                     }
                 })
-                .done(function(data) {
+                .done((data) => {
 
-                    elements.each(function() {
-                        var iObjectId = parseInt($(this).find('.cdn-object-picker__input').val(), 10);
-                        for (var i = data.data.length - 1; i >= 0; i--) {
+                    elements.each((index, el) => {
+                        let $el = $(el);
+                        let iObjectId = parseInt($el.find('.cdn-object-picker__input').val(), 10);
+                        for (let i = data.data.length - 1; i >= 0; i--) {
                             if (iObjectId === data.data[i].id) {
-                                base.setPickerObject($(this), data.data[i]);
+                                this.setPickerObject($el, data.data[i]);
                                 return;
                             }
                         }
@@ -140,9 +133,9 @@ _CDN_OBJECTPICKER = function() {
 
                     elements.removeClass('cdn-object-picker--pending');
                 })
-                .fail(function(data) {
+                .fail((data) => {
 
-                    var _data;
+                    let _data;
                     try {
                         _data = JSON.parse(data.responseText);
                     } catch (e) {
@@ -152,18 +145,18 @@ _CDN_OBJECTPICKER = function() {
                         };
                     }
 
-                    base.warn(_data.error);
+                    this.warn(_data.error);
                 });
         }
     };
 
     // --------------------------------------------------------------------------
 
-    base.setPickerObject = function(picker, object) {
+    setPickerObject(picker, object) {
 
-        base.resetPicker(picker);
+        this.resetPicker(picker);
 
-        base.log('Setting picker object');
+        this.log('Setting picker object');
         picker.find('.cdn-object-picker__input').val(object.id);
         picker.trigger('picked');
 
@@ -175,7 +168,7 @@ _CDN_OBJECTPICKER = function() {
             });
         } else {
 
-            var sizeHuman = base.getReadableFileSizeString(object.object.size.bytes);
+            let sizeHuman = this.getReadableFileSizeString(object.object.size.bytes);
 
             picker.addClass('cdn-object-picker--has-file');
             picker.find('.cdn-object-picker__label')
@@ -191,8 +184,8 @@ _CDN_OBJECTPICKER = function() {
      * @param  {Object} picker The picker element
      * @return void
      */
-    base.resetPicker = function(picker) {
-        base.log('Resetting picker');
+    resetPicker(picker) {
+        this.log('Resetting picker');
         picker.removeClass('cdn-object-picker--has-image cdn-object-picker--has-file');
         picker.find('.cdn-object-picker__preview-link').attr('href', '#');
         picker.find('.cdn-object-picker__preview').removeAttr('style');
@@ -206,14 +199,14 @@ _CDN_OBJECTPICKER = function() {
      * Opens the CDN Manager window
      * @return {void}
      */
-    base.openManager = function(picker) {
+    openManager(picker) {
 
         if (picker.data('readonly')) {
             return false;
         }
 
         picker.addClass('cdn-object-picker--pending');
-        base.log('Getting Manager URL');
+        this.log('Getting Manager URL');
         $.ajax({
                 'url': window.SITE_URL + 'api/cdn/manager/url',
                 'data': {
@@ -221,10 +214,10 @@ _CDN_OBJECTPICKER = function() {
                     'callback': ['_CDN_OBJECTPICKER', 'receiveFromManager']
                 }
             })
-            .done(function(data) {
+            .done((data) => {
                 if ($.fancybox) {
-                    base.log('Showing Manager');
-                    base.activePicker = picker;
+                    this.log('Showing Manager');
+                    this.activePicker = picker;
                     $('body').addClass('noscroll');
                     $.fancybox.open(
                         data.data + '&isModal=1',
@@ -246,11 +239,11 @@ _CDN_OBJECTPICKER = function() {
                         }
                     );
                 } else {
-                    base.warn('Fancybox not enabled.');
+                    this.warn('Fancybox not enabled.');
                 }
             })
-            .fail(function(data) {
-                var _data;
+            .fail((data) => {
+                let _data;
                 try {
 
                     _data = JSON.parse(data.responseText);
@@ -263,33 +256,33 @@ _CDN_OBJECTPICKER = function() {
                     };
                 }
 
-                base.warn(_data.error);
+                this.warn(_data.error);
             })
-            .always(function() {
+            .always(() => {
                 picker.removeClass('cdn-object-picker--pending');
             });
     };
 
     // --------------------------------------------------------------------------
 
-    base.receiveFromManager = function(id) {
+    receiveFromManager(id) {
 
-        base.log('Received data from manager');
-        base.activePicker.addClass('cdn-object-picker--pending');
+        this.log('Received data from manager');
+        this.activePicker.addClass('cdn-object-picker--pending');
 
         //  Check the Object Cache
-        var cache = base.getFromCache(id);
+        let cache = this.getFromCache(id);
 
         if (cache) {
 
-            base.log('Using Cache');
-            base.setPickerObject(base.activePicker, cache);
-            base.activePicker.removeClass('cdn-object-picker--pending');
-            base.activePicker = null;
+            this.log('Using Cache');
+            this.setPickerObject(this.activePicker, cache);
+            this.activePicker.removeClass('cdn-object-picker--pending');
+            this.activePicker = null;
 
         } else {
 
-            base.log('Requesting Object data');
+            this.log('Requesting Object data');
             $.ajax({
                     'url': window.SITE_URL + 'api/cdn/object',
                     'data': {
@@ -297,13 +290,13 @@ _CDN_OBJECTPICKER = function() {
                         'urls': '150x150-crop'
                     }
                 })
-                .done(function(data) {
-                    base.setObjectCache(data.data);
-                    base.setPickerObject(base.activePicker, data.data);
+                .done((data) => {
+                    this.setObjectCache(data.data);
+                    this.setPickerObject(this.activePicker, data.data);
                 })
-                .fail(function(data) {
+                .fail((data) => {
 
-                    var _data;
+                    let _data;
                     try {
                         _data = JSON.parse(data.responseText);
                     } catch (e) {
@@ -313,11 +306,11 @@ _CDN_OBJECTPICKER = function() {
                         };
                     }
 
-                    base.warn(_data.error);
+                    this.warn(_data.error);
                 })
-                .always(function() {
-                    base.activePicker.removeClass('cdn-object-picker--pending');
-                    base.activePicker = null;
+                .always(() => {
+                    this.activePicker.removeClass('cdn-object-picker--pending');
+                    this.activePicker = null;
                 });
         }
     };
@@ -330,9 +323,9 @@ _CDN_OBJECTPICKER = function() {
      * @param  {Number} fileSizeInBytes The filesize to convert, in bytes
      * @return {String}
      */
-    base.getReadableFileSizeString = function(fileSizeInBytes) {
-        var i = -1;
-        var byteUnits = [' kB', ' MB', ' GB', ' TB', 'PB', 'EB', 'ZB', 'YB'];
+    getReadableFileSizeString(fileSizeInBytes) {
+        let i = -1;
+        let byteUnits = [' kB', ' MB', ' GB', ' TB', 'PB', 'EB', 'ZB', 'YB'];
         do {
             fileSizeInBytes = fileSizeInBytes / 1024;
             i++;
@@ -348,10 +341,10 @@ _CDN_OBJECTPICKER = function() {
      * @param  {Number} objectId The ID of the object to fetch
      * @return {Object}
      */
-    base.getFromCache = function(objectId) {
-        for (var i = base.objectCache.length - 1; i >= 0; i--) {
-            if (base.objectCache[i].id === objectId) {
-                return base.objectCache[i];
+    getFromCache(objectId) {
+        for (let i = this.objectCache.length - 1; i >= 0; i--) {
+            if (this.objectCache[i].id === objectId) {
+                return this.objectCache[i];
             }
         }
 
@@ -364,8 +357,8 @@ _CDN_OBJECTPICKER = function() {
      * Save an object to the cache
      * @param {Object} object The object to save
      */
-    base.setObjectCache = function(object) {
-        base.objectCache.push(object);
+    setObjectCache(object) {
+        this.objectCache.push(object);
     };
 
     // --------------------------------------------------------------------------
@@ -376,7 +369,7 @@ _CDN_OBJECTPICKER = function() {
      * @param  {mixed}  payload Any additional data to display in the console
      * @return {void}
      */
-    base.log = function(message, payload) {
+    log(message, payload) {
         if (typeof(console.log) === 'function') {
             if (payload !== undefined) {
                 console.log('CDN Object Picker:', message, payload);
@@ -394,21 +387,15 @@ _CDN_OBJECTPICKER = function() {
      * @param  {mixed}  payload Any additional data to display in the console
      * @return {void}
      */
-    base.warn = function(message, payload) {
+    warn(message, payload) {
         if (typeof(console.warn) === 'function') {
-
             if (payload !== undefined) {
-
                 console.warn('CDN Object Picker:', message, payload);
-
             } else {
-
                 console.warn('CDN Object Picker:', message);
             }
         }
     };
+}
 
-    // --------------------------------------------------------------------------
-
-    return base.__construct();
-}();
+export default ObjectPicker;
