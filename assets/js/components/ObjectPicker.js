@@ -211,7 +211,7 @@ class ObjectPicker {
                 'url': window.SITE_URL + 'api/cdn/manager/url',
                 'data': {
                     'bucket': picker.data('bucket'),
-                    'callback': ['_CDN_OBJECTPICKER', 'receiveFromManager']
+                    'callback': ['NAILS.CDN.ObjectPicker', 'receiveFromManager']
                 }
             })
             .done((data) => {

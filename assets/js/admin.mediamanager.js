@@ -415,14 +415,38 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.callbackPicker = function(object) {
         if (isModal) {
-            window
-                .parent[callback[0]][callback[1]]
-                .call(null, object.id);
+
+            var className = 'parent.' + callback[0];
+            var functionName = callback[1];
+
+            base
+                .getFunctionFromString(className + '.' + functionName)
+                .call(
+                    base.getFunctionFromString(className),
+                    object.id
+                );
+
         } else {
             window
                 .opener[callback[0]][callback[1]]
                 .call(null, object.id);
         }
+    };
+
+    // --------------------------------------------------------------------------
+
+    base.getFunctionFromString = function(string) {
+
+        var scope = window;
+        var scopeSplit = string.split('.');
+        for (i = 0; i < scopeSplit.length - 1; i++) {
+            scope = scope[scopeSplit[i]];
+            if (scope == undefined) {
+                return;
+            }
+        }
+
+        return scope[scopeSplit[scopeSplit.length - 1]];
     };
 
     // --------------------------------------------------------------------------
