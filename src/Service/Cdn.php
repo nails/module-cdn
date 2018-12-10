@@ -705,13 +705,14 @@ class Cdn
                     //  If it's not in $_FILES does that file exist on the file system?
                     if (!is_file($object)) {
                         //  Is it a data URI?
-                        if (!preg_match('/^data:(.*?)(;base64)?,(.+)/', $object, $aMatches)) {
+                        if (!preg_match('/^data:(.*?)(;(base64))?,(.+)/', $object, $aMatches)) {
                             throw new ObjectCreateException('You did not select a file to upload [' . $object . ']');
                         }
 
                         $sCacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
                         $sMime      = getFromArray(1, $aMatches);
-                        $sData      = getFromArray(3, $aMatches);
+                        $bEncoded   = getFromArray(3, $aMatches) === 'base64';
+                        $sData      = getFromArray(4, $aMatches);
                         $sExt       = $this->getExtFromMime($sMime);
 
                         if (empty($aOptions['filename_display'])) {
@@ -723,7 +724,7 @@ class Cdn
                         }
 
                         $fh = fopen(static::CACHE_PATH . $sCacheFile, 'w');
-                        fwrite($fh, $sData);
+                        fwrite($fh, $bEncoded ? base64_decode($sData) : $sData);
                         fclose($fh);
 
                         $object = static::CACHE_PATH . $sCacheFile;
