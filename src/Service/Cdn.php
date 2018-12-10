@@ -679,6 +679,9 @@ class Cdn
 
                     $aHeaders                 = get_headers($object, 1);
                     $aOptions['Content-Type'] = $aHeaders['Content-Type'];
+                    if (is_array($aOptions['Content-Type'])) {
+                        $aOptions['Content-Type'] = end($aOptions['Content-Type']);
+                    }
 
                     if (empty($aOptions['Content-Type'])) {
                         $aOptions['Content-Type'] = 'application/octet-stream';
