@@ -704,18 +704,37 @@ class Cdn
 
                     //  If it's not in $_FILES does that file exist on the file system?
                     if (!is_file($object)) {
+                        //  Is it a data URI?
+                        if (!preg_match('/^data:(.*?)(;base64)?,(.+)/', $object, $aMatches)) {
+                            throw new ObjectCreateException('You did not select a file to upload [' . $object . ']');
+                        }
 
-                        throw new ObjectCreateException('You did not select a file to upload');
+                        $sCacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
+                        $sMime      = getFromArray(1, $aMatches);
+                        $sData      = getFromArray(3, $aMatches);
+                        $sExt       = $this->getExtFromMime($sMime);
 
-                    } else {
+                        if (empty($aOptions['filename_display'])) {
+                            $aOptions['filename_display'] = date('Y-m-d-H-i-s') . '.' . $sExt;
+                        }
 
-                        $oData->file = $object;
-                        $oData->name = empty($aOptions['filename_display']) ? basename($object) : $aOptions['filename_display'];
+                        if (empty($aOptions['Content-Type'])) {
+                            $aOptions['Content-Type'] = $sMime;
+                        }
 
-                        //  Determine the extension
-                        $oData->ext = substr(strrchr($oData->file, '.'), 1);
-                        $oData->ext = $this->sanitiseExtension($oData->ext);
+                        $fh = fopen(static::CACHE_PATH . $sCacheFile, 'w');
+                        fwrite($fh, $sData);
+                        fclose($fh);
+
+                        $object = static::CACHE_PATH . $sCacheFile;
                     }
+
+                    $oData->file = $object;
+                    $oData->name = empty($aOptions['filename_display']) ? basename($object) : $aOptions['filename_display'];
+
+                    //  Determine the extension
+                    $oData->ext = substr(strrchr($oData->file, '.'), 1);
+                    $oData->ext = $this->sanitiseExtension($oData->ext);
 
                 } else {
 
