@@ -651,19 +651,30 @@ class Cdn
     /**
      * Create a new object
      *
-     * @param  mixed   $object    The object to create: $_FILE key, path or data stream
-     * @param  string  $sBucket   The bucket to upload to
-     * @param  array   $aOptions  Upload options
-     * @param  boolean $bIsStream Whether the upload is a stream or not
+     * @param  mixed        $object    The object to create: $_FILE key, path or data stream
+     * @param  string|array $mBucket   The bucket to upload to
+     * @param  array        $aOptions  Upload options
+     * @param  boolean      $bIsStream Whether the upload is a stream or not
      *
-     * @return mixed             stdClass on success, false on failure
+     * @return mixed        stdClass on success, false on failure
      */
-    public function objectCreate($object, $sBucket, $aOptions = [], $bIsStream = false)
+    public function objectCreate($object, $mBucket, $aOptions = [], $bIsStream = false)
     {
         try {
 
             //  Define variables we'll need
             $oData = new \stdClass();
+
+            //  Support creating buckets with additional parameters
+            if (is_array($mBucket)) {
+                $sBucket     = getFromArray(['slug', 0], $mBucket);
+                $aBucketData = $sBucket;
+                unset($aBucketData['slug']);
+                unset($aBucketData[0]);
+            } else {
+                $sBucket     = $mBucket;
+                $aBucketData = [];
+            }
 
             // --------------------------------------------------------------------------
 
@@ -861,7 +872,8 @@ class Cdn
             }
 
             if (!$oBucket) {
-                if ($this->bucketCreate($sBucket)) {
+                $aBucketData['slug'] = $sBucket;
+                if ($this->bucketCreate($aBucketData)) {
                     $oBucket       = $this->getBucket($sBucket);
                     $oData->bucket = (object) [
                         'id'   => $oBucket->id,
@@ -1762,6 +1774,18 @@ class Cdn
      */
     public function bucketCreate($sSlug, $sLabel = null, $aAllowedTypes = [])
     {
+        if (is_array($sSlug)) {
+            $aBucketData = $sSlug;
+        } else {
+            $aBucketData = [
+                'slug'          => $sSlug,
+                'label'         => $sLabel,
+                'allowed_types' => $aAllowedTypes,
+            ];
+        }
+
+        $sSlug = getFromArray('slug', $aBucketData);
+
         //  Test if bucket exists, if it does stop, job done.
         $oBucket = $this->getBucket($sSlug);
 
@@ -1775,33 +1799,26 @@ class Cdn
 
         if ($bResult) {
 
-            $oDb = Factory::service('Database');
-            $oDb->set('slug', $sSlug);
-            if (empty($sLabel)) {
-                $oDb->set('label', ucwords(str_replace('-', ' ', $sSlug)));
-            } else {
-                $oDb->set('label', $sLabel);
-            }
-            $oDb->set('created', 'NOW()', false);
-            $oDb->set('modified', 'NOW()', false);
+            $oBucketModel = Factory::model('Bucket', 'nails/module-cdn');
 
-            if (isLoggedIn()) {
-                $oDb->set('created_by', activeUser('id'));
-                $oDb->set('modified_by', activeUser('id'));
+            if (empty($aBucketData['label'])) {
+                $aBucketData['label'] = ucwords(str_replace('-', ' ', $sSlug));
             }
 
-            $aAllowedTypes = (array) $aAllowedTypes;
-            $aAllowedTypes = array_filter($aAllowedTypes);
-            $aAllowedTypes = array_unique($aAllowedTypes);
+            if (!empty($aBucketData['allowed_types'])) {
+                if (!is_array($aBucketData['allowed_types'])) {
+                    $aBucketData['allowed_types'] = (array) $aBucketData['allowed_types'];
+                }
 
-            if (!empty($aAllowedTypes)) {
-                $oDb->set('allowed_types', implode('|', $aAllowedTypes));
+                $aBucketData['allowed_types'] = array_filter($aBucketData['allowed_types']);
+                $aBucketData['allowed_types'] = array_unique($aBucketData['allowed_types']);
+                $aBucketData['allowed_types'] = implode('|', $aBucketData['allowed_types']);
             }
 
-            $oDb->insert(NAILS_DB_PREFIX . 'cdn_bucket');
+            $iBucketId = $oBucketModel->create($aBucketData);
 
-            if ($oDb->affected_rows()) {
-                return $oDb->insert_id();
+            if ($iBucketId) {
+                return $iBucketId;
             } else {
                 $this->callDriver('destroy', [$sSlug]);
                 $this->setError('Failed to create bucket record');
