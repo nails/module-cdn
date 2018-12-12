@@ -668,7 +668,7 @@ class Cdn
             //  Support creating buckets with additional parameters
             if (is_array($mBucket)) {
                 $sBucket     = getFromArray(['slug', 0], $mBucket);
-                $aBucketData = $sBucket;
+                $aBucketData = $mBucket;
                 unset($aBucketData['slug']);
                 unset($aBucketData[0]);
             } else {
