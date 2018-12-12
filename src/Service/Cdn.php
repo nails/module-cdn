@@ -1943,10 +1943,16 @@ class Cdn
             } else {
                 $aAllowedTypes = explode(',', $bucket->allowed_types);
             }
-            $aAllowedTypes = array_map('trim', $aAllowedTypes);
         } else {
             $aAllowedTypes = $this->aDefaultAllowedTypes;
         }
+
+        $aAllowedTypes = array_map(
+            function ($sExt) {
+                return preg_replace('/^\./', '', trim($sExt));
+            },
+            $aAllowedTypes
+        );
 
         $aAllowedTypes = array_map([$this, 'sanitiseExtension'], $aAllowedTypes);
         $aAllowedTypes = array_unique($aAllowedTypes);
@@ -2934,33 +2940,29 @@ class Cdn
     /**
      * Determines whether a supplied extension is valid for a given array of acceptable extensions
      *
-     * @param  string $extension  The extension to test
-     * @param  array  $allowedExt An array of valid extensions
+     * @param  string $sExtension  The extension to test
+     * @param  array  $aAllowedExt An array of valid extensions
      *
      * @return boolean
      */
-    protected function isAllowedExt($extension, $allowedExt)
+    protected function isAllowedExt($sExtension, array $aAllowedExt)
     {
-        $allowedExt = array_filter($allowedExt);
+        $aAllowedExt = array_filter($aAllowedExt);
 
-        if (empty($allowedExt)) {
-            $out = true;
-        } else {
-
-            //  Sanitise and map common extensions
-            $extension = $this->sanitiseExtension($extension);
-
-            //  Sanitize allowed types
-            $allowedExt = (array) $allowedExt;
-            $allowedExt = array_map([$this, 'sanitiseExtension'], $allowedExt);
-            $allowedExt = array_unique($allowedExt);
-            $allowedExt = array_values($allowedExt);
-
-            //  Search
-            $out = in_array($extension, $allowedExt);
+        if (empty($aAllowedExt)) {
+            return true;
         }
 
-        return $out;
+        //  Sanitise and map common extensions
+        $sExtension = $this->sanitiseExtension($sExtension);
+
+        //  Sanitize allowed types
+        $aAllowedExt = array_map([$this, 'sanitiseExtension'], $aAllowedExt);
+        $aAllowedExt = array_unique($aAllowedExt);
+        $aAllowedExt = array_values($aAllowedExt);
+
+        //  Search
+        return in_array($sExtension, $aAllowedExt);
     }
 
     // --------------------------------------------------------------------------
