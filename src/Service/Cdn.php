@@ -1122,9 +1122,9 @@ class Cdn
     public function objectDelete($iObjectId)
     {
         $oDb = Factory::service('Database');
+
         try {
 
-            log_message('error', 'delete; loaded with object Id ' . $iObjectId);
             $object = $this->getObject($iObjectId);
             if (empty($object)) {
                 throw new \Exception('Not a valid object');
@@ -1132,28 +1132,29 @@ class Cdn
 
             // --------------------------------------------------------------------------
 
-            $objectData                     = [];
-            $objectData['id']               = $object->id;
-            $objectData['bucket_id']        = $object->bucket->id;
-            $objectData['filename']         = $object->file->name->disk;
-            $objectData['filename_display'] = $object->file->name->human;
-            $objectData['mime']             = $object->file->mime;
-            $objectData['filesize']         = $object->file->size->bytes;
-            $objectData['img_width']        = $object->img_width;
-            $objectData['img_height']       = $object->img_height;
-            $objectData['img_orientation']  = $object->img_orientation;
-            $objectData['is_animated']      = $object->is_animated;
-            $objectData['serves']           = $object->serves;
-            $objectData['downloads']        = $object->downloads;
-            $objectData['thumbs']           = $object->thumbs;
-            $objectData['scales']           = $object->scales;
-            $objectData['driver']           = $object->driver;
-            $objectData['created']          = $object->created;
-            $objectData['created_by']       = $object->created_by;
-            $objectData['modified']         = $object->modified;
-            $objectData['modified_by']      = $object->modified_by;
+            $aObjectData = [
+                'id'               => $object->id,
+                'bucket_id'        => $object->bucket->id,
+                'filename'         => $object->file->name->disk,
+                'filename_display' => $object->file->name->human,
+                'mime'             => $object->file->mime,
+                'filesize'         => $object->file->size->bytes,
+                'img_width'        => $object->img_width,
+                'img_height'       => $object->img_height,
+                'img_orientation'  => $object->img_orientation,
+                'is_animated'      => $object->is_animated,
+                'serves'           => $object->serves,
+                'downloads'        => $object->downloads,
+                'thumbs'           => $object->thumbs,
+                'scales'           => $object->scales,
+                'driver'           => $object->driver,
+                'created'          => $object->created,
+                'created_by'       => $object->created_by,
+                'modified'         => $object->modified,
+                'modified_by'      => $object->modified_by,
+            ];
 
-            $oDb->set($objectData);
+            $oDb->set($aObjectData);
             $oDb->set('trashed', 'NOW()', false);
 
             if (isLoggedIn()) {
@@ -1205,38 +1206,38 @@ class Cdn
 
         try {
 
-            log_message('error', 'restore; loaded with object Id ' . $iObjectId);
-            $object = $this->getObjectFromTrash($iObjectId);
-            if (empty($object)) {
+            $oObject = $this->getObjectFromTrash($iObjectId);
+            if (empty($oObject)) {
                 throw new \Exception('Not a valid object');
             }
 
             // --------------------------------------------------------------------------
 
-            $objectData                     = [];
-            $objectData['id']               = $object->id;
-            $objectData['bucket_id']        = $object->bucket->id;
-            $objectData['filename']         = $object->file->name->disk;
-            $objectData['filename_display'] = $object->file->name->human;
-            $objectData['mime']             = $object->file->mime;
-            $objectData['filesize']         = $object->file->size->bytes;
-            $objectData['img_width']        = $object->img_width;
-            $objectData['img_height']       = $object->img_height;
-            $objectData['img_orientation']  = $object->img_orientation;
-            $objectData['is_animated']      = $object->is_animated;
-            $objectData['serves']           = $object->serves;
-            $objectData['downloads']        = $object->downloads;
-            $objectData['thumbs']           = $object->thumbs;
-            $objectData['scales']           = $object->scales;
-            $objectData['driver']           = $object->driver;
-            $objectData['created']          = $object->created;
-            $objectData['created_by']       = $object->created_by;
+            $aObjectData = [
+                'id'               => $oObject->id,
+                'bucket_id'        => $oObject->bucket->id,
+                'filename'         => $oObject->file->name->disk,
+                'filename_display' => $oObject->file->name->human,
+                'mime'             => $oObject->file->mime,
+                'filesize'         => $oObject->file->size->bytes,
+                'img_width'        => $oObject->img_width,
+                'img_height'       => $oObject->img_height,
+                'img_orientation'  => $oObject->img_orientation,
+                'is_animated'      => $oObject->is_animated,
+                'serves'           => $oObject->serves,
+                'downloads'        => $oObject->downloads,
+                'thumbs'           => $oObject->thumbs,
+                'scales'           => $oObject->scales,
+                'driver'           => $oObject->driver,
+                'created'          => $oObject->created,
+                'created_by'       => $oObject->created_by,
+            ];
 
             if (isLoggedIn()) {
-                $objectData['modified_by'] = activeUser('id');
+                $aObjectData['modified_by'] = activeUser('id');
             }
 
-            $oDb->set($objectData);
+            $oDb->set($aObjectData);
             $oDb->set('modified', 'NOW()', false);
 
             //  Start transaction
@@ -1248,7 +1249,7 @@ class Cdn
             }
 
             //  Remove trash object
-            $oDb->where('id', $object->id);
+            $oDb->where('id', $oObject->id);
             if (!$oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash')) {
                 throw new \Exception('Failed to remove the trash object.');
             }
@@ -1258,10 +1259,8 @@ class Cdn
             return true;
 
         } catch (\Exception $e) {
-
             $oDb->trans_rollback();
             $this->setError($e->getMessage());
-
             return false;
         }
     }

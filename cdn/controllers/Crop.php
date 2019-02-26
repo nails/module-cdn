@@ -70,8 +70,9 @@ class Crop extends Base
      */
     public function index($cropMethod = 'CROP')
     {
-        $oInput = Factory::service('Input');
-        $oCdn   = Factory::service('Cdn', 'nails/module-cdn');
+        $oInput  = Factory::service('Input');
+        $oLogger = Factory::service('Logger');
+        $oCdn    = Factory::service('Cdn', 'nails/module-cdn');
 
         switch ($cropMethod) {
             case 'SCALE':
@@ -91,7 +92,7 @@ class Crop extends Base
 
         //  We must have a bucket, object and extension in order to work with this
         if (!$this->bucket || !$this->object || !$this->extension) {
-            log_message('error', 'CDN: ' . $cropMethod . ': Missing _bucket, _object or _extension');
+            $oLogger->line('CDN: ' . $cropMethod . ': Missing _bucket, _object or _extension');
             $this->serveBadSrc([
                 'width'  => $this->width,
                 'height' => $this->height,
@@ -201,8 +202,8 @@ class Crop extends Base
 
             if (!$filePath) {
 
-                log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned.');
-                log_message('error', 'CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
+                $oLogger->line('CDN: ' . $cropMethod . ': No local path was returned.');
+                $oLogger->line('CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
                 $this->serveBadSrc([
                     'width'  => $width,
                     'height' => $height,
@@ -223,8 +224,8 @@ class Crop extends Base
 
                 if (!$filePath) {
 
-                    log_message('error', 'CDN: ' . $cropMethod . ': No local path was returned, second attempt.');
-                    log_message('error', 'CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
+                    $oLogger->line('CDN: ' . $cropMethod . ': No local path was returned, second attempt.');
+                    $oLogger->line('CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
                     $this->serveBadSrc([
                         'width'  => $width,
                         'height' => $height,
@@ -232,7 +233,7 @@ class Crop extends Base
 
                 } elseif (!filesize($filePath)) {
 
-                    log_message('error', 'CDN: ' . $cropMethod . ': local path exists, but has a zero file size.');
+                    $oLogger->line('CDN: ' . $cropMethod . ': local path exists, but has a zero file size.');
                     $this->serveBadSrc([
                         'width'  => $width,
                         'height' => $height,
@@ -334,7 +335,7 @@ class Crop extends Base
         } catch (Exception $e) {
 
             //  Log the error
-            log_message('error', 'CDN: ' . $phpCropMethod . ': ' . $e->getMessage());
+            Factory::service('Logger')->line('CDN: ' . $phpCropMethod . ': ' . $e->getMessage());
 
             //  Switch error reporting back how it was
             error_reporting($oldErrorReporting);
@@ -427,6 +428,7 @@ class Crop extends Base
 
         /**
          * Recompile the re-sized images back into an animated gif and save to the cache
+         *
          * @todo: We assume the gif loops infinitely but we should really check.
          * Issue made on the library's GitHub asking for this feature.
          * View here: https://github.com/Sybio/GifFrameExtractor/issues/3
@@ -477,6 +479,7 @@ class Crop extends Base
 
     /**
      * Map all requests to index()
+     *
      * @return void
      */
     public function _remap()

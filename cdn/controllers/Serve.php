@@ -82,18 +82,21 @@ class Serve extends Base
 
     /**
      * Serve the file
+     *
      * @return void
      */
     public function index()
     {
-        $oCdn   = Factory::service('Cdn', 'nails/module-cdn');
-        $oInput = Factory::service('Input');
+        $oCdn    = Factory::service('Cdn', 'nails/module-cdn');
+        $oInput  = Factory::service('Input');
+        $oLogger = Factory::service('Logger');
+
         //  Check if there was a bad token
         if ($this->badToken) {
-            log_message('error', 'CDN: Serve: Bad Token');
+            $oLogger->line('CDN: Serve: Bad Token');
             $this->serveBadSrc([
-                'error' => 'Bad Token'
-            ] );
+                'error' => 'Bad Token',
+            ]);
         }
 
         // --------------------------------------------------------------------------
@@ -114,17 +117,16 @@ class Serve extends Base
 
                 if (!$object) {
                     //  Cool, guess it really doesn't exist
-                    log_message('error', 'CDN: Serve: Object not defined');
+                    $oLogger->line('CDN: Serve: Object not defined');
                     $this->serveBadSrc([
-                        'error' => 'Object not defined'
-                    ] );
+                        'error' => 'Object not defined',
+                    ]);
                 }
 
             } else {
-
-                log_message('error', 'CDN: Serve: Object not defined');
+                $oLogger->line('CDN: Serve: Object not defined');
                 $this->serveBadSrc([
-                    'error' => 'Object not defined'
+                    'error' => 'Object not defined',
                 ]);
             }
         }
@@ -155,16 +157,16 @@ class Serve extends Base
 
         if (!$usefile) {
 
-            log_message('error', 'CDN: Serve: File does not exist');
-            log_message('error', 'CDN: Serve: ' . $oCdn->lastError());
+            $oLogger->line('CDN: Serve: File does not exist');
+            $oLogger->line('CDN: Serve: ' . $oCdn->lastError());
 
             if (isSuperuser()) {
                 $this->serveBadSrc([
-                    'error' => 'File not found: ' . $usefile
+                    'error' => 'File not found: ' . $usefile,
                 ]);
             } else {
                 $this->serveBadSrc([
-                    'error' => 'File not found'
+                    'error' => 'File not found',
                 ]);
             }
         }
@@ -251,10 +253,11 @@ class Serve extends Base
      * Serves a response for bad requests
      *
      * @param array $params
+     *
      * @internal param string $error The error which occurred
      *
      */
-    protected function serveBadSrc( array $params )
+    protected function serveBadSrc(array $params)
     {
         $error = $params['error'];
 
@@ -291,6 +294,7 @@ class Serve extends Base
 
     /**
      * Map all requests to index()
+     *
      * @return void
      */
     public function _remap()

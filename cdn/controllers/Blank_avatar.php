@@ -83,6 +83,7 @@ class Blank_avatar extends Base
 
     /**
      * Generate the thumbnail
+     *
      * @return  void
      */
     public function index()
@@ -163,9 +164,8 @@ class Blank_avatar extends Base
                 $this->serveFromCache($this->cdnCacheFile);
 
             } else {
-
                 //  This object does not exist.
-                log_message('error', 'CDN: Blank Avatar: File not found; ' . $src);
+                Factory::service('Logger')->line('CDN: Blank Avatar: File not found; ' . $src);
                 return $this->serveBadSrc([
                     'width'  => $width,
                     'height' => $height,
@@ -178,6 +178,7 @@ class Blank_avatar extends Base
 
     /**
      * Map all requests to index();
+     *
      * @return void
      */
     public function _remap()
