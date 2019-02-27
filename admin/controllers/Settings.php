@@ -42,7 +42,7 @@ class Settings extends Base
      * Returns an array of permissions which can be configured for the user
      * @return array
      */
-    public static function permissions()
+    public static function permissions(): array
     {
         $aPermissions = parent::permissions();
 

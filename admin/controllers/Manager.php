@@ -39,7 +39,7 @@ class Manager extends BaseAdmin
 
     // --------------------------------------------------------------------------
 
-    public static function permissions()
+    public static function permissions(): array
     {
         $aPermissions = parent::permissions();
 
