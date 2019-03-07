@@ -3174,12 +3174,33 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
+     * Return the permitted dimensions for this installation
+     *
+     * @return \stdClass[]
+     */
+    public function getPermittedDimensions(): array
+    {
+        $aDimensions = array_map(function ($sDimension) {
+            return (object) array_combine(
+                ['width', 'height'],
+                array_map('intval', explode('x', $sDimension))
+            );
+        }, $this->aPermittedDimensions);
+
+        arraySortMulti($aDimensions, 'width');
+
+        return array_values($aDimensions);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Determines whether the dimensions are permitted by the CDN
      *
-     * @param $iWidth
-     * @param $iHeight
+     * @param int $iWidth  The width to check
+     * @param int $iHeight The height to check
      */
-    public function isPermittedDimension($iWidth, $iHeight)
+    public function isPermittedDimension($iWidth, $iHeight): bool
     {
         if (Factory::property('allowDangerousImageTransformation', 'nails/module-cdn')) {
             return true;
