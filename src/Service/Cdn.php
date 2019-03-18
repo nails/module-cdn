@@ -12,6 +12,7 @@
 
 namespace Nails\Cdn\Service;
 
+use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
 use Nails\Cdn\Exception\PermittedDimensionException;
@@ -1127,7 +1128,7 @@ class Cdn
 
             $object = $this->getObject($iObjectId);
             if (empty($object)) {
-                throw new \Exception('Not a valid object');
+                throw new CdnException('Not a valid object');
             }
 
             // --------------------------------------------------------------------------
@@ -1166,13 +1167,13 @@ class Cdn
 
             //  Create trash object
             if (!$oDb->insert(NAILS_DB_PREFIX . 'cdn_object_trash')) {
-                throw new \Exception('Failed to create the trash object.');
+                throw new CdnException('Failed to create the trash object.');
             }
 
             //  Remove original object
             $oDb->where('id', $object->id);
             if (!$oDb->delete(NAILS_DB_PREFIX . 'cdn_object')) {
-                throw new \Exception('Failed to remove original object.');
+                throw new CdnException('Failed to remove original object.');
             }
 
             $oDb->trans_commit();
@@ -1208,7 +1209,7 @@ class Cdn
 
             $oObject = $this->getObjectFromTrash($iObjectId);
             if (empty($oObject)) {
-                throw new \Exception('Not a valid object');
+                throw new CdnException('Not a valid object');
             }
 
             // --------------------------------------------------------------------------
@@ -1245,13 +1246,13 @@ class Cdn
 
             //  Restore object
             if (!$oDb->insert(NAILS_DB_PREFIX . 'cdn_object')) {
-                throw new \Exception('Failed to restore original object.');
+                throw new CdnException('Failed to restore original object.');
             }
 
             //  Remove trash object
             $oDb->where('id', $oObject->id);
             if (!$oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash')) {
-                throw new \Exception('Failed to remove the trash object.');
+                throw new CdnException('Failed to remove the trash object.');
             }
 
             $oDb->trans_commit();
@@ -1467,7 +1468,7 @@ class Cdn
 
             $oObj = $bIsTrash ? $this->getObjectFromTrash($iId) : $this->getObject($iId);
             if (!$oObj) {
-                throw new \Exception('Invalid Object ID');
+                throw new CdnException('Invalid Object ID');
             }
 
             $sLocalPath = $this->callDriver(
@@ -1480,7 +1481,7 @@ class Cdn
             );
 
             if (!$sLocalPath) {
-                throw new \Exception($this->callDriver('lastError'));
+                throw new CdnException($this->callDriver('lastError'));
             }
 
             return $sLocalPath;

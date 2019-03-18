@@ -2,6 +2,7 @@
 
 namespace Nails\Cdn\Console\Command;
 
+use Nails\Common\Exception\NailsException;
 use Nails\Console\Command\Base;
 use Nails\Factory;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -79,7 +80,7 @@ class Migrate extends Base
         if (empty($sDriver)) {
             $oEnabledDriver = $oStorageDriver->getEnabled();
             if (empty($oEnabledDriver)) {
-                throw new \Exception('No CDN drivers are enabled');
+                throw new NailsException('No CDN drivers are enabled');
             } else {
                 $sDriver = $oEnabledDriver->slug;
             }
@@ -96,7 +97,7 @@ class Migrate extends Base
         }
 
         if (!array_key_exists($sDriver, $aDrivers)) {
-            throw new \Exception('"' . $sDriver . '" is not a valid storage driver.');
+            throw new NailsException('"' . $sDriver . '" is not a valid storage driver.');
         }
 
         // --------------------------------------------------------------------------
@@ -219,7 +220,7 @@ class Migrate extends Base
                     //  Get the next item
                     $aObjects = $oObjectModel->getAll(0, 1, $aData + ['expand' => ['bucket']]);
                     if (empty($aObjects)) {
-                        throw new \Exception('FAILURE: No objects returned');
+                        throw new NailsException('FAILURE: No objects returned');
                     }
 
                     $oObject      = $aObjects[0];
@@ -232,9 +233,9 @@ class Migrate extends Base
                         $sLocalPath = $oInstanceOld->objectLocalPath($oObject->bucket->slug, $oObject->file->name->disk);
 
                         if (empty($sLocalPath)) {
-                            throw new \Exception('Failed to retrieve local path');
+                            throw new NailsException('Failed to retrieve local path');
                         } elseif (!file_exists($sLocalPath)) {
-                            throw new \Exception('File does not exist locally: ' . $sLocalPath);
+                            throw new NailsException('File does not exist locally: ' . $sLocalPath);
                         }
 
                         $bResult = $oInstanceNew->objectCreate((object) [
@@ -247,7 +248,7 @@ class Migrate extends Base
                         ]);
 
                         if (!$bResult) {
-                            throw new \Exception(
+                            throw new NailsException(
                                 'Failed to upload to new storage driver. ' . $oInstanceNew->lastError()
                             );
                         }
