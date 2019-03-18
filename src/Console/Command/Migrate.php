@@ -15,6 +15,7 @@ class Migrate extends Base
 {
     /**
      * Stores driver instances
+     *
      * @var array
      */
     protected $aDriverInstances = [];
@@ -23,6 +24,7 @@ class Migrate extends Base
 
     /**
      * Configures the app
+     *
      * @return void
      */
     protected function configure()
@@ -68,7 +70,7 @@ class Migrate extends Base
         $oOutput->writeln('<info>--------------------</info>');
         $oOutput->writeln('<info>CDN Driver Migration</info>');
         $oOutput->writeln('<info>--------------------</info>');
-        $oOutput->writeln('Beginning...');
+        $oOutput->writeln('');
 
         $oStorageDriver = Factory::model('StorageDriver', 'nails/module-cdn');
         $sDriver        = $oInput->getArgument('driver');
