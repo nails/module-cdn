@@ -17,6 +17,7 @@ use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
+use Nails\Cdn\Model\CdnObject;
 use Nails\Common\Traits\Caching;
 use Nails\Common\Traits\ErrorHandling;
 use Nails\Common\Traits\GetCountCommon;
@@ -843,6 +844,8 @@ class Cdn
 
             //  Calculate the MD5 hash, don't upload duplicates in the same bucket
             $oData->md5_hash = md5_file($oData->file);
+
+            /** @var CdnObject $oObjectModel */
             $oObjectModel    = Factory::model('Object', 'nails/module-cdn');
             $oExistingObject = $oObjectModel->getByMd5Hash($oData->md5_hash, ['expand' => ['bucket']]);
 
