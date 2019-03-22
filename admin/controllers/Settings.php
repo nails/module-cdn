@@ -21,6 +21,7 @@ class Settings extends Base
 {
     /**
      * Announces this controller's navGroups
+     *
      * @return \stdClass
      */
     public static function announce()
@@ -40,6 +41,7 @@ class Settings extends Base
 
     /**
      * Returns an array of permissions which can be configured for the user
+     *
      * @return array
      */
     public static function permissions(): array
@@ -55,6 +57,7 @@ class Settings extends Base
 
     /**
      * Manage invoice settings
+     *
      * @return void
      */
     public function index()
@@ -63,14 +66,14 @@ class Settings extends Base
             unauthorised();
         }
 
-        $oInput              = Factory::service('Input');
-        $oStorageDriverModel = Factory::model('StorageDriver', 'nails/module-cdn');
+        $oInput         = Factory::service('Input');
+        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
 
         if ($oInput->post()) {
 
             try {
 
-                $sKeyStorageDriver = $oStorageDriverModel->getSettingKey();
+                $sKeyStorageDriver = $oStorageDriver->getSettingKey();
                 $oFormValidation   = Factory::service('FormValidation');
                 $oFormValidation->set_rules($sKeyStorageDriver, '', 'required');
 
@@ -78,7 +81,7 @@ class Settings extends Base
                     throw new ValidationException(lang('fv_there_were_errors'));
                 }
 
-                $oStorageDriverModel->saveEnabled($oInput->post($sKeyStorageDriver));
+                $oStorageDriver->saveEnabled($oInput->post($sKeyStorageDriver));
                 $this->data['success'] = 'CDN settings were saved.';
 
             } catch (\Exception $e) {

@@ -72,7 +72,7 @@ class Migrate extends Base
         $oOutput->writeln('<info>--------------------</info>');
         $oOutput->writeln('');
 
-        $oStorageDriver = Factory::model('StorageDriver', 'nails/module-cdn');
+        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
         $sDriver        = $oInput->getArgument('driver');
         $bOverwrite     = $oInput->getOption('overwrite');
         $bRemove        = $oInput->getOption('remove-src');
@@ -179,7 +179,7 @@ class Migrate extends Base
     {
         $oOutput        = $this->oOutput;
         $oObjectModel   = Factory::model('Object', 'nails/module-cdn');
-        $oStorageDriver = Factory::model('StorageDriver', 'nails/module-cdn');
+        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
 
         $oProgress = new ProgressBar($oOutput, 100);
         $oProgress->setFormat("\n%current%% [%bar%]\n\nElapsed:   %elapsed:6s%\nEstimated: %estimated:-6s%");

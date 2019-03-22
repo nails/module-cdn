@@ -119,12 +119,12 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Load the storage driver
-        $oStorageDriverModel = Factory::model('StorageDriver', 'nails/module-cdn');
-        $aDrivers            = $oStorageDriverModel->getAll();
-        $oDriver             = $oStorageDriverModel->getEnabled();
+        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
+        $aDrivers       = $oStorageDriver->getAll();
+        $oDriver        = $oStorageDriver->getEnabled();
 
         if (empty($oDriver)) {
-            $oDriver = $oStorageDriverModel->getBySlug(static::DEFAULT_DRIVER);
+            $oDriver = $oStorageDriver->getBySlug(static::DEFAULT_DRIVER);
             if (empty($oDriver)) {
                 throw new DriverException('Unable to load a CDN storage driver.');
             }
@@ -223,8 +223,8 @@ class Cdn
             throw new DriverException('"' . $sDriver . '" is not a valid CDN driver.');
         }
 
-        $oStorageDriverModel = Factory::model('StorageDriver', 'nails/module-cdn');
-        $oInstance           = $oStorageDriverModel->getInstance($oDriver->slug);
+        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
+        $oInstance      = $oStorageDriver->getInstance($oDriver->slug);
 
         if (empty($oInstance)) {
             throw new DriverException('Failed to load CDN driver instance.');

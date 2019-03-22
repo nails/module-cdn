@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This model manages the CDN storage drivers
+ * This service manages the CDN storage drivers
  *
  * @package     Nails
  * @subpackage  module-cdn
@@ -10,7 +10,7 @@
  * @link
  */
 
-namespace Nails\Cdn\Model;
+namespace Nails\Cdn\Service;
 
 use Nails\Common\Model\BaseDriver;
 

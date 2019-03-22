@@ -27,41 +27,41 @@ return [
         'allowDangerousImageTransformation' => false,
     ],
     'services'   => [
-        'Cdn' => function () {
+        'Cdn'           => function () {
             if (class_exists('\App\Cdn\Service\Cdn')) {
                 return new \App\Cdn\Service\Cdn();
             } else {
                 return new \Nails\Cdn\Service\Cdn();
             }
         },
+        'StorageDriver' => function () {
+            if (class_exists('\App\Cdn\Service\StorageDriver')) {
+                return new \App\Cdn\Service\StorageDriver();
+            } else {
+                return new \Nails\Cdn\Service\StorageDriver();
+            }
+        },
     ],
     'models'     => [
-        'Bucket'        => function () {
+        'Bucket'      => function () {
             if (class_exists('\App\Cdn\Model\Bucket')) {
                 return new \App\Cdn\Model\Bucket();
             } else {
                 return new \Nails\Cdn\Model\Bucket();
             }
         },
-        'Object'        => function () {
+        'Object'      => function () {
             if (class_exists('\App\Cdn\Model\CdnObject')) {
                 return new \App\Cdn\Model\CdnObject();
             } else {
                 return new \Nails\Cdn\Model\CdnObject();
             }
         },
-        'ObjectTrash'   => function () {
+        'ObjectTrash' => function () {
             if (class_exists('\App\Cdn\Model\CdnObject\Trash')) {
                 return new \App\Cdn\Model\CdnObject\Trash();
             } else {
                 return new \Nails\Cdn\Model\CdnObject\Trash();
-            }
-        },
-        'StorageDriver' => function () {
-            if (class_exists('\App\Cdn\Model\StorageDriver')) {
-                return new \App\Cdn\Model\StorageDriver();
-            } else {
-                return new \Nails\Cdn\Model\StorageDriver();
             }
         },
     ],
