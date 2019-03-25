@@ -1,5 +1,8 @@
 <?php
 
+use Nails\Common\Service;
+use Nails\Factory;
+
 return [
     'properties' => [
 
@@ -27,11 +30,16 @@ return [
         'allowDangerousImageTransformation' => false,
     ],
     'services'   => [
-        'Cdn'           => function () {
+        'Cdn'           => function (Service\Mime $oMimeService = null) {
+
+            if (!$oMimeService) {
+                $oMimeService = Factory::service('Mime');
+            }
+
             if (class_exists('\App\Cdn\Service\Cdn')) {
-                return new \App\Cdn\Service\Cdn();
+                return new \App\Cdn\Service\Cdn($oMimeService);
             } else {
-                return new \Nails\Cdn\Service\Cdn();
+                return new \Nails\Cdn\Service\Cdn($oMimeService);
             }
         },
         'StorageDriver' => function () {

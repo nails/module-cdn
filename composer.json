@@ -36,7 +36,9 @@
         "nails/driver-cdn-local": "dev-develop",
         "sybio/gif-creator": "~1.0.0",
         "sybio/gif-frame-extractor": "~1.0.0",
-        "masterexploder/phpthumb": "dev-master"
+        "masterexploder/phpthumb": "dev-master",
+        "adrienrn/php-mimetyper": "^0.2.2",
+        "katzien/php-mime-type": "^2.1"
     },
     "require-dev":
     {

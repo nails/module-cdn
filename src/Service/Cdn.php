@@ -18,6 +18,7 @@ use Nails\Cdn\Exception\ObjectCreateException;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model\CdnObject;
+use Nails\Common\Service\Mime;
 use Nails\Common\Traits\Caching;
 use Nails\Common\Traits\ErrorHandling;
 use Nails\Common\Traits\GetCountCommon;
@@ -106,15 +107,25 @@ class Cdn
      */
     protected $aPermittedDimensions = [];
 
+    protected $oMimeService;
+
     // --------------------------------------------------------------------------
 
     /**
      * Cdn constructor.
      *
+     * @param Mime $oMimeService The mime service to use
+     *
      * @throws DriverException
+     * @throws \Nails\Common\Exception\FactoryException
      */
-    public function __construct()
-    {
+    public function __construct(
+        Mime $oMimeService
+    ) {
+        $this->oMimeService = $oMimeService;
+
+        // --------------------------------------------------------------------------
+
         $this->aDefaultAllowedTypes = Factory::property('bucketDefaultAllowedTypes', 'nails/module-cdn');
 
         // --------------------------------------------------------------------------
@@ -2050,31 +2061,10 @@ class Cdn
      *
      * @return string
      */
-    public function getExtFromMime($mime)
+    public function getExtFromMime($sMime)
     {
-        $mimes = $this->getMimeMappings();
-        $out   = false;
-
-        foreach ($mimes as $ext => $_mime) {
-            if (is_array($_mime)) {
-                foreach ($_mime as $submime) {
-                    if ($submime == $mime) {
-                        $out = $ext;
-                        break;
-                    }
-                }
-                if ($out) {
-                    break;
-                }
-            } else {
-                if ($_mime == $mime) {
-                    $out = $ext;
-                    break;
-                }
-            }
-        }
-
-        return $this->sanitiseExtension($out);
+        $aExtensions = $this->oMimeService->getExtensionsForMime($sMime);
+        return reset($aExtensions);
     }
 
     // --------------------------------------------------------------------------
@@ -2082,29 +2072,16 @@ class Cdn
     /**
      * Gets the mime type from the extension
      *
-     * @param  string $ext The extension to return the mime type for
+     * @param  string $sExt The extension to return the mime type for
      *
      * @return string
      */
-    public function getMimeFromExt($ext)
+    public function getMimeFromExt($sExt)
     {
-        $ext   = $this->getExtFromPath($ext);
-        $mimes = $this->getMimeMappings();
-
-        foreach ($mimes as $_ext => $mime) {
-            if ($_ext == $ext) {
-                if (is_string($mime)) {
-                    $return = $mime;
-                    break;
-                } elseif (is_array($mime)) {
-
-                    $return = reset($mime);
-                    break;
-                }
-            }
-        }
-
-        return !empty($return) ? $return : 'application/octet-stream';
+        $sExt   = $this->sanitiseExtension($sExt);
+        $aMimes = $this->oMimeService->getMimesForExtension($sExt);
+        $sMime  = reset($aMimes);
+        return !empty($sMime) ? $sMime : 'application/octet-stream';
     }
 
     // --------------------------------------------------------------------------
@@ -2112,18 +2089,13 @@ class Cdn
     /**
      * Gets the mime type of a file on disk
      *
-     * @param  string $file The file to analyse
+     * @param  string $sFile The file to analyse
      *
      * @return string
      */
-    public function getMimeFromFile($file)
+    public function getMimeFromFile(string $sFile)
     {
-        if (file_exists($file)) {
-            $fh = finfo_open(FILEINFO_MIME_TYPE);
-            return finfo_file($fh, $file);
-        } else {
-            return '';
-        }
+        return $this->oMimeService->detectFromFile($sFile);
     }
 
     // --------------------------------------------------------------------------
@@ -2131,51 +2103,15 @@ class Cdn
     /**
      * Determines whether an extension is valid for a specific mime typ
      *
-     * @param  string $ext  The extension to test, no leading period
-     * @param  string $mime The mime type to test against
+     * @param  string $sExt  The extension to test, no leading period
+     * @param  string $sMime The mime type to test against
      *
      * @return bool
      */
-    public function validExtForMime($ext, $mime)
+    public function validExtForMime($sExt, $sMime)
     {
-        $_assocs = [];
-        $_mimes  = $this->getMimeMappings();
-        $ext     = $this->getExtFromPath($ext);
-
-        foreach ($_mimes as $_ext => $_mime) {
-            if (is_array($_mime)) {
-                foreach ($_mime as $_subext => $_submime) {
-                    if (!isset($_assocs[strtolower($_submime)])) {
-                        $_assocs[strtolower($_submime)] = [];
-                    }
-                }
-            } else {
-                if (!isset($_assocs[strtolower($_mime)])) {
-                    $_assocs[strtolower($_mime)] = [];
-                }
-            }
-        }
-
-        //  Now put extensions into the appropriate slots
-        foreach ($_mimes as $_ext => $_mime) {
-            if (is_array($_mime)) {
-                foreach ($_mime as $_submime) {
-                    $_assocs[strtolower($_submime)][] = $_ext;
-                }
-            } else {
-                $_assocs[strtolower($_mime)][] = $_ext;
-            }
-        }
-
-        // --------------------------------------------------------------------------
-
-        if (isset($_assocs[strtolower($mime)])) {
-
-            return array_search($ext, $_assocs[strtolower($mime)]) !== false;
-        } else {
-
-            return false;
-        }
+        $sExt = $this->sanitiseExtension($sExt);
+        return in_array($sExt, $this->oMimeService->getExtensionsForMime($sMime));
     }
 
     // --------------------------------------------------------------------------
@@ -2989,7 +2925,7 @@ class Cdn
 
     /**
      * Maps variants of an extension to a definitive one, for consistency. Can be
-     * overloaded by the developer to satisfy any OCD tenancies with regards file
+     * overloaded by the developer to satisfy any preferences with regards file
      * extensions
      *
      * @param  string $sExt The extension to map
@@ -2999,6 +2935,7 @@ class Cdn
     public function sanitiseExtension($sExt)
     {
         $sExt = trim(strtolower($sExt));
+        $sExt = preg_replace('/^\./', '', $sExt);
 
         switch ($sExt) {
             case 'jpeg':
