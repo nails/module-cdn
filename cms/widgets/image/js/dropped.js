@@ -1,11 +1,11 @@
 /* globals domElement */
-var $fieldScale = $('select[name=scaling]', domElement).closest('.field');
-var $fieldSize = $('select[name=size]', domElement).closest('.field');
-var $fieldUrl = $('input[name=url]', domElement).closest('.field');
-var $fieldTarget = $('select[name=target]', domElement).closest('.field');
-var $fieldAttr = $('input[name=link_attr]', domElement).closest('.field');
-var $inpScaling = $('select[name=scaling]', domElement);
-var $inpLinking = $('select[name=linking]', domElement);
+var $fieldScale = $('select[name=sScaling]', domElement).closest('.field');
+var $fieldSize = $('select[name=sSize]', domElement).closest('.field');
+var $fieldUrl = $('input[name=sUrl]', domElement).closest('.field');
+var $fieldTarget = $('select[name=sTarget]', domElement).closest('.field');
+var $fieldAttr = $('input[name=sLinkAttr]', domElement).closest('.field');
+var $inpScaling = $('select[name=sScaling]', domElement);
+var $inpLinking = $('select[name=sLinking]', domElement);
 
 // --------------------------------------------------------------------------
 
