@@ -769,7 +769,22 @@ class Cdn
                     //  It's in $_FILES, check the upload was successful
                     if ($_FILES[$object]['error'] == UPLOAD_ERR_OK) {
 
-                        $oData->file = $_FILES[$object]['tmp_name'];
+                        //  Move the file to a tmp directory and call it the original name
+                        $sTmpDir = CACHE_PATH . (int) microtime(true) . md5($_FILES[$object]['name']) . DIRECTORY_SEPARATOR;
+                        if (!mkdir($sTmpDir)) {
+                            throw new ObjectCreateException(
+                                'Failed to create temporary directory'
+                            );
+                        }
+
+                        $sTmpPath = $sTmpDir . $_FILES[$object]['name'];
+                        if (!move_uploaded_file($_FILES[$object]['tmp_name'], $sTmpPath)) {
+                            throw new ObjectCreateException(
+                                'Failed to move uploaded file to temporary directory'
+                            );
+                        }
+
+                        $oData->file = $sTmpPath;
                         $oData->name = getFromArray('filename_display', $aOptions, $_FILES[$object]['name']);
 
                         //  Determine the supplied extension
@@ -1038,6 +1053,7 @@ class Cdn
             if ($upload) {
                 $object = $this->createObject($oData, true);
                 if ($object) {
+                    //  @todo (Pablo - 2019-03-27) - Remove temporary file, if created
                     return $object;
                 } else {
                     $this->callDriver('destroy', [$oData->filename, $oData->bucket_slug]);
@@ -1056,6 +1072,8 @@ class Cdn
             if (!empty($sCacheFile) && file_exists(static::CACHE_PATH . $sCacheFile)) {
                 unlink(static::CACHE_PATH . $sCacheFile);
             }
+
+            //  @todo (Pablo - 2019-03-27) - Remove temporary file, if created
         }
 
         return false;
