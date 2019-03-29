@@ -713,7 +713,9 @@ class Cdn
                 }
 
                 //  This is a URL, treat as stream
-                $object    = @file_get_contents($object);
+                $aOptions  = ['http' => ['user_agent' => 'Nails']];
+                $rContext  = stream_context_create($aOptions);
+                $object    = @file_get_contents($object, false, $rContext);
                 $bIsStream = true;
 
                 if (empty($object)) {
