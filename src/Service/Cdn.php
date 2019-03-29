@@ -18,6 +18,7 @@ use Nails\Cdn\Exception\ObjectCreateException;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model\CdnObject;
+use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Service\Mime;
 use Nails\Common\Traits\Caching;
 use Nails\Common\Traits\ErrorHandling;
@@ -221,8 +222,8 @@ class Cdn
      * @param array  $aArguments an array of arguments to pass to the driver
      * @param string $sDriver    If specified, which driver to call
      *
-     * @throws DriverException
      * @return mixed
+     * @throws DriverException
      */
     protected function callDriver($sMethod, $aArguments = [], $sDriver = null)
     {
@@ -327,9 +328,9 @@ class Cdn
     /**
      * Returns an array of objects
      *
-     * @param  integer $page    The page to return
-     * @param  integer $perPage The number of items to return per page
-     * @param  array   $data    An array of data to pass to getCountCommonBuckets()
+     * @param integer $page    The page to return
+     * @param integer $perPage The number of items to return per page
+     * @param array   $data    An array of data to pass to getCountCommonBuckets()
      *
      * @return array
      */
@@ -407,9 +408,9 @@ class Cdn
     /**
      * Retrieves objects from the trash
      *
-     * @param  int   $page    The page of results to return
-     * @param  int   $perPage The number of results per page
-     * @param  array $data    Data to pass to getCountCommon()
+     * @param int   $page    The page of results to return
+     * @param int   $perPage The number of results per page
+     * @param array $data    Data to pass to getCountCommon()
      *
      * @return array
      */
@@ -487,9 +488,9 @@ class Cdn
     /**
      * Returns a single object
      *
-     * @param  mixed  $objectIdSlug The object's ID or filename
-     * @param  string $bucketIdSlug The bucket's ID or slug
-     * @param  array  $data         Data to pass to getCountCommon()()
+     * @param mixed  $objectIdSlug The object's ID or filename
+     * @param string $bucketIdSlug The bucket's ID or slug
+     * @param array  $data         Data to pass to getCountCommon()()
      *
      * @return mixed                stdClass on success, false on failure
      */
@@ -544,9 +545,9 @@ class Cdn
     /**
      * Returns a single object from the trash
      *
-     * @param  mixed  $object The object's ID or filename
-     * @param  string $bucket The bucket's ID or slug
-     * @param  array  $data   Data to pass to getCountCommon()
+     * @param mixed  $object The object's ID or filename
+     * @param string $bucket The bucket's ID or slug
+     * @param array  $data   Data to pass to getCountCommon()
      *
      * @return mixed          stdClass on success, false on failure
      */
@@ -613,7 +614,7 @@ class Cdn
     /**
      * Counts all objects
      *
-     * @param  mixed $data Data to pass to getCountCommon()
+     * @param mixed $data Data to pass to getCountCommon()
      *
      * @return int
      **/
@@ -629,7 +630,7 @@ class Cdn
     /**
      * Counts all objects from the trash
      *
-     * @param  mixed $data Data to pass to getCountCommon()
+     * @param mixed $data Data to pass to getCountCommon()
      *
      * @return int
      **/
@@ -645,10 +646,10 @@ class Cdn
     /**
      * Returns objects created by a user
      *
-     * @param  int   $userId  The user's ID
-     * @param  int   $page    The page of results to return
-     * @param  int   $perPage The number of results per page
-     * @param  array $data    Data to pass to getCountCommon()
+     * @param int   $userId  The user's ID
+     * @param int   $page    The page of results to return
+     * @param int   $perPage The number of results per page
+     * @param array $data    Data to pass to getCountCommon()
      *
      * @return array
      */
@@ -664,10 +665,10 @@ class Cdn
     /**
      * Create a new object
      *
-     * @param  mixed        $object    The object to create: $_FILE key, path or data stream
-     * @param  string|array $mBucket   The bucket to upload to
-     * @param  array        $aOptions  Upload options
-     * @param  boolean      $bIsStream Whether the upload is a stream or not
+     * @param mixed        $object    The object to create: $_FILE key, path or data stream
+     * @param string|array $mBucket   The bucket to upload to
+     * @param array        $aOptions  Upload options
+     * @param boolean      $bIsStream Whether the upload is a stream or not
      *
      * @return mixed        stdClass on success, false on failure
      */
@@ -699,27 +700,39 @@ class Cdn
             //  Are we uploading a URL?
             if (!$bIsStream && preg_match('/^https?:\/\//', $object)) {
 
-                if (!isset($aOptions['Content-Type'])) {
+                try {
 
-                    $aHeaders                 = get_headers($object, 1);
-                    $aOptions['Content-Type'] = $aHeaders['Content-Type'];
-                    if (is_array($aOptions['Content-Type'])) {
-                        $aOptions['Content-Type'] = end($aOptions['Content-Type']);
+                    if (empty($oData->ext)) {
+                        //  Attempt to maintain the existing extension if there is one
+                        preg_match('/.*\.([a-z0-9]+)$/', $object, $aMatches);
+                        $sExt = getFromArray(1, $aMatches);
+                        if (!empty($sExt)) {
+                            $aOptions['extension'] = $sExt;
+                        }
                     }
 
-                    if (empty($aOptions['Content-Type'])) {
-                        $aOptions['Content-Type'] = 'application/octet-stream';
+                    /** @var Get $oHttpClient */
+                    $oHttpClient = Factory::factory('HttpRequestGet');
+                    $aUrl        = parse_url($object);
+                    $oHttpClient
+                        ->baseUri(
+                            getFromArray('scheme', $aUrl, 'http') . '://' .
+                            getFromArray('host', $aUrl) . '/'
+                        )
+                        ->path(getFromArray('path', $aUrl));
+
+                    $oResponse = $oHttpClient->execute();
+
+                    if (!isset($aOptions['Content-Type'])) {
+                        $aContentType             = $oResponse->getHeader('Content-Type');
+                        $aOptions['Content-Type'] = reset($aContentType);
                     }
-                }
 
-                //  This is a URL, treat as stream
-                $aOptions  = ['http' => ['user_agent' => 'Nails']];
-                $rContext  = stream_context_create($aOptions);
-                $object    = @file_get_contents($object, false, $rContext);
-                $bIsStream = true;
+                    $object    = $oResponse->getBody(false);
+                    $bIsStream = true;
 
-                if (empty($object)) {
-                    throw new UrlException('Invalid URL');
+                } catch (\Exception $e) {
+                    throw new UrlException($e->getMessage(), $e->getCode(), $e);
                 }
             }
 
@@ -834,38 +847,37 @@ class Cdn
 
                 if (!isset($aOptions['Content-Type'])) {
                     throw new ObjectCreateException('A Content-Type must be defined for data stream uploads');
-                } else {
-
-                    $sCacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
-                    $fh         = fopen(static::CACHE_PATH . $sCacheFile, 'w');
-                    fwrite($fh, $object);
-                    fclose($fh);
-
-                    // --------------------------------------------------------------------------
-
-                    //  File mime types
-                    $oData->mime = $aOptions['Content-Type'];
-
-                    // --------------------------------------------------------------------------
-
-                    //  If an extension has been supplied use that, if not detect from mime type
-                    if (!empty($aOptions['extension'])) {
-                        $oData->ext = $aOptions['extension'];
-                        $oData->ext = $this->sanitiseExtension($oData->ext);
-                    } else {
-                        $oData->ext = $this->getExtFromMime($oData->mime);
-                    }
-
-                    // --------------------------------------------------------------------------
-
-                    //  Specify the file specifics
-                    if (empty($aOptions['filename_display'])) {
-                        $oData->name = $sCacheFile . '.' . $oData->ext;
-                    } else {
-                        $oData->name = $aOptions['filename_display'];
-                    }
-                    $oData->file = static::CACHE_PATH . $sCacheFile;
                 }
+
+                $sCacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
+                $fh         = fopen(static::CACHE_PATH . $sCacheFile, 'w');
+                fwrite($fh, $object);
+                fclose($fh);
+
+                // --------------------------------------------------------------------------
+
+                //  File mime types
+                $oData->mime = $aOptions['Content-Type'];
+
+                // --------------------------------------------------------------------------
+
+                //  If an extension has been supplied use that, if not detect from mime type
+                if (!empty($aOptions['extension'])) {
+                    $oData->ext = $aOptions['extension'];
+                    $oData->ext = $this->sanitiseExtension($oData->ext);
+                } else {
+                    $oData->ext = $this->getExtFromMime($oData->mime);
+                }
+
+                // --------------------------------------------------------------------------
+
+                //  Specify the file specifics
+                if (empty($aOptions['filename_display'])) {
+                    $oData->name = $sCacheFile . '.' . $oData->ext;
+                } else {
+                    $oData->name = $aOptions['filename_display'];
+                }
+                $oData->file = static::CACHE_PATH . $sCacheFile;
             }
 
             // --------------------------------------------------------------------------
@@ -932,13 +944,13 @@ class Cdn
                     $sAccepted = implode(', .', $oBucket->allowed_types);
                     $sAccepted = str_replace(', . and , ', ' and ', $sAccepted);
                     throw new ObjectCreateException(
-                        sprintf('The file type is not allowed, accepted file types are: %s', $sAccepted)
+                        sprintf('The file type .' . $oData->ext . ' is not allowed, accepted file types are: %s', $sAccepted)
                     );
 
                 } else {
                     $sAccepted = implode('', $oBucket->allowed_types);
                     throw new ObjectCreateException(
-                        sprintf('The file type is not allowed, accepted file type is %s', $sAccepted)
+                        sprintf('The file type .' . $oData->ext . ' is not allowed, accepted file type is %s', $sAccepted)
                     );
                 }
             }
@@ -1150,7 +1162,7 @@ class Cdn
     /**
      * Deletes an object
      *
-     * @param  int $iObjectId The object's ID or filename
+     * @param int $iObjectId The object's ID or filename
      *
      * @return boolean
      */
@@ -1231,7 +1243,7 @@ class Cdn
     /**
      * Restore an object from the trash
      *
-     * @param  mixed $iObjectId The object's ID or filename
+     * @param mixed $iObjectId The object's ID or filename
      *
      * @return boolean
      */
@@ -1305,7 +1317,7 @@ class Cdn
     /**
      * Permanently deletes an object
      *
-     * @param  mixed $object The object's ID or filename
+     * @param mixed $object The object's ID or filename
      *
      * @return bool
      **/
@@ -1372,9 +1384,9 @@ class Cdn
     /**
      * Copies an object
      *
-     * @param  int   $sourceObjectId The ID of the object to copy
-     * @param  mixed $newBucket      The ID or slug of the destination bucket, leave as null to copy to same bucket
-     * @param  array $options        An array of options to apply to the new object
+     * @param int   $sourceObjectId The ID of the object to copy
+     * @param mixed $newBucket      The ID or slug of the destination bucket, leave as null to copy to same bucket
+     * @param array $options        An array of options to apply to the new object
      *
      * @return boolean
      */
@@ -1389,8 +1401,8 @@ class Cdn
     /**
      * Moves an object to a new bucket
      *
-     * @param  int   $sourceObjectId The ID of the object to move
-     * @param  mixed $newBucket      The ID or slug of the destination bucket
+     * @param int   $sourceObjectId The ID of the object to move
+     * @param mixed $newBucket      The ID or slug of the destination bucket
      *
      * @return boolean
      */
@@ -1405,11 +1417,11 @@ class Cdn
     /**
      * Uploads an object and, if successful, removes the old object. Note that a new Object ID is created.
      *
-     * @param  mixed   $object      The existing object's ID or filename
-     * @param  mixed   $bucket      The bucket's ID or slug
-     * @param  mixed   $replaceWith The replacement: $_FILE key, path or data stream
-     * @param  array   $options     An array of options to apply to the upload
-     * @param  boolean $bIsStream   Whether the replacement object is a data stream or not
+     * @param mixed   $object      The existing object's ID or filename
+     * @param mixed   $bucket      The bucket's ID or slug
+     * @param mixed   $replaceWith The replacement: $_FILE key, path or data stream
+     * @param array   $options     An array of options to apply to the upload
+     * @param boolean $bIsStream   Whether the replacement object is a data stream or not
      *
      * @return mixed                stdClass on success, false on failure
      */
@@ -1438,9 +1450,9 @@ class Cdn
     /**
      * Increments the stats of on object
      *
-     * @param  string $action The stat to increment
-     * @param  mixed  $object The object's ID or filename
-     * @param  mixed  $bucket The bucket's ID or slug
+     * @param string $action The stat to increment
+     * @param mixed  $object The object's ID or filename
+     * @param mixed  $bucket The bucket's ID or slug
      *
      * @return boolean
      */
@@ -1491,7 +1503,7 @@ class Cdn
     /**
      * Returns a local path for an object ID
      *
-     * @param  int    $iId      The object's ID
+     * @param int     $iId      The object's ID
      * @param boolean $bIsTrash Whether to look in the trash or not
      *
      * @return mixed
@@ -1531,8 +1543,8 @@ class Cdn
     /**
      * Creates a new object record in the DB; called from various other methods
      *
-     * @param  \stdClass $oData         The data to create the object with
-     * @param  boolean   $bReturnObject Whether to return the object, or just it's ID
+     * @param \stdClass $oData         The data to create the object with
+     * @param boolean   $bReturnObject Whether to return the object, or just it's ID
      *
      * @return mixed
      */
@@ -1584,7 +1596,7 @@ class Cdn
     /**
      * Formats an object object
      *
-     * @param   object $oObj The object to format
+     * @param object $oObj The object to format
      *
      * @return  void
      **/
@@ -1664,9 +1676,9 @@ class Cdn
     /**
      * Returns an array of buckets
      *
-     * @param  integer $page    The page to return
-     * @param  integer $perPage The number of items to return per page
-     * @param  array   $data    An array of data to pass to getCountCommonBuckets()
+     * @param integer $page    The page to return
+     * @param integer $perPage The number of items to return per page
+     * @param array   $data    An array of data to pass to getCountCommonBuckets()
      *
      * @return array
      */
@@ -1740,9 +1752,9 @@ class Cdn
     /**
      * Returns an array of buckets as a flat array
      *
-     * @param  integer $page    The page to return
-     * @param  integer $perPage The number of items to return per page
-     * @param  array   $data    An array of data to pass to getCountCommonBuckets()
+     * @param integer $page    The page to return
+     * @param integer $perPage The number of items to return per page
+     * @param array   $data    An array of data to pass to getCountCommonBuckets()
      *
      * @return array
      */
@@ -1763,7 +1775,7 @@ class Cdn
     /**
      * Returns a single bucket object
      *
-     * @param   string
+     * @param string
      *
      * @return  \stdClass|false
      **/
@@ -1800,9 +1812,9 @@ class Cdn
     /**
      * Create a new bucket
      *
-     * @param  string $sSlug         The slug to give the bucket
-     * @param  string $sLabel        The label to give the bucket
-     * @param  array  $aAllowedTypes An array of file types the bucket will accept
+     * @param string $sSlug         The slug to give the bucket
+     * @param string $sLabel        The label to give the bucket
+     * @param array  $aAllowedTypes An array of file types the bucket will accept
      *
      * @return boolean
      */
@@ -1925,7 +1937,7 @@ class Cdn
     /**
      * Permanently delete a bucket and its contents
      *
-     * @param   string
+     * @param string
      *
      * @return  boolean
      **/
@@ -1976,7 +1988,7 @@ class Cdn
     /**
      * Formats a bucket object
      *
-     * @param   object $bucket The bucket to format
+     * @param object $bucket The bucket to format
      *
      * @return  void
      **/
@@ -2022,7 +2034,7 @@ class Cdn
      * Attempts to detect whether a gif is animated or not
      * Credit where credit's due: http://php.net/manual/en/function.imagecreatefromgif.php#59787
      *
-     * @param   string $file the path to the file to check
+     * @param string $file the path to the file to check
      *
      * @return  boolean
      **/
@@ -2092,7 +2104,7 @@ class Cdn
     /**
      * Gets the mime type from the extension
      *
-     * @param  string $sExt The extension to return the mime type for
+     * @param string $sExt The extension to return the mime type for
      *
      * @return string
      */
@@ -2109,7 +2121,7 @@ class Cdn
     /**
      * Gets the mime type of a file on disk
      *
-     * @param  string $sFile The file to analyse
+     * @param string $sFile The file to analyse
      *
      * @return string
      */
@@ -2123,8 +2135,8 @@ class Cdn
     /**
      * Determines whether an extension is valid for a specific mime typ
      *
-     * @param  string $sExt  The extension to test, no leading period
-     * @param  string $sMime The mime type to test against
+     * @param string $sExt  The extension to test, no leading period
+     * @param string $sMime The mime type to test against
      *
      * @return bool
      */
@@ -2238,7 +2250,7 @@ class Cdn
     /**
      * Returns the URL for serving raw content from the CDN driver's source and not running it through the main CDN
      *
-     * @param  integer $iObjectId The ID of the object to serve
+     * @param integer $iObjectId The ID of the object to serve
      *
      * @return string
      * @throws UrlException
@@ -2363,7 +2375,7 @@ class Cdn
     /**
      * Calls the driver's public urlServeZippedScheme method
      *
-     * @param   none
+     * @param none
      *
      * @return  string
      **/
@@ -2377,9 +2389,9 @@ class Cdn
     /**
      * Calls the driver's public urlCrop method
      *
-     * @param   int $iObjectId The ID of the object we're cropping
-     * @param   int $iWidth    The width of the crop
-     * @param   int $iHeight   The height of the crop
+     * @param int $iObjectId The ID of the object we're cropping
+     * @param int $iWidth    The width of the crop
+     * @param int $iHeight   The height of the crop
      *
      * @return  string
      **/
@@ -2459,7 +2471,7 @@ class Cdn
     /**
      * Calls the driver's public urlCropScheme method
      *
-     * @param   none
+     * @param none
      *
      * @return  string
      **/
@@ -2473,9 +2485,9 @@ class Cdn
     /**
      * Calls the driver's public urlScale method
      *
-     * @param   int $iObjectId The ID of the object we're cropping
-     * @param   int $iWidth    The width of the scaled image
-     * @param   int $iHeight   The height of the scaled image
+     * @param int $iObjectId The ID of the object we're cropping
+     * @param int $iWidth    The width of the scaled image
+     * @param int $iHeight   The height of the scaled image
      *
      * @return  string
      **/
@@ -2560,7 +2572,7 @@ class Cdn
     /**
      * Calls the driver's public urlScaleScheme method
      *
-     * @param   none
+     * @param none
      *
      * @return  string
      **/
@@ -2680,9 +2692,9 @@ class Cdn
     /**
      * Calls the driver's public urlPlaceholder method
      *
-     * @param   int $iWidth  The width of the placeholder
-     * @param   int $iHeight The height of the placeholder
-     * @param   int $border  The width of the border round the placeholder
+     * @param int $iWidth  The width of the placeholder
+     * @param int $iHeight The height of the placeholder
+     * @param int $border  The width of the border round the placeholder
      *
      * @return  string
      **/
@@ -2704,7 +2716,7 @@ class Cdn
     /**
      * Calls the driver's public urlPlaceholderScheme method
      *
-     * @param   none
+     * @param none
      *
      * @return  string
      **/
@@ -2718,9 +2730,9 @@ class Cdn
     /**
      * Calls the driver's public urlBlankAvatar method
      *
-     * @param   int   $iWidth  The width of the placeholder
-     * @param   int   $iHeight The height of the placeholder
-     * @param   mixed $sex     The gender of the blank avatar to show
+     * @param int   $iWidth  The width of the placeholder
+     * @param int   $iHeight The height of the placeholder
+     * @param mixed $sex     The gender of the blank avatar to show
      *
      * @return  string
      **/
@@ -2742,7 +2754,7 @@ class Cdn
     /**
      * Calls the driver's public urlBlankAvatarScheme method
      *
-     * @param   none
+     * @param none
      *
      * @return  string
      **/
@@ -2756,9 +2768,9 @@ class Cdn
     /**
      * Returns the appropriate avatar for a user
      *
-     * @param   int $iUserId The user's ID
-     * @param   int $iWidth  The width of the avatar
-     * @param   int $iHeight The height of the avatar
+     * @param int $iUserId The user's ID
+     * @param int $iWidth  The width of the avatar
+     * @param int $iHeight The height of the avatar
      *
      * @return  string
      **/
@@ -2790,7 +2802,7 @@ class Cdn
     /**
      * Determines which scheme to use for a user's avatar and returns the appropriate one
      *
-     * @param  integer $iUserId The User ID to check
+     * @param integer $iUserId The User ID to check
      *
      * @return string
      */
@@ -2820,9 +2832,9 @@ class Cdn
     /**
      * Generates an expiring URL for an object
      *
-     * @param  integer $iObjectId     The object's ID
-     * @param  integer $expires       The length of time the URL should be valid for, in seconds
-     * @param  boolean $forceDownload Whether to force the download or not
+     * @param integer $iObjectId     The object's ID
+     * @param integer $expires       The length of time the URL should be valid for, in seconds
+     * @param boolean $forceDownload Whether to force the download or not
      *
      * @return string
      */
@@ -2862,7 +2874,7 @@ class Cdn
     /**
      * Calls the driver's public urlExpiringScheme method
      *
-     * @param   none
+     * @param none
      *
      * @return  string
      **/
@@ -2916,8 +2928,8 @@ class Cdn
     /**
      * Determines whether a supplied extension is valid for a given array of acceptable extensions
      *
-     * @param  string $sExtension  The extension to test
-     * @param  array  $aAllowedExt An array of valid extensions
+     * @param string $sExtension  The extension to test
+     * @param array  $aAllowedExt An array of valid extensions
      *
      * @return boolean
      */
@@ -2948,7 +2960,7 @@ class Cdn
      * overloaded by the developer to satisfy any preferences with regards file
      * extensions
      *
-     * @param  string $sExt The extension to map
+     * @param string $sExt The extension to map
      *
      * @return string
      */
@@ -3051,8 +3063,8 @@ class Cdn
     /**
      * Formats a file size given in bytes into a human-friendly string
      *
-     * @param  integer $iBytes     The file size, in bytes
-     * @param  integer $iPrecision The precision to use
+     * @param integer $iBytes     The file size, in bytes
+     * @param integer $iPrecision The precision to use
      *
      * @return string
      */
@@ -3084,7 +3096,7 @@ class Cdn
      * Formats a file size as bytes (e.g max_upload_size)
      * hat-tip: http://php.net/manual/en/function.ini-get.php#96996
      *
-     * @param  string $sSize The string to convert to bytes
+     * @param string $sSize The string to convert to bytes
      *
      * @return integer
      */
