@@ -100,6 +100,46 @@ class CdnObject extends Resource
      */
     public $url;
 
+    /**
+     * @var string
+     */
+    protected $filename;
+
+    /**
+     * @var string
+     */
+    protected $filename_display;
+
+    /**
+     * @var string
+     */
+    protected $mime;
+
+    /**
+     * @var string
+     */
+    protected $filesize;
+
+    /**
+     * @var int
+     */
+    protected $img_width;
+
+    /**
+     * @var int
+     */
+    protected $img_height;
+
+    /**
+     * @var string
+     */
+    protected $img_orientation;
+
+    /**
+     * @var bool
+     */
+    protected $is_animated;
+
     // --------------------------------------------------------------------------
 
     /**
