@@ -16,6 +16,9 @@ use Nails\Factory;
 
 class CdnObject extends Base
 {
+    const RESOURCE_NAME = 'CdnObject';
+    const RESOURCE_PROVIDER = 'nails/module-cdn';
+
     /**
      * Object constructor.
      */
@@ -77,62 +80,5 @@ class CdnObject extends Base
         $aBools[] = 'is_animated';
 
         parent::formatObject($oObj, $aData, $aIntegers, $aBools, $aFloats);
-
-        // --------------------------------------------------------------------------
-
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
-
-        $sFileNameDisk  = $oObj->filename;
-        $sFileNameHuman = $oObj->filename_display;
-        $iFileSize      = (int) $oObj->filesize;
-
-        $oObj->file = new \stdClass();
-
-        $oObj->file->name        = new \stdClass();
-        $oObj->file->name->disk  = $sFileNameDisk;
-        $oObj->file->name->human = $sFileNameHuman;
-        unset($oObj->filename);
-        unset($oObj->filename_display);
-
-        $oObj->file->mime = $oObj->mime;
-        $oObj->file->ext  = strtolower(pathinfo($oObj->file->name->disk, PATHINFO_EXTENSION));
-        unset($oObj->mime);
-
-        $oObj->file->size            = new \stdClass();
-        $oObj->file->size->bytes     = $iFileSize;
-        $oObj->file->size->kilobytes = round($iFileSize / $oCdn::BYTE_MULTIPLIER_KB, $oCdn::FILE_SIZE_PRECISION);
-        $oObj->file->size->megabytes = round($iFileSize / $oCdn::BYTE_MULTIPLIER_MB, $oCdn::FILE_SIZE_PRECISION);
-        $oObj->file->size->gigabytes = round($iFileSize / $oCdn::BYTE_MULTIPLIER_GB, $oCdn::FILE_SIZE_PRECISION);
-        $oObj->file->size->human     = $oCdn->formatBytes($iFileSize);
-        unset($oObj->filesize);
-
-        // --------------------------------------------------------------------------
-
-        //  Quick flag for detecting images
-        $bIsImg = false;
-
-        switch ($oObj->file->mime) {
-
-            case 'image/jpg':
-            case 'image/jpeg':
-            case 'image/gif':
-            case 'image/png':
-                $bIsImg = true;
-                break;
-        }
-
-        if ($bIsImg) {
-            $oObj->img = (object) [
-                'width'       => $oObj->img_width,
-                'height'      => $oObj->img_height,
-                'orientation' => $oObj->img_orientation,
-                'animated'    => $oObj->is_animated,
-            ];
-        }
-
-        unset($oObj->img_width);
-        unset($oObj->img_height);
-        unset($oObj->img_orientation);
-        unset($oObj->is_animated);
     }
 }
