@@ -43,7 +43,7 @@ class Size extends Resource
     /**
      * Size constructor.
      *
-     * @param Resource|\stdClass\array $oObj The data to format
+     * @param Resource|\stdClass|array $oObj The data to format
      *
      * @throws \Nails\Common\Exception\FactoryException
      */

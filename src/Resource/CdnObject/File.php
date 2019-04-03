@@ -39,7 +39,7 @@ class File extends Resource
     /**
      * File constructor.
      *
-     * @param Resource|\stdClass\array $oObj The data to format
+     * @param Resource|\stdClass|array $oObj The data to format
      *
      * @throws \Nails\Common\Exception\FactoryException
      */

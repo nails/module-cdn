@@ -4,8 +4,6 @@ namespace Nails\Cdn\Resource;
 
 use Nails\Cdn\Resource\CdnObject\File;
 use Nails\Cdn\Resource\CdnObject\Image;
-use Nails\Cdn\Resource\CdnObject\Name;
-use Nails\Cdn\Resource\CdnObject\Size;
 use Nails\Common\Resource;
 use Nails\Factory;
 
@@ -101,7 +99,7 @@ class CdnObject extends Resource
     /**
      * CdnObject constructor.
      *
-     * @param Resource|\stdClass\array $oObj The data to format
+     * @param Resource|\stdClass|array $oObj The data to format
      *
      * @throws \Nails\Common\Exception\FactoryException
      */
