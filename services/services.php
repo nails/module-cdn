@@ -73,4 +73,13 @@ return [
             }
         },
     ],
+    'resources' => [
+        'CdnObject' => function($obj) {
+            if (class_exists('\App\Cdn\Resource\CdnObject')) {
+                return new \App\Cdn\Resource\CdnObject($obj);
+            } else {
+                return new \Nails\Cdn\Resource\CdnObject($obj);
+            }
+        }
+    ]
 ];
