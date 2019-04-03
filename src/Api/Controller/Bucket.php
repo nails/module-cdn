@@ -65,14 +65,7 @@ class Bucket extends CrudController
         return Factory::factory('ApiResponse', 'nails/module-api')
             ->setData(array_map(
                 function ($oObj) {
-                    $oObj->url = Factory::resource(
-                        'ObjectUrl',
-                        'nails/module-cdn',
-                        [
-                            'src'     => cdnServe($oObj->id),
-                            'preview' => $oObj->is_img ? cdnCrop($oObj->id, 400, 400) : null,
-                        ]
-                    );
+                    $oObj->url->preview = $oObj->is_img ? cdnCrop($oObj->id, 400, 400) : null;
                     return $oObj;
                 },
                 $aObjects

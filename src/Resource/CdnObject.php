@@ -4,6 +4,7 @@ namespace Nails\Cdn\Resource;
 
 use Nails\Cdn\Resource\CdnObject\File;
 use Nails\Cdn\Resource\CdnObject\Image;
+use Nails\Cdn\Resource\CdnObject\Url;
 use Nails\Common\Resource;
 use Nails\Factory;
 
@@ -94,6 +95,11 @@ class CdnObject extends Resource
      */
     public $img;
 
+    /**
+     * @var Url
+     */
+    public $url;
+
     // --------------------------------------------------------------------------
 
     /**
@@ -114,29 +120,29 @@ class CdnObject extends Resource
             'nails/module-cdn',
             (object) [
                 'name' => (object) [
-                    'disk'  => $oObj->filename,
-                    'human' => $oObj->filename_display,
+                    'disk'  => $this->filename,
+                    'human' => $this->filename_display,
                 ],
-                'mime' => $oObj->mime,
-                'ext'  => strtolower(pathinfo($oObj->filename, PATHINFO_EXTENSION)),
+                'mime' => $this->mime,
+                'ext'  => strtolower(pathinfo($this->filename, PATHINFO_EXTENSION)),
                 'size' => (object) [
-                    'bytes' => $oObj->filesize,
+                    'bytes' => $this->filesize,
                 ],
             ]
         );
 
         // --------------------------------------------------------------------------
 
-        $this->is_img = (bool) preg_match('/^image\/.+/', $oObj->mime);
+        $this->is_img = (bool) preg_match('/^image\/.+/', $this->mime);
         if ($this->is_img) {
             $this->img = Factory::resource(
                 'ObjectImage',
                 'nails/module-cdn',
                 [
-                    'width'       => $oObj->img_width,
-                    'height'      => $oObj->img_height,
-                    'orientation' => $oObj->img_orientation,
-                    'animated'    => $oObj->is_animated,
+                    'width'       => $this->img_width,
+                    'height'      => $this->img_height,
+                    'orientation' => $this->img_orientation,
+                    'animated'    => $this->is_animated,
                 ]
             );
         } else {
@@ -145,11 +151,22 @@ class CdnObject extends Resource
 
         // --------------------------------------------------------------------------
 
-        if (empty($oObj->bucket)) {
+        if (empty($this->bucket)) {
             unset($this->bucket);
         } else {
             unset($this->bucket_id);
         }
+
+        // --------------------------------------------------------------------------
+
+        $this->url = Factory::resource(
+            'ObjectUrl',
+            'nails/module-cdn',
+            (object) [
+                'id'     => $this->id,
+                'is_img' => $this->is_img,
+            ]
+        );
 
         // --------------------------------------------------------------------------
 
