@@ -32,6 +32,7 @@ class Bucket extends CrudController
 
     /**
      * Returns a paginated list of a bucket's contents
+     *
      * @return array
      */
     public function getList()
@@ -62,21 +63,24 @@ class Bucket extends CrudController
         );
 
         return Factory::factory('ApiResponse', 'nails/module-api')
-                      ->setData(array_map(
-                          function ($oObj) {
-                              $oObj->is_img = isset($oObj->img);
-                              $oObj->url    = (object) [
-                                  'src'     => cdnServe($oObj->id),
-                                  'preview' => isset($oObj->img) ? cdnCrop($oObj->id, 400, 400) : null,
-                              ];
-                              return $oObj;
-                          },
-                          $aObjects
-                      ))
-                      ->setMeta([
-                          'page'     => $iPage,
-                          'per_page' => static::CONFIG_OBJECTS_PER_PAGE,
-                      ]);
+            ->setData(array_map(
+                function ($oObj) {
+                    $oObj->url = Factory::resource(
+                        'ObjectUrl',
+                        'nails/module-cdn',
+                        [
+                            'src'     => cdnServe($oObj->id),
+                            'preview' => $oObj->is_img ? cdnCrop($oObj->id, 400, 400) : null,
+                        ]
+                    );
+                    return $oObj;
+                },
+                $aObjects
+            ))
+            ->setMeta([
+                'page'     => $iPage,
+                'per_page' => static::CONFIG_OBJECTS_PER_PAGE,
+            ]);
     }
 
     // --------------------------------------------------------------------------

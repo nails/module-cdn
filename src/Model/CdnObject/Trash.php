@@ -13,8 +13,18 @@ namespace Nails\Cdn\Model\CdnObject;
 
 use Nails\Cdn\Model\CdnObject;
 
+/**
+ * Class Trash
+ *
+ * @package Nails\Cdn\Model\CdnObject
+ */
 class Trash extends CdnObject
 {
+    const RESOURCE_NAME     = 'Object';
+    const RESOURCE_PROVIDER = 'nails/module-cdn';
+
+    // --------------------------------------------------------------------------
+
     /**
      * Trash constructor.
      */

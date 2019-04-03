@@ -86,13 +86,14 @@ class CdnObject extends Base
         }
 
         return Factory::factory('ApiResponse', 'nails/module-api')
-                      ->setData($oInput->get('id') ? reset($aOut) : $aOut);
+            ->setData($oInput->get('id') ? reset($aOut) : $aOut);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Upload a new object to the CDN
+     *
      * @return array
      */
     public function postCreate()
@@ -128,18 +129,19 @@ class CdnObject extends Base
 
         //  @todo (Pablo - 2018-06-25) - Reduce the namespace here (i.e remove `object`)
         return Factory::factory('ApiResponse', 'nails/module-api')
-                      ->setData([
-                          'object' => $this->formatObject(
-                              $oObject,
-                              $this->getRequestedUrls()
-                          ),
-                      ]);
+            ->setData([
+                'object' => $this->formatObject(
+                    $oObject,
+                    $this->getRequestedUrls()
+                ),
+            ]);
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Delete an object from the CDN
+     *
      * @return array
      */
     public function postDelete()
@@ -198,6 +200,7 @@ class CdnObject extends Base
 
     /**
      * Restore an item form the trash
+     *
      * @return array
      */
     public function postRestore()
@@ -229,6 +232,7 @@ class CdnObject extends Base
 
     /**
      * Search across all objects
+     *
      * @return array
      */
     public function getSearch()
@@ -271,6 +275,7 @@ class CdnObject extends Base
 
     /**
      * List items in the trash
+     *
      * @return array
      */
     public function getTrash()
@@ -312,6 +317,7 @@ class CdnObject extends Base
 
     /**
      * Return an array of the requested URLs form the request
+     *
      * @return array
      */
     protected function getRequestedUrls()

@@ -2,98 +2,166 @@
 
 namespace Nails\Cdn\Resource;
 
-use Nails\Cdn\Resource\CdnObject\Name;
+use Nails\Cdn\Resource\CdnObject\File;
 use Nails\Cdn\Resource\CdnObject\Image;
+use Nails\Cdn\Resource\CdnObject\Name;
 use Nails\Cdn\Resource\CdnObject\Size;
-use Nails\Cdn\Service\Cdn;
 use Nails\Common\Resource;
 use Nails\Factory;
 
 /**
  * Class CdnObject
  *
- * @package App\Resource
+ * @package Nails\Cdn\Resource
  */
 class CdnObject extends Resource
 {
     /**
-     * @var Name
+     * @var int
      */
-    public $name;
+    public $id;
+
+    /**
+     * @var int
+     */
+    public $bucket_id;
+
+    /**
+     * @var Bucket
+     */
+    public $bucket;
 
     /**
      * @var string
      */
-    public $mime;
+    public $md5_hash;
+
+    /**
+     * @var int
+     */
+    public $serves;
+
+    /**
+     * @var int
+     */
+    public $downloads;
+
+    /**
+     * @var int
+     */
+    public $thumbs;
+
+    /**
+     * @var int
+     */
+    public $scales;
 
     /**
      * @var string
      */
-    public $ext;
+    public $driver;
 
     /**
-     * @var Size
+     * @var string
      */
-    public $size;
+    public $created;
 
     /**
-     * @var Image|null
+     * @var int
+     */
+    public $created_by;
+
+    /**
+     * @var string
+     */
+    public $modified;
+
+    /**
+     * @var int
+     */
+    public $modified_by;
+
+    /**
+     * @var File
+     */
+    public $file;
+
+    /**
+     * @var bool
+     */
+    public $is_img;
+
+    /**
+     * @var Image
      */
     public $img;
 
-    /**
-     * @var string
-     */
-    public $url;
+    // --------------------------------------------------------------------------
 
+    /**
+     * CdnObject constructor.
+     *
+     * @param Resource|\stdClass\array $oObj The data to format
+     *
+     * @throws \Nails\Common\Exception\FactoryException
+     */
     public function __construct($oObj)
     {
         parent::__construct($oObj);
 
-        /** @var Cdn $cndService */
-        $cndService = Factory::service('Cdn', 'nails/module-cdn');
+        // --------------------------------------------------------------------------
 
-        $sFileNameDisk  = $oObj->filename;
-        $sFileNameHuman = $oObj->filename_display;
-        $iFileSize      = (int) $oObj->filesize;
-
-        $this->name        = new Name();
-        $this->name->disk  = $sFileNameDisk;
-        $this->name->human = $sFileNameHuman;
-
-        $this->mime = $oObj->mime;
-        $this->ext  = strtolower(pathinfo($this->name->disk, PATHINFO_EXTENSION));
-
-        $this->size            = new Size();
-        $this->size->bytes     = $iFileSize;
-        $this->size->kilobytes = round($iFileSize / $cndService::BYTE_MULTIPLIER_KB, $cndService::FILE_SIZE_PRECISION);
-        $this->size->megabytes = round($iFileSize / $cndService::BYTE_MULTIPLIER_MB, $cndService::FILE_SIZE_PRECISION);
-        $this->size->gigabytes = round($iFileSize / $cndService::BYTE_MULTIPLIER_GB, $cndService::FILE_SIZE_PRECISION);
-        $this->size->human     = $cndService->formatBytes($iFileSize);
+        $this->file = Factory::resource(
+            'ObjectFile',
+            'nails/module-cdn',
+            (object) [
+                'name' => (object) [
+                    'disk'  => $oObj->filename,
+                    'human' => $oObj->filename_display,
+                ],
+                'mime' => $oObj->mime,
+                'ext'  => strtolower(pathinfo($oObj->filename, PATHINFO_EXTENSION)),
+                'size' => (object) [
+                    'bytes' => $oObj->filesize,
+                ],
+            ]
+        );
 
         // --------------------------------------------------------------------------
 
-        //  Quick flag for detecting images
-        $bIsImg = false;
-        switch ($this->mime) {
-
-            case 'image/jpg':
-            case 'image/jpeg':
-            case 'image/gif':
-            case 'image/png':
-                $bIsImg = true;
-                break;
+        $this->is_img = (bool) preg_match('/^image\/.+/', $oObj->mime);
+        if ($this->is_img) {
+            $this->img = Factory::resource(
+                'ObjectImage',
+                'nails/module-cdn',
+                [
+                    'width'       => $oObj->img_width,
+                    'height'      => $oObj->img_height,
+                    'orientation' => $oObj->img_orientation,
+                    'animated'    => $oObj->is_animated,
+                ]
+            );
+        } else {
+            unset($this->img);
         }
 
-        if ($bIsImg) {
-            $image = new Image();
-            $image->url = $cndService->urlServe($oObj->id);
-            $image->width = $oObj->img_width;
-            $image->height = $oObj->img_height;
-            $image->orientation = $oObj->img_orientation;
-            $image->animated = $oObj->is_animated;
-            $image->height = $oObj->is_animated;
-            $this->img = $image;
+        // --------------------------------------------------------------------------
+
+        if (empty($oObj->bucket)) {
+            unset($this->bucket);
+        } else {
+            unset($this->bucket_id);
         }
+
+        // --------------------------------------------------------------------------
+
+        unset($this->filename);
+        unset($this->filename_display);
+        unset($this->mime);
+        unset($this->filesize);
+        unset($this->img_width);
+        unset($this->img_height);
+        unset($this->img_orientation);
+        unset($this->is_animated);
     }
 }

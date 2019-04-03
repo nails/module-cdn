@@ -2,22 +2,24 @@
 
 namespace Nails\Cdn\Resource\CdnObject;
 
-class Image
+use Nails\Common\Resource;
+
+/**
+ * Class Image
+ *
+ * @package Nails\Cdn\Resource\CdnObject
+ */
+class Image extends Resource
 {
     /**
-     * @var string
-     */
-    public $url;
-
-    /**
-     * @var integer
-     */
-    public $height;
-
-    /**
-     * @var integer
+     * @var int
      */
     public $width;
+
+    /**
+     * @var int
+     */
+    public $height;
 
     /**
      * @var string
@@ -25,7 +27,7 @@ class Image
     public $orientation;
 
     /**
-     * @var boolean
+     * @var bool
      */
     public $animated;
 }

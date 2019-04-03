@@ -27,6 +27,7 @@ class Manager extends Base
 
     /**
      * Returns the URL for a manager
+     *
      * @return array
      */
     public function getUrl()
@@ -42,12 +43,12 @@ class Manager extends Base
         $oInput = Factory::service('Input');
 
         return Factory::factory('ApiResponse', 'nails/module-api')
-                      ->setData(site_url(
-                          'admin/cdn/manager?' .
-                          http_build_query([
-                              'bucket'   => $oInput->get('bucket'),
-                              'callback' => $oInput->get('callback'),
-                          ])
-                      ));
+            ->setData(site_url(
+                'admin/cdn/manager?' .
+                http_build_query([
+                    'bucket'   => $oInput->get('bucket'),
+                    'callback' => $oInput->get('callback'),
+                ])
+            ));
     }
 }

@@ -2,6 +2,7 @@
 
 /**
  * This model handles interactions with the module's "object" table.
+ *
  * @todo        Integrate this properly with the library
  * @package     Nails
  * @subpackage  module-cdn
@@ -12,12 +13,18 @@
 namespace Nails\Cdn\Model;
 
 use Nails\Common\Model\Base;
-use Nails\Factory;
 
+/**
+ * Class CdnObject
+ *
+ * @package Nails\Cdn\Model
+ */
 class CdnObject extends Base
 {
-    const RESOURCE_NAME = 'CdnObject';
+    const RESOURCE_NAME     = 'Object';
     const RESOURCE_PROVIDER = 'nails/module-cdn';
+
+    // --------------------------------------------------------------------------
 
     /**
      * Object constructor.
@@ -34,14 +41,15 @@ class CdnObject extends Base
             'filename',
             'filename_display',
         ];
-        $this->addExpandableField([
-            'trigger'   => 'bucket',
-            'type'      => self::EXPANDABLE_TYPE_SINGLE,
-            'property'  => 'bucket',
-            'model'     => 'Bucket',
-            'provider'  => 'nails/module-cdn',
-            'id_column' => 'bucket_id',
-        ]);
+        $this
+            ->addExpandableField([
+                'trigger'   => 'bucket',
+                'type'      => self::EXPANDABLE_TYPE_SINGLE,
+                'property'  => 'bucket',
+                'model'     => 'Bucket',
+                'provider'  => 'nails/module-cdn',
+                'id_column' => 'bucket_id',
+            ]);
     }
 
     // --------------------------------------------------------------------------
@@ -61,6 +69,15 @@ class CdnObject extends Base
 
     // --------------------------------------------------------------------------
 
+    /**
+     * Formats a single object
+     *
+     * @param object $oObj      A reference to the object being formatted.
+     * @param array  $aData     The same data array which is passed to _getCountCommon, for reference if needed
+     * @param array  $aIntegers Fields which should be cast as integers if numerical and not null
+     * @param array  $aBools    Fields which should be cast as booleans if not null
+     * @param array  $aFloats   Fields which should be cast as floats if not null
+     */
     protected function formatObject(
         &$oObj,
         array $aData = [],
@@ -74,11 +91,9 @@ class CdnObject extends Base
         $aIntegers[] = 'downloads';
         $aIntegers[] = 'thumbs';
         $aIntegers[] = 'scales';
-        $aIntegers[] = '';
-        $aIntegers[] = '';
-
-        $aBools[] = 'is_animated';
-
+        $aIntegers[] = 'filesize';
+        $aIntegers[] = 'bucket_id';
+        $aBools[]    = 'is_animated';
         parent::formatObject($oObj, $aData, $aIntegers, $aBools, $aFloats);
     }
 }
