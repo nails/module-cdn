@@ -14,7 +14,7 @@ return [
             //  Images
             'png', 'jpg', 'gif',
             //  Documents & Text
-            'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'rtf', 'txt', 'csv', 'xml', 'json',
+            'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'rtf', 'txt', 'csv', 'xml', 'json', 'js', 'css',
             //  Video
             'mp4', 'mov', 'm4v', 'mpg', 'mpeg', 'avi', 'ogv',
             //  Audio
