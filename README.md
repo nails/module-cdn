@@ -7,13 +7,15 @@
 
 This is the CDN module for Nails, it brings simple file storage, management, and image manipulation to the app with support for popular object storage (e.g. S3) and distributed edges (e.g. CloudFront).
 
-http://nailsapp.co.uk/modules/cdn
+-
 
-Note: If you are using the Crop functionality of this module it is recommended to use @hellopablo's fork of PHPThumb. There is a bug in the original package which causes black lines to be rendered at the edge of images when cropped to certain dimensions.
+Note: If you are using the `crop` functionality of this module it is recommended to use @hellopablo's fork of PHPThumb. There is a bug in the original package which causes black lines to be rendered at the edge of images when cropped to certain dimensions.
 
 To use @hellopablo's fork you must alias the package at the root level `composer.json` (i.e., your project's `composer.json`) file.
 
-    "repositories": [{
-        "type": "vcs",
-        "url": "https://github.com/hellopablo/PHPThumb"
-    }]
+```json
+"repositories": [{
+    "type": "vcs",
+    "url": "https://github.com/hellopablo/PHPThumb"
+}]
+```
