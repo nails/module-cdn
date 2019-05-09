@@ -19,6 +19,8 @@ use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model\CdnObject;
 use Nails\Common\Factory\HttpRequest\Get;
+use Nails\Common\Helper\Directory;
+use Nails\Common\Service\FileCache;
 use Nails\Common\Service\Mime;
 use Nails\Common\Traits\Caching;
 use Nails\Common\Traits\ErrorHandling;
@@ -64,20 +66,6 @@ class Cdn
     const ORIENTATION_LANDSCAPE = 'LANDSCAPE';
     const ORIENTATION_SQUARE    = 'SQUARE';
 
-    /**
-     * The cache directory to use
-     *
-     * @var string
-     */
-    const CACHE_PATH = CACHE_PUBLIC_PATH;
-
-    /**
-     * The cache directory to use
-     *
-     * @var string
-     */
-    const CACHE_URL = CACHE_PUBLIC_URL;
-
     // --------------------------------------------------------------------------
 
     /**
@@ -108,7 +96,19 @@ class Cdn
      */
     protected $aPermittedDimensions = [];
 
+    /**
+     * The Mime service
+     *
+     * @var Mime
+     */
     protected $oMimeService;
+
+    /**
+     * The cache directory
+     *
+     * @var string
+     */
+    protected $sCacheDirectory;
 
     // --------------------------------------------------------------------------
 
@@ -124,6 +124,13 @@ class Cdn
         Mime $oMimeService
     ) {
         $this->oMimeService = $oMimeService;
+
+        // --------------------------------------------------------------------------
+
+        //  @todo (Pablo - 2019-05-09) - Make better use of the FileCache service
+        /** @var FileCache $oFileCache */
+        $oFileCache            = Factory::service('FileCache');
+        $this->sCacheDirectory = $oFileCache->public()->getDir();
 
         // --------------------------------------------------------------------------
 
@@ -275,7 +282,7 @@ class Cdn
 
             // Create a handler for the directory
             $pattern = '#^' . $bucketSlug . '-' . substr($objectFilename, 0, strrpos($objectFilename, '.')) . '#';
-            $fh      = @opendir(static::CACHE_PATH);
+            $fh      = @opendir($this->sCacheDirectory);
 
             if ($fh !== false) {
 
@@ -286,8 +293,8 @@ class Cdn
                     if ($file != '.' && $file != '..') {
 
                         // Check with regex that the file format is what we're expecting and not something else
-                        if (preg_match($pattern, $file) && file_exists(static::CACHE_PATH . $file)) {
-                            unlink(static::CACHE_PATH . $file);
+                        if (preg_match($pattern, $file) && file_exists($this->sCacheDirectory . $file)) {
+                            unlink($this->sCacheDirectory . $file);
                         }
                     }
                 }
@@ -765,11 +772,11 @@ class Cdn
                             $aOptions['Content-Type'] = $sMime;
                         }
 
-                        $fh = fopen(static::CACHE_PATH . $sCacheFile, 'w');
+                        $fh = fopen($this->sCacheDirectory . $sCacheFile, 'w');
                         fwrite($fh, $bEncoded ? base64_decode($sData) : $sData);
                         fclose($fh);
 
-                        $object = static::CACHE_PATH . $sCacheFile;
+                        $object = $this->sCacheDirectory . $sCacheFile;
                     }
 
                     $oData->file = $object;
@@ -785,7 +792,7 @@ class Cdn
                     if ($_FILES[$object]['error'] == UPLOAD_ERR_OK) {
 
                         //  Move the file to a tmp directory and call it the original name
-                        $sTmpDir = CACHE_PATH . (int) microtime(true) . md5($_FILES[$object]['name']) . DIRECTORY_SEPARATOR;
+                        $sTmpDir = Directory::tempdir();
                         if (!mkdir($sTmpDir)) {
                             throw new ObjectCreateException(
                                 'Failed to create temporary directory'
@@ -850,7 +857,7 @@ class Cdn
                 }
 
                 $sCacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
-                $fh         = fopen(static::CACHE_PATH . $sCacheFile, 'w');
+                $fh         = fopen($this->sCacheDirectory . $sCacheFile, 'w');
                 fwrite($fh, $object);
                 fclose($fh);
 
@@ -877,7 +884,7 @@ class Cdn
                 } else {
                     $oData->name = $aOptions['filename_display'];
                 }
-                $oData->file = static::CACHE_PATH . $sCacheFile;
+                $oData->file = $this->sCacheDirectory . $sCacheFile;
             }
 
             // --------------------------------------------------------------------------
@@ -1083,8 +1090,8 @@ class Cdn
 
         } finally {
             //  If a cache file was created then we should remove it
-            if (!empty($sCacheFile) && file_exists(static::CACHE_PATH . $sCacheFile)) {
-                unlink(static::CACHE_PATH . $sCacheFile);
+            if (!empty($sCacheFile) && file_exists($this->sCacheDirectory . $sCacheFile)) {
+                unlink($this->sCacheDirectory . $sCacheFile);
             }
 
             //  @todo (Pablo - 2019-03-27) - Remove temporary file, if created
@@ -2584,6 +2591,18 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
+     * Returns the directory being used by the CDN for caching
+     *
+     * @return string
+     */
+    public function getCacheDir(): string
+    {
+        return $this->sCacheDirectory;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Checks the public cache for an image, and if it's there will return it's URL
      *
      * @param string  $sBucket     The bucket slug
@@ -2616,8 +2635,11 @@ class Cdn
             $iHeight
         );
 
-        if (file_exists(static::CACHE_PATH . $sCachePath)) {
-            return static::CACHE_URL . $sCachePath;
+        /** @var FileCache $oFileCache */
+        $oFileCache = Factory::service('FileCache');
+
+        if ($oFileCache->public()->exists($sCachePath)) {
+            return $oFileCache->public()->getUrl($sCachePath);
         }
 
         return null;

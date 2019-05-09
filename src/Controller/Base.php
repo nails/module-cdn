@@ -61,7 +61,7 @@ abstract class Base extends BaseMiddle
         //  Define variables
         $oCdn                     = Factory::service('Cdn', 'nails/module-cdn');
         $this->cdnRoot            = NAILS_PATH . 'module-cdn/cdn/';
-        $this->cdnCacheDir        = $oCdn::CACHE_PATH;
+        $this->cdnCacheDir        = $oCdn->getCacheDir();
         $this->cdnCacheHeadersSet = false;
 
         /**
@@ -85,9 +85,9 @@ abstract class Base extends BaseMiddle
     /**
      * Serve a file from the app's cache
      *
-     * @param  string  $file            The file to serve
-     * @param  boolean $hit             Whether or not the request was a cache hit or not
-     * @param  boolean $setCacheHeaders Whether tos et the cache headers or not
+     * @param string  $file            The file to serve
+     * @param boolean $hit             Whether or not the request was a cache hit or not
+     * @param boolean $setCacheHeaders Whether tos et the cache headers or not
      *
      * @return void
      */
@@ -158,6 +158,7 @@ abstract class Base extends BaseMiddle
 
     /**
      * Unset the cache headers of an object
+     *
      * @return boolean
      */
     protected function unsetCacheHeaders()
@@ -193,7 +194,7 @@ abstract class Base extends BaseMiddle
     /**
      * Serve the "304 Not Modified" headers for an object
      *
-     * @param  string $file The file we're sending the headers for
+     * @param string $file The file we're sending the headers for
      *
      * @return boolean
      */
@@ -261,6 +262,7 @@ abstract class Base extends BaseMiddle
 
     /**
      * Serve up the "fail whale" graphic
+     *
      * @return void
      */
     protected function serveBadSrc(array $params)
