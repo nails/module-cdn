@@ -792,14 +792,7 @@ class Cdn
                     if ($_FILES[$object]['error'] == UPLOAD_ERR_OK) {
 
                         //  Move the file to a tmp directory and call it the original name
-                        $sTmpDir = Directory::tempdir();
-                        if (!mkdir($sTmpDir)) {
-                            throw new ObjectCreateException(
-                                'Failed to create temporary directory'
-                            );
-                        }
-
-                        $sTmpPath = $sTmpDir . $_FILES[$object]['name'];
+                        $sTmpPath = Directory::tempdir() . $_FILES[$object]['name'];
                         if (!move_uploaded_file($_FILES[$object]['tmp_name'], $sTmpPath)) {
                             throw new ObjectCreateException(
                                 'Failed to move uploaded file to temporary directory'
