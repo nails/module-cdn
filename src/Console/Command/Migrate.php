@@ -2,7 +2,10 @@
 
 namespace Nails\Cdn\Console\Command;
 
+use Nails\Cdn\Model\CdnObject;
+use Nails\Cdn\Service\StorageDriver;
 use Nails\Common\Exception\NailsException;
+use Nails\Common\Service\Logger;
 use Nails\Console\Command\Base;
 use Nails\Factory;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -56,11 +59,11 @@ class Migrate extends Base
     /**
      * Executes the app
      *
-     * @param  InputInterface  $oInput  The Input Interface provided by Symfony
-     * @param  OutputInterface $oOutput The Output Interface provided by Symfony
+     * @param InputInterface  $oInput  The Input Interface provided by Symfony
+     * @param OutputInterface $oOutput The Output Interface provided by Symfony
      *
-     * @throws \Exception
      * @return void
+     * @throws \Exception
      */
     protected function execute(InputInterface $oInput, OutputInterface $oOutput)
     {
@@ -177,22 +180,39 @@ class Migrate extends Base
 
     protected function doMigrate($sDriver, $bOverwrite, $bRemove, $aDriversOld)
     {
-        $oOutput        = $this->oOutput;
-        $oObjectModel   = Factory::model('Object', 'nails/module-cdn');
+        $oOutput = $this->oOutput;
+
+        /** @var CdnObject $oObjectModel */
+        $oObjectModel = Factory::model('Object', 'nails/module-cdn');
+        /** @var StorageDriver $oStorageDriver */
         $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
 
+        //  Set up a log file to catch errors
+        /** @var Logger $oLogger */
+        $oLogger = Factory::service('Logger');
+        /** @var \DateTime $oNow */
+        $oNow = Factory::factory('DateTime');
+
+        $sLog = $oLogger->getDir() . 'cdn-migrate-' . $oNow->format('Y-m-d_H-i-s') . '.php';
+        $rLog = fopen($sLog, 'w');
+
+        fwrite($rLog, '<?php die("No direct access allowed"); ?>' . "\n");
+
+        $oOutput->writeln('Logging to: <info>' . $sLog . '</info>');
+
         $oProgress = new ProgressBar($oOutput, 100);
-        $oProgress->setFormat("\n%current%% [%bar%]\n\nElapsed:   %elapsed:6s%\nEstimated: %estimated:-6s%");
+        $oProgress->setFormat(implode("\n", [
+            '',
+            '%current%% [%bar%]',
+            '',
+            'Elapsed:   <info>%elapsed:6s%</info>',
+            'Estimated: <info>%estimated:-6s%</info>',
+            '',
+        ]));
         $oProgress->setProgressCharacter('');
         $oProgress->setBarCharacter('❚');
         $oProgress->setEmptyBarCharacter(' ');
         $oProgress->start();
-
-        //  Set up a log file to catch errors
-        $oNow = Factory::factory('DateTime');
-        $sLog = 'application/logs/cdn-migrate-' . $oNow->format('Y-m-d_H-i-s') . '.php';
-        $rLog = fopen($sLog, 'w');
-        fwrite($rLog, '<?php die("No direct access allowed"); ?>' . "\n");
 
         $iMigrated = 0;
         $iFailures = 0;
