@@ -12,6 +12,8 @@
 
 use Nails\Cdn\Controller\Base;
 
+use Nails\Factory;
+
 class Placeholder extends Base
 {
     private $tile;
