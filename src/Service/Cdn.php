@@ -1339,7 +1339,7 @@ class Cdn
         }
 
         //  Object doesn't exist but may exist in the trash
-        $object = $this->getObjectFromTrash($object);
+        $object = $this->getObjectFromTrash($object->id);
 
         if (!$object) {
             $this->setError('Nothing to destroy.');
