@@ -20,6 +20,7 @@ use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model\CdnObject;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Helper\Directory;
+use Nails\Common\Service\Database;
 use Nails\Common\Service\FileCache;
 use Nails\Common\Service\Mime;
 use Nails\Common\Traits\Caching;
@@ -335,14 +336,22 @@ class Cdn
     /**
      * Returns an array of objects
      *
-     * @param integer $page    The page to return
-     * @param integer $perPage The number of items to return per page
-     * @param array   $data    An array of data to pass to getCountCommonBuckets()
+     * @param integer $iPage    The page to return
+     * @param integer $iPerPage The number of items to return per page
+     * @param array   $aData    An array of data to pass to getCountCommonBuckets()
      *
      * @return array
      */
-    public function getObjects($page = null, $perPage = null, $data = [])
+    public function getObjects($iPage = null, $iPerPage = null, $aData = [])
     {
+        //  If the first value is an array then treat as if called with getObjects(null, null, $aData);
+        if (is_array($iPage)) {
+            $aData = $iPage;
+            $iPage = null;
+        }
+
+        // --------------------------------------------------------------------------
+
         $oDb = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.serves, o.downloads, o.thumbs, o.scales, o.driver, o.md5_hash');
         $oDb->Select('o.created, o.created_by, o.modified, o.modified_by');
@@ -353,39 +362,39 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        //  Apply common items; pass $data
-        $this->getCountCommonObjects($data);
+        //  Apply common items; pass $aData
+        $this->getCountCommonObjects($aData);
 
         // --------------------------------------------------------------------------
 
         //  Facilitate pagination
-        if (!is_null($page)) {
+        if (!is_null($iPage)) {
 
             /**
              * Adjust the page variable, reduce by one so that the offset is calculated
              * correctly. Make sure we don't go into negative numbers
              */
 
-            $page--;
-            $page = $page < 0 ? 0 : $page;
+            $iPage--;
+            $iPage = $iPage < 0 ? 0 : $iPage;
 
             //  Work out what the offset should be
-            $perPage = is_null($perPage) ? 50 : (int) $perPage;
-            $offset  = $page * $perPage;
+            $iPerPage = is_null($iPerPage) ? 50 : (int) $iPerPage;
+            $iOffset  = $iPage * $iPerPage;
 
-            $oDb->limit($perPage, $offset);
+            $oDb->limit($iPerPage, $iOffset);
         }
 
         // --------------------------------------------------------------------------
 
-        $objects    = $oDb->get(NAILS_DB_PREFIX . 'cdn_object o')->result();
-        $numObjects = count($objects);
+        $aObjects    = $oDb->get(NAILS_DB_PREFIX . 'cdn_object o')->result();
+        $iNumObjects = count($aObjects);
 
-        for ($i = 0; $i < $numObjects; $i++) {
-            $this->formatObject($objects[$i]);
+        for ($i = 0; $i < $iNumObjects; $i++) {
+            $this->formatObject($aObjects[$i]);
         }
 
-        return $objects;
+        return $aObjects;
     }
 
     // --------------------------------------------------------------------------
@@ -415,14 +424,22 @@ class Cdn
     /**
      * Retrieves objects from the trash
      *
-     * @param int   $page    The page of results to return
-     * @param int   $perPage The number of results per page
-     * @param array $data    Data to pass to getCountCommon()
+     * @param int   $iPage    The page of results to return
+     * @param int   $iPerPage The number of results per page
+     * @param array $aData    Data to pass to getCountCommon()
      *
      * @return array
      */
-    public function getObjectsFromTrash($page = null, $perPage = null, $data = [])
+    public function getObjectsFromTrash($iPage = null, $iPerPage = null, $aData = [])
     {
+        //  If the first value is an array then treat as if called with getObjectsFromTrash(null, null, $aData);
+        if (is_array($iPage)) {
+            $aData = $iPage;
+            $iPage = null;
+        }
+
+        // --------------------------------------------------------------------------
+
         $oDb = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.serves, o.downloads, ');
         $oDb->select('o.thumbs, o.scales, o.driver, o.md5_hash, o.created, o.created_by, o.modified, o.modified_by');
@@ -433,61 +450,61 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        //  Apply common items; pass $data
-        $this->getCountCommonObjectsFromTrash($data);
+        //  Apply common items; pass $aData
+        $this->getCountCommonObjectsFromTrash($aData);
 
         // --------------------------------------------------------------------------
 
         //  Facilitate pagination
-        if (!is_null($page)) {
+        if (!is_null($iPage)) {
 
             /**
              * Adjust the page variable, reduce by one so that the offset is calculated
              * correctly. Make sure we don't go into negative numbers
              */
 
-            $page--;
-            $page = $page < 0 ? 0 : $page;
+            $iPage--;
+            $iPage = $iPage < 0 ? 0 : $iPage;
 
             //  Work out what the offset should be
-            $perPage = is_null($perPage) ? 50 : (int) $perPage;
-            $offset  = $page * $perPage;
+            $iPerPage = is_null($iPerPage) ? 50 : (int) $iPerPage;
+            $iOffset  = $iPage * $iPerPage;
 
-            $oDb->limit($perPage, $offset);
+            $oDb->limit($iPerPage, $iOffset);
         }
 
         // --------------------------------------------------------------------------
 
-        $objects    = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->result();
-        $numObjects = count($objects);
+        $aObjects   = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->result();
+        $iNumObjets = count($aObjects);
 
-        for ($i = 0; $i < $numObjects; $i++) {
+        for ($i = 0; $i < $iNumObjets; $i++) {
 
             //  Format the object, make it pretty
-            $this->formatObject($objects[$i]);
+            $this->formatObject($aObjects[$i]);
         }
 
-        return $objects;
+        return $aObjects;
     }
 
     // --------------------------------------------------------------------------
 
-    public function getCountCommonObjectsFromTrash($data = [])
+    public function getCountCommonObjectsFromTrash($aData = [])
     {
-        if (!empty($data['keywords'])) {
+        if (!empty($aData['keywords'])) {
 
-            if (!isset($data['or_like'])) {
+            if (!isset($aData['or_like'])) {
 
-                $data['or_like'] = [];
+                $aData['or_like'] = [];
             }
 
-            $data['or_like'][] = [
+            $aData['or_like'][] = [
                 'column' => 'o.filename_display',
-                'value'  => $data['keywords'],
+                'value'  => $aData['keywords'],
             ];
         }
 
-        $this->getCountCommon($data);
+        $this->getCountCommon($aData);
     }
 
     // --------------------------------------------------------------------------
@@ -653,18 +670,24 @@ class Cdn
     /**
      * Returns objects created by a user
      *
-     * @param int   $userId  The user's ID
-     * @param int   $page    The page of results to return
-     * @param int   $perPage The number of results per page
-     * @param array $data    Data to pass to getCountCommon()
+     * @param int   $userId   The user's ID
+     * @param int   $iPage    The page of results to return
+     * @param int   $iPerPage The number of results per page
+     * @param array $aData    Data to pass to getCountCommon()
      *
      * @return array
      */
-    public function getObjectsForUser($userId, $page = null, $perPage = null, $data = [])
+    public function getObjectsForUser($userId, $iPage = null, $iPerPage = null, $aData = [])
     {
+        //  If the first value is an array then treat as if called with getObjectsForUser($userId, null, null, $aData);
+        if (is_array($iPage)) {
+            $aData = $iPage;
+            $iPage = null;
+        }
+
         $oDb = Factory::service('Database');
         $oDb->where('o.created_by', $userId);
-        return $this->getObjects($page, $perPage, $data);
+        return $this->getObjects($iPage, $iPerPage, $aData);
     }
 
     // --------------------------------------------------------------------------
@@ -1317,31 +1340,32 @@ class Cdn
     /**
      * Permanently deletes an object
      *
-     * @param mixed $object The object's ID or filename
+     * @param int $iObjectId The object's ID
      *
      * @return bool
      **/
-    public function objectDestroy($object)
+    public function objectDestroy($iObjectId)
     {
-        if (!$object) {
+        if (!$iObjectId) {
             $this->setError('Not a valid object');
             return false;
         }
 
         // --------------------------------------------------------------------------
 
-        $object = $this->getObject($object);
+        $oObject = $this->getObject($iObjectId);
 
-        if ($object) {
-            if (!$this->objectDelete($object->id)) {
+        if ($oObject) {
+            if (!$this->objectDelete($oObject->id)) {
                 return false;
             }
         }
 
         //  Object doesn't exist but may exist in the trash
-        $object = $this->getObjectFromTrash($object->id);
+        $oObject = $this->getObjectFromTrash(is_object($oObject) ? $object->id : $iObjectId);
 
-        if (!$object) {
+        if (!$oObject) {
+            lastQuery();
             $this->setError('Nothing to destroy.');
             return false;
         }
@@ -1349,16 +1373,17 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Attempt to remove the file
-        if ($this->callDriver('objectDestroy', [$object->file->name->disk, $object->bucket->slug])) {
+        if ($this->callDriver('objectDestroy', [$oObject->file->name->disk, $oObject->bucket->slug])) {
 
             //  Remove the database entries
+            /** @var Database $oDb */
             $oDb = Factory::service('Database');
             $oDb->trans_begin();
 
-            $oDb->where('id', $object->id);
+            $oDb->where('id', $oObject->id);
             $oDb->delete(NAILS_DB_PREFIX . 'cdn_object');
 
-            $oDb->where('id', $object->id);
+            $oDb->where('id', $oObject->id);
             $oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
 
             if ($oDb->trans_status() === false) {
@@ -1369,7 +1394,7 @@ class Cdn
             } else {
 
                 $oDb->trans_commit();
-                $this->unsetCacheObject($object);
+                $this->unsetCacheObject($oObject);
                 return true;
             }
         } else {
@@ -1676,53 +1701,60 @@ class Cdn
     /**
      * Returns an array of buckets
      *
-     * @param integer $page    The page to return
-     * @param integer $perPage The number of items to return per page
-     * @param array   $data    An array of data to pass to getCountCommonBuckets()
+     * @param integer $iPage    The page to return
+     * @param integer $iPerPage The number of items to return per page
+     * @param array   $aData    An array of data to pass to getCountCommonBuckets()
      *
      * @return array
      */
-    public function getBuckets($page = null, $perPage = null, $data = [])
+    public function getBuckets($iPage = null, $iPerPage = null, $aData = [])
     {
+        //  If the first value is an array then treat as if called with getBuckets(null, null, $aData);
+        if (is_array($iPage)) {
+            $aData = $iPage;
+            $iPage = null;
+        }
+
+        // --------------------------------------------------------------------------
+
+        /** @var Database $oDb */
         $oDb = Factory::service('Database');
         $oDb->select('b.id,b.slug,b.label,b.allowed_types,b.max_size,b.created,b.created_by');
         $oDb->select('b.modified,b.modified_by');
 
-        //  Apply common items; pass $data
-        $this->getCountCommonBuckets($data);
+        //  Apply common items; pass $aData
+        $this->getCountCommonBuckets($aData);
 
         // --------------------------------------------------------------------------
 
         //  Facilitate pagination
-        if (!is_null($page)) {
+        if (!is_null($iPage)) {
 
             /**
              * Adjust the page variable, reduce by one so that the offset is calculated
              * correctly. Make sure we don't go into negative numbers
              */
 
-            $page--;
-            $page = $page < 0 ? 0 : $page;
+            $iPage--;
+            $iPage = $iPage < 0 ? 0 : $iPage;
 
             //  Work out what the offset should be
-            $perPage = is_null($perPage) ? 50 : (int) $perPage;
-            $offset  = $page * $perPage;
+            $iPerPage = is_null($iPerPage) ? 50 : (int) $iPerPage;
+            $iOffset  = $iPage * $iPerPage;
 
-            $oDb->limit($perPage, $offset);
+            $oDb->limit($iPerPage, $iOffset);
         }
 
         // --------------------------------------------------------------------------
 
-        $buckets    = $oDb->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
-        $numBuckets = count($buckets);
+        $aBuckets    = $oDb->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
+        $iNumBuckets = count($aBuckets);
 
-        for ($i = 0; $i < $numBuckets; $i++) {
-
-            //  Format the object, make it pretty
-            $this->formatBucket($buckets[$i]);
+        for ($i = 0; $i < $iNumBuckets; $i++) {
+            $this->formatBucket($aBuckets[$i]);
         }
 
-        return $buckets;
+        return $aBuckets;
     }
 
     // --------------------------------------------------------------------------
@@ -1752,15 +1784,21 @@ class Cdn
     /**
      * Returns an array of buckets as a flat array
      *
-     * @param integer $page    The page to return
-     * @param integer $perPage The number of items to return per page
-     * @param array   $data    An array of data to pass to getCountCommonBuckets()
+     * @param integer $iPage    The page to return
+     * @param integer $iPerPage The number of items to return per page
+     * @param array   $aData    An array of data to pass to getCountCommonBuckets()
      *
      * @return array
      */
-    public function getBucketsFlat($page = null, $perPage = null, $data = [])
+    public function getBucketsFlat($iPage = null, $iPerPage = null, $aData = [])
     {
-        $aBuckets = $this->getBuckets($page, $perPage, $data);
+        //  If the first value is an array then treat as if called with getAll(null, null, $aData);
+        if (is_array($iPage)) {
+            $aData = $iPage;
+            $iPage = null;
+        }
+
+        $aBuckets = $this->getBuckets($iPage, $iPerPage, $aData);
         $aOut     = [];
 
         foreach ($aBuckets as $oBucket) {

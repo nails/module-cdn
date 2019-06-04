@@ -28,6 +28,13 @@ return [
          * https://github.com/nails/module-cdn/blob/develop/docs/transformation/security.md
          */
         'allowDangerousImageTransformation' => false,
+
+        /**
+         * For how many days to keep an item in the trash
+         *
+         * @var int
+         */
+        'trashRetention' => 180
     ],
     'services'   => [
         'Cdn'           => function (Service\Mime $oMimeService = null) {
