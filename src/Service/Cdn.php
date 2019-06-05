@@ -1362,10 +1362,9 @@ class Cdn
         }
 
         //  Object doesn't exist but may exist in the trash
-        $oObject = $this->getObjectFromTrash(is_object($oObject) ? $object->id : $iObjectId);
+        $oObject = $this->getObjectFromTrash(is_object($oObject) ? $oObject->id : $iObjectId);
 
         if (!$oObject) {
-            lastQuery();
             $this->setError('Nothing to destroy.');
             return false;
         }
