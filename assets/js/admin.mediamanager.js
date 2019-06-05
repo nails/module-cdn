@@ -532,14 +532,14 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 if (response.meta.pagination.next) {
                     base.apiFetchBuckets(response.meta.pagination.next, buckets)
                         .done(function() {
-                            $deferred.resolve();
+                            $deferred.resolve(buckets);
                         })
                         .fail(function() {
                             $deferred.reject();
                         });
+                } else {
+                    $deferred.resolve(buckets);
                 }
-
-                $deferred.resolve(buckets);
             })
             .fail(function() {
                 base.error('Failed to retrieve list of buckets from the server.');
