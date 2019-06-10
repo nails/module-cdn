@@ -906,17 +906,20 @@ class Cdn
             // --------------------------------------------------------------------------
 
             //  Calculate the MD5 hash, don't upload duplicates in the same bucket
-            $oData->md5_hash = md5_file($oData->file);
+            if (empty($aOptions['no-md5-check'])) {
 
-            /** @var CdnObject $oObjectModel */
-            $oObjectModel    = Factory::model('Object', 'nails/module-cdn');
-            $oExistingObject = $oObjectModel->getByMd5Hash($oData->md5_hash, ['expand' => ['bucket']]);
+                $oData->md5_hash = md5_file($oData->file);
 
-            if (!empty($oExistingObject)) {
-                if (!empty($oExistingObject->bucket) && $oExistingObject->bucket->slug == $sBucket) {
-                    //  Update this item's modified date so that it appears further up the list
-                    $oObjectModel->update($oExistingObject->id);
-                    return $this->getObject($oExistingObject->id);
+                /** @var CdnObject $oObjectModel */
+                $oObjectModel    = Factory::model('Object', 'nails/module-cdn');
+                $oExistingObject = $oObjectModel->getByMd5Hash($oData->md5_hash, ['expand' => ['bucket']]);
+
+                if (!empty($oExistingObject)) {
+                    if (!empty($oExistingObject->bucket) && $oExistingObject->bucket->slug == $sBucket) {
+                        //  Update this item's modified date so that it appears further up the list
+                        $oObjectModel->update($oExistingObject->id);
+                        return $this->getObject($oExistingObject->id);
+                    }
                 }
             }
 
