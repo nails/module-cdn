@@ -906,9 +906,8 @@ class Cdn
             // --------------------------------------------------------------------------
 
             //  Calculate the MD5 hash, don't upload duplicates in the same bucket
+            $oData->md5_hash = md5_file($oData->file);
             if (empty($aOptions['no-md5-check'])) {
-
-                $oData->md5_hash = md5_file($oData->file);
 
                 /** @var CdnObject $oObjectModel */
                 $oObjectModel    = Factory::model('Object', 'nails/module-cdn');
