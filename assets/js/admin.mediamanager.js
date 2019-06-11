@@ -15,6 +15,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.showInsert = ko.observable(callback.length > 0);
     base.canUpload = ko.observable(true);
     base.isSearching = ko.observable(false);
+    base.isListing = ko.observable(false);
     base.searchTimeout = null;
     base.searchTerm = ko.observable();
     base.lastSearch = ko.observable();
@@ -95,12 +96,12 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                             return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
                         });
                         $.ajax({
-                                'url': window.SITE_URL + 'api/cdn/bucket',
-                                'method': 'POST',
-                                'data': {
-                                    'label': label
-                                }
-                            })
+                            'url': window.SITE_URL + 'api/cdn/bucket',
+                            'method': 'POST',
+                            'data': {
+                                'label': label
+                            }
+                        })
                             .fail(function() {
                                 base.debug('Failed to create initial bucket');
                                 deferred.reject();
@@ -142,6 +143,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             'max_size': bucket.max_size || null,
             'max_size_human': bucket.max_size_human || null,
             'object_count': ko.observable(bucket.object_count || 0),
+            'is_renaming': ko.observable(false),
             'is_selected': ko.computed(function() {
                 return !base.isSearching() && !base.isTrash() && bucket.id === base.currentBucket();
             })
@@ -157,8 +159,14 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.selectBucket = function(bucket) {
         if (typeof bucket === 'object') {
+
+            if (bucket.is_renaming()) {
+                return false;
+            }
+
             base.debug('Selecting bucket: ', bucket.id);
             base.currentBucket(bucket.id);
+
         } else {
             base.debug('Selecting bucket: ', bucket);
             base.currentBucket(bucket);
@@ -170,7 +178,10 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         base.isTrash(false);
         base.currentPage(1);
         base.objects.removeAll();
-        base.listObjects();
+
+        if (base.currentBucket()) {
+            base.listObjects();
+        }
     };
 
     // --------------------------------------------------------------------------
@@ -185,12 +196,12 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         if (event.which === base.keymap.ENTER) {
             base.showAddBucket(false);
             $.ajax({
-                    'url': window.SITE_URL + 'api/cdn/bucket',
-                    'method': 'POST',
-                    'data': {
-                        'label': event.currentTarget.value
-                    }
-                })
+                'url': window.SITE_URL + 'api/cdn/bucket',
+                'method': 'POST',
+                'data': {
+                    'label': event.currentTarget.value
+                }
+            })
                 .done(function(response) {
                     base.success('Bucket created');
                     base.debug('Bucket created');
@@ -210,6 +221,72 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             base.showAddBucket(false);
         }
         return true;
+    };
+
+    // --------------------------------------------------------------------------
+
+    base.deleteBucket = function(bucket, event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (bucket.object_count() === 0) {
+
+            $.ajax({
+                'url': window.SITE_URL + 'api/cdn/bucket/' + bucket.id,
+                'method': 'DELETE'
+            })
+                .done(function() {
+
+                    base.buckets.remove(bucket);
+                    if (base.buckets().length) {
+                        base.selectBucket(base.buckets()[0]);
+                    } else {
+                        base.selectBucket();
+                    }
+                    base.feedback('success', 'Bucket deleted');
+
+                })
+                .fail(function(response) {
+                    base.error('Failed to delete bucket.');
+                });
+
+        } else {
+            base.feedback('error', 'Bucket is not empty');
+        }
+        return false;
+    }
+
+    // --------------------------------------------------------------------------
+
+    base.renameBucket = function(bucket, label) {
+        label = $.trim(label);
+        if (label !== bucket.label) {
+
+            bucket.label = label;
+
+            //  @todo (Pablo - 2019-06-11) - Save changes to API
+            $.ajax({
+                'url': window.SITE_URL + 'api/cdn/bucket/' + bucket.id,
+                'method': 'PUT',
+                'dataType': 'json',
+                'data': JSON.stringify({
+                    'label': label
+                })
+            })
+                .done(function() {
+
+                    base.feedback('success', 'Bucket renamed');
+                    bucket.is_renaming(false);
+
+                })
+                .fail(function(response) {
+                    base.error('Failed to rename bucket.');
+                });
+
+        } else {
+            bucket.is_renaming(false);
+        }
     };
 
     // --------------------------------------------------------------------------
@@ -332,12 +409,12 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
             if (confirm(message)) {
                 $.ajax({
-                        'url': window.SITE_URL + 'api/cdn/object/delete',
-                        'method': 'POST',
-                        'data': {
-                            'object_id': object.id
-                        }
-                    })
+                    'url': window.SITE_URL + 'api/cdn/object/delete',
+                    'method': 'POST',
+                    'data': {
+                        'object_id': object.id
+                    }
+                })
                     .done(function() {
                         base.objects.remove(object);
                         base.success('Item deleted');
@@ -364,12 +441,12 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.restoreObject = function() {
         var object = this;
         $.ajax({
-                'url': window.SITE_URL + 'api/cdn/object/restore',
-                'method': 'POST',
-                'data': {
-                    'object_id': object.id
-                }
-            })
+            'url': window.SITE_URL + 'api/cdn/object/restore',
+            'method': 'POST',
+            'data': {
+                'object_id': object.id
+            }
+        })
             .done(function() {
                 base.objects.remove(object);
                 base.success('Item restored');
@@ -594,6 +671,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.listObjects = function() {
         base.debug('Listing objects');
+        base.isListing(true);
         var $deferred = new $.Deferred();
         var url, data;
 
@@ -617,9 +695,9 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         }
 
         $.ajax({
-                'url': url,
-                'data': data
-            })
+            'url': url,
+            'data': data
+        })
             .done(function(response) {
                 $.each(response.data, function(index, object) {
                     base.addObject({
@@ -638,6 +716,9 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             .fail(function() {
                 base.error('Failed to retrieve list of objects from the server.');
                 $deferred.reject();
+            })
+            .always(function() {
+                base.isListing(false);
             });
         return $deferred.promise();
     };

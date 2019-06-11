@@ -45,6 +45,7 @@ class Bucket extends CrudController
         }
 
         $oInput       = Factory::service('Input');
+        $oHttpCodes   = Factory::service('HttpCodes');
         $oObjectModel = Factory::model('Object', 'nails/module-cdn');
         $iBucketId    = (int) $oInput->get('bucket_id') ?: null;
         $iPage        = (int) $oInput->get('page') ?: 1;
@@ -126,5 +127,13 @@ class Bucket extends CrudController
             'max_size_human' => $sMaxSizeHuman,
             'object_count'   => $oObj->objects,
         ];
+    }
+
+    // --------------------------------------------------------------------------
+
+    protected function userCan($sAction, $oItem = null)
+    {
+        //  @todo (Pablo - 2019-06-11) - Restrict deletes and updates to those with permission
+        //  @todo (Pablo - 2019-06-11) - Restrict deletes to empty buckets
     }
 }

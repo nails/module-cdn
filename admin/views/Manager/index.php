@@ -9,10 +9,8 @@
     </svg>
 </div>
 <!-- /ko -->
-<div class="module-cdn manager-feedback">
-    <div class="manager-feedback__error"></div>
-    <div class="manager-feedback__success"></div>
-</div>
+<div class="manager-feedback__error"></div>
+<div class="manager-feedback__success"></div>
 <div class="module-cdn manager hidden" data-bind="css: {hidden: !ready()}">
     <div class="manager__browse">
         <div class="manager__browse__buckets">
@@ -23,11 +21,61 @@
                 <!-- ko foreach: buckets -->
                 <li class="manager__browse__buckets__list__item"
                     data-bind="click: $root.selectBucket, css: {selected: is_selected()}">
-                    <span class="manager__browse__buckets__list__item__label" data-bind="html:label"></span>
+
+                    <!-- ko if: is_renaming() -->
+                    <span class="manager__browse__buckets__list__item__label">
+                        <input type="text"
+                               data-bind="
+                                    attr: {
+                                        value: label,
+                                        id: 'rename-bucket-' + id
+                                    },
+                                    event: {
+                                        keyup: function($data, event) {
+                                            if (event.which === 27) {
+                                                $data.is_renaming(false);
+                                            } else if (event.which === 13) {
+                                                $root.renameBucket($data, event.currentTarget.value);
+                                            }
+                                        }
+                                    }
+                               "
+                        />
+                    </span>
+                    <span class="manager__browse__buckets__list__item__count">
+                        Press enter to save, escape to cancel
+                    </span>
+                    <!-- /ko -->
+
+                    <!-- ko if: !is_renaming() -->
+                    <span class="manager__browse__buckets__list__item__label">
+                        <span data-bind="html:label"></span>
+                    </span>
                     <span class="manager__browse__buckets__list__item__count" data-bind="html:object_count() + ' Objects'"></span>
+                    <!-- /ko -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="8" height="12" viewBox="0 0 8 12">
                         <polygon fill="#444444" points="218 35.4 216.6 34 220.6 30 216.6 26 218 24.6 223.4 30" transform="translate(-216 -24)"/>
                     </svg>
+                    <span class="manager__browse__buckets__list__item__controls"
+                          data-bind="css: {selected: is_selected()}">
+                        <button class="btn btn-xs btn-danger"
+                                data-bind="click: $root.deleteBucket"
+                        >
+                            Delete
+                        </button>
+                        <button class="btn btn-xs btn-warning"
+                                data-bind="
+                                    click: function($data, event) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        $data.is_renaming(true);
+                                        $('#rename-bucket-' + $data.id).select().focus();
+                                    }
+                                "
+                        >
+                            Rename
+                        </button>
+                    </span>
                 </li>
                 <!-- /ko -->
                 <!-- ko if: $root.showAddBucket() -->
@@ -187,14 +235,21 @@
             <!-- /ko -->
             <!-- /ko -->
             <!-- ko if: !objects().length -->
+            <!-- ko if: isListing() -->
+            <div class="manager__browse__objects__empty">
+                Loading...
+            </div>
+            <!-- /ko -->
+            <!-- ko if: !isListing() -->
             <div class="manager__browse__objects__empty">
                 <!-- ko if: isSearching() || isTrash() -->
                 No objects found
                 <!-- /ko -->
                 <!-- ko if: !isSearching() && !isTrash() -->
-                    No objects in this bucket
+                No objects in this bucket
                 <!-- /ko -->
             </div>
+            <!-- /ko -->
             <!-- /ko -->
             <!-- /ko -->
         </div>
