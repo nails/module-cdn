@@ -43,7 +43,7 @@ class Manager extends Base
         $oInput = Factory::service('Input');
 
         return Factory::factory('ApiResponse', 'nails/module-api')
-            ->setData(site_url(
+            ->setData(siteUrl(
                 'admin/cdn/manager?' .
                 http_build_query([
                     'bucket'   => $oInput->get('bucket'),
