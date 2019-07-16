@@ -157,8 +157,8 @@ class ObjectPicker {
         this.resetPicker(picker);
 
         this.log('Setting picker object');
-        picker.find('.cdn-object-picker__input').val(object.id);
-        picker.trigger('picked');
+        let input = picker.find('.cdn-object-picker__input');
+        input.val(object.id);
 
         if (object.is_img) {
             picker.addClass('cdn-object-picker--has-image');
@@ -175,6 +175,9 @@ class ObjectPicker {
                 .html(object.object.name + ' (' + sizeHuman + ')')
                 .attr('title', object.object.name + ' (' + sizeHuman + ')');
         }
+
+        input.trigger('change');
+        picker.trigger('picked');
     };
 
     // --------------------------------------------------------------------------
@@ -190,7 +193,8 @@ class ObjectPicker {
         picker.find('.cdn-object-picker__preview-link').attr('href', '#');
         picker.find('.cdn-object-picker__preview').removeAttr('style');
         picker.find('.cdn-object-picker__label').html('');
-        picker.find('.cdn-object-picker__input').val('');
+        picker.find('.cdn-object-picker__input').val('').trigger('change');
+        picker.trigger('reset');
     };
 
     // --------------------------------------------------------------------------
