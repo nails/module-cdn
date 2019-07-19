@@ -3122,7 +3122,7 @@ class Cdn
      *
      * @return string
      */
-    public static function formatBytes($iBytes, $iPrecision = 2)
+    public static function formatBytes($iBytes, $iPrecision = 2): string
     {
         $units  = ['B', 'KB', 'MB', 'GB', 'TB'];
         $iBytes = max($iBytes, 0);
@@ -3154,7 +3154,7 @@ class Cdn
      *
      * @return integer
      */
-    public static function returnBytes($sSize)
+    public static function returnBytes($sSize): int
     {
         switch (strtoupper(substr($sSize, -1))) {
             case 'M':
@@ -3172,6 +3172,34 @@ class Cdn
         }
 
         return $iReturn;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the configured maximum upload size for this system by inspecting
+     * upload_max_filesize and post_max_size, if available.
+     *
+     * @param boolean $bFormat Whether to format the string using formatBytes
+     *
+     * @return integer|string
+     */
+    public static function maxUploadSize($bFormat = true)
+    {
+        if (function_exists('ini_get')) {
+
+            $aMaxSizes = [
+                returnBytes(ini_get('upload_max_filesize')),
+                returnBytes(ini_get('post_max_size')),
+            ];
+
+            $iMaxSize = min($aMaxSizes);
+
+            return $bFormat ? formatBytes($iMaxSize) : $iMaxSize;
+
+        } else {
+            return null;
+        }
     }
 
     // --------------------------------------------------------------------------
