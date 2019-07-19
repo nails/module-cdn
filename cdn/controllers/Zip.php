@@ -103,11 +103,11 @@ class Zip extends Base
                     foreach ($usefiles as $file) {
 
                         $name = $useBuckets ? $file->bucket . '/' . $file->filename : $file->filename;
-                        get_instance()->add_data($name, file_get_contents($file->path));
+                        get_instance()->zip->add_data($name, file_get_contents($file->path));
                     }
 
                     //  Save the Zip to the cache directory
-                    get_instance()->archive($this->cdnCacheDir . $this->cdnCacheFile);
+                    get_instance()->zip->archive($this->cdnCacheDir . $this->cdnCacheFile);
 
                     //  Set all the appropriate headers
                     if (strpos($_SERVER['HTTP_USER_AGENT'], "MSIE") !== false) {
