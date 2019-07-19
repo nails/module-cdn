@@ -96,17 +96,18 @@ class Zip extends Base
                     // --------------------------------------------------------------------------
 
                     //  Time to start Zipping!
-                    $this->load->library('zip');
+                    //  @todo (Pablo - 2019-07-19) - Use Zip service
+                    get_instance()->load->library('zip');
 
                     //  Save to the zip
                     foreach ($usefiles as $file) {
 
                         $name = $useBuckets ? $file->bucket . '/' . $file->filename : $file->filename;
-                        $this->zip->add_data($name, file_get_contents($file->path));
+                        get_instance()->add_data($name, file_get_contents($file->path));
                     }
 
                     //  Save the Zip to the cache directory
-                    $this->zip->archive($this->cdnCacheDir . $this->cdnCacheFile);
+                    get_instance()->archive($this->cdnCacheDir . $this->cdnCacheFile);
 
                     //  Set all the appropriate headers
                     if (strpos($_SERVER['HTTP_USER_AGENT'], "MSIE") !== false) {
