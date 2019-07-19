@@ -11,6 +11,7 @@
 
 namespace Nails\Cdn\Helper;
 
+use Nails\Common\Helper\ArrayHelper;
 use Nails\Factory;
 
 class Form
