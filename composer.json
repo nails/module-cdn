@@ -1,11 +1,15 @@
 {
     "name": "nails/module-cdn",
-    "keywords": ["Nails", "Shed Collective", "CodeIgniter", "CDN Module"],
+    "keywords": [
+        "Nails",
+        "Shed Collective",
+        "CodeIgniter",
+        "CDN Module"
+    ],
     "homepage": "http://nailsapp.co.uk/modules/cdn",
     "description": "This is the \"CDN\" module for Nails.",
     "license": "MIT",
-    "authors":
-    [
+    "authors": [
         {
             "name": "Pablo de la Pena",
             "email": "p@nailsapp.co.uk",
@@ -19,18 +23,18 @@
             "role": "Developer"
         }
     ],
-    "support":
-    {
+    "support": {
         "email": "hello@nailsapp.co.uk"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
-    "repositories": [{
-        "type": "vcs",
-        "url": "https://github.com/hellopablo/PHPThumb"
-    }],
-    "require":
-    {
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/hellopablo/PHPThumb"
+        }
+    ],
+    "require": {
         "nails/common": "dev-develop",
         "nails/module-console": "dev-develop",
         "nails/driver-cdn-local": "dev-develop",
@@ -38,23 +42,24 @@
         "sybio/gif-frame-extractor": "~1.0.0",
         "masterexploder/phpthumb": "dev-master"
     },
-    "require-dev":
-    {
+    "require-dev": {
         "phpunit/phpunit": "8.*"
     },
-    "autoload":
-    {
-        "psr-4": {"Nails\\Cdn\\": "src/"}
+    "autoload": {
+        "psr-4": {
+            "Nails\\Cdn\\": "src/"
+        }
     },
-    "extra":
-    {
-        "nails" :
-        {
+    "extra": {
+        "nails": {
             "moduleName": "cdn",
             "type": "module",
             "namespace": "Nails\\Cdn\\",
             "autoload": {
-                "helpers": ["cdn"]
+                "helpers": [
+                    "cdn",
+                    "form"
+                ]
             },
             "data": {
                 "nails/module-admin": {
@@ -83,7 +88,6 @@
                     ]
                 }
             }
-
         }
     }
 }
