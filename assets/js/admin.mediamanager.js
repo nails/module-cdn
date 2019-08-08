@@ -20,6 +20,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.searchTerm = ko.observable();
     base.lastSearch = ko.observable();
     base.isTrash = ko.observable(false);
+    base.listingXHR = null;
 
     // --------------------------------------------------------------------------
 
@@ -671,6 +672,9 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      */
     base.listObjects = function() {
         base.debug('Listing objects');
+        if (base.listingXHR) {
+            base.listingXHR.abort();
+        }
         base.isListing(true);
         var $deferred = new $.Deferred();
         var url, data;
@@ -694,7 +698,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             };
         }
 
-        $.ajax({
+        base.listingXHR = $.ajax({
             'url': url,
             'data': data
         })
@@ -713,12 +717,15 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 base.showLoadMore(response.data.length >= response.meta.per_page);
                 $deferred.resolve();
             })
-            .fail(function() {
-                base.error('Failed to retrieve list of objects from the server.');
+            .fail(function(xhr, textStatus) {
+                if (textStatus !== 'abort') {
+                    base.error('Failed to retrieve list of objects from the server.');
+                }
                 $deferred.reject();
             })
             .always(function() {
                 base.isListing(false);
+                base.listingXHR = null;
             });
         return $deferred.promise();
     };
@@ -746,7 +753,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
             } else {
                 base.stopSearch();
             }
-        }, 150);
+        }, 500);
 
         return true;
     };
