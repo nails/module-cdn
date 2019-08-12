@@ -59,7 +59,7 @@ class CdnObject extends Base
 
         if (count($aIds) > 100) {
             throw new ApiException(
-                'You can request a maximum of ' . self::MAX_OBJECTS_PER_REQUEST . ' objects per request',
+                'You can request a maximum of ' . static::MAX_OBJECTS_PER_REQUEST . ' objects per request',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
         }
@@ -73,7 +73,7 @@ class CdnObject extends Base
         $aOut     = [];
         $aResults = $oCdn->getObjects(
             0,
-            self::MAX_OBJECTS_PER_REQUEST,
+            static::MAX_OBJECTS_PER_REQUEST,
             [
                 'where_in' => [
                     ['o.id', $aIds],
