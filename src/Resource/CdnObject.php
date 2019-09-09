@@ -18,11 +18,6 @@ class CdnObject extends Resource
     /**
      * @var int
      */
-    public $id;
-
-    /**
-     * @var int
-     */
     public $bucket_id;
 
     /**
@@ -59,26 +54,6 @@ class CdnObject extends Resource
      * @var string
      */
     public $driver;
-
-    /**
-     * @var string
-     */
-    public $created;
-
-    /**
-     * @var int
-     */
-    public $created_by;
-
-    /**
-     * @var string
-     */
-    public $modified;
-
-    /**
-     * @var int
-     */
-    public $modified_by;
 
     /**
      * @var File
