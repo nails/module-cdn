@@ -5,7 +5,7 @@ namespace Nails\Cdn\Resource;
 use Nails\Cdn\Resource\CdnObject\File;
 use Nails\Cdn\Resource\CdnObject\Image;
 use Nails\Cdn\Resource\CdnObject\Url;
-use Nails\Common\Entity;
+use Nails\Common\Resource\Entity;
 use Nails\Factory;
 
 /**
