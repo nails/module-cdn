@@ -5,7 +5,7 @@ namespace Nails\Cdn\Resource;
 use Nails\Cdn\Resource\CdnObject\File;
 use Nails\Cdn\Resource\CdnObject\Image;
 use Nails\Cdn\Resource\CdnObject\Url;
-use Nails\Common\Resource;
+use Nails\Common\Entity;
 use Nails\Factory;
 
 /**
@@ -13,7 +13,7 @@ use Nails\Factory;
  *
  * @package Nails\Cdn\Resource
  */
-class CdnObject extends Resource
+class CdnObject extends Entity
 {
     /**
      * @var int
