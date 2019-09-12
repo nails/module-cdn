@@ -12,6 +12,7 @@
 
 namespace Nails\Cdn\Service;
 
+use Nails\Auth;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
@@ -2837,7 +2838,7 @@ class Cdn
         if (empty($iUserId)) {
             $avatarUrl = $this->urlBlankAvatar($iWidth, $iHeight);
         } else {
-            $oUserModel = Factory::model('User', 'nails/module-auth');
+            $oUserModel = Factory::model('User', Auth\Constants::MODULE_SLUG);
             $user       = $oUserModel->getById($iUserId);
             if (empty($user)) {
                 $avatarUrl = $this->urlBlankAvatar($iWidth, $iHeight);
@@ -2869,7 +2870,7 @@ class Cdn
         if (empty($iUserId)) {
             $avatarScheme = $this->urlBlankAvatarScheme();
         } else {
-            $oUserModel = Factory::model('User', 'nails/module-auth');
+            $oUserModel = Factory::model('User', Auth\Constants::MODULE_SLUG);
             $user       = $oUserModel->getById($iUserId);
             if (empty($user->profile_img)) {
                 $avatarScheme = $this->urlBlankAvatarScheme();
