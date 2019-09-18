@@ -23,4 +23,5 @@ class Token extends Base
     const TABLE             = NAILS_DB_PREFIX . 'cdn_token';
     const RESOURCE_NAME     = 'Token';
     const RESOURCE_PROVIDER = 'nails/module-cdn';
+    const AUTO_SET_TOKEN    = true;
 }
