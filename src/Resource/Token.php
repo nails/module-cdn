@@ -3,6 +3,7 @@
 namespace Nails\Cdn\Resource;
 
 use Nails\Common\Resource\DateTime;
+use Nails\Common\Resource\Entity;
 
 /**
  * Class Token
