@@ -3298,7 +3298,7 @@ class Cdn
         } elseif (is_null($mExpire)) {
 
             $sExpire = Factory::factory('DateTime')
-                ->add(new \DateInterval('P1H'))
+                ->add(new \DateInterval('PT1H'))
                 ->format('Y-m-d H:i:s');
 
         } else {
@@ -3306,7 +3306,7 @@ class Cdn
         }
 
         /** @var Token $oModel */
-        $oModel = Factory::mode('Token', 'nails/module-cdn');
+        $oModel = Factory::model('Token', 'nails/module-cdn');
         $oToken = $oModel->create(['expires' => $sExpire], true);
 
         if (empty($oToken)) {
@@ -3340,7 +3340,7 @@ class Cdn
         }
 
         /** @var Token $oModel */
-        $oModel = Factory::mode('Token', 'nails/module-cdn');
+        $oModel = Factory::model('Token', 'nails/module-cdn');
         return (bool) $oModel->getByToken($sToken, ['where' => [['expires >', 'NOW()', false]]]);
     }
 }
