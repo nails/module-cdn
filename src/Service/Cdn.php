@@ -20,6 +20,7 @@ use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model\CdnObject;
 use Nails\Cdn\Resource\Token;
+use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Helper\Directory;
@@ -122,7 +123,7 @@ class Cdn
      * @param Mime $oMimeService The mime service to use
      *
      * @throws DriverException
-     * @throws \Nails\Common\Exception\FactoryException
+     * @throws FactoryException
      */
     public function __construct(
         Mime $oMimeService
@@ -3273,11 +3274,12 @@ class Cdn
     /**
      * Generates a new CDN token
      *
-     * @param  \DateTime|\Nails\Common\Resource\DateTime|string|null $mExpire The expiration date of the token
+     * @param \DateTime|\Nails\Common\Resource\DateTime|string|null $mExpire The expiration date of the token
      *
      * @return Token
-     * @throws ValidationException
      * @throws CdnException
+     * @throws ValidationException
+     * @throws FactoryException
      */
     public function generateToken($mExpire = null): Token
     {
@@ -3300,7 +3302,7 @@ class Cdn
                 ->format('Y-m-d H:i:s');
 
         } else {
-            throw new ValidationException('Imvalid type "' . gettype($mExpire). '" passed to ' . __METHOD__);
+            throw new ValidationException('Invalid type "' . gettype($mExpire) . '" passed to ' . __METHOD__);
         }
 
         /** @var Token $oModel */
@@ -3319,7 +3321,8 @@ class Cdn
     /**
      * Validates a token
      *
-     * @param  Token|string $mToken The token to validate
+     * @param Token|string $mToken The token to validate
+     *
      * @return bool
      */
     public function validateToken($mToken): bool
@@ -3333,7 +3336,7 @@ class Cdn
             $sToken = $mToken;
 
         } else {
-            throw new ValidationException('Imvalid type "' . gettype($mToken). '" passed to ' . __METHOD__);
+            return false;
         }
 
         /** @var Token $oModel */

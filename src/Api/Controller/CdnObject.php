@@ -14,10 +14,15 @@ namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api\Controller\Base;
 use Nails\Api\Exception\ApiException;
-use Nails\Common\Service\Input;
 use Nails\Cdn\Service\Cdn;
+use Nails\Common\Service\Input;
 use Nails\Factory;
 
+/**
+ * Class CdnObject
+ *
+ * @package Nails\Cdn\Api\Controller
+ */
 class CdnObject extends Base
 {
     /**
@@ -28,8 +33,8 @@ class CdnObject extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Whether the user is authenticated. to be considered authenticated the user
-     * must either have an active session or have passed a valid cdn token.
+     * Whether the user is authenticated. To be considered authenticated the user
+     * must either have an active session or have passed a valid CDN token.
      *
      * @param string $sHttpMethod The HTTP Method protocol being used
      * @param string $sMethod     The controller method being executed
@@ -50,7 +55,7 @@ class CdnObject extends Base
         $oCdn = Factory::service('Cdn', 'nails/module-cdn');
 
         $sCdnToken = $oInput->header('X-Cdn-Token');
-        return $oCdn->validateToken($sCdnToken);
+        return $oCdn->validateToken($sCdnToken ?: null);
     }
 
     // --------------------------------------------------------------------------
@@ -62,7 +67,17 @@ class CdnObject extends Base
      */
     public function getIndex()
     {
-        //  @todo (Pablo - 2017-12-18) - this should be protected using admin permissions or the token uploader
+        $oHttpCodes = Factory::service('HttpCodes');
+
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            throw new ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
+
+        // --------------------------------------------------------------------------
+
         $oInput = Factory::service('Input');
         $oCdn   = Factory::service('Cdn', 'nails/module-cdn');
 
@@ -121,7 +136,6 @@ class CdnObject extends Base
      */
     public function postCreate()
     {
-        //  @todo (Pablo - 2017-12-18) - this should be protected using admin permissions or the token uploader
         $oHttpCodes = Factory::service('HttpCodes');
         $oInput     = Factory::service('Input');
         $oCdn       = Factory::service('Cdn', 'nails/module-cdn');
