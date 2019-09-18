@@ -14,21 +14,44 @@ namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api\Controller\Base;
 use Nails\Api\Exception\ApiException;
+use Nails\Common\Service\Input;
+use Nails\Cdn\Service\Cdn;
 use Nails\Factory;
 
 class CdnObject extends Base
 {
     /**
-     * Require the user be authenticated to use any endpoint
+     * The maximum number of objects a user can request at any one time
      */
-    const REQUIRE_AUTH = true;
+    const MAX_OBJECTS_PER_REQUEST = 50;
 
     // --------------------------------------------------------------------------
 
     /**
-     * The maximum number of objects a user can request at any one time
+     * Whether the user is authenticated. to be considered authenticated the user
+     * must either have an active session or have passed a valid cdn token.
+     *
+     * @param string $sHttpMethod The HTTP Method protocol being used
+     * @param string $sMethod     The controller method being executed
+     *
+     * @return boolean/array       Boolean true or false. Can also return an array
+     *                             with two elements (status and error) which
+     *                             will customise the response code and message.
      */
-    const MAX_OBJECTS_PER_REQUEST = 50;
+    public static function isAuthenticated($sHttpMethod = '', $sMethod = '')
+    {
+        if (isLoggedIn()) {
+            return true;
+        }
+
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+
+        $sCdnToken = $oInput->header('X-Cdn-Token');
+        return $oCdn->validateToken($sCdnToken);
+    }
 
     // --------------------------------------------------------------------------
 

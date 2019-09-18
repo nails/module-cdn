@@ -79,6 +79,13 @@ return [
                 return new \Nails\Cdn\Model\CdnObject\Trash();
             }
         },
+        'Token'       => function () {
+            if (class_exists('\App\Cdn\Model\Token')) {
+                return new \App\Cdn\Model\Token();
+            } else {
+                return new \Nails\Cdn\Model\Token();
+            }
+        },
     ],
     'resources' => [
         'Bucket'         => function ($oObj) {
@@ -128,6 +135,13 @@ return [
                 return new \App\Cdn\Resource\CdnObject\Url($oObj);
             } else {
                 return new \Nails\Cdn\Resource\CdnObject\Url($oObj);
+            }
+        },
+        'Token'          => function ($oObj) {
+            if (class_exists('\App\Cdn\Resource\Token')) {
+                return new \App\Cdn\Resource\Token($oObj);
+            } else {
+                return new \Nails\Cdn\Resource\Token($oObj);
             }
         },
     ]

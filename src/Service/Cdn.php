@@ -19,6 +19,8 @@ use Nails\Cdn\Exception\ObjectCreateException;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model\CdnObject;
+use Nails\Cdn\Resource\Token;
+use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Helper\Directory;
 use Nails\Common\Service\Database;
@@ -3264,5 +3266,78 @@ class Cdn
             $sDimension = $iWidth . 'x' . $iHeight;
             return in_array($sDimension, $this->aPermittedDimensions);
         }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Generates a new CDN token
+     *
+     * @param  \DateTime|\Nails\Common\Resource\DateTime|string|null $mExpire The expiration date of the token
+     *
+     * @return Token
+     * @throws ValidationException
+     * @throws CdnException
+     */
+    public function generateToken($mExpire = null): Token
+    {
+        if ($mExpire instanceof \DateTime) {
+
+            $sExpire = $mExpire->format('Y-m-d H:i:s');
+
+        } elseif ($mExpire instanceof \Nails\Common\Resource\DateTime) {
+
+            $sExpire = $mExpire->raw;
+
+        } elseif (is_string($mExpire)) {
+
+            $sExpire = $mExpire;
+
+        } elseif (is_null($mExpire)) {
+
+            $sExpire = Factory::factory('DateTime')
+                ->add(new \DateInterval('P1H'))
+                ->format('Y-m-d H:i:s');
+
+        } else {
+            throw new ValidationException('Imvalid type "' . gettype($mExpire). '" passed to ' . __METHOD__);
+        }
+
+        /** @var Token $oModel */
+        $oModel = Factory::mode('Token', 'nails/module-cdn');
+        $oToken = $oModel->create(['expires' => $sExpire], true);
+
+        if (empty($oToken)) {
+            throw new CdnException('Failed to generate token. ' . $this->lastError());
+        }
+
+        return $oToken;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Validates a token
+     *
+     * @param  Token|string $mToken The token to validate
+     * @return bool
+     */
+    public function validateToken($mToken): bool
+    {
+        if ($mToken instanceof Token) {
+
+            $sToken = $mToken->token;
+
+        } elseif (is_string($mToken)) {
+
+            $sToken = $mToken;
+
+        } else {
+            throw new ValidationException('Imvalid type "' . gettype($mToken). '" passed to ' . __METHOD__);
+        }
+
+        /** @var Token $oModel */
+        $oModel = Factory::mode('Token', 'nails/module-cdn');
+        return (bool) $oModel->getByToken($sToken, ['where' => [['expires >', 'NOW()', false]]]);
     }
 }
