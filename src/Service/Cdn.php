@@ -13,6 +13,7 @@
 namespace Nails\Cdn\Service;
 
 use Nails\Auth;
+use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
@@ -139,12 +140,12 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $this->aDefaultAllowedTypes = Factory::property('bucketDefaultAllowedTypes', 'nails/module-cdn');
+        $this->aDefaultAllowedTypes = Factory::property('bucketDefaultAllowedTypes', Constants::MODULE_SLUG);
 
         // --------------------------------------------------------------------------
 
         //  Load the storage driver
-        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
+        $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
         $aDrivers       = $oStorageDriver->getAll();
         $oDriver        = $oStorageDriver->getEnabled();
 
@@ -174,10 +175,10 @@ class Cdn
         //  Determine permitted image dimensions from modules
         $aPermittedDimensions = [];
         foreach (Components::available() as $oComponent) {
-            if (!empty($oComponent->data->{'nails/module-cdn'}->{'permitted-image-dimensions'})) {
+            if (!empty($oComponent->data->{Constants::MODULE_SLUG}->{'permitted-image-dimensions'})) {
                 $aPermittedDimensions = array_merge(
                     $aPermittedDimensions,
-                    $oComponent->data->{'nails/module-cdn'}->{'permitted-image-dimensions'}
+                    $oComponent->data->{Constants::MODULE_SLUG}->{'permitted-image-dimensions'}
                 );
             }
         }
@@ -185,10 +186,10 @@ class Cdn
         //  Determine permitted dimensions from app
         $oApp = Components::getApp();
 
-        if (!empty($oApp->data->{'nails/module-cdn'}->{'permitted-image-dimensions'})) {
+        if (!empty($oApp->data->{Constants::MODULE_SLUG}->{'permitted-image-dimensions'})) {
             $aPermittedDimensions = array_merge(
                 $aPermittedDimensions,
-                $oApp->data->{'nails/module-cdn'}->{'permitted-image-dimensions'}
+                $oApp->data->{Constants::MODULE_SLUG}->{'permitted-image-dimensions'}
             );
         }
 
@@ -248,7 +249,7 @@ class Cdn
             throw new DriverException('"' . $sDriver . '" is not a valid CDN driver.');
         }
 
-        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
+        $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
         $oInstance      = $oStorageDriver->getInstance($oDriver->slug);
 
         if (empty($oInstance)) {
@@ -914,7 +915,7 @@ class Cdn
             if (empty($aOptions['no-md5-check'])) {
 
                 /** @var CdnObject $oObjectModel */
-                $oObjectModel    = Factory::model('Object', 'nails/module-cdn');
+                $oObjectModel    = Factory::model('Object', Constants::MODULE_SLUG);
                 $oExistingObject = $oObjectModel->getByMd5Hash($oData->md5_hash, ['expand' => ['bucket']]);
 
                 if (!empty($oExistingObject)) {
@@ -1611,7 +1612,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $oObjectModel = Factory::model('Object', 'nails/module-cdn');
+        $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
         $iObjectId    = $oObjectModel->create($aData);
 
         if ($iObjectId) {
@@ -1888,7 +1889,7 @@ class Cdn
 
         if ($bResult) {
 
-            $oBucketModel = Factory::model('Bucket', 'nails/module-cdn');
+            $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
 
             if (empty($aBucketData['label'])) {
                 $aBucketData['label'] = ucwords(str_replace('-', ' ', $sSlug));
@@ -3261,7 +3262,7 @@ class Cdn
      */
     public function isPermittedDimension($iWidth, $iHeight): bool
     {
-        if (Factory::property('allowDangerousImageTransformation', 'nails/module-cdn')) {
+        if (Factory::property('allowDangerousImageTransformation', Constants::MODULE_SLUG)) {
             return true;
         } else {
             $sDimension = $iWidth . 'x' . $iHeight;
@@ -3306,7 +3307,7 @@ class Cdn
         }
 
         /** @var Token $oModel */
-        $oModel = Factory::model('Token', 'nails/module-cdn');
+        $oModel = Factory::model('Token', Constants::MODULE_SLUG);
         $oToken = $oModel->create(['expires' => $sExpire], true);
 
         if (empty($oToken)) {
@@ -3340,7 +3341,7 @@ class Cdn
         }
 
         /** @var Token $oModel */
-        $oModel = Factory::model('Token', 'nails/module-cdn');
+        $oModel = Factory::model('Token', Constants::MODULE_SLUG);
         return (bool) $oModel->getByToken($sToken, ['where' => [['expires >', 'NOW()', false]]]);
     }
 }

@@ -12,6 +12,7 @@
 
 namespace Nails\Cdn\Controller;
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Environment;
 use Nails\Factory;
@@ -59,7 +60,7 @@ abstract class Base extends BaseMiddle
         // --------------------------------------------------------------------------
 
         //  Define variables
-        $oCdn                     = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn                     = Factory::service('Cdn', Constants::MODULE_SLUG);
         $this->cdnRoot            = NAILS_PATH . 'module-cdn/cdn/';
         $this->cdnCacheDir        = $oCdn->getCacheDir();
         $this->cdnCacheHeadersSet = false;
@@ -106,7 +107,7 @@ abstract class Base extends BaseMiddle
         }
 
         //  Work out content type
-        $oCdn  = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn  = Factory::service('Cdn', Constants::MODULE_SLUG);
         $sMime = $oCdn->getMimeFromFile($this->cdnCacheDir . $file);
 
         header('Content-Type: ' . $sMime, true);
@@ -345,7 +346,7 @@ abstract class Base extends BaseMiddle
      */
     protected function checkDimensions($iWidth, $iHeight)
     {
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         if (!$oCdn->isPermittedDimension($iWidth, $iHeight)) {
             if (Environment::not(Environment::ENV_PROD)) {
                 throw new PermittedDimensionException(

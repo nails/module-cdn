@@ -1,5 +1,9 @@
 <?php
+
+use Nails\Cdn\Constants;
+
 $oInput = \Nails\Factory::service('Input');
+
 ?>
 <div class="group-cdn settings">
     <?php
@@ -33,7 +37,7 @@ $oInput = \Nails\Factory::service('Input');
                 <?=adminHelper(
                     'loadSettingsDriverTable',
                     'StorageDriver',
-                    'nails/module-cdn'
+                    Constants::MODULE_SLUG
                 )?>
             </div>
             <?php

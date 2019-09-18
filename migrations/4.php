@@ -14,6 +14,7 @@
 
 namespace Nails\Database\Migration\Nails\ModuleCdn;
 
+use Nails\Cdn\Constants;
 use Nails\Common\Console\Migrate\Base;
 use Nails\Factory;
 
@@ -25,7 +26,7 @@ class Migration4 extends Base
      */
     public function execute()
     {
-        $oCdn           = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn           = Factory::service('Cdn', Constants::MODULE_SLUG);
         $sDefaultDriver = $oCdn::DEFAULT_DRIVER;
         $sDriver        = defined('APP_CDN_DRIVER') ? strtolower(APP_CDN_DRIVER) : $sDefaultDriver;
 

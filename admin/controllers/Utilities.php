@@ -13,9 +13,15 @@
 namespace Nails\Admin\Cdn;
 
 use Nails\Admin\Helper;
+use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\BaseAdmin;
 use Nails\Factory;
 
+/**
+ * Class Utilities
+ *
+ * @package Nails\Admin\Cdn
+ */
 class Utilities extends BaseAdmin
 {
     /**
@@ -84,7 +90,7 @@ class Utilities extends BaseAdmin
 
                         case 'db':
 
-                            $oCdn                  = Factory::service('Cdn', 'nails/module-cdn');
+                            $oCdn                  = Factory::service('Cdn', Constants::MODULE_SLUG);
                             $this->data['orphans'] = $oCdn->findOrphanedObjects();
                             break;
 

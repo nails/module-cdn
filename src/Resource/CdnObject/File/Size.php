@@ -2,6 +2,7 @@
 
 namespace Nails\Cdn\Resource\CdnObject\File;
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Service\Cdn;
 use Nails\Common\Resource;
 use Nails\Factory;
@@ -52,7 +53,7 @@ class Size extends Resource
         parent::__construct($oObj);
 
         /** @var Cdn $oCdnService */
-        $oCdnService = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdnService = Factory::service('Cdn', Constants::MODULE_SLUG);
 
         $this->kilobytes = round($this->bytes / $oCdnService::BYTE_MULTIPLIER_KB, $oCdnService::FILE_SIZE_PRECISION);
         $this->megabytes = round($this->bytes / $oCdnService::BYTE_MULTIPLIER_MB, $oCdnService::FILE_SIZE_PRECISION);

@@ -1,3 +1,8 @@
+<?php
+
+use Nails\Cdn\Constants;
+
+?>
 <div class="group-utilities cdn orphans">
     <p>
         It is possible for CDN objects in the database to become disconnected from the physical files on disk.
@@ -76,7 +81,7 @@
 
                         foreach ($orphans['orphans'] as $orphan) {
 
-                            $oCdn = \Nails\Factory::service('Cdn', 'nails/module-cdn');
+                            $oCdn = \Nails\Factory::service('Cdn', Constants::MODULE_SLUG);
 
                             ?>
                             <tr>

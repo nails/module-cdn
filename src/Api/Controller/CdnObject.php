@@ -14,7 +14,13 @@ namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api\Controller\Base;
 use Nails\Api\Exception\ApiException;
+use Nails\Api\Factory\ApiResponse;
+use Nails\Cdn\Constants;
+use Nails\Cdn\Model\CdnObject\Trash;
 use Nails\Cdn\Service\Cdn;
+use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\ModelException;
+use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
 use Nails\Factory;
 
@@ -27,6 +33,8 @@ class CdnObject extends Base
 {
     /**
      * The maximum number of objects a user can request at any one time
+     *
+     * @var int
      */
     const MAX_OBJECTS_PER_REQUEST = 50;
 
@@ -43,16 +51,16 @@ class CdnObject extends Base
      *                             with two elements (status and error) which
      *                             will customise the response code and message.
      */
-    public static function isAuthenticated($sHttpMethod = '', $sMethod = '')
+    public static function isAuthenticated($sHttpMethod = '', $sMethod = ''): bool
     {
-        if (isLoggedIn()) {
+        if (($sHttpMethod === 'GET' && $sMethod === 'index') || isLoggedIn()) {
             return true;
         }
 
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
 
         $sCdnToken = $oInput->header('X-Cdn-Token');
         return $oCdn->validateToken($sCdnToken ?: null);
@@ -63,23 +71,23 @@ class CdnObject extends Base
     /**
      * Lists objects
      *
-     * @return array
+     * @return ApiResponse
+     * @throws ApiException
+     * @throws FactoryException
      */
-    public function getIndex()
+    public function getIndex(): ApiResponse
     {
-        $oHttpCodes = Factory::service('HttpCodes');
-
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            throw new ApiException(
-                'You do not have permission to access this resource',
-                $oHttpCodes::STATUS_UNAUTHORIZED
-            );
-        }
+        //  @todo (Pablo - 2019-09-18) - Consider a way to restrict abuse of this endpoint
+        //  See: https://github.com/nails/module-cdn/issues/76
 
         // --------------------------------------------------------------------------
 
+        /** @var HttpCodes $oHttpCodes */
+        $oHttpCodes = Factory::service('HttpCodes');
+        /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        $oCdn   = Factory::service('Cdn', 'nails/module-cdn');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
 
         $sIds = '';
 
@@ -136,10 +144,13 @@ class CdnObject extends Base
      */
     public function postCreate()
     {
+        /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
-        $oInput     = Factory::service('Input');
-        $oCdn       = Factory::service('Cdn', 'nails/module-cdn');
-        $aOut       = [];
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+        $aOut = [];
 
         // --------------------------------------------------------------------------
 
@@ -179,10 +190,13 @@ class CdnObject extends Base
     /**
      * Delete an object from the CDN
      *
-     * @return array
+     * @return ApiResponse
+     * @throws ApiException
+     * @throws FactoryException
      */
-    public function postDelete()
+    public function postDelete(): ApiResponse
     {
+        /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:object:delete')) {
@@ -192,8 +206,11 @@ class CdnObject extends Base
             );
         }
 
-        $oInput    = Factory::service('Input');
-        $oCdn      = Factory::service('Cdn', 'nails/module-cdn');
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+
         $iObjectId = $oInput->post('object_id');
 
         if (empty($iObjectId)) {
@@ -238,10 +255,13 @@ class CdnObject extends Base
     /**
      * Restore an item form the trash
      *
-     * @return array
+     * @return ApiResponse
+     * @throws ApiException
+     * @throws FactoryException
      */
-    public function postRestore()
+    public function postRestore(): ApiResponse
     {
+        /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:object:restore')) {
@@ -251,8 +271,11 @@ class CdnObject extends Base
             );
         }
 
-        $oInput    = Factory::service('Input');
-        $oCdn      = Factory::service('Cdn', 'nails/module-cdn');
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+
         $iObjectId = $oInput->post('object_id');
 
         if (!$oCdn->objectRestore($iObjectId)) {
@@ -270,10 +293,13 @@ class CdnObject extends Base
     /**
      * Search across all objects
      *
-     * @return array
+     * @return ApiResponse
+     * @throws ApiException
+     * @throws FactoryException
      */
-    public function getSearch()
+    public function getSearch(): ApiResponse
     {
+        /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:object:browse')) {
@@ -283,8 +309,11 @@ class CdnObject extends Base
             );
         }
 
-        $oInput    = Factory::service('Input');
-        $oModel    = Factory::model('Object', 'nails/module-cdn');
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var \Nails\Cdn\Model\CdnObject $oModel */
+        $oModel = Factory::model('Object', Constants::MODULE_SLUG);
+
         $sKeywords = $oInput->get('keywords');
         $iPage     = (int) $oInput->get('page') ?: 1;
         $oResult   = $oModel->search(
@@ -293,6 +322,7 @@ class CdnObject extends Base
             static::MAX_OBJECTS_PER_REQUEST
         );
 
+        /** @var ApiResponse $oResponse */
         $oResponse = Factory::factory('ApiResponse', 'nails/module-api');
         $oResponse->setData(array_map(
             function ($oObj) {
@@ -313,10 +343,14 @@ class CdnObject extends Base
     /**
      * List items in the trash
      *
-     * @return array
+     * @return ApiResponse
+     * @throws ApiException
+     * @throws FactoryException
+     * @throws ModelException
      */
-    public function getTrash()
+    public function getTrash(): ApiResponse
     {
+        /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:object:browse')) {
@@ -326,8 +360,11 @@ class CdnObject extends Base
             );
         }
 
-        $oInput   = Factory::service('Input');
-        $oModel   = Factory::model('ObjectTrash', 'nails/module-cdn');
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Trash $oModel */
+        $oModel = Factory::model('ObjectTrash', Constants::MODULE_SLUG);
+
         $iPage    = (int) $oInput->get('page') ?: 1;
         $aResults = $oModel->getAll(
             $iPage,
@@ -335,6 +372,7 @@ class CdnObject extends Base
             ['sort' => [['trashed', 'desc']]]
         );
 
+        /** @var ApiResponse $oResponse */
         $oResponse = Factory::factory('ApiResponse', 'nails/module-api');
         $oResponse->setData(array_map(
             function ($oObj) {
@@ -356,13 +394,16 @@ class CdnObject extends Base
      * Return an array of the requested URLs form the request
      *
      * @return array
+     * @throws FactoryException
      */
-    protected function getRequestedUrls()
+    protected function getRequestedUrls(): array
     {
+        /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        $sUrls  = $oInput->get('urls') ?: $oInput->header('X-Cdn-Urls');
-        $aUrls  = !is_array($sUrls) ? explode(',', $sUrls) : $sUrls;
-        $aUrls  = array_map('strtolower', $aUrls);
+
+        $sUrls = $oInput->get('urls') ?: $oInput->header('X-Cdn-Urls');
+        $aUrls = !is_array($sUrls) ? explode(',', $sUrls) : $sUrls;
+        $aUrls = array_map('strtolower', $aUrls);
 
         //  Filter out any which don't follow the format {digit}x{digit}-{scale|crop} || raw
         foreach ($aUrls as &$sDimension) {
@@ -396,9 +437,9 @@ class CdnObject extends Base
      * @param \stdClass $oObject the object to format
      * @param array     $aUrls   The requested URLs
      *
-     * @return object
+     * @return \stdClass
      */
-    protected function formatObject($oObject, $aUrls = [])
+    protected function formatObject($oObject, $aUrls = []): \stdClass
     {
         return (object) [
             'id'       => $oObject->id,
@@ -430,10 +471,13 @@ class CdnObject extends Base
      * @param array     $aUrls   The URLs to generate
      *
      * @return array
+     * @throws FactoryException
      */
-    protected function generateUrls($oObject, $aUrls)
+    protected function generateUrls($oObject, $aUrls): array
     {
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+
         $aOut = ['src' => $oCdn->urlServe($oObject)];
 
         if (!empty($aUrls) && $oObject->is_img) {

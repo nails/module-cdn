@@ -14,12 +14,20 @@ namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api\Controller\CrudController;
 use Nails\Api\Exception\ApiException;
+use Nails\Cdn\Constants;
+use Nails\Common\Service\HttpCodes;
+use Nails\Common\Service\Input;
 use Nails\Factory;
 
+/**
+ * Class Bucket
+ *
+ * @package Nails\Cdn\Api\Controller
+ */
 class Bucket extends CrudController
 {
     const CONFIG_MODEL_NAME       = 'Bucket';
-    const CONFIG_MODEL_PROVIDER   = 'nails/module-cdn';
+    const CONFIG_MODEL_PROVIDER   = Constants::MODULE_SLUG;
     const REQUIRE_AUTH            = true;
     const CONFIG_PER_PAGE         = 50;
     const CONFIG_OBJECTS_PER_PAGE = 25;
@@ -44,11 +52,15 @@ class Bucket extends CrudController
             );
         }
 
-        $oInput       = Factory::service('Input');
-        $oHttpCodes   = Factory::service('HttpCodes');
-        $oObjectModel = Factory::model('Object', 'nails/module-cdn');
-        $iBucketId    = (int) $oInput->get('bucket_id') ?: null;
-        $iPage        = (int) $oInput->get('page') ?: 1;
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var HttpCodes $oHttpCodes */
+        $oHttpCodes = Factory::service('HttpCodes');
+        /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
+        $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
+
+        $iBucketId = (int) $oInput->get('bucket_id') ?: null;
+        $iPage     = (int) $oInput->get('page') ?: 1;
 
         if (empty($iBucketId)) {
             throw new ApiException(
@@ -86,7 +98,9 @@ class Bucket extends CrudController
      */
     public function postIndex()
     {
-        $oInput     = Factory::service('Input');
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:bucket:create')) {

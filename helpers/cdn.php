@@ -10,6 +10,7 @@
  * @link
  */
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Service\Cdn;
 use Nails\Common\Service\View;
 use Nails\Factory;
@@ -27,7 +28,7 @@ if (!function_exists('formatBytes')) {
     function formatBytes($iBytes, $iPrecision = 2): string
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->formatBytes($iBytes, $iPrecision);
     }
 }
@@ -47,7 +48,7 @@ if (!function_exists('returnBytes')) {
     function returnBytes($sSize): int
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->returnBytes($sSize);
     }
 }
@@ -67,7 +68,7 @@ if (!function_exists('maxUploadSize')) {
     function maxUploadSize($bFormat = true)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->maxUploadSize($bFormat);
     }
 }
@@ -86,7 +87,7 @@ if (!function_exists('cdnObject')) {
     function cdnObject($iObjectId)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->getObject($iObjectId);
     }
 }
@@ -105,7 +106,7 @@ if (!function_exists('cdnBucket')) {
     function cdnBucket($iBucketId)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->getBucket($iBucketId);
     }
 }
@@ -125,7 +126,7 @@ if (!function_exists('cdnServe')) {
     function cdnServe($iObjectId, $bForceDownload = false)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->urlServe($iObjectId, $bForceDownload);
     }
 }
@@ -144,7 +145,7 @@ if (!function_exists('cdnServeRaw')) {
     function cdnServeRaw($iObjectId)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->urlServeRaw($iObjectId);
     }
 }
@@ -164,7 +165,7 @@ if (!function_exists('cdnServeZipped')) {
     function cdnServeZipped($aObjectIds, $sFilename = 'download.zip')
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->urlServeZipped($aObjectIds, $sFilename);
     }
 }
@@ -185,7 +186,7 @@ if (!function_exists('cdnCrop')) {
     function cdnCrop($iObjectId, $iWidth, $iHeight)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->urlCrop($iObjectId, $iWidth, $iHeight);
     }
 }
@@ -206,7 +207,7 @@ if (!function_exists('cdnScale')) {
     function cdnScale($iObjectId, $iWidth, $iHeight)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->urlScale($iObjectId, $iWidth, $iHeight);
     }
 }
@@ -227,7 +228,7 @@ if (!function_exists('cdnPlaceholder')) {
     function cdnPlaceholder($iWidth, $iHeight, $iBorder = 0)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->urlPlaceholder($iWidth, $iHeight, $iBorder);
     }
 }
@@ -248,7 +249,7 @@ if (!function_exists('cdnBlankAvatar')) {
     function cdnBlankAvatar($iWidth, $iHeight, $mSex = '')
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->urlBlankAvatar($iWidth, $iHeight, $mSex);
     }
 }
@@ -269,7 +270,7 @@ if (!function_exists('cdnAvatar')) {
     function cdnAvatar($iUserId = null, $iWidth = 100, $iHeight = 100)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->urlAvatar($iUserId, $iWidth, $iHeight);
     }
 }
@@ -290,7 +291,7 @@ if (!function_exists('cdnExpiringUrl')) {
     function cdnExpiringUrl($iObject, $iExpires, $bForceDownload = false)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->urlExpiring($iObject, $iExpires, $bForceDownload);
     }
 }
@@ -309,7 +310,7 @@ if (!function_exists('getExtFromMime')) {
     function getExtFromMime($sMime)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->getExtFromMime($sMime);
     }
 }
@@ -328,7 +329,7 @@ if (!function_exists('getMimeFromExt')) {
     function getMimeFromExt($sExt)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->getMimeFromExt($sExt);
     }
 }
@@ -347,7 +348,7 @@ if (!function_exists('getMimeFromFile')) {
     function getMimeFromFile($sFile)
     {
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         return $oCdn->getMimeFromFile($sFile);
     }
 }

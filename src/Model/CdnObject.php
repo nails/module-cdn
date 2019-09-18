@@ -12,6 +12,7 @@
 
 namespace Nails\Cdn\Model;
 
+use Nails\Cdn\Constants;
 use Nails\Common\Model\Base;
 
 /**
@@ -22,7 +23,7 @@ use Nails\Common\Model\Base;
 class CdnObject extends Base
 {
     const RESOURCE_NAME     = 'Object';
-    const RESOURCE_PROVIDER = 'nails/module-cdn';
+    const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
 
     // --------------------------------------------------------------------------
 
@@ -47,7 +48,7 @@ class CdnObject extends Base
                 'type'      => self::EXPANDABLE_TYPE_SINGLE,
                 'property'  => 'bucket',
                 'model'     => 'Bucket',
-                'provider'  => 'nails/module-cdn',
+                'provider'  => Constants::MODULE_SLUG,
                 'id_column' => 'bucket_id',
             ]);
     }

@@ -12,6 +12,7 @@
 
 namespace Nails\Cdn\Cms\Widget;
 
+use Nails\Cdn\Constants;
 use Nails\Factory;
 use Nails\Cms\Widget\WidgetBase;
 
@@ -46,7 +47,7 @@ class Image extends WidgetBase
         $aWidgetData['sImgAttr']  = getFromArray(['sImgAttr', 'img_attr'], $aWidgetData);
         $aWidgetData['sLinkAttr'] = getFromArray(['sLinkAttr', 'link_attr'], $aWidgetData);
 
-        $oCdn        = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn        = Factory::service('Cdn', Constants::MODULE_SLUG);
         $aOptions    = ['Landscape' => [], 'Portrait' => [], 'Square' => []];
         $aDimensions = $oCdn->getPermittedDimensions();
 

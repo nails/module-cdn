@@ -2,6 +2,7 @@
 
 namespace Nails\Cdn\Console\Command;
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject;
 use Nails\Cdn\Service\StorageDriver;
 use Nails\Common\Exception\NailsException;
@@ -75,7 +76,7 @@ class Migrate extends Base
         $oOutput->writeln('<info>--------------------</info>');
         $oOutput->writeln('');
 
-        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
+        $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
         $sDriver        = $oInput->getArgument('driver');
         $bOverwrite     = $oInput->getOption('overwrite');
         $bRemove        = $oInput->getOption('remove-src');
@@ -108,7 +109,7 @@ class Migrate extends Base
         // --------------------------------------------------------------------------
 
         //  Work out what's going to happen
-        $oObjectModel = Factory::model('Object', 'nails/module-cdn');
+        $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
 
         //  How many objects are already migrated
         $iMigrated = $oObjectModel->countAll([
@@ -183,9 +184,9 @@ class Migrate extends Base
         $oOutput = $this->oOutput;
 
         /** @var CdnObject $oObjectModel */
-        $oObjectModel = Factory::model('Object', 'nails/module-cdn');
+        $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
         /** @var StorageDriver $oStorageDriver */
-        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
+        $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
 
         //  Set up a log file to catch errors
         /** @var Logger $oLogger */

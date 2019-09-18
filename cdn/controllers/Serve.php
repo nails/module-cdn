@@ -10,6 +10,7 @@
  * @link
  */
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\Base;
 use Nails\Factory;
 
@@ -87,7 +88,7 @@ class Serve extends Base
      */
     public function index()
     {
-        $oCdn    = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn    = Factory::service('Cdn', Constants::MODULE_SLUG);
         $oInput  = Factory::service('Input');
         $oLogger = Factory::service('Logger');
 

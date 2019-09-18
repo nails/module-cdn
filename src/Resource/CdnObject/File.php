@@ -2,6 +2,7 @@
 
 namespace Nails\Cdn\Resource\CdnObject;
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Resource\CdnObject\File\Name;
 use Nails\Cdn\Resource\CdnObject\File\Size;
 use Nails\Common\Resource;
@@ -48,12 +49,12 @@ class File extends Resource
         parent::__construct($oObj);
         $this->name = Factory::resource(
             'ObjectFileName',
-            'nails/module-cdn',
+            Constants::MODULE_SLUG,
             $oObj->name
         );
         $this->size = Factory::resource(
             'ObjectFileSize',
-            'nails/module-cdn',
+            Constants::MODULE_SLUG,
             $oObj->size
         );
     }

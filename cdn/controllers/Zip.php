@@ -10,6 +10,7 @@
  * @link
  */
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\Base;
 use Nails\Factory;
 
@@ -30,7 +31,7 @@ class Zip extends Base
         if ($ids && $hash) {
 
             //  Check the hash
-            $oCdn    = Factory::service('Cdn', 'nails/module-cdn');
+            $oCdn    = Factory::service('Cdn', Constants::MODULE_SLUG);
             $objects = $oCdn->verifyUrlServeZippedHash($hash, $ids, $filename);
 
             if ($objects) {

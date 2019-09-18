@@ -12,11 +12,12 @@
 
 namespace Nails\Cdn\Service;
 
+use Nails\Cdn\Constants;
 use Nails\Common\Model\BaseDriver;
 
 class StorageDriver extends BaseDriver
 {
-    protected $sModule         = 'nails/module-cdn';
+    protected $sModule         = Constants::MODULE_SLUG;
     protected $sType           = 'storage';
     protected $bEnableMultiple = false;
 }

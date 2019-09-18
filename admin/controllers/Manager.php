@@ -13,9 +13,15 @@
 namespace Nails\Admin\Cdn;
 
 use Nails\Admin\Helper;
+use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\BaseAdmin;
 use Nails\Factory;
 
+/**
+ * Class Manager
+ *
+ * @package Nails\Admin\Cdn
+ */
 class Manager extends BaseAdmin
 {
     /**
@@ -71,7 +77,7 @@ class Manager extends BaseAdmin
         $oAsset = Factory::service('Asset');
         $oAsset->library('KNOCKOUT');
         //  @todo (Pablo - 2018-12-01) - Update/Remove/Use minified once JS is refactored to be a module
-        $oAsset->load('admin.mediamanager.js', 'nails/module-cdn');
+        $oAsset->load('admin.mediamanager.js', Constants::MODULE_SLUG);
 
         $sBucketSlug      = $oInput->get('bucket');
         $sCallbackHandler = $oInput->get('CKEditor') ? 'ckeditor' : 'picker';

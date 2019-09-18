@@ -11,6 +11,7 @@
 
 namespace Nails\Cdn\Model\CdnObject;
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject;
 
 /**
@@ -21,7 +22,7 @@ use Nails\Cdn\Model\CdnObject;
 class Trash extends CdnObject
 {
     const RESOURCE_NAME     = 'Object';
-    const RESOURCE_PROVIDER = 'nails/module-cdn';
+    const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
 
     // --------------------------------------------------------------------------
 

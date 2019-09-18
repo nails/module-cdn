@@ -14,8 +14,15 @@ namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api\Controller\Base;
 use Nails\Api\Exception\ApiException;
+use Nails\Common\Service\HttpCodes;
+use Nails\Common\Service\Input;
 use Nails\Factory;
 
+/**
+ * Class Manager
+ *
+ * @package Nails\Cdn\Api\Controller
+ */
 class Manager extends Base
 {
     /**
@@ -33,6 +40,7 @@ class Manager extends Base
     public function getUrl()
     {
         if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            /** @var HttpCodes $oHttpCodes */
             $oHttpCodes = Factory::service('HttpCodes');
             throw new ApiException(
                 'You do not have permission to access this resource',
@@ -40,6 +48,7 @@ class Manager extends Base
             );
         }
 
+        /** @var Input $oInput */
         $oInput = Factory::service('Input');
 
         return Factory::factory('ApiResponse', 'nails/module-api')

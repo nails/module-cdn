@@ -9,6 +9,7 @@
 
 namespace Nails\Cdn\Console\Command\Trash;
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject\Trash;
 use Nails\Cdn\Resource\CdnObject;
 use Nails\Cdn\Service\Cdn;
@@ -31,7 +32,7 @@ class EmptyTrash extends Base
     {
         $this
             ->setName('cdn:trash:empty')
-            ->setDescription('Deletes items which have been in the trash for ' . Factory::property('trashRetention', 'nails/module-cdn') . ' days');
+            ->setDescription('Deletes items which have been in the trash for ' . Factory::property('trashRetention', Constants::MODULE_SLUG) . ' days');
     }
 
     // --------------------------------------------------------------------------
@@ -49,18 +50,18 @@ class EmptyTrash extends Base
         parent::execute($oInput, $oOutput);
 
         $this->banner('CDN: Trash: Empty');
-        $oOutput->writeln('Deleting trashed items older than <comment>' . Factory::property('trashRetention', 'nails/module-cdn') . '</comment> days');
+        $oOutput->writeln('Deleting trashed items older than <comment>' . Factory::property('trashRetention', Constants::MODULE_SLUG) . '</comment> days');
         $oOutput->writeln('');
 
         /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
 
         /** @var Trash $oModel */
-        $oModel = Factory::model('ObjectTrash', 'nails/module-cdn');
+        $oModel = Factory::model('ObjectTrash', Constants::MODULE_SLUG);
 
         /** @var \DateTime $oNow */
         $oNow = Factory::factory('DateTime');
-        $oNow->sub(new \DateInterval('P' . Factory::property('trashRetention', 'nails/module-cdn') . 'D'));
+        $oNow->sub(new \DateInterval('P' . Factory::property('trashRetention', Constants::MODULE_SLUG) . 'D'));
 
         $aTrashedItems = $oModel->getAll([
             'where' => [

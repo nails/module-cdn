@@ -10,6 +10,7 @@
  * @link
  */
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\Base;
 use Nails\Factory;
 
@@ -72,7 +73,7 @@ class Crop extends Base
     {
         $oInput  = Factory::service('Input');
         $oLogger = Factory::service('Logger');
-        $oCdn    = Factory::service('Cdn', 'nails/module-cdn');
+        $oCdn    = Factory::service('Cdn', Constants::MODULE_SLUG);
 
         switch ($cropMethod) {
             case 'SCALE':

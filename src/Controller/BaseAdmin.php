@@ -12,6 +12,7 @@
 
 namespace Nails\Cdn\Controller;
 
+use Nails\Cdn\Constants;
 use Nails\Factory;
 use Nails\Admin\Controller\Base;
 
@@ -21,6 +22,6 @@ class BaseAdmin extends Base
     {
         parent::__construct();
         $oAsset = Factory::service('Asset');
-        $oAsset->load('admin.min.css', 'nails/module-cdn');
+        $oAsset->load('admin.min.css', Constants::MODULE_SLUG);
     }
 }

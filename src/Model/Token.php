@@ -11,6 +11,7 @@
 
 namespace Nails\Cdn\Model;
 
+use Nails\Cdn\Constants;
 use Nails\Common\Model\Base;
 
 /**
@@ -22,6 +23,6 @@ class Token extends Base
 {
     const TABLE             = NAILS_DB_PREFIX . 'cdn_token';
     const RESOURCE_NAME     = 'Token';
-    const RESOURCE_PROVIDER = 'nails/module-cdn';
+    const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
     const AUTO_SET_TOKEN    = true;
 }

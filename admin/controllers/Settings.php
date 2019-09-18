@@ -14,6 +14,7 @@ namespace Nails\Admin\Cdn;
 
 use Nails\Admin\Controller\Base;
 use Nails\Admin\Helper;
+use Nails\Cdn\Constants;
 use Nails\Common\Exception\ValidationException;
 use Nails\Factory;
 
@@ -67,7 +68,7 @@ class Settings extends Base
         }
 
         $oInput         = Factory::service('Input');
-        $oStorageDriver = Factory::service('StorageDriver', 'nails/module-cdn');
+        $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
 
         if ($oInput->post()) {
 
@@ -92,7 +93,7 @@ class Settings extends Base
         // --------------------------------------------------------------------------
 
         //  Get data
-        $this->data['settings'] = appSetting(null, 'nails/module-cdn', true);
+        $this->data['settings'] = appSetting(null, Constants::MODULE_SLUG, true);
 
         Helper::loadView('index');
     }

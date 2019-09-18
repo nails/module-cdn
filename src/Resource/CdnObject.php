@@ -2,6 +2,7 @@
 
 namespace Nails\Cdn\Resource;
 
+use Nails\Cdn\Constants;
 use Nails\Cdn\Resource\CdnObject\File;
 use Nails\Cdn\Resource\CdnObject\Image;
 use Nails\Cdn\Resource\CdnObject\Url;
@@ -132,7 +133,7 @@ class CdnObject extends Entity
 
         $this->file = Factory::resource(
             'ObjectFile',
-            'nails/module-cdn',
+            Constants::MODULE_SLUG,
             (object) [
                 'name' => (object) [
                     'disk'  => $this->filename,
@@ -152,7 +153,7 @@ class CdnObject extends Entity
         if ($this->is_img) {
             $this->img = Factory::resource(
                 'ObjectImage',
-                'nails/module-cdn',
+                Constants::MODULE_SLUG,
                 [
                     'width'       => $this->img_width,
                     'height'      => $this->img_height,
@@ -176,7 +177,7 @@ class CdnObject extends Entity
 
         $this->url = Factory::resource(
             'ObjectUrl',
-            'nails/module-cdn',
+            Constants::MODULE_SLUG,
             (object) [
                 'id'     => $this->id,
                 'is_img' => $this->is_img,
