@@ -35,6 +35,7 @@ class Migration10 extends Base
                 UNIQUE KEY `token` (`token`),
                 KEY `created_by` (`created_by`),
                 KEY `modified_by` (`modified_by`),
+                KEY `token_2` (`token`,`expires`),
                 CONSTRAINT `{{NAILS_DB_PREFIX}}cdn_token_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `{{NAILS_DB_PREFIX}}user` (`id`) ON DELETE SET NULL,
                 CONSTRAINT `{{NAILS_DB_PREFIX}}cdn_token_ibfk_2` FOREIGN KEY (`modified_by`) REFERENCES `{{NAILS_DB_PREFIX}}user` (`id`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
