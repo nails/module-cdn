@@ -228,6 +228,11 @@
                             Insert
                         </button>
                         <!-- /ko -->
+                        <!-- ko if: $root.isTrash() -->
+                        <button class="action action--restore" data-bind="click: $root.restoreObject">
+                            Restore
+                        </button>
+                        <!-- /ko -->
                     </div>
                 </li>
                 <!-- /ko -->
