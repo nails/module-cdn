@@ -59,7 +59,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         deferred
             .done(function() {
                 base.debug('Initialisation complete');
-                if (base.buckets().length > 0) {
+                if (base.currentBucket() && base.buckets().length > 0) {
                     base.listObjects()
                         .done(function() {
                             deferred.resolve();
@@ -117,9 +117,6 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                                     });
                             });
                     }
-                } else if (base.buckets().length > 0) {
-                    base.currentBucket(base.buckets()[0].id);
-                    deferred.resolve();
                 } else {
                     deferred.resolve();
                 }

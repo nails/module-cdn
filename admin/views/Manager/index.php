@@ -121,7 +121,12 @@
                 Create a bucket, so you can upload files
             </div>
             <!-- /ko -->
-            <!-- ko if: buckets().length -->
+            <!-- ko if: buckets().length && !currentBucket() -->
+            <div class="manager__browse__objects__empty">
+                Select a bucket, or search for a file, from the menu on the left
+            </div>
+            <!-- /ko -->
+            <!-- ko if: buckets().length && currentBucket() -->
 
             <!-- ko if: isSearching() -->
             <div class="manager__browse__objects__search">
