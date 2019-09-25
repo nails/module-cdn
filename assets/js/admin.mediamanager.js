@@ -712,6 +712,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 });
                 base.currentPage(response.meta.page + 1);
                 base.showLoadMore(response.data.length >= response.meta.per_page);
+                $(document).trigger('admin:refresh-ui');
                 $deferred.resolve();
             })
             .fail(function(xhr, textStatus) {

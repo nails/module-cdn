@@ -209,6 +209,9 @@
                             Restore
                         </button>
                         <!-- /ko -->
+                        <button class="action action--copy js-copy-to-clipboard" data-bind="attr:{'data-clipboard-text': url.src}">
+                            Copy URL
+                        </button>
                     </div>
                 </li>
                 <!-- /ko -->
@@ -233,6 +236,9 @@
                             Restore
                         </button>
                         <!-- /ko -->
+                        <button class="action action--copy js-copy-to-clipboard" data-bind="attr:{'data-clipboard-text': url.src}">
+                            Copy URL
+                        </button>
                     </div>
                 </li>
                 <!-- /ko -->
