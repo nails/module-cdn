@@ -59,7 +59,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         deferred
             .done(function() {
                 base.debug('Initialisation complete');
-                if (base.buckets().length > 0) {
+                if (base.currentBucket() && base.buckets().length > 0) {
                     base.listObjects()
                         .done(function() {
                             deferred.resolve();
@@ -117,9 +117,6 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                                     });
                             });
                     }
-                } else if (base.buckets().length > 0) {
-                    base.currentBucket(base.buckets()[0].id);
-                    deferred.resolve();
                 } else {
                     deferred.resolve();
                 }
@@ -715,6 +712,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 });
                 base.currentPage(response.meta.page + 1);
                 base.showLoadMore(response.data.length >= response.meta.per_page);
+                $(document).trigger('admin:refresh-ui');
                 $deferred.resolve();
             })
             .fail(function(xhr, textStatus) {

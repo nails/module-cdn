@@ -370,6 +370,7 @@
         box-sizing: border-box;
         width: 100%;
         padding: 0.3rem;
+        margin-top: 0.3rem;
         border: 1px solid #cacaca;
         border-radius: 2px;
         background-color: #fcfcfc;
@@ -386,6 +387,10 @@
         &:focus {
             outline: 0;
             box-shadow: none;
+        }
+
+        &:first-of-type {
+            margin-top: 0;
         }
     }
 }

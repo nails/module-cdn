@@ -15,9 +15,11 @@
     <div class="manager__browse">
         <div class="manager__browse__buckets">
             <ul class="manager__browse__buckets__list">
+                <!-- ko if: buckets().length -->
                 <li class="manager__browse__buckets__list__search">
                     <input type="search" placeholder="Search for an object" data-bind="event: {keydown: $root.search, keyup: $root.search}, textInput: $root.searchTerm">
                 </li>
+                <!-- /ko -->
                 <!-- ko foreach: buckets -->
                 <li class="manager__browse__buckets__list__item"
                     data-bind="click: $root.selectBucket, css: {selected: is_selected()}">
@@ -54,7 +56,7 @@
                     <span class="manager__browse__buckets__list__item__count" data-bind="html:object_count() + ' Objects'"></span>
                     <!-- /ko -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="8" height="12" viewBox="0 0 8 12">
-                        <polygon fill="#444444" points="218 35.4 216.6 34 220.6 30 216.6 26 218 24.6 223.4 30" transform="translate(-216 -24)"/>
+                        <polygon fill="#444444" points="218 35.4 216.6 34 220.6 30 216.6 26 218 24.6 223.4 30" transform="translate(-216 -24)" />
                     </svg>
                     <span class="manager__browse__buckets__list__item__controls"
                           data-bind="css: {selected: is_selected()}">
@@ -94,7 +96,7 @@
                     data-bind="click: $root.browseTrash, css: {selected: $root.isTrash()}">
                     Trash
                     <svg xmlns="http://www.w3.org/2000/svg" width="8" height="12" viewBox="0 0 8 12">
-                        <polygon fill="#444444" points="218 35.4 216.6 34 220.6 30 216.6 26 218 24.6 223.4 30" transform="translate(-216 -24)"/>
+                        <polygon fill="#444444" points="218 35.4 216.6 34 220.6 30 216.6 26 218 24.6 223.4 30" transform="translate(-216 -24)" />
                     </svg>
                 </li>
                 <!-- /ko -->
@@ -119,7 +121,12 @@
                 Create a bucket, so you can upload files
             </div>
             <!-- /ko -->
-            <!-- ko if: buckets().length -->
+            <!-- ko if: buckets().length && !currentBucket() -->
+            <div class="manager__browse__objects__empty">
+                Select a bucket, or search for a file, from the menu on the left
+            </div>
+            <!-- /ko -->
+            <!-- ko if: buckets().length && currentBucket() -->
 
             <!-- ko if: isSearching() -->
             <div class="manager__browse__objects__search">
@@ -141,9 +148,9 @@
                     <input multiple type="file" data-bind="event: {change: $root.uploadObject}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="17" viewBox="0 0 24 17">
                         <g fill="none" fill-rule="evenodd" stroke="#999999" transform="translate(1 1)">
-                            <path d="M11,14 L11,6"/>
-                            <polyline stroke-linecap="square" points="8 9 11 6 14 9"/>
-                            <path stroke-linecap="square" d="M16,15 L18,15 C20.209,15 22,13.207239 22,10.9985335 C22,8.80182642 20.218,6.98606852 17.975,7.00206639 C17.718,3.09358752 14.474,0 10.5,0 C6.481,0 3.21,3.16357819 3.018,7.13504866 C1.287,7.57399013 0,9.1297827 0,10.9985335 C0,13.207239 1.791,15 4,15 L6,15"/>
+                            <path d="M11,14 L11,6" />
+                            <polyline stroke-linecap="square" points="8 9 11 6 14 9" />
+                            <path stroke-linecap="square" d="M16,15 L18,15 C20.209,15 22,13.207239 22,10.9985335 C22,8.80182642 20.218,6.98606852 17.975,7.00206639 C17.718,3.09358752 14.474,0 10.5,0 C6.481,0 3.21,3.16357819 3.018,7.13504866 C1.287,7.57399013 0,9.1297827 0,10.9985335 C0,13.207239 1.791,15 4,15 L6,15" />
                         </g>
                     </svg>
                     <p>drag and drop your files here to upload</p>
@@ -187,7 +194,7 @@
                     <div class="manager__browse__objects__list__item__label" data-bind="html: label"></div>
                     <div class="actions">
                         <button class="action action--delete" data-bind="click: $root.deleteObject">
-                            delete
+                            Delete
                         </button>
                         <a class="action action--view" target="_blank" data-bind="attr:{href: url.src}">
                             View
@@ -202,6 +209,9 @@
                             Restore
                         </button>
                         <!-- /ko -->
+                        <button class="action action--copy js-copy-to-clipboard" data-bind="attr:{'data-clipboard-text': url.src}">
+                            Copy URL
+                        </button>
                     </div>
                 </li>
                 <!-- /ko -->
@@ -211,7 +221,7 @@
                     <div class="manager__browse__objects__list__item__label" data-bind="html: label"></div>
                     <div class="actions">
                         <button class="action action--delete" data-bind="click: $root.deleteObject">
-                            delete
+                            Delete
                         </button>
                         <a class="action action--view" target="_blank" data-bind="attr:{href: url.src}">
                             View
@@ -221,6 +231,14 @@
                             Insert
                         </button>
                         <!-- /ko -->
+                        <!-- ko if: $root.isTrash() -->
+                        <button class="action action--restore" data-bind="click: $root.restoreObject">
+                            Restore
+                        </button>
+                        <!-- /ko -->
+                        <button class="action action--copy js-copy-to-clipboard" data-bind="attr:{'data-clipboard-text': url.src}">
+                            Copy URL
+                        </button>
                     </div>
                 </li>
                 <!-- /ko -->
