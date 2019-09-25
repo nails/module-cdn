@@ -15,9 +15,11 @@
     <div class="manager__browse">
         <div class="manager__browse__buckets">
             <ul class="manager__browse__buckets__list">
+                <!-- ko if: buckets().length -->
                 <li class="manager__browse__buckets__list__search">
                     <input type="search" placeholder="Search for an object" data-bind="event: {keydown: $root.search, keyup: $root.search}, textInput: $root.searchTerm">
                 </li>
+                <!-- /ko -->
                 <!-- ko foreach: buckets -->
                 <li class="manager__browse__buckets__list__item"
                     data-bind="click: $root.selectBucket, css: {selected: is_selected()}">
