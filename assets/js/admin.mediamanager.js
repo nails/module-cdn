@@ -351,6 +351,9 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                             //  Bump the bucket's counter
                             var bucket = base.getBucketById(base.currentBucket());
                             bucket.object_count(bucket.object_count() + 1);
+                            
+                            //  Reload admin UI components
+                            $(document).trigger('admin:refresh-ui');
 
                         } catch (e) {
                             data = {'error': 'An unknown error occurred.'};
