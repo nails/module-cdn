@@ -112,12 +112,12 @@ class ObjectPicker {
         if (fetchIds.length > 0) {
 
             $.ajax({
-                    'url': window.SITE_URL + 'api/cdn/object',
-                    'data': {
-                        'ids': fetchIds.join(','),
-                        'urls': '150x150-crop'
-                    }
-                })
+                'url': window.SITE_URL + 'api/cdn/object',
+                'data': {
+                    'ids': fetchIds.join(','),
+                    'urls': '150x150-crop'
+                }
+            })
                 .done((data) => {
 
                     elements.each((index, el) => {
@@ -158,6 +158,12 @@ class ObjectPicker {
 
         this.log('Setting picker object');
         let input = picker.find('.cdn-object-picker__input');
+        let sizeHuman = this.getReadableFileSizeString(object.object.size.bytes);
+        let label = object.object.name;
+        let attributes = [
+            sizeHuman
+        ];
+
         input.val(object.id);
 
         if (object.is_img) {
@@ -166,15 +172,16 @@ class ObjectPicker {
             picker.find('.cdn-object-picker__preview').css({
                 'background-image': 'url(' + object.url['150x150-crop'] + ')'
             });
-        } else {
 
-            let sizeHuman = this.getReadableFileSizeString(object.object.size.bytes);
-
-            picker.addClass('cdn-object-picker--has-file');
-            picker.find('.cdn-object-picker__label')
-                .html(object.object.name + ' (' + sizeHuman + ')')
-                .attr('title', object.object.name + ' (' + sizeHuman + ')');
+            attributes.push(object.img.width + 'x' + object.img.height)
         }
+
+        label = label + ' (' + attributes.join(', ') + ')';
+
+        picker.addClass('cdn-object-picker--has-file');
+        picker.find('.cdn-object-picker__label')
+            .html(label)
+            .attr('title', label);
 
         input.trigger('change');
         picker.trigger('picked');
@@ -212,12 +219,12 @@ class ObjectPicker {
         picker.addClass('cdn-object-picker--pending');
         this.log('Getting Manager URL');
         $.ajax({
-                'url': window.SITE_URL + 'api/cdn/manager/url',
-                'data': {
-                    'bucket': picker.data('bucket'),
-                    'callback': ['NAILS.CDN.ObjectPicker', 'receiveFromManager']
-                }
-            })
+            'url': window.SITE_URL + 'api/cdn/manager/url',
+            'data': {
+                'bucket': picker.data('bucket'),
+                'callback': ['NAILS.CDN.ObjectPicker', 'receiveFromManager']
+            }
+        })
             .done((data) => {
                 if ($.fancybox) {
                     this.log('Showing Manager');
@@ -288,12 +295,12 @@ class ObjectPicker {
 
             this.log('Requesting Object data');
             $.ajax({
-                    'url': window.SITE_URL + 'api/cdn/object',
-                    'data': {
-                        'id': id,
-                        'urls': '150x150-crop'
-                    }
-                })
+                'url': window.SITE_URL + 'api/cdn/object',
+                'data': {
+                    'id': id,
+                    'urls': '150x150-crop'
+                }
+            })
                 .done((data) => {
                     this.setObjectCache(data.data);
                     this.setPickerObject(this.activePicker, data.data);
@@ -374,7 +381,7 @@ class ObjectPicker {
      * @return {void}
      */
     log(message, payload) {
-        if (typeof(console.log) === 'function') {
+        if (typeof (console.log) === 'function') {
             if (payload !== undefined) {
                 console.log('CDN Object Picker:', message, payload);
             } else {
@@ -392,7 +399,7 @@ class ObjectPicker {
      * @return {void}
      */
     warn(message, payload) {
-        if (typeof(console.warn) === 'function') {
+        if (typeof (console.warn) === 'function') {
             if (payload !== undefined) {
                 console.warn('CDN Object Picker:', message, payload);
             } else {

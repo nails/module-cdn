@@ -1,13 +1,15 @@
 .cdn-object-picker {
-    background: #FFFFFF;
-    border: 1px solid #EEEEEE;
+    background: #ffffff;
+    border: 1px solid #eeeeee;
     border-radius: 0.15em;
     padding: 0.5em;
     cursor: pointer;
     position: relative;
+
     &__btn {
         margin-right: 0.25em;
     }
+
     &__label {
         font-size: 0.8em;
         width: 100%;
@@ -20,6 +22,7 @@
         text-overflow: ellipsis;
         overflow: hidden;
     }
+
     &__preview {
         vertical-align: middle;
         background-size: cover;
@@ -27,8 +30,9 @@
         background-position: center;
         width: 30px;
         height: 30px;
-        border: 1px solid #ECECEC;
+        border: 1px solid #ececec;
     }
+
     &__pending,
     &__remove {
         position: absolute;
@@ -36,12 +40,15 @@
         right: 0.55em;
         font-size: 1.25em;
     }
+
     &__remove {
-        color: #CCCCCC;
+        color: #cccccc;
+
         &:hover {
-            color: #BF181D;
+            color: #bf181d;
         }
     }
+
     &__pending,
     &__label,
     &__preview-link,
@@ -49,27 +56,36 @@
     &__remove {
         display: none;
     }
+
     &--has-file,
     &--has-image {
         .cdn-object-picker__remove {
             display: inline-block;
         }
     }
+
     &--has-file {
         .cdn-object-picker__label {
             display: inline-block;
         }
     }
+
     &--has-image {
         .cdn-object-picker__preview-link,
         .cdn-object-picker__preview {
             display: inline-block;
         }
+
+        .cdn-object-picker__label {
+            margin-left: 38px;
+        }
     }
+
     &--pending {
         .cdn-object-picker__pending {
             display: inline-block;
         }
+
         .cdn-object-picker__remove {
             display: none;
         }
