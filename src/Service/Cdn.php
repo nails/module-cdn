@@ -34,6 +34,11 @@ use Nails\Common\Traits\GetCountCommon;
 use Nails\Components;
 use Nails\Factory;
 
+/**
+ * Class Cdn
+ *
+ * @package Nails\Cdn\Service
+ */
 class Cdn
 {
     use ErrorHandling;
@@ -2238,21 +2243,30 @@ class Cdn
     /**
      * Calls the driver's public urlServe method
      *
-     * @param int  $objectId      The ID of the object to serve
-     * @param bool $forceDownload Whether or not to force download of the object
+     * @param int  $iObjectId      The ID of the object to serve
+     * @param bool $bForceDownload Whether or not to force download of the object
      *
      * @return string
      * @throws UrlException
      */
-    public function urlServe($objectId, $forceDownload = false)
+    public function urlServe($iObjectId, $bForceDownload = false)
     {
+        //  Test the cache first, have we dealt with this url yet?
+        $sCacheKey = 'URL:SERVE:' . $iObjectId . ':' . (int) $bForceDownload;
+        $sCacheUrl = $this->getCache($sCacheKey);
+        if (!empty($sCacheUrl)) {
+            return $sCacheUrl;
+        };
+
+        // --------------------------------------------------------------------------
+
         $isTrashed = false;
 
-        if (empty($objectId)) {
+        if (empty($iObjectId)) {
             $oObj = $this->emptyObject();
-        } elseif (is_numeric($objectId)) {
+        } elseif (is_numeric($iObjectId)) {
 
-            $oObj = $this->getObject($objectId);
+            $oObj = $this->getObject($iObjectId);
 
             if (!$oObj) {
 
@@ -2261,7 +2275,7 @@ class Cdn
                  */
 
                 if (userHasPermission('admin:cdn:trash:browse')) {
-                    $oObj = $this->getObjectFromTrash($objectId);
+                    $oObj = $this->getObjectFromTrash($iObjectId);
                     if (!$oObj) {
                         //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
                         $oObj = $this->emptyObject();
@@ -2273,19 +2287,20 @@ class Cdn
                     $oObj = $this->emptyObject();
                 }
             }
-        } elseif (is_object($objectId)) {
-            $oObj = $objectId;
+        } elseif (is_object($iObjectId)) {
+            $oObj = $iObjectId;
         } else {
-            throw new UrlException('Supplied $objectId must be numeric or an object', 1);
+            throw new UrlException('Supplied $iObjectId must be numeric or an object', 1);
         }
 
-        $url = $this->callDriver(
+        $sUrl = $this->callDriver(
             'urlServe',
-            [$oObj->file->name->disk, $oObj->bucket->slug, $forceDownload],
+            [$oObj->file->name->disk, $oObj->bucket->slug, $bForceDownload],
             $oObj->driver
         );
-        $url .= $isTrashed ? '?trashed=1' : '';
+        $sUrl .= $isTrashed ? '?trashed=1' : '';
 
+        $this->setCache($sCacheKey, $sUrl);
         return $url;
     }
 
@@ -2301,6 +2316,15 @@ class Cdn
      */
     public function urlServeRaw($iObjectId)
     {
+        //  Test the cache first, have we dealt with this url yet?
+        $sCacheKey = 'URL:SERVE:RAW:' . $iObjectId;
+        $sCacheUrl = $this->getCache($sCacheKey);
+        if (!empty($sCacheUrl)) {
+            return $sCacheUrl;
+        };
+
+        // --------------------------------------------------------------------------
+
         $bIsTrashed = false;
 
         if (empty($iObjectId)) {
@@ -2337,6 +2361,7 @@ class Cdn
         $sUrl = $this->callDriver('urlServeRaw', [$oObj->file->name->disk, $oObj->bucket->slug], $oObj->driver);
         $sUrl .= $bIsTrashed ? '?trashed=1' : '';
 
+        $this->setCache($sCacheKey, $sUrl);
         return $sUrl;
     }
 
@@ -2441,6 +2466,15 @@ class Cdn
      **/
     public function urlCrop($iObjectId, $iWidth, $iHeight)
     {
+        //  Test the cache first, have we dealt with this url yet?
+        $sCacheKey = 'URL:CROP:' . $iObjectId . ':' . $iWidth . ':' . $iHeight;
+        $sCacheUrl = $this->getCache($sCacheKey);
+        if (!empty($sCacheUrl)) {
+            return $sCacheUrl;
+        };
+
+        // --------------------------------------------------------------------------
+
         if (!$this->isPermittedDimension($iWidth, $iHeight)) {
             throw new PermittedDimensionException(
                 'CDN::urlCrop() - Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
@@ -2495,6 +2529,7 @@ class Cdn
         );
 
         if (!empty($sCacheUrl)) {
+            $this->setCache($sCacheKey, $sCacheUrl);
             return $sCacheUrl;
         }
 
@@ -2507,6 +2542,7 @@ class Cdn
         );
         $sUrl .= $isTrashed ? '?trashed=1' : '';
 
+        $this->setCache($sCacheKey, $sUrl);
         return $sUrl;
     }
 
@@ -2537,6 +2573,15 @@ class Cdn
      **/
     public function urlScale($iObjectId, $iWidth, $iHeight)
     {
+        //  Test the cache first, have we dealt with this url yet?
+        $sCacheKey = 'URL:SCALE:' . $iObjectId . ':' . $iWidth . ':' . $iHeight;
+        $sCacheUrl = $this->getCache($sCacheKey);
+        if (!empty($sCacheUrl)) {
+            return $sCacheUrl;
+        };
+
+        // --------------------------------------------------------------------------
+
         if (!$this->isPermittedDimension($iWidth, $iHeight)) {
             throw new PermittedDimensionException(
                 'CDN::urlScale() - Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
@@ -2591,6 +2636,7 @@ class Cdn
         );
 
         if (!empty($sCacheUrl)) {
+            $this->setCache($sCacheKey, $sCacheUrl);
             return $sCacheUrl;
         }
 
@@ -2608,6 +2654,7 @@ class Cdn
         );
         $sUrl .= $isTrashed ? '?trashed=1' : '';
 
+        $this->setCache($sCacheKey, $sUrl);
         return $sUrl;
     }
 
@@ -2891,13 +2938,13 @@ class Cdn
     /**
      * Generates an expiring URL for an object
      *
-     * @param integer $iObjectId     The object's ID
-     * @param integer $expires       The length of time the URL should be valid for, in seconds
-     * @param boolean $forceDownload Whether to force the download or not
+     * @param integer $iObjectId      The object's ID
+     * @param integer $expires        The length of time the URL should be valid for, in seconds
+     * @param boolean $bForceDownload Whether to force the download or not
      *
      * @return string
      */
-    public function urlExpiring($iObjectId, $expires, $forceDownload = false)
+    public function urlExpiring($iObjectId, $expires, $bForceDownload = false)
     {
         if (is_numeric($iObjectId)) {
 
@@ -2923,7 +2970,7 @@ class Cdn
 
         return $this->callDriver(
             'urlExpiring',
-            [$oObj->file->name->disk, $oObj->bucket->slug, $expires, $forceDownload],
+            [$oObj->file->name->disk, $oObj->bucket->slug, $expires, $bForceDownload],
             $oObj->driver
         );
     }
