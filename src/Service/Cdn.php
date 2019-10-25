@@ -2301,7 +2301,7 @@ class Cdn
         $sUrl .= $isTrashed ? '?trashed=1' : '';
 
         $this->setCache($sCacheKey, $sUrl);
-        return $url;
+        return $sUrl;
     }
 
     // --------------------------------------------------------------------------
