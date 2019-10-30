@@ -2252,7 +2252,11 @@ class Cdn
     public function urlServe($iObjectId, $bForceDownload = false)
     {
         //  Test the cache first, have we dealt with this url yet?
-        $sCacheKey = 'URL:SERVE:' . $iObjectId . ':' . (int) $bForceDownload;
+        if (is_object($iObjectId)) {
+            $sCacheKey = 'URL:SERVE:' . $iObjectId->id . ':' . (int) $bForceDownload;
+        } else {
+            $sCacheKey = 'URL:SERVE:' . $iObjectId . ':' . (int) $bForceDownload;
+        }
         $sCacheUrl = $this->getCache($sCacheKey);
         if (!empty($sCacheUrl)) {
             return $sCacheUrl;
@@ -2317,7 +2321,11 @@ class Cdn
     public function urlServeRaw($iObjectId)
     {
         //  Test the cache first, have we dealt with this url yet?
-        $sCacheKey = 'URL:SERVE:RAW:' . $iObjectId;
+        if (is_object($iObjectId)) {
+            $sCacheKey = 'URL:SERVE:RAW:' . $iObjectId->id;
+        } else {
+            $sCacheKey = 'URL:SERVE:RAW:' . $iObjectId;
+        }
         $sCacheUrl = $this->getCache($sCacheKey);
         if (!empty($sCacheUrl)) {
             return $sCacheUrl;
@@ -2467,7 +2475,11 @@ class Cdn
     public function urlCrop($iObjectId, $iWidth, $iHeight)
     {
         //  Test the cache first, have we dealt with this url yet?
-        $sCacheKey = 'URL:CROP:' . $iObjectId . ':' . $iWidth . ':' . $iHeight;
+        if (is_object($iObjectId)) {
+            $sCacheKey = 'URL:CROP:' . $iObjectId->id . ':' . $iWidth . ':' . $iHeight;
+        } else {
+            $sCacheKey = 'URL:CROP:' . $iObjectId . ':' . $iWidth . ':' . $iHeight;
+        }
         $sCacheUrl = $this->getCache($sCacheKey);
         if (!empty($sCacheUrl)) {
             return $sCacheUrl;
@@ -2574,7 +2586,11 @@ class Cdn
     public function urlScale($iObjectId, $iWidth, $iHeight)
     {
         //  Test the cache first, have we dealt with this url yet?
-        $sCacheKey = 'URL:SCALE:' . $iObjectId . ':' . $iWidth . ':' . $iHeight;
+        if (is_object($iObjectId)) {
+            $sCacheKey = 'URL:SCALE:' . $iObjectId->id . ':' . $iWidth . ':' . $iHeight;
+        } else {
+            $sCacheKey = 'URL:SCALE:' . $iObjectId . ':' . $iWidth . ':' . $iHeight;
+        }
         $sCacheUrl = $this->getCache($sCacheKey);
         if (!empty($sCacheUrl)) {
             return $sCacheUrl;
