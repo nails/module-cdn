@@ -5,9 +5,14 @@ import ObjectPicker from './components/ObjectPicker.js';
 import UtilitiesOrphans from './components/UtilitiesOrphans.js';
 
 (function() {
-    //  Add this instance to the global scope so outside parties can access it
-    window.NAILS.CDN = {
-        ObjectPicker: new ObjectPicker()
-    };
-    new UtilitiesOrphans();
+    window.NAILS.ADMIN.registerPlugin(
+        'nails/module-cdn',
+        'ObjectPicker',
+        new ObjectPicker()
+    );
+    window.NAILS.ADMIN.registerPlugin(
+        'nails/module-cdn',
+        'UtilitiesOrphans',
+        new UtilitiesOrphans()
+    );
 })();
