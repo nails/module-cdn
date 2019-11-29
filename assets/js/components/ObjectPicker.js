@@ -2,7 +2,7 @@ class ObjectPicker {
 
     // --------------------------------------------------------------------------
 
-    constructor() {
+    constructor(adminController) {
 
         this.log('Constructing');
         /**
@@ -21,7 +21,10 @@ class ObjectPicker {
 
         //  Set things up
         this.setupListeners();
-        this.initPickers();
+
+        adminController.onRefreshUi(() => {
+            this.initPickers();
+        });
     };
 
     // --------------------------------------------------------------------------
@@ -222,7 +225,7 @@ class ObjectPicker {
             'url': window.SITE_URL + 'api/cdn/manager/url',
             'data': {
                 'bucket': picker.data('bucket'),
-                'callback': ['NAILS.CDN.ObjectPicker', 'receiveFromManager']
+                'callback': ['NAILS.ADMIN.instances["nails/module-cdn"].ObjectPicker', 'receiveFromManager']
             }
         })
             .done((data) => {

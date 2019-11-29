@@ -8,7 +8,7 @@ import UtilitiesOrphans from './components/UtilitiesOrphans.js';
     window.NAILS.ADMIN.registerPlugin(
         'nails/module-cdn',
         'ObjectPicker',
-        new ObjectPicker()
+        new ObjectPicker(window.NAILS.ADMIN)
     );
     window.NAILS.ADMIN.registerPlugin(
         'nails/module-cdn',

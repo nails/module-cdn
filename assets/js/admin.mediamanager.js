@@ -351,9 +351,9 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                             //  Bump the bucket's counter
                             var bucket = base.getBucketById(base.currentBucket());
                             bucket.object_count(bucket.object_count() + 1);
-                            
+
                             //  Reload admin UI components
-                            $(document).trigger('admin:refresh-ui');
+                            window.NAILS.ADMIN.refreshUi();
 
                         } catch (e) {
                             data = {'error': 'An unknown error occurred.'};
@@ -481,6 +481,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {void}
      */
     base.callbackCKEditor = function(object) {
+        base.debug('Executing CKEditor callback', callback);
         window.opener.CKEDITOR.tools.callFunction(callback[0], object.url.src);
     };
 
@@ -492,6 +493,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {void}
      */
     base.callbackPicker = function(object) {
+        base.debug('Executing callback', callback);
         if (isModal) {
 
             var className = 'parent.' + callback[0];
@@ -517,8 +519,23 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
         var scope = window;
         var scopeSplit = string.split('.');
+
         for (i = 0; i < scopeSplit.length - 1; i++) {
-            scope = scope[scopeSplit[i]];
+
+            if (scopeSplit[i].indexOf('[') !== -1) {
+
+                var arrayItem = scopeSplit[i].substr(0, scopeSplit[i].length - 1).split('[');
+                scope = scope[arrayItem[0]];
+                if (scope == undefined) {
+                    return;
+                }
+
+                scope = scope[arrayItem[1].replace(/^['"](.*)['"]$/, '$1')];
+
+            } else {
+                scope = scope[scopeSplit[i]];
+            }
+
             if (scope == undefined) {
                 return;
             }
@@ -715,7 +732,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
                 });
                 base.currentPage(response.meta.page + 1);
                 base.showLoadMore(response.data.length >= response.meta.per_page);
-                $(document).trigger('admin:refresh-ui');
+                window.NAILS.ADMIN.refreshUi();
                 $deferred.resolve();
             })
             .fail(function(xhr, textStatus) {
