@@ -21,6 +21,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.lastSearch = ko.observable();
     base.isTrash = ko.observable(false);
     base.listingXHR = null;
+    base.localStorageCurrentBucketKey = 'NAILS:CDN:MEDIAMANAGER:BUCKET';
 
     // --------------------------------------------------------------------------
 
@@ -81,7 +82,18 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
         base.debug('Initialising');
         base.listBuckets()
             .done(function() {
+
                 //  If bucket is defined, then set it as current, else take the first bucket in the list
+                if (!initialBucket) {
+
+                    var initialBucketId = window.localStorage.getItem(base.localStorageCurrentBucketKey);
+                    var initialBucketObject = base.getBucketById(parseInt(initialBucketId));
+
+                    if (initialBucketObject) {
+                        initialBucket = initialBucketObject.slug;
+                    }
+                }
+
                 if (initialBucket) {
                     base.debug('Initial bucket specified: "' + initialBucket + '", attempting to load');
                     var bucket = base.getBucketBySlug(initialBucket);
@@ -179,6 +191,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
 
         if (base.currentBucket()) {
             base.listObjects();
+            window.localStorage.setItem(base.localStorageCurrentBucketKey, base.currentBucket());
         }
     };
 
