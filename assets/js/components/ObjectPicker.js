@@ -5,6 +5,7 @@ class ObjectPicker {
     constructor(adminController) {
 
         this.log('Constructing');
+
         /**
          * Contains reference to the active picker - i.e., the one which the CDN manager is attached to
          * @type {Object}
@@ -86,7 +87,7 @@ class ObjectPicker {
     initPickers() {
         this.log('Processing new CDN Pickers');
         this.refreshPicker(
-            $('.cdn-object-picker:not(.cdn-object-picker--pending)')
+            $('.cdn-object-picker:not(.cdn-object-picker--pending):not(.cdn-object-picker--ready)')
         );
     };
 
@@ -101,9 +102,11 @@ class ObjectPicker {
 
         let fetchIds = [];
 
+        elements.addClass('cdn-object-picker--pending');
+        elements.addClass('cdn-object-picker--ready');
+
         elements.each((index, el) => {
             let $el = $(el);
-            $el.addClass('cdn-object-picker--pending');
             let iObjectId = $el.find('.cdn-object-picker__input').val();
             if (iObjectId) {
                 fetchIds.push(iObjectId);
