@@ -32,7 +32,6 @@ class Utilities extends BaseAdmin
     {
         $oNavGroup = Factory::factory('Nav', 'nails/module-admin');
         $oNavGroup->setLabel('Utilities');
-        $oNavGroup->setIcon('fa-sliders');
 
         if (userHasPermission('admin:cdn:utilities:findOrphan')) {
             $oNavGroup->addAction('CDN: Find orphaned objects');

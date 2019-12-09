@@ -34,7 +34,7 @@ class Manager extends BaseAdmin
             $oNavGroup = Factory::factory('Nav', 'nails/module-admin');
             $oNavGroup
                 ->setLabel('Media')
-                ->setIcon('fa-picture-o')
+                ->setIcon('fa-images')
                 ->addAction('Media Manager', 'index', [], 0);
 
             return $oNavGroup;
