@@ -22,9 +22,9 @@ class Form
      * @param array  $field The config array
      * @param string $tip   An optional tip (DEPRECATED: use $field['tip'] instead)
      *
-     * @return string        The form HTML
-     * @todo  when form builder is updated, ensure that other things can create custom field types
+     * @return string
      *
+     * @todo (Pablo - 2020-01-15) - Replace this using \Nails\Admin\Service\Form
      */
     public static function form_field_cdn_object_picker($field, $tip = ''): string
     {
@@ -149,9 +149,9 @@ EOT;
      * @param array  $field The config array
      * @param string $tip   An optional tip (DEPRECATED: use $field['tip'] instead)
      *
-     * @return string        The form HTML
-     * @todo  when form builder is updated, ensure that other things can create custom field types
+     * @return string
      *
+     * @todo (Pablo - 2020-01-15) - Replace this using \Nails\Admin\Service\Form
      */
     public static function form_field_cdn_object_picker_multi($field, $tip = ''): string
     {
@@ -371,9 +371,9 @@ EOT;
      * @param array  $aConfig The config array
      * @param string $sTip    An optional tip (DEPRECATED: use $field['tip'] instead)
      *
-     * @return string        The form HTML
-     * @todo  when form builder is updated, ensure that other things can create custom field types
+     * @return string
      *
+     * @todo (Pablo - 2020-01-15) - Replace this using \Nails\Admin\Service\Form
      */
     public static function form_field_cdn_object_picker_multi_with_label($aConfig, $sTip = ''): string
     {
@@ -587,41 +587,5 @@ EOT;
 EOT;
 
         return $_out;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Generates a form field containing the media manager to select a file.
-     *
-     * @param array  $aField The config array
-     * @param string $sTip   An optional tip (DEPRECATED: use $field['tip'] instead)
-     *
-     * @return string         The form HTML
-     * @deprecated Use form_field_cdn_object_picker instead
-     *
-     */
-    public static function form_field_mm($aField, $sTip = ''): string
-    {
-        deprecatedError('form_field_mm', 'form_field_cdn_object_picker');
-        return static::form_field_cdn_object_picker($aField, $sTip);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Generates a form field containing the media manager to select an image
-     *
-     * @param array  $aField The config array
-     * @param string $sTip   An optional tip (DEPRECATED: use $field['tip'] instead)
-     *
-     * @return string         The form HTML
-     * @deprecated Use form_field_cdn_object_picker instead
-     *
-     */
-    public static function form_field_mm_image($aField, $sTip = ''): string
-    {
-        deprecatedError('form_field_mm_image', 'form_field_cdn_object_picker');
-        return static::form_field_cdn_object_picker($aField, $sTip);
     }
 }

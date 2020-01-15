@@ -23,16 +23,3 @@ if (!function_exists('form_field_cdn_object_picker_multi_with_label')) {
     }
 }
 
-if (!function_exists('form_field_mm')) {
-    function form_field_mm($aField, $sTip = ''): string
-    {
-        return Form::form_field_mm($aField, $sTip);
-    }
-}
-
-if (!function_exists('form_field_mm_image')) {
-    function form_field_mm_image($aField, $sTip = ''): string
-    {
-        return Form::form_field_mm_image($aField, $sTip);
-    }
-}
