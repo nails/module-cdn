@@ -4,7 +4,7 @@ class ObjectPicker {
 
     constructor(adminController) {
 
-        this.log('Constructing');
+        ObjectPicker.log('Constructing');
 
         /**
          * Contains reference to the active picker - i.e., the one which the CDN manager is attached to
@@ -36,7 +36,7 @@ class ObjectPicker {
      */
     setupListeners() {
 
-        this.log('Setting up listeners');
+        ObjectPicker.log('Setting up listeners');
 
         $(document)
             .on('click', '.cdn-object-picker', (e) => {
@@ -85,7 +85,7 @@ class ObjectPicker {
      * @return {void}
      */
     initPickers() {
-        this.log('Processing new CDN Pickers');
+        ObjectPicker.log('Processing new CDN Pickers');
         this.refreshPicker(
             $('.cdn-object-picker:not(.cdn-object-picker--pending):not(.cdn-object-picker--ready)')
         );
@@ -151,7 +151,7 @@ class ObjectPicker {
                         };
                     }
 
-                    this.warn(_data.error);
+                    ObjectPicker.warn(_data.error);
                 });
         }
     };
@@ -162,7 +162,7 @@ class ObjectPicker {
 
         this.resetPicker(picker);
 
-        this.log('Setting picker object');
+        ObjectPicker.log('Setting picker object');
         let input = picker.find('.cdn-object-picker__input');
         let sizeHuman = this.getReadableFileSizeString(object.object.size.bytes);
         let label = object.object.name;
@@ -201,7 +201,7 @@ class ObjectPicker {
      * @return void
      */
     resetPicker(picker) {
-        this.log('Resetting picker');
+        ObjectPicker.log('Resetting picker');
         picker.removeClass('cdn-object-picker--has-image cdn-object-picker--has-file');
         picker.find('.cdn-object-picker__preview-link').attr('href', '#');
         picker.find('.cdn-object-picker__preview').removeAttr('style');
@@ -223,7 +223,7 @@ class ObjectPicker {
         }
 
         picker.addClass('cdn-object-picker--pending');
-        this.log('Getting Manager URL');
+        ObjectPicker.log('Getting Manager URL');
         $.ajax({
             'url': window.SITE_URL + 'api/cdn/manager/url',
             'data': {
@@ -233,7 +233,7 @@ class ObjectPicker {
         })
             .done((data) => {
                 if ($.fancybox) {
-                    this.log('Showing Manager');
+                    ObjectPicker.log('Showing Manager');
                     this.activePicker = picker;
                     $('body').addClass('noscroll');
                     $.fancybox.open(
@@ -256,7 +256,7 @@ class ObjectPicker {
                         }
                     );
                 } else {
-                    this.warn('Fancybox not enabled.');
+                    ObjectPicker.warn('Fancybox not enabled.');
                 }
             })
             .fail((data) => {
@@ -273,7 +273,7 @@ class ObjectPicker {
                     };
                 }
 
-                this.warn(_data.error);
+                ObjectPicker.warn(_data.error);
             })
             .always(() => {
                 picker.removeClass('cdn-object-picker--pending');
@@ -284,7 +284,7 @@ class ObjectPicker {
 
     receiveFromManager(id) {
 
-        this.log('Received data from manager');
+        ObjectPicker.log('Received data from manager');
         this.activePicker.addClass('cdn-object-picker--pending');
 
         //  Check the Object Cache
@@ -292,14 +292,14 @@ class ObjectPicker {
 
         if (cache) {
 
-            this.log('Using Cache');
+            ObjectPicker.log('Using Cache');
             this.setPickerObject(this.activePicker, cache);
             this.activePicker.removeClass('cdn-object-picker--pending');
             this.activePicker = null;
 
         } else {
 
-            this.log('Requesting Object data');
+            ObjectPicker.log('Requesting Object data');
             $.ajax({
                 'url': window.SITE_URL + 'api/cdn/object',
                 'data': {
@@ -323,7 +323,7 @@ class ObjectPicker {
                         };
                     }
 
-                    this.warn(_data.error);
+                    ObjectPicker.warn(_data.error);
                 })
                 .always(() => {
                     this.activePicker.removeClass('cdn-object-picker--pending');
@@ -382,17 +382,11 @@ class ObjectPicker {
 
     /**
      * Write a log to the console
-     * @param  {String} message The message to log
-     * @param  {mixed}  payload Any additional data to display in the console
      * @return {void}
      */
-    log(message, payload) {
+    static log() {
         if (typeof (console.log) === 'function') {
-            if (payload !== undefined) {
-                console.log('CDN Object Picker:', message, payload);
-            } else {
-                console.log('CDN Object Picker:', message);
-            }
+            console.log("\x1b[33m[CDN ObjectPicker]\x1b[0m", ...arguments);
         }
     };
 
@@ -400,17 +394,11 @@ class ObjectPicker {
 
     /**
      * Write a warning to the console
-     * @param  {String} message The message to warn
-     * @param  {mixed}  payload Any additional data to display in the console
      * @return {void}
      */
-    warn(message, payload) {
+    static warn() {
         if (typeof (console.warn) === 'function') {
-            if (payload !== undefined) {
-                console.warn('CDN Object Picker:', message, payload);
-            } else {
-                console.warn('CDN Object Picker:', message);
-            }
+            console.warn("\x1b[33m[CDN ObjectPicker]\x1b[0m", ...arguments);
         }
     };
 }
