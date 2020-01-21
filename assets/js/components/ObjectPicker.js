@@ -2,8 +2,8 @@ class ObjectPicker {
 
     constructor(adminController) {
 
-        this.adminController.log('Constructing');
         this.adminController = adminController;
+        this.adminController.log('Constructing');
 
         /**
          * Contains reference to the active picker - i.e., the one which the CDN manager is attached to
