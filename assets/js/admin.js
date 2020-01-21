@@ -8,11 +8,15 @@ import UtilitiesOrphans from './components/UtilitiesOrphans.js';
     window.NAILS.ADMIN.registerPlugin(
         'nails/module-cdn',
         'ObjectPicker',
-        new ObjectPicker(window.NAILS.ADMIN)
+        function(controller) {
+            return new ObjectPicker(controller);
+        }
     );
     window.NAILS.ADMIN.registerPlugin(
         'nails/module-cdn',
         'UtilitiesOrphans',
-        new UtilitiesOrphans()
+        function(controller) {
+            return new UtilitiesOrphans(controller);
+        }
     );
 })();
