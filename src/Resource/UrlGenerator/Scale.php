@@ -18,15 +18,17 @@ class Scale extends Crop
      */
     public function callDriver(Interfaces\Driver $oDriver, Resource\CdnObject $oObject): string
     {
-        $sCacheUrl = $this->oCdn::getCacheUrl(
-            $oObject->bucket->slug,
-            $oObject->file->name->disk,
-            $oObject->file->ext,
-            'CROP',
-            $oObject->img->orientation ?? null,
-            $this->iWidth,
-            $this->iHeight
-        );
+        if ($oObject instanceof Resource\CdnObject\Trash && userHasPermission('admin:cdn:trash:browse')) {
+            $sCacheUrl = $this->oCdn::getCacheUrl(
+                $oObject->bucket->slug,
+                $oObject->file->name->disk,
+                $oObject->file->ext,
+                'SCALE',
+                $oObject->img->orientation ?? null,
+                $this->iWidth,
+                $this->iHeight
+            );
+        }
 
         return $oDriver->urlScale(
             $oObject->file->name->disk,
