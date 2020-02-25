@@ -21,8 +21,8 @@ if (!function_exists('formatBytes')) {
     /**
      * Formats a filesize given in bytes into a human-friendly string
      *
-     * @param integer $iBytes     The filesize, in bytes
-     * @param integer $iPrecision The precision to use
+     * @param int $iBytes     The filesize, in bytes
+     * @param int $iPrecision The precision to use
      *
      * @return string
      */
@@ -44,7 +44,7 @@ if (!function_exists('returnBytes')) {
      *
      * @param string $sSize The string to convert to bytes
      *
-     * @return integer
+     * @return int
      */
     function returnBytes($sSize): int
     {
@@ -62,9 +62,9 @@ if (!function_exists('maxUploadSize')) {
      * Returns the configured maximum upload size for this system by inspecting
      * upload_max_filesize and post_max_size, if available.
      *
-     * @param boolean $bFormat Whether to format the string using formatBytes
+     * @param bool $bFormat Whether to format the string using formatBytes
      *
-     * @return integer|string
+     * @return int|string
      */
     function maxUploadSize($bFormat = true)
     {
@@ -81,7 +81,7 @@ if (!function_exists('cdnObject')) {
     /**
      * Returns a CDN object
      *
-     * @param integer $iObjectId The ID of the object to get
+     * @param int $iObjectId The ID of the object to get
      *
      * @return stdClass
      */
@@ -100,7 +100,7 @@ if (!function_exists('cdnBucket')) {
     /**
      * Returns a CDN object
      *
-     * @param integer $iBucketId The ID of the bucket to get
+     * @param int $iBucketId The ID of the bucket to get
      *
      * @return stdClass
      */
@@ -119,12 +119,12 @@ if (!function_exists('cdnServe')) {
     /**
      * Returns the URL for serving raw content from the CDN
      *
-     * @param integer $iObjectId      The ID of the object to serve
-     * @param boolean $bForceDownload Whether or not the URL should stream to the browser, or forcibly download
+     * @param int  $iObjectId      The ID of the object to serve
+     * @param bool $bForceDownload Whether or not the URL should stream to the browser, or forcibly download
      *
-     * @return UrlGenerator\Crop
+     * @return UrlGenerator\Crop|null
      */
-    function cdnServe($iObjectId, $bForceDownload = false): UrlGenerator\Serve
+    function cdnServe($iObjectId, $bForceDownload = false): ?UrlGenerator\Serve
     {
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
@@ -139,7 +139,7 @@ if (!function_exists('cdnServeRaw')) {
     /**
      * Returns the URL for serving raw content from the CDN driver's source and not running it through the main CDN
      *
-     * @param integer $iObjectId The ID of the object to serve
+     * @param int $iObjectId The ID of the object to serve
      *
      * @return string
      */
@@ -178,13 +178,13 @@ if (!function_exists('cdnCrop')) {
     /**
      * Returns the URL for a crop of an object
      *
-     * @param integer $iObjectId The Object's ID
-     * @param integer $iWidth    The width of the thumbnail
-     * @param integer $iHeight   The height of the thumbnail
+     * @param int $iObjectId The Object's ID
+     * @param int $iWidth    The width of the thumbnail
+     * @param int $iHeight   The height of the thumbnail
      *
-     * @return UrlGenerator\Crop
+     * @return UrlGenerator\Crop|null
      */
-    function cdnCrop($iObjectId, $iWidth, $iHeight): UrlGenerator\Crop
+    function cdnCrop($iObjectId, $iWidth, $iHeight): ?UrlGenerator\Crop
     {
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
@@ -199,13 +199,13 @@ if (!function_exists('cdnScale')) {
     /**
      * Returns the URL for a scaled thumbnail of an object
      *
-     * @param integer $iObjectId The Object's ID
-     * @param integer $iWidth    The width of the thumbnail
-     * @param integer $iHeight   The height of the thumbnail
+     * @param int $iObjectId The Object's ID
+     * @param int $iWidth    The width of the thumbnail
+     * @param int $iHeight   The height of the thumbnail
      *
      * @return string
      */
-    function cdnScale($iObjectId, $iWidth, $iHeight): UrlGenerator\Scale
+    function cdnScale($iObjectId, $iWidth, $iHeight): ?UrlGenerator\Scale
     {
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
@@ -220,9 +220,9 @@ if (!function_exists('cdnPlaceholder')) {
     /**
      * Returns the URL for a placeholder graphic
      *
-     * @param integer $iWidth  The width of the placeholder
-     * @param integer $iHeight The height of the placeholder
-     * @param integer $iBorder The width of the border, if any
+     * @param int $iWidth  The width of the placeholder
+     * @param int $iHeight The height of the placeholder
+     * @param int $iBorder The width of the border, if any
      *
      * @return string
      */
@@ -241,9 +241,9 @@ if (!function_exists('cdnBlankAvatar')) {
     /**
      * Returns the URL for a blank avatar graphic
      *
-     * @param integer        $iWidth  The width of the placeholder
-     * @param integer        $iHeight The height of the placeholder
-     * @param string|integer $mSex    The gender of the avatar
+     * @param int        $iWidth  The width of the placeholder
+     * @param int        $iHeight The height of the placeholder
+     * @param string|int $mSex    The gender of the avatar
      *
      * @return string
      */
@@ -262,9 +262,9 @@ if (!function_exists('cdnAvatar')) {
     /**
      * Returns the URL for a user's avatar
      *
-     * @param integer $iUserId The user ID to use
-     * @param integer $iWidth  The width of the avatar
-     * @param integer $iHeight The height of the avatar
+     * @param int $iUserId The user ID to use
+     * @param int $iWidth  The width of the avatar
+     * @param int $iHeight The height of the avatar
      *
      * @return string
      */
@@ -283,9 +283,9 @@ if (!function_exists('cdnExpiringUrl')) {
     /**
      * Returns an expiring URL
      *
-     * @param integer $iObject        The ID of the object to server
-     * @param integer $iExpires       The length of time the URL should be valid for, in seconds
-     * @param boolean $bForceDownload Whether or not the URL should stream to the browser, or forcibly download
+     * @param int  $iObject        The ID of the object to server
+     * @param int  $iExpires       The length of time the URL should be valid for, in seconds
+     * @param bool $bForceDownload Whether or not the URL should stream to the browser, or forcibly download
      *
      * @return string
      */
@@ -361,12 +361,12 @@ if (!function_exists('cdnObjectPicker')) {
     /**
      * Returns the markup required for cdn Object Pickers
      *
-     * @param string  $sKey       The name to give the input
-     * @param string  $sBucket    The bucket we're picking from
-     * @param int     $iObjectId  The object which has previously been chosen
-     * @param string  $sAttr      Any attributes to add to the containing element
-     * @param string  $sInputAttr Any attributes to add to the input element
-     * @param boolean $bReadOnly  Whether picker is readonly
+     * @param string $sKey       The name to give the input
+     * @param string $sBucket    The bucket we're picking from
+     * @param int    $iObjectId  The object which has previously been chosen
+     * @param string $sAttr      Any attributes to add to the containing element
+     * @param string $sInputAttr Any attributes to add to the input element
+     * @param bool   $bReadOnly  Whether picker is readonly
      *
      * @return string
      */

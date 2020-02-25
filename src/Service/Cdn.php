@@ -2247,10 +2247,10 @@ class Cdn
      * @param int  $iObjectId      The ID of the object to serve
      * @param bool $bForceDownload Whether or not to force download of the object
      *
-     * @return Resource\UrlGenerator\Crop
+     * @return Resource\UrlGenerator\Crop|null
      * @throws UrlException
      */
-    public function urlServe($iObjectId, $bForceDownload = false): Resource\UrlGenerator\Serve
+    public function urlServe($iObjectId, $bForceDownload = false): ?Resource\UrlGenerator\Serve
     {
         /** @var UrlGenerator $oUrlService */
         $oUrlService = Factory::service('UrlGenerator', Constants::MODULE_SLUG);
@@ -2420,9 +2420,9 @@ class Cdn
      * @param int $iWidth    The width of the crop
      * @param int $iHeight   The height of the crop
      *
-     * @return Resource\UrlGenerator\Crop
+     * @return Resource\UrlGenerator\Crop|null
      **/
-    public function urlCrop($iObjectId, $iWidth, $iHeight): Resource\UrlGenerator\Crop
+    public function urlCrop($iObjectId, $iWidth, $iHeight): ?Resource\UrlGenerator\Crop
     {
         /** @var UrlGenerator $oUrlService */
         $oUrlService = Factory::service('UrlGenerator', Constants::MODULE_SLUG);
@@ -2453,9 +2453,9 @@ class Cdn
      * @param int $iWidth    The width of the scaled image
      * @param int $iHeight   The height of the scaled image
      *
-     * @return Resource\UrlGenerator\Scale
+     * @return Resource\UrlGenerator\Scale|null
      **/
-    public function urlScale($iObjectId, $iWidth, $iHeight): Resource\UrlGenerator\Scale
+    public function urlScale($iObjectId, $iWidth, $iHeight): ?Resource\UrlGenerator\Scale
     {
         /** @var UrlGenerator $oUrlService */
         $oUrlService = Factory::service('UrlGenerator', Constants::MODULE_SLUG);
