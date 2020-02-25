@@ -20,7 +20,8 @@ use Nails\Cdn\Exception\ObjectCreateException;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model\CdnObject;
-use Nails\Cdn\Resource\Token;
+use Nails\Cdn\Model\Token;
+use Nails\Cdn\Resource;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
@@ -2246,71 +2247,15 @@ class Cdn
      * @param int  $iObjectId      The ID of the object to serve
      * @param bool $bForceDownload Whether or not to force download of the object
      *
-     * @return string
+     * @return Resource\UrlGenerator\Crop
      * @throws UrlException
      */
-    public function urlServe($iObjectId, $bForceDownload = false)
+    public function urlServe($iObjectId, $bForceDownload = false): Resource\UrlGenerator\Serve
     {
         /** @var UrlGenerator $oUrlService */
         $oUrlService = Factory::service('UrlGenerator', Constants::MODULE_SLUG);
 
-        return $iObjectId ? $oUrlService->serve($iObjectId) : null;
-
-        //  Test the cache first, have we dealt with this url yet?
-        if (is_object($iObjectId)) {
-            $sCacheKey = 'URL:SERVE:' . $iObjectId->id . ':' . (int) $bForceDownload;
-        } else {
-            $sCacheKey = 'URL:SERVE:' . $iObjectId . ':' . (int) $bForceDownload;
-        }
-        $sCacheUrl = $this->getCache($sCacheKey);
-        if (!empty($sCacheUrl)) {
-            return $sCacheUrl;
-        };
-
-        // --------------------------------------------------------------------------
-
-        $isTrashed = false;
-
-        if (empty($iObjectId)) {
-            $oObj = $this->emptyObject();
-        } elseif (is_numeric($iObjectId)) {
-
-            $oObj = $this->getObject($iObjectId);
-
-            if (!$oObj) {
-
-                /**
-                 * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
-                 */
-
-                if (userHasPermission('admin:cdn:trash:browse')) {
-                    $oObj = $this->getObjectFromTrash($iObjectId);
-                    if (!$oObj) {
-                        //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
-                        $oObj = $this->emptyObject();
-                    } else {
-                        $isTrashed = true;
-                    }
-                } else {
-                    //  Let the renderer show a bad_src graphic
-                    $oObj = $this->emptyObject();
-                }
-            }
-        } elseif (is_object($iObjectId)) {
-            $oObj = $iObjectId;
-        } else {
-            throw new UrlException('Supplied $iObjectId must be numeric or an object', 1);
-        }
-
-        $sUrl = $this->callDriver(
-            'urlServe',
-            [$oObj->file->name->disk, $oObj->bucket->slug, $bForceDownload],
-            $oObj->driver
-        );
-        $sUrl .= $isTrashed ? '?trashed=1' : '';
-
-        $this->setCache($sCacheKey, $sUrl);
-        return $sUrl;
+        return $iObjectId ? $oUrlService->serve($iObjectId, $bForceDownload) : null;
     }
 
     // --------------------------------------------------------------------------
@@ -2475,97 +2420,14 @@ class Cdn
      * @param int $iWidth    The width of the crop
      * @param int $iHeight   The height of the crop
      *
-     * @return  string
+     * @return Resource\UrlGenerator\Crop
      **/
-    public function urlCrop($iObjectId, $iWidth, $iHeight)
+    public function urlCrop($iObjectId, $iWidth, $iHeight): Resource\UrlGenerator\Crop
     {
         /** @var UrlGenerator $oUrlService */
         $oUrlService = Factory::service('UrlGenerator', Constants::MODULE_SLUG);
 
-        return $iObjectId ? $oUrlService->crop($iObjectId) : null;
-
-        //  Test the cache first, have we dealt with this url yet?
-        if (is_object($iObjectId)) {
-            $sCacheKey = 'URL:CROP:' . $iObjectId->id . ':' . $iWidth . ':' . $iHeight;
-        } else {
-            $sCacheKey = 'URL:CROP:' . $iObjectId . ':' . $iWidth . ':' . $iHeight;
-        }
-        $sCacheUrl = $this->getCache($sCacheKey);
-        if (!empty($sCacheUrl)) {
-            return $sCacheUrl;
-        };
-
-        // --------------------------------------------------------------------------
-
-        if (!$this->isPermittedDimension($iWidth, $iHeight)) {
-            throw new PermittedDimensionException(
-                'CDN::urlCrop() - Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
-            );
-        }
-
-        // --------------------------------------------------------------------------
-
-        $isTrashed = false;
-
-        if (empty($iObjectId)) {
-            $oObj = $this->emptyObject();
-        } elseif (is_numeric($iObjectId)) {
-
-            $oObj = $this->getObject($iObjectId);
-
-            if (!$oObj) {
-
-                /**
-                 * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
-                 */
-
-                if (userHasPermission('admin:cdn:trash:browse')) {
-
-                    $oObj = $this->getObjectFromTrash($iObjectId);
-
-                    if (!$oObj) {
-                        //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
-                        $oObj = $this->emptyObject();
-                    } else {
-                        $isTrashed = true;
-                    }
-                } else {
-                    //  Let the renderer show a bad_src graphic
-                    $oObj = $this->emptyObject();
-                }
-            }
-        } else {
-            $oObj = $iObjectId;
-        }
-
-        // --------------------------------------------------------------------------
-
-        $sCacheUrl = static::getCacheUrl(
-            $oObj->bucket->slug,
-            $oObj->file->name->disk,
-            $oObj->file->ext,
-            'CROP',
-            $oObj->img_orientation,
-            $iWidth,
-            $iHeight
-        );
-
-        if (!empty($sCacheUrl)) {
-            $this->setCache($sCacheKey, $sCacheUrl);
-            return $sCacheUrl;
-        }
-
-        // --------------------------------------------------------------------------
-
-        $sUrl = $this->callDriver(
-            'urlCrop',
-            [$oObj->file->name->disk, $oObj->bucket->slug, $iWidth, $iHeight],
-            $oObj->driver
-        );
-        $sUrl .= $isTrashed ? '?trashed=1' : '';
-
-        $this->setCache($sCacheKey, $sUrl);
-        return $sUrl;
+        return $iObjectId ? $oUrlService->crop($iObjectId, $iWidth, $iHeight) : null;
     }
 
     // --------------------------------------------------------------------------
@@ -2591,102 +2453,14 @@ class Cdn
      * @param int $iWidth    The width of the scaled image
      * @param int $iHeight   The height of the scaled image
      *
-     * @return  string
+     * @return Resource\UrlGenerator\Scale
      **/
-    public function urlScale($iObjectId, $iWidth, $iHeight)
+    public function urlScale($iObjectId, $iWidth, $iHeight): Resource\UrlGenerator\Scale
     {
         /** @var UrlGenerator $oUrlService */
         $oUrlService = Factory::service('UrlGenerator', Constants::MODULE_SLUG);
 
-        return $iObjectId ? $oUrlService->scale($iObjectId) : null;
-
-        //  Test the cache first, have we dealt with this url yet?
-        if (is_object($iObjectId)) {
-            $sCacheKey = 'URL:SCALE:' . $iObjectId->id . ':' . $iWidth . ':' . $iHeight;
-        } else {
-            $sCacheKey = 'URL:SCALE:' . $iObjectId . ':' . $iWidth . ':' . $iHeight;
-        }
-        $sCacheUrl = $this->getCache($sCacheKey);
-        if (!empty($sCacheUrl)) {
-            return $sCacheUrl;
-        };
-
-        // --------------------------------------------------------------------------
-
-        if (!$this->isPermittedDimension($iWidth, $iHeight)) {
-            throw new PermittedDimensionException(
-                'CDN::urlScale() - Transformation of image to ' . $iWidth . 'x' . $iHeight . ' is not permitted'
-            );
-        }
-
-        // --------------------------------------------------------------------------
-
-        $isTrashed = false;
-
-        if (empty($iObjectId)) {
-            $oObj = $this->emptyObject();
-        } elseif (is_numeric($iObjectId)) {
-
-            $oObj = $this->getObject($iObjectId);
-
-            if (!$oObj) {
-
-                /**
-                 * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
-                 */
-
-                if (userHasPermission('admin:cdn:trash:browse')) {
-
-                    $oObj = $this->getObjectFromTrash($iObjectId);
-
-                    if (!$oObj) {
-                        //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
-                        $oObj = $this->emptyObject();
-                    } else {
-                        $isTrashed = true;
-                    }
-                } else {
-                    //  Let the renderer show a bad_src graphic
-                    $oObj = $this->emptyObject();
-                }
-            }
-        } else {
-            $oObj = $iObjectId;
-        }
-
-        // --------------------------------------------------------------------------
-
-        $sCacheUrl = static::getCacheUrl(
-            $oObj->bucket->slug,
-            $oObj->file->name->disk,
-            $oObj->file->ext,
-            'SCALE',
-            $oObj->img_orientation,
-            $iWidth,
-            $iHeight
-        );
-
-        if (!empty($sCacheUrl)) {
-            $this->setCache($sCacheKey, $sCacheUrl);
-            return $sCacheUrl;
-        }
-
-        // --------------------------------------------------------------------------
-
-        $sUrl = $this->callDriver(
-            'urlScale',
-            [
-                $oObj->file->name->disk,
-                $oObj->bucket->slug,
-                $iWidth,
-                $iHeight,
-            ],
-            $oObj->driver
-        );
-        $sUrl .= $isTrashed ? '?trashed=1' : '';
-
-        $this->setCache($sCacheKey, $sUrl);
-        return $sUrl;
+        return $iObjectId ? $oUrlService->scale($iObjectId, $iWidth, $iHeight) : null;
     }
 
     // --------------------------------------------------------------------------
@@ -3355,12 +3129,12 @@ class Cdn
      *
      * @param \DateTime|\Nails\Common\Resource\DateTime|string|null $mExpire The expiration date of the token
      *
-     * @return Token
+     * @return Resource\Token
      * @throws CdnException
      * @throws ValidationException
      * @throws FactoryException
      */
-    public function generateToken($mExpire = null): Token
+    public function generateToken($mExpire = null): Resource\Token
     {
         if ($mExpire instanceof \DateTime) {
 
@@ -3400,13 +3174,13 @@ class Cdn
     /**
      * Validates a token
      *
-     * @param Token|string $mToken The token to validate
+     * @param Resource\Token|string $mToken The token to validate
      *
      * @return bool
      */
     public function validateToken($mToken): bool
     {
-        if ($mToken instanceof Token) {
+        if ($mToken instanceof Resource\Token) {
 
             $sToken = $mToken->token;
 

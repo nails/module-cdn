@@ -181,37 +181,41 @@ return [
             }
         },
         'UrlGeneratorCrop'  => function (
-            Service\UrlGenerator $oSerice,
+            Service\Cdn $oCdn,
+            Service\UrlGenerator $oService,
             int $iObjectId,
             int $iWidth,
             int $iHeight
         ): Resource\UrlGenerator\Crop {
             if (class_exists('\App\Cdn\Resource\UrlGenerator\Crop')) {
-                return new \App\Cdn\Resource\UrlGenerator\Crop($oSerice, $iObjectId, $iWidth, $iHeight);
+                return new \App\Cdn\Resource\UrlGenerator\Crop($oCdn, $oService, $iObjectId, $iWidth, $iHeight);
             } else {
-                return new Resource\UrlGenerator\Crop($oSerice, $iObjectId, $iWidth, $iHeight);
+                return new Resource\UrlGenerator\Crop($oCdn, $oService, $iObjectId, $iWidth, $iHeight);
             }
         },
         'UrlGeneratorScale' => function (
-            Service\UrlGenerator $oSerice,
+            Service\Cdn $oCdn,
+            Service\UrlGenerator $oService,
             int $iObjectId,
             int $iWidth,
             int $iHeight
         ): Resource\UrlGenerator\Scale {
             if (class_exists('\App\Cdn\Resource\UrlGenerator\Scale')) {
-                return new \App\Cdn\Resource\UrlGenerator\Scale($oSerice, $iObjectId, $iWidth, $iHeight);
+                return new \App\Cdn\Resource\UrlGenerator\Scale($oCdn, $oService, $iObjectId, $iWidth, $iHeight);
             } else {
-                return new Resource\UrlGenerator\Scale($oSerice, $iObjectId, $iWidth, $iHeight);
+                return new Resource\UrlGenerator\Scale($oCdn, $oService, $iObjectId, $iWidth, $iHeight);
             }
         },
         'UrlGeneratorServe' => function (
-            Service\UrlGenerator $oSerice,
-            int $iObjectId
+            Service\Cdn $oCdn,
+            Service\UrlGenerator $oService,
+            int $iObjectId,
+            bool $bForceDownload
         ): Resource\UrlGenerator\Serve {
             if (class_exists('\App\Cdn\Resource\UrlGenerator\Serve')) {
-                return new \App\Cdn\Resource\UrlGenerator\Serve($oSerice, $iObjectId);
+                return new \App\Cdn\Resource\UrlGenerator\Serve($oCdn, $oService, $iObjectId, $bForceDownload);
             } else {
-                return new Resource\UrlGenerator\Serve($oSerice, $iObjectId);
+                return new Resource\UrlGenerator\Serve($oCdn, $oService, $iObjectId, $bForceDownload);
             }
         },
     ],

@@ -11,6 +11,7 @@
  */
 
 use Nails\Cdn\Constants;
+use Nails\Cdn\Resource\UrlGenerator;
 use Nails\Cdn\Service\Cdn;
 use Nails\Common\Service\View;
 use Nails\Factory;
@@ -121,9 +122,9 @@ if (!function_exists('cdnServe')) {
      * @param integer $iObjectId      The ID of the object to serve
      * @param boolean $bForceDownload Whether or not the URL should stream to the browser, or forcibly download
      *
-     * @return string
+     * @return UrlGenerator\Crop
      */
-    function cdnServe($iObjectId, $bForceDownload = false)
+    function cdnServe($iObjectId, $bForceDownload = false): UrlGenerator\Serve
     {
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
@@ -181,9 +182,9 @@ if (!function_exists('cdnCrop')) {
      * @param integer $iWidth    The width of the thumbnail
      * @param integer $iHeight   The height of the thumbnail
      *
-     * @return string
+     * @return UrlGenerator\Crop
      */
-    function cdnCrop($iObjectId, $iWidth, $iHeight)
+    function cdnCrop($iObjectId, $iWidth, $iHeight): UrlGenerator\Crop
     {
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
@@ -204,7 +205,7 @@ if (!function_exists('cdnScale')) {
      *
      * @return string
      */
-    function cdnScale($iObjectId, $iWidth, $iHeight)
+    function cdnScale($iObjectId, $iWidth, $iHeight): UrlGenerator\Scale
     {
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
