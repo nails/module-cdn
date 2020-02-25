@@ -15,7 +15,7 @@ use Nails\Factory;
  *
  * @package Nails\Cdn\Resource
  */
-abstract class UrlGenerator extends Resource implements Interfaces\UrlGenerator
+abstract class UrlGenerator extends Resource implements Interfaces\UrlGenerator, \JsonSerializable
 {
     /**
      * The CDN service
@@ -122,5 +122,19 @@ abstract class UrlGenerator extends Resource implements Interfaces\UrlGenerator
         }
 
         return $this->sUrl ?? '';
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * When serialised, return the URL ratehr than serialize the object
+     *
+     * @return string
+     * @throws FactoryException
+     * @throws ModelException
+     */
+    public function jsonSerialize()
+    {
+        return $this->__toString();
     }
 }
