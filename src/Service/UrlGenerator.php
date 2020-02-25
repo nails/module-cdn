@@ -3,6 +3,7 @@
 namespace Nails\Cdn\Service;
 
 use Nails\Cdn\Constants;
+use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Model\CdnObject;
 use Nails\Cdn\Resource;
 use Nails\Common\Exception\FactoryException;
@@ -182,6 +183,23 @@ class UrlGenerator
         }
 
         //  @todo (Pablo - 2020-02-25) - Fetch items from trash if needed
+        $aMissing = array_diff($aNewIds, array_keys($this->aCachedObjects));
+        if (!empty($aMissing)) {
+            $oObjectTrashModel = Factory::model('ObjectTrash', Constants::MODULE_SLUG);
+            foreach ($oObjectTrashModel->getByIds($aObjectIds, [new Expand('bucket')]) as $oObject) {
+                $this->aCachedObjects[$oObject->id] = $oObject;
+            }
+        }
+
+        $aMissing = array_diff($aNewIds, array_keys($this->aCachedObjects));
+        if (!empty($aMissing)) {
+            throw new CdnException(
+                sprintf(
+                    'Attempted to generate URLs for objects which do not exist: %s',
+                    implode(', ', $aMissing)
+                )
+            );
+        }
 
         foreach ($this->aGenerators as $oUrlObject) {
             if (in_array($oUrlObject->getObjectId(), $aObjectIds)) {

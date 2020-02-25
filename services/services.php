@@ -173,6 +173,13 @@ return [
                 return new Resource\CdnObject\Url($oObj);
             }
         },
+        'ObjectTrash'       => function ($oObj): Resource\CdnObject {
+            if (class_exists('\App\Cdn\Resource\CdnObject\Trash')) {
+                return new \App\Cdn\Resource\CdnObject\Trash($oObj);
+            } else {
+                return new Resource\CdnObject\Trash($oObj);
+            }
+        },
         'Token'             => function ($oObj): Resource\Token {
             if (class_exists('\App\Cdn\Resource\Token')) {
                 return new \App\Cdn\Resource\Token($oObj);

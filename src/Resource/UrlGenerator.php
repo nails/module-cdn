@@ -103,6 +103,10 @@ abstract class UrlGenerator extends Resource implements Interfaces\UrlGenerator,
 
         $this->sUrl = $this->callDriver($oDriver, $oObject);
 
+        if ($oObject instanceof CdnObject\Trash) {
+            $this->sUrl .= (strpos('?', $this->sUrl) !== false ? '&' : '?') . 'trashed=1';
+        }
+
         return $this;
     }
 
