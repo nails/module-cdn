@@ -1018,7 +1018,7 @@ class Cdn
 
             if (in_array($oData->mime, $aImageMimeTypes)) {
 
-                list($iWidth, $iHeight) = getimagesize($oData->file);
+                [$iWidth, $iHeight] = getimagesize($oData->file);
                 $oData->img = (object) [
                     'width'       => $iWidth,
                     'height'      => $iHeight,
@@ -2251,6 +2251,11 @@ class Cdn
      */
     public function urlServe($iObjectId, $bForceDownload = false)
     {
+        /** @var UrlGenerator $oUrlService */
+        $oUrlService = Factory::service('UrlGenerator', Constants::MODULE_SLUG);
+
+        return $iObjectId ? $oUrlService->serve($iObjectId) : null;
+
         //  Test the cache first, have we dealt with this url yet?
         if (is_object($iObjectId)) {
             $sCacheKey = 'URL:SERVE:' . $iObjectId->id . ':' . (int) $bForceDownload;
@@ -2474,6 +2479,11 @@ class Cdn
      **/
     public function urlCrop($iObjectId, $iWidth, $iHeight)
     {
+        /** @var UrlGenerator $oUrlService */
+        $oUrlService = Factory::service('UrlGenerator', Constants::MODULE_SLUG);
+
+        return $iObjectId ? $oUrlService->crop($iObjectId) : null;
+
         //  Test the cache first, have we dealt with this url yet?
         if (is_object($iObjectId)) {
             $sCacheKey = 'URL:CROP:' . $iObjectId->id . ':' . $iWidth . ':' . $iHeight;
@@ -2585,6 +2595,11 @@ class Cdn
      **/
     public function urlScale($iObjectId, $iWidth, $iHeight)
     {
+        /** @var UrlGenerator $oUrlService */
+        $oUrlService = Factory::service('UrlGenerator', Constants::MODULE_SLUG);
+
+        return $iObjectId ? $oUrlService->scale($iObjectId) : null;
+
         //  Test the cache first, have we dealt with this url yet?
         if (is_object($iObjectId)) {
             $sCacheKey = 'URL:SCALE:' . $iObjectId->id . ':' . $iWidth . ':' . $iHeight;
