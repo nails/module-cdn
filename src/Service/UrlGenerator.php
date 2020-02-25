@@ -56,13 +56,18 @@ class UrlGenerator
     {
         if (is_object($mObject)) {
             $mObject = $mObject->id;
-        } elseif (!is_int($mObject)) {
+        } elseif (!is_numeric($mObject)) {
             throw new \InvalidArgumentException(
                 sprintf(
-                    'Second argument passed to %s must be an object, or an integer',
-                    __METHOD__
+                    'Second argument passed to %s must be an object, or an integer; %s passed',
+                    __METHOD__,
+                    gettype($mObject)
                 )
             );
+        }
+
+        if (!is_int($mObject) && is_numeric($mObject)) {
+            $mObject = (int) $mObject;
         }
 
         $aArgs = func_get_args();
