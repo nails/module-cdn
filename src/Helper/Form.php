@@ -74,6 +74,29 @@ class Form
 
         // --------------------------------------------------------------------------
 
+        //  Prep the containers attributes
+        $_field_attributes = [];
+
+        //  Move revealer properties to the container if both are present
+        //  If only revealer is present then it is a control
+
+        if (array_key_exists('revealer', $_field_data) && array_key_exists('reveal-on', $_field_data)) {
+            $_field_attributes[] = sprintf(
+                'data-%s="%s"',
+                'revealer',
+                $_field_data['revealer']
+            );
+            $_field_attributes[] = sprintf(
+                'data-%s="%s"',
+                'reveal-on',
+                $_field_data['reveal-on']
+            );
+        }
+
+        $_field_attributes = implode(' ', $_field_attributes);
+
+        // --------------------------------------------------------------------------
+
         //  Prep the field's attributes
         $_attr = '';
 
@@ -121,7 +144,7 @@ class Form
 
         $_out = <<<EOT
 
-    <div class="field $_error_class $_field_oddeven $_readonly_cls $_field_type" $_field_id_top>
+    <div class="field $_error_class $_field_oddeven $_readonly_cls $_field_type" $_field_id_top $_field_attributes>
         <label>
             <span class="label">
                 $_field_label
