@@ -36,6 +36,7 @@
     ],
     "require": {
         "nails/common": "dev-develop",
+        "nails/module-auth": "dev-develop",
         "nails/module-console": "dev-develop",
         "nails/driver-cdn-local": "dev-develop",
         "sybio/gif-creator": "~1.0.0",
