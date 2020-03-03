@@ -1496,7 +1496,7 @@ class Cdn
      */
     public function objectIncrementCount($action, $object, $bucket = null)
     {
-        /** @var \CI_Db $oDb */
+        /** @var Database $oDb */
         $oDb = Factory::service('Database');
 
         switch (strtoupper($action)) {
@@ -2894,7 +2894,7 @@ class Cdn
 
     public function purgeTrash($purgeIds = null)
     {
-        /** @var \CI_Db $oDb */
+        /** @var Database $oDb */
         $oDb = Factory::service('Database');
 
         //  Get all the ID's we'll be dealing with
