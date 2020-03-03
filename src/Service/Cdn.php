@@ -33,6 +33,7 @@ use Nails\Common\Traits\Caching;
 use Nails\Common\Traits\ErrorHandling;
 use Nails\Common\Traits\GetCountCommon;
 use Nails\Components;
+use Nails\Config;
 use Nails\Factory;
 
 /**
@@ -369,7 +370,7 @@ class Cdn
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
         $oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
-        $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
+        $oDb->join(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
 
         // --------------------------------------------------------------------------
 
@@ -398,7 +399,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $aObjects    = $oDb->get(NAILS_DB_PREFIX . 'cdn_object o')->result();
+        $aObjects    = $oDb->get(Config::get('NAILS_DB_PREFIX') . 'cdn_object o')->result();
         $iNumObjects = count($aObjects);
 
         for ($i = 0; $i < $iNumObjects; $i++) {
@@ -457,7 +458,7 @@ class Cdn
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
         $oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
-        $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
+        $oDb->join(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
 
         // --------------------------------------------------------------------------
 
@@ -486,7 +487,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $aObjects   = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->result();
+        $aObjects   = $oDb->get(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash o')->result();
         $iNumObjets = count($aObjects);
 
         for ($i = 0; $i < $iNumObjets; $i++) {
@@ -657,7 +658,7 @@ class Cdn
     {
         $oDb = Factory::service('Database');
         $this->getCountCommon($data);
-        return $oDb->count_all_results(NAILS_DB_PREFIX . 'cdn_object o');
+        return $oDb->count_all_results(Config::get('NAILS_DB_PREFIX') . 'cdn_object o');
     }
 
     // --------------------------------------------------------------------------
@@ -673,7 +674,7 @@ class Cdn
     {
         $oDb = Factory::service('Database');
         $this->getCountCommon($data);
-        return $oDb->count_all_results(NAILS_DB_PREFIX . 'cdn_object_trash o');
+        return $oDb->count_all_results(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash o');
     }
 
     // --------------------------------------------------------------------------
@@ -1248,13 +1249,13 @@ class Cdn
             $oDb->trans_begin();
 
             //  Create trash object
-            if (!$oDb->insert(NAILS_DB_PREFIX . 'cdn_object_trash')) {
+            if (!$oDb->insert(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash')) {
                 throw new CdnException('Failed to create the trash object.');
             }
 
             //  Remove original object
             $oDb->where('id', $object->id);
-            if (!$oDb->delete(NAILS_DB_PREFIX . 'cdn_object')) {
+            if (!$oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object')) {
                 throw new CdnException('Failed to remove original object.');
             }
 
@@ -1327,13 +1328,13 @@ class Cdn
             $oDb->trans_begin();
 
             //  Restore object
-            if (!$oDb->insert(NAILS_DB_PREFIX . 'cdn_object')) {
+            if (!$oDb->insert(Config::get('NAILS_DB_PREFIX') . 'cdn_object')) {
                 throw new CdnException('Failed to restore original object.');
             }
 
             //  Remove trash object
             $oDb->where('id', $oObject->id);
-            if (!$oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash')) {
+            if (!$oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash')) {
                 throw new CdnException('Failed to remove the trash object.');
             }
 
@@ -1393,10 +1394,10 @@ class Cdn
             $oDb->trans_begin();
 
             $oDb->where('id', $oObject->id);
-            $oDb->delete(NAILS_DB_PREFIX . 'cdn_object');
+            $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
 
             $oDb->where('id', $oObject->id);
-            $oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
+            $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash');
 
             if ($oDb->trans_status() === false) {
 
@@ -1525,13 +1526,13 @@ class Cdn
 
         if ($bucket && is_numeric($bucket)) {
             $oDb->where('o.bucket_id', $bucket);
-            return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
+            return $oDb->update(Config::get('NAILS_DB_PREFIX') . 'cdn_object o');
         } elseif ($bucket) {
             $oDb->where('b.slug', $bucket);
-            $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'b.id = o.bucket_id');
-            return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
+            $oDb->join(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b', 'b.id = o.bucket_id');
+            return $oDb->update(Config::get('NAILS_DB_PREFIX') . 'cdn_object o');
         } else {
-            return $oDb->update(NAILS_DB_PREFIX . 'cdn_object o');
+            return $oDb->update(Config::get('NAILS_DB_PREFIX') . 'cdn_object o');
         }
     }
 
@@ -1759,7 +1760,7 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $aBuckets    = $oDb->get(NAILS_DB_PREFIX . 'cdn_bucket b')->result();
+        $aBuckets    = $oDb->get(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b')->result();
         $iNumBuckets = count($aBuckets);
 
         for ($i = 0; $i < $iNumBuckets; $i++) {
@@ -1854,7 +1855,7 @@ class Cdn
     {
         $oDb = Factory::service('Database');
         $this->getCountCommon($aData);
-        return $oDb->count_all_results(NAILS_DB_PREFIX . 'cdn_bucket b');
+        return $oDb->count_all_results(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b');
     }
 
     // --------------------------------------------------------------------------
@@ -2022,7 +2023,7 @@ class Cdn
 
                 $oDb = Factory::service('Database');
                 $oDb->where('id', $oBucket->id);
-                $oDb->delete(NAILS_DB_PREFIX . 'cdn_bucket');
+                $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket');
                 return true;
 
             } else {
@@ -2807,10 +2808,10 @@ class Cdn
         $oDb  = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.mime, o.filesize, o.driver');
         $oDb->select('b.slug bucket_slug, b.label bucket');
-        $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
+        $oDb->join(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b', 'o.bucket_id = b.id');
         $oDb->order_by('b.label');
         $oDb->order_by('o.filename_display');
-        $oQuery = $oDb->get(NAILS_DB_PREFIX . 'cdn_object o');
+        $oQuery = $oDb->get(Config::get('NAILS_DB_PREFIX') . 'cdn_object o');
 
         while ($oRow = $oQuery->unbuffered_row()) {
             if (!$this->callDriver('objectExists', [$oRow->filename, $oRow->bucket_slug])) {
@@ -2900,7 +2901,7 @@ class Cdn
         if (is_null($purgeIds)) {
 
             $oDb->select('id');
-            $result   = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash');
+            $result   = $oDb->get(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash');
             $purgeIds = [];
             while ($object = $result->unbuffered_row()) {
                 $purgeIds[] = $object->id;
@@ -2920,9 +2921,9 @@ class Cdn
         foreach ($purgeIds as $iObjectId) {
 
             $oDb->select('o.id,o.filename,b.id bucket_id,b.slug bucket_slug, o.driver');
-            $oDb->join(NAILS_DB_PREFIX . 'cdn_bucket b', 'o.bucket_id = b.id');
+            $oDb->join(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b', 'o.bucket_id = b.id');
             $oDb->where('o.id', $iObjectId);
-            $oObject = $oDb->get(NAILS_DB_PREFIX . 'cdn_object_trash o')->row();
+            $oObject = $oDb->get(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash o')->row();
 
             if (!empty($oObject)) {
 
@@ -2935,10 +2936,10 @@ class Cdn
 
                     //  Remove the database entries
                     $oDb->where('id', $oObject->id);
-                    $oDb->delete(NAILS_DB_PREFIX . 'cdn_object');
+                    $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
 
                     $oDb->where('id', $oObject->id);
-                    $oDb->delete(NAILS_DB_PREFIX . 'cdn_object_trash');
+                    $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash');
 
                     // --------------------------------------------------------------------------
 

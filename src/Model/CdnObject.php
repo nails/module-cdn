@@ -14,6 +14,7 @@ namespace Nails\Cdn\Model;
 
 use Nails\Cdn\Constants;
 use Nails\Common\Model\Base;
+use Nails\Config;
 
 /**
  * Class CdnObject
@@ -33,7 +34,7 @@ class CdnObject extends Base
     public function __construct()
     {
         parent::__construct();
-        $this->table             = NAILS_DB_PREFIX . 'cdn_object';
+        $this->table             = Config::get('NAILS_DB_PREFIX') . 'cdn_object';
         $this->defaultSortColumn = 'modified';
         $this->defaultSortOrder  = 'desc';
         $this->tableLabelColumn  = 'filename_display';

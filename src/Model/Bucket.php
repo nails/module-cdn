@@ -14,6 +14,7 @@ namespace Nails\Cdn\Model;
 
 use Nails\Cdn\Constants;
 use Nails\Common\Model\Base;
+use Nails\Config;
 
 /**
  * Class Bucket
@@ -33,7 +34,7 @@ class Bucket extends Base
     public function __construct()
     {
         parent::__construct();
-        $this->table             = NAILS_DB_PREFIX . 'cdn_bucket';
+        $this->table             = Config::get('NAILS_DB_PREFIX') . 'cdn_bucket';
         $this->tableAutoSetSlugs = true;
         $this->defaultSortColumn = 'label';
         $this

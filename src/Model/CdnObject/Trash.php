@@ -13,6 +13,7 @@ namespace Nails\Cdn\Model\CdnObject;
 
 use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject;
+use Nails\Config;
 
 /**
  * Class Trash
@@ -32,6 +33,6 @@ class Trash extends CdnObject
     public function __construct()
     {
         parent::__construct();
-        $this->table = NAILS_DB_PREFIX . 'cdn_object_trash';
+        $this->table = Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash';
     }
 }
