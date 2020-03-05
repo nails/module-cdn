@@ -12,9 +12,7 @@
 
 namespace Nails\Cdn\Api\Controller;
 
-use Nails\Api\Controller\Base;
-use Nails\Api\Exception\ApiException;
-use Nails\Api\Factory\ApiResponse;
+use Nails\Api;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject\Trash;
 use Nails\Cdn\Service\Cdn;
@@ -29,7 +27,7 @@ use Nails\Factory;
  *
  * @package Nails\Cdn\Api\Controller
  */
-class CdnObject extends Base
+class CdnObject extends Api\Controller\Base
 {
     /**
      * The maximum number of objects a user can request at any one time
@@ -71,11 +69,11 @@ class CdnObject extends Base
     /**
      * Lists objects
      *
-     * @return ApiResponse
-     * @throws ApiException
+     * @return Api\Factory\ApiResponse
+     * @throws Api\Exception\ApiException
      * @throws FactoryException
      */
-    public function getIndex(): ApiResponse
+    public function getIndex(): Api\Factory\ApiResponse
     {
         //  @todo (Pablo - 2019-09-18) - Consider a way to restrict abuse of this endpoint
         //  See: https://github.com/nails/module-cdn/issues/76
@@ -104,7 +102,7 @@ class CdnObject extends Base
         $aIds = array_unique($aIds);
 
         if (count($aIds) > 100) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'You can request a maximum of ' . static::MAX_OBJECTS_PER_REQUEST . ' objects per request',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
@@ -131,7 +129,7 @@ class CdnObject extends Base
             $aOut[] = $this->formatObject($oObject, $aUrls);
         }
 
-        return Factory::factory('ApiResponse', 'nails/module-api')
+        return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
             ->setData($oInput->get('id') ? reset($aOut) : $aOut);
     }
 
@@ -157,7 +155,7 @@ class CdnObject extends Base
         $sBucket = $oInput->post('bucket') ?: $oInput->header('X-Cdn-Bucket');
 
         if (!$sBucket) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'Bucket not defined',
                 $oHttpCodes::STATUS_BAD_REQUEST
             );
@@ -169,14 +167,14 @@ class CdnObject extends Base
         $oObject = $oCdn->objectCreate('upload', $sBucket);
 
         if (!$oObject) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 $oCdn->lastError(),
                 $oHttpCodes::STATUS_BAD_REQUEST
             );
         }
 
         //  @todo (Pablo - 2018-06-25) - Reduce the namespace here (i.e remove `object`)
-        return Factory::factory('ApiResponse', 'nails/module-api')
+        return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
             ->setData([
                 'object' => $this->formatObject(
                     $oObject,
@@ -190,17 +188,17 @@ class CdnObject extends Base
     /**
      * Delete an object from the CDN
      *
-     * @return ApiResponse
-     * @throws ApiException
+     * @return Api\Factory\ApiResponse
+     * @throws Api\Exception\ApiException
      * @throws FactoryException
      */
-    public function postDelete(): ApiResponse
+    public function postDelete(): Api\Factory\ApiResponse
     {
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:object:delete')) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
@@ -214,7 +212,7 @@ class CdnObject extends Base
         $iObjectId = $oInput->post('object_id');
 
         if (empty($iObjectId)) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 '`object_id` is a required field',
                 $oHttpCodes::STATUS_BAD_REQUEST
             );
@@ -228,7 +226,7 @@ class CdnObject extends Base
         }
 
         if (empty($oObject)) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'Invalid object ID',
                 $oHttpCodes::STATUS_NOT_FOUND
             );
@@ -241,13 +239,13 @@ class CdnObject extends Base
         }
 
         if (!$bDelete) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 $oCdn->lastError(),
                 $oHttpCodes::STATUS_BAD_REQUEST
             );
         }
 
-        return Factory::factory('ApiResponse', 'nails/module-api');
+        return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
     }
 
     // --------------------------------------------------------------------------
@@ -255,17 +253,17 @@ class CdnObject extends Base
     /**
      * Restore an item form the trash
      *
-     * @return ApiResponse
-     * @throws ApiException
+     * @return Api\Factory\ApiResponse
+     * @throws Api\Exception\ApiException
      * @throws FactoryException
      */
-    public function postRestore(): ApiResponse
+    public function postRestore(): Api\Factory\ApiResponse
     {
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:object:restore')) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
@@ -279,13 +277,13 @@ class CdnObject extends Base
         $iObjectId = $oInput->post('object_id');
 
         if (!$oCdn->objectRestore($iObjectId)) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 $oCdn->lastError(),
                 $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR
             );
         }
 
-        return Factory::factory('ApiResponse', 'nails/module-api');
+        return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
     }
 
     // --------------------------------------------------------------------------
@@ -293,17 +291,17 @@ class CdnObject extends Base
     /**
      * Search across all objects
      *
-     * @return ApiResponse
-     * @throws ApiException
+     * @return Api\Factory\ApiResponse
+     * @throws Api\Exception\ApiException
      * @throws FactoryException
      */
-    public function getSearch(): ApiResponse
+    public function getSearch(): Api\Factory\ApiResponse
     {
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
@@ -322,8 +320,8 @@ class CdnObject extends Base
             static::MAX_OBJECTS_PER_REQUEST
         );
 
-        /** @var ApiResponse $oResponse */
-        $oResponse = Factory::factory('ApiResponse', 'nails/module-api');
+        /** @var Api\Factory\ApiResponse $oResponse */
+        $oResponse = Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
         $oResponse->setData(array_map(
             function ($oObj) {
                 $oObj->is_img = isset($oObj->img);
@@ -343,18 +341,18 @@ class CdnObject extends Base
     /**
      * List items in the trash
      *
-     * @return ApiResponse
-     * @throws ApiException
+     * @return Api\Factory\ApiResponse
+     * @throws Api\Exception\ApiException
      * @throws FactoryException
      * @throws ModelException
      */
-    public function getTrash(): ApiResponse
+    public function getTrash(): Api\Factory\ApiResponse
     {
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
@@ -372,8 +370,8 @@ class CdnObject extends Base
             ['sort' => [['trashed', 'desc']]]
         );
 
-        /** @var ApiResponse $oResponse */
-        $oResponse = Factory::factory('ApiResponse', 'nails/module-api');
+        /** @var Api\Factory\ApiResponse $oResponse */
+        $oResponse = Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
         $oResponse->setData(array_map(
             function ($oObj) {
                 $oObj->is_img = isset($oObj->img);

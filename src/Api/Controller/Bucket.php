@@ -12,8 +12,7 @@
 
 namespace Nails\Cdn\Api\Controller;
 
-use Nails\Api\Controller\CrudController;
-use Nails\Api\Exception\ApiException;
+use Nails\Api;
 use Nails\Cdn\Constants;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
@@ -24,7 +23,7 @@ use Nails\Factory;
  *
  * @package Nails\Cdn\Api\Controller
  */
-class Bucket extends CrudController
+class Bucket extends Apu\Controller\CrudController
 {
     const CONFIG_MODEL_NAME       = 'Bucket';
     const CONFIG_MODEL_PROVIDER   = Constants::MODULE_SLUG;
@@ -46,7 +45,7 @@ class Bucket extends CrudController
     public function getList()
     {
         if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
@@ -63,7 +62,7 @@ class Bucket extends CrudController
         $iPage     = (int) $oInput->get('page') ?: 1;
 
         if (empty($iBucketId)) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 '`bucket_id` is a required field',
                 $oHttpCodes::STATUS_BAD_REQUEST
             );
@@ -75,7 +74,7 @@ class Bucket extends CrudController
             ['where' => [['bucket_id', $iBucketId]]]
         );
 
-        return Factory::factory('ApiResponse', 'nails/module-api')
+        return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
             ->setData(array_map(
                 function ($oObj) {
                     $oObj->url->preview = $oObj->is_img ? cdnCrop($oObj->id, 400, 400) : null;
@@ -104,7 +103,7 @@ class Bucket extends CrudController
         $oHttpCodes = Factory::service('HttpCodes');
 
         if (!userHasPermission('admin:cdn:manager:bucket:create')) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'You do not have permission to create this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
@@ -112,7 +111,7 @@ class Bucket extends CrudController
 
         //  @todo (Pablo - 2018-08-16) - Remove once CrudController validates properly itself
         if (!$oInput->post('label')) {
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 '`label` is a required field',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );

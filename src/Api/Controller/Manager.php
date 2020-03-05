@@ -12,8 +12,7 @@
 
 namespace Nails\Cdn\Api\Controller;
 
-use Nails\Api\Controller\Base;
-use Nails\Api\Exception\ApiException;
+use Nails\Api;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
 use Nails\Factory;
@@ -23,7 +22,7 @@ use Nails\Factory;
  *
  * @package Nails\Cdn\Api\Controller
  */
-class Manager extends Base
+class Manager extends Api\Controller\Base
 {
     /**
      * Require the user be authenticated to use any endpoint
@@ -42,7 +41,7 @@ class Manager extends Base
         if (!userHasPermission('admin:cdn:manager:object:browse')) {
             /** @var HttpCodes $oHttpCodes */
             $oHttpCodes = Factory::service('HttpCodes');
-            throw new ApiException(
+            throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
             );
@@ -51,7 +50,7 @@ class Manager extends Base
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
 
-        return Factory::factory('ApiResponse', 'nails/module-api')
+        return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
             ->setData(siteUrl(
                 'admin/cdn/manager?' .
                 http_build_query([
