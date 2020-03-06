@@ -23,7 +23,7 @@ use Nails\Factory;
  *
  * @package Nails\Cdn\Api\Controller
  */
-class Bucket extends Apu\Controller\CrudController
+class Bucket extends Api\Controller\CrudController
 {
     const CONFIG_MODEL_NAME       = 'Bucket';
     const CONFIG_MODEL_PROVIDER   = Constants::MODULE_SLUG;
