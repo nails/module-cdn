@@ -270,10 +270,12 @@ EOT;
         // --------------------------------------------------------------------------
 
         if ($_field_sortable) {
+            $sFieldSortableClass   = 'js-admin-sortable';
             $sFieldSortableHandle  = '<td class="handle" width="25"><b class="fa fa-bars"></b></td>';
             $sFieldSortableColspan = 'colspan="2"';
             $sFieldSortableOrder   = '<input type="hidden" name="' . $_field_key . '[{{index}}][order]" value="{{index}}" class="js-admin-sortable__order">';
         } else {
+            $sFieldSortableClass   = '';
             $sFieldSortableHandle  = '';
             $sFieldSortableColspan = '';
             $sFieldSortableOrder   = '';
@@ -358,7 +360,7 @@ EOT;
                                 <th width="*" $sFieldSortableColspan>File</th>
                                 <th width="10"></th>
                             </thead>
-                            <tbody class="js-row-target $sFieldSortable">
+                            <tbody class="js-row-target $sFieldSortableClass">
                                 $_default_html
                             </tbody>
                             <tbody>
