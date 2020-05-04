@@ -3205,7 +3205,7 @@ class Cdn
      *
      * @return array
      */
-    public function apiUploadUptions(): array
+    public function apiUploadOptions(): array
     {
         return [];
     }

@@ -168,7 +168,7 @@ class CdnObject extends Api\Controller\Base
         $oObject = $oCdn->objectCreate(
             'upload',
             $sBucket,
-            $oCdn->apiUploadUptions()
+            $oCdn->apiUploadOptions()
         );
 
         if (!$oObject) {
