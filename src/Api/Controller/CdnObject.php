@@ -20,6 +20,7 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
+use Nails\Config;
 use Nails\Factory;
 
 /**
@@ -164,7 +165,11 @@ class CdnObject extends Api\Controller\Base
         // --------------------------------------------------------------------------
 
         //  Attempt upload
-        $oObject = $oCdn->objectCreate('upload', $sBucket);
+        $oObject = $oCdn->objectCreate(
+            'upload',
+            $sBucket,
+            $oCdn->apiUploadUptions()
+        );
 
         if (!$oObject) {
             throw new Api\Exception\ApiException(

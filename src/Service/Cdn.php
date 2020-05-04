@@ -3197,4 +3197,16 @@ class Cdn
         $oModel = Factory::model('Token', Constants::MODULE_SLUG);
         return (bool) $oModel->getByToken($sToken, ['where' => [['expires >', 'NOW()', false]]]);
     }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns an array of options for the upload API endpoint
+     *
+     * @return array
+     */
+    public function apiUploadUptions(): array
+    {
+        return [];
+    }
 }
