@@ -171,22 +171,26 @@ class UrlGenerator
         $aObjectIds = array_values($aObjectIds);
 
         //  Only fetch new items from the DB
-        $aCachedIds = arrayExtractProperty($this->aCachedObjects, 'id');
+        $aCachedIds = array_keys($this->aCachedObjects);
         $aNewIds    = array_diff($aObjectIds, $aCachedIds);
 
         if (!empty($aNewIds)) {
             /** @var CdnObject $oObjectModel */
             $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
-            foreach ($oObjectModel->getByIds($aObjectIds, [new Expand('bucket')]) as $oObject) {
+            $aObjects     = $oObjectModel->getByIds($aNewIds, [new Expand('bucket')]);
+
+            foreach ($aObjects as $oObject) {
                 $this->aCachedObjects[$oObject->id] = $oObject;
             }
         }
 
-        //  @todo (Pablo - 2020-02-25) - Fetch items from trash if needed
+        //  Fetch items from trash if needed
         $aMissing = array_diff($aNewIds, array_keys($this->aCachedObjects));
         if (!empty($aMissing)) {
             $oObjectTrashModel = Factory::model('ObjectTrash', Constants::MODULE_SLUG);
-            foreach ($oObjectTrashModel->getByIds($aObjectIds, [new Expand('bucket')]) as $oObject) {
+            $aObjects          = $oObjectTrashModel->getByIds($aMissing, [new Expand('bucket')]);
+
+            foreach ($aObjects as $oObject) {
                 $this->aCachedObjects[$oObject->id] = $oObject;
             }
         }
