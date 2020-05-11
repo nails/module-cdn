@@ -17,6 +17,15 @@ use Nails\Factory;
 class Form
 {
     /**
+     * The following constants represent the various field types available.
+     */
+    const FIELD_OBJECT_PICKER                  = 'cdn_object_picker';
+    const FIELD_OBJECT_PICKER_MULTI            = 'cdn_object_picker_multi';
+    const FIELD_OBJECT_PICKER_MULTI_WITH_LABEL = 'cdn_object_picker_multi_with_labek';
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Generates a form field containing the media manager to select a file.
      *
      * @param array  $field The config array
