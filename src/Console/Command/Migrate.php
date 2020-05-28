@@ -5,7 +5,10 @@ namespace Nails\Cdn\Console\Command;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject;
 use Nails\Cdn\Service\StorageDriver;
+use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
+use Nails\Common\Factory\Component;
 use Nails\Common\Service\Logger;
 use Nails\Console\Command\Base;
 use Nails\Factory;
@@ -15,6 +18,11 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * Class Migrate
+ *
+ * @package Nails\Cdn\Console\Command
+ */
 class Migrate extends Base
 {
     /**
@@ -76,14 +84,18 @@ class Migrate extends Base
         $oOutput->writeln('<info>--------------------</info>');
         $oOutput->writeln('');
 
+        /** @var StorageDriver $oStorageDriver */
         $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
         $sDriver        = $oInput->getArgument('driver');
         $bOverwrite     = $oInput->getOption('overwrite');
         $bRemove        = $oInput->getOption('remove-src');
-        $aAllDrivers    = $oStorageDriver->getAll();
+
+        /** @var Component[] $aAllDrivers */
+        $aAllDrivers = $oStorageDriver->getAll();
 
         //  Auto-detect the driver if not specified
         if (empty($sDriver)) {
+            /** @var Component $oEnabledDriver */
             $oEnabledDriver = $oStorageDriver->getEnabled();
             if (empty($oEnabledDriver)) {
                 throw new NailsException('No CDN drivers are enabled');
@@ -109,6 +121,7 @@ class Migrate extends Base
         // --------------------------------------------------------------------------
 
         //  Work out what's going to happen
+        /** @var CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
 
         //  How many objects are already migrated
@@ -181,7 +194,18 @@ class Migrate extends Base
 
     // --------------------------------------------------------------------------
 
-    protected function doMigrate($sDriver, $bOverwrite, $bRemove, $aDriversOld)
+    /**
+     * Performs the migration
+     *
+     * @param string      $sDriver     The driver to migrate to
+     * @param bool        $bOverwrite  Whether to overwrite target items
+     * @param bool        $bRemove     Whether to remove source items
+     * @param Component[] $aDriversOld The old drivers
+     *
+     * @throws FactoryException
+     * @throws ModelException
+     */
+    protected function doMigrate(string $sDriver, bool $bOverwrite, bool $bRemove, array $aDriversOld)
     {
         $oOutput = $this->oOutput;
 
@@ -225,7 +249,7 @@ class Migrate extends Base
         while ($iProgress < 100) {
 
             //  Get total number of objects still to migrate
-            $aData      = [
+            $aData = [
                 'where_in'     => [
                     ['driver', array_keys($aDriversOld)],
                 ],
@@ -233,6 +257,7 @@ class Migrate extends Base
                     ['id', $aFailures],
                 ],
             ];
+
             $iToMigrate = $oObjectModel->countAll($aData);
 
             if ($iToMigrate) {
