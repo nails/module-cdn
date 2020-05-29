@@ -3115,7 +3115,7 @@ class Cdn
      */
     public function isPermittedDimension($iWidth, $iHeight): bool
     {
-        if (Factory::property('allowDangerousImageTransformation', Constants::MODULE_SLUG)) {
+        if (Config::get('CDN_ALLOW_DANGEROUS_IMAGE_TRANSFORMATION')) {
             return true;
         } else {
             $sDimension = $iWidth . 'x' . $iHeight;

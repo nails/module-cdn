@@ -53,12 +53,6 @@ return [
             //  Zips
             'zip',
         ],
-
-        /**
-         * Allow images to be manipulated to any size via the URL. Not recommended.
-         * https://github.com/nails/module-cdn/blob/develop/docs/transformation/security.md
-         */
-        'allowDangerousImageTransformation' => false,
     ],
     'services'   => [
         'Cdn'           => function (Common\Service\Mime $oMimeService = null): Service\Cdn {
