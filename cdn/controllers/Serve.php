@@ -12,6 +12,7 @@
 
 use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\Base;
+use Nails\Config;
 use Nails\Factory;
 
 class Serve extends Base
@@ -39,7 +40,7 @@ class Serve extends Base
 
             //  Encrypted token/expiring URL
             $oEncrypt = Factory::service('Encrypt');
-            $token    = $oEncrypt->decode($token, APP_PRIVATE_KEY);
+            $token    = $oEncrypt->decode($token, Config::get('APP_PRIVATE_KEY'));
             $token    = explode('|', $token);
 
             if (count($token) == 5) {
@@ -47,9 +48,9 @@ class Serve extends Base
                 $this->badToken = false;
 
                 //  Seems to be ok, but verify the different parts
-                list($bucket, $object, $expires, $time, $hash) = $token;
+                [$bucket, $object, $expires, $time, $hash] = $token;
 
-                if (md5($time . $bucket . $object . $expires . APP_PRIVATE_KEY) == $hash) {
+                if (md5($time . $bucket . $object . $expires . Config::get('APP_PRIVATE_KEY')) == $hash) {
 
                     //  Hash validates, URL expired?
                     if (time() <= ($time + $expires)) {
