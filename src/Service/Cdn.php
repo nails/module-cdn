@@ -147,7 +147,46 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $this->aDefaultAllowedTypes = Factory::property('bucketDefaultAllowedTypes', Constants::MODULE_SLUG);
+        $this->aDefaultAllowedTypes = Config::get('CDN_BUCKET_DEFAULT_ALLOWED_TYPES', [
+            //  Images
+            'png',
+            'jpg',
+            'gif',
+            //  Documents & Text
+            'pdf',
+            'doc',
+            'docx',
+            'ppt',
+            'pptx',
+            'xls',
+            'xlsx',
+            'rtf',
+            'txt',
+            'csv',
+            'xml',
+            'json',
+            'js',
+            'css',
+            //  Video
+            'mp4',
+            'mov',
+            'm4v',
+            'mpg',
+            'mpeg',
+            'avi',
+            'ogv',
+            //  Audio
+            'mp3',
+            'wav',
+            'aiff',
+            'ogg',
+            'm4a',
+            'wma',
+            'aac',
+            'oga',
+            //  Zips
+            'zip',
+        ]);
 
         // --------------------------------------------------------------------------
 

@@ -7,53 +7,6 @@ use Nails\Cdn\Model;
 use Nails\Factory;
 
 return [
-    'properties' => [
-
-        /**
-         * Define the default array of allowed types/extensions
-         * This list should be restrictive enough so that malicious users can't do too much damage.
-         */
-        'bucketDefaultAllowedTypes'         => [
-            //  Images
-            'png',
-            'jpg',
-            'gif',
-            //  Documents & Text
-            'pdf',
-            'doc',
-            'docx',
-            'ppt',
-            'pptx',
-            'xls',
-            'xlsx',
-            'rtf',
-            'txt',
-            'csv',
-            'xml',
-            'json',
-            'js',
-            'css',
-            //  Video
-            'mp4',
-            'mov',
-            'm4v',
-            'mpg',
-            'mpeg',
-            'avi',
-            'ogv',
-            //  Audio
-            'mp3',
-            'wav',
-            'aiff',
-            'ogg',
-            'm4a',
-            'wma',
-            'aac',
-            'oga',
-            //  Zips
-            'zip',
-        ],
-    ],
     'services'   => [
         'Cdn'           => function (Common\Service\Mime $oMimeService = null): Service\Cdn {
 
