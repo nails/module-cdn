@@ -13,6 +13,7 @@ use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject\Trash;
 use Nails\Cdn\Resource\CdnObject;
 use Nails\Cdn\Service\Cdn;
+use Nails\Config;
 use Nails\Console\Command\Base;
 use Nails\Factory;
 use Symfony\Component\Console\Input\InputInterface;
@@ -26,13 +27,35 @@ use Symfony\Component\Console\Output\OutputInterface;
 class EmptyTrash extends Base
 {
     /**
+     * The number of days to keep trashed objects
+     *
+     * @var int
+     */
+    protected $iTrashRetention;
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * EmptyTrash constructor.
+     *
+     * @param string|null $name
+     */
+    public function __construct(string $name = null)
+    {
+        $this->iTrashRetention = (int) Config::get('CDN_TRASH_RETENTION', 180);
+        parent::__construct($name);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Configure the cdn:trash:empty command
      */
     protected function configure()
     {
         $this
             ->setName('cdn:trash:empty')
-            ->setDescription('Deletes items which have been in the trash for ' . Factory::property('trashRetention', Constants::MODULE_SLUG) . ' days');
+            ->setDescription('Deletes items which have been in the trash for ' . $this->iTrashRetention . ' days');
     }
 
     // --------------------------------------------------------------------------
@@ -50,7 +73,7 @@ class EmptyTrash extends Base
         parent::execute($oInput, $oOutput);
 
         $this->banner('CDN: Trash: Empty');
-        $oOutput->writeln('Deleting trashed items older than <comment>' . Factory::property('trashRetention', Constants::MODULE_SLUG) . '</comment> days');
+        $oOutput->writeln('Deleting trashed items older than <comment>' . $this->iTrashRetention . '</comment> days');
         $oOutput->writeln('');
 
         /** @var Cdn $oCdn */
@@ -61,7 +84,7 @@ class EmptyTrash extends Base
 
         /** @var \DateTime $oNow */
         $oNow = Factory::factory('DateTime');
-        $oNow->sub(new \DateInterval('P' . Factory::property('trashRetention', Constants::MODULE_SLUG) . 'D'));
+        $oNow->sub(new \DateInterval('P' . $this->iTrashRetention . 'D'));
 
         $aTrashedItems = $oModel->getAll([
             'where' => [
