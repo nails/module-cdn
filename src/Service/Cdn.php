@@ -2401,7 +2401,7 @@ class Cdn
 
         $_ids      = implode('-', $_ids);
         $_ids_hash = implode('-', $_ids_hash);
-        $_hash     = md5(APP_PRIVATE_KEY . $_ids . $_ids_hash . $filename);
+        $_hash     = md5(Config::get('PRIVATE_KEY') . $_ids . $_ids_hash . $filename);
 
         return $this->callDriver('urlServeZipped', [$_ids, $_hash, $filename]);
     }
@@ -2434,7 +2434,7 @@ class Cdn
         $_ids      = implode('-', $_ids);
         $_ids_hash = implode('-', $_ids_hash);
 
-        return md5(APP_PRIVATE_KEY . $_ids . $_ids_hash . $filename) === $hash ? $_objects : false;
+        return md5(Config::get('PRIVATE_KEY') . $_ids . $_ids_hash . $filename) === $hash ? $_objects : false;
     }
 
     // --------------------------------------------------------------------------

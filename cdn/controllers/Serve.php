@@ -40,7 +40,7 @@ class Serve extends Base
 
             //  Encrypted token/expiring URL
             $oEncrypt = Factory::service('Encrypt');
-            $token    = $oEncrypt->decode($token, Config::get('APP_PRIVATE_KEY'));
+            $token    = $oEncrypt->decode($token, Config::get('PRIVATE_KEY'));
             $token    = explode('|', $token);
 
             if (count($token) == 5) {
@@ -50,7 +50,7 @@ class Serve extends Base
                 //  Seems to be ok, but verify the different parts
                 [$bucket, $object, $expires, $time, $hash] = $token;
 
-                if (md5($time . $bucket . $object . $expires . Config::get('APP_PRIVATE_KEY')) == $hash) {
+                if (md5($time . $bucket . $object . $expires . Config::get('PRIVATE_KEY')) == $hash) {
 
                     //  Hash validates, URL expired?
                     if (time() <= ($time + $expires)) {
