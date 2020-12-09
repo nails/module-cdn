@@ -214,6 +214,7 @@ class Serve extends Base
 
             //  If the object is known about, add some extra headers
             if ($oObject) {
+                header('Content-Disposition: inline; filename="' . $oObject->file->name->human . '"', true);
                 header('Content-Length: ' . $oObject->file->size->bytes, true);
             }
         }
