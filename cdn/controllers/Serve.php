@@ -15,6 +15,9 @@ use Nails\Cdn\Controller\Base;
 use Nails\Config;
 use Nails\Factory;
 
+/**
+ * Class Serve
+ */
 class Serve extends Base
 {
     private $bucket;
@@ -33,22 +36,24 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Work out some variables
+        /** @var \Nails\Common\Service\Input $oInput */
         $oInput = Factory::service('Input');
-        $token  = $oInput->get('token');
+        $sToken = $oInput->get('token');
 
-        if ($token) {
+        if ($sToken) {
 
             //  Encrypted token/expiring URL
+            /** @var \Nails\Common\Service\Encrypt $oEncrypt */
             $oEncrypt = Factory::service('Encrypt');
-            $token    = $oEncrypt->decode($token, Config::get('PRIVATE_KEY'));
-            $token    = explode('|', $token);
+            $sToken   = $oEncrypt->decode($sToken, Config::get('PRIVATE_KEY'));
+            $aToken   = explode('|', $sToken);
 
-            if (count($token) == 5) {
+            if (count($aToken) == 5) {
 
                 $this->badToken = false;
 
                 //  Seems to be ok, but verify the different parts
-                [$bucket, $object, $expires, $time, $hash] = $token;
+                [$bucket, $object, $expires, $time, $hash] = $aToken;
 
                 if (md5($time . $bucket . $object . $expires . Config::get('PRIVATE_KEY')) == $hash) {
 
@@ -73,6 +78,7 @@ class Serve extends Base
 
         } else {
 
+            /** @var \Nails\Common\Service\Uri $oUri */
             $oUri           = Factory::service('Uri');
             $this->badToken = false;
             $this->bucket   = $oUri->segment(3);
@@ -89,8 +95,11 @@ class Serve extends Base
      */
     public function index()
     {
-        $oCdn    = Factory::service('Cdn', Constants::MODULE_SLUG);
-        $oInput  = Factory::service('Input');
+        /** @var \Nails\Cdn\Service\Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+        /** @var \Nails\Common\Service\Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var \Nails\Common\Service\Logger $oLogger */
         $oLogger = Factory::service('Logger');
 
         //  Check if there was a bad token
@@ -104,9 +113,9 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Look up the object in the DB
-        $object = $oCdn->getObject($this->object, $this->bucket);
+        $oObject = $oCdn->getObject($this->object, $this->bucket);
 
-        if (!$object) {
+        if (!$oObject) {
 
             /**
              * If trashed=1 GET param is set and user is a logged in admin with
@@ -115,9 +124,9 @@ class Serve extends Base
 
             if ($oInput->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
 
-                $object = $oCdn->getObjectFromTrash($this->object, $this->bucket);
+                $oObject = $oCdn->getObjectFromTrash($this->object, $this->bucket);
 
-                if (!$object) {
+                if (!$oObject) {
                     //  Cool, guess it really doesn't exist
                     $oLogger->line('CDN: Serve: Object not defined');
                     $this->serveBadSrc([
@@ -141,11 +150,11 @@ class Serve extends Base
          */
 
         if ($this->serveNotModified($this->bucket . $this->object)) {
-            if ($object) {
+            if ($oObject) {
                 if ($oInput->get('dl')) {
-                    $oCdn->objectIncrementCount('DOWNLOAD', $object->id);
+                    $oCdn->objectIncrementCount('DOWNLOAD', $oObject->id);
                 } else {
-                    $oCdn->objectIncrementCount('SERVE', $object->id);
+                    $oCdn->objectIncrementCount('SERVE', $oObject->id);
                 }
             }
 
@@ -155,16 +164,16 @@ class Serve extends Base
         // --------------------------------------------------------------------------
 
         //  Fetch source
-        $usefile = $oCdn->objectLocalPath($object->id);
+        $sLocalPath = $oCdn->objectLocalPath($oObject->id);
 
-        if (!$usefile) {
+        if (!$sLocalPath) {
 
             $oLogger->line('CDN: Serve: File does not exist');
             $oLogger->line('CDN: Serve: ' . $oCdn->lastError());
 
             if (isSuperuser()) {
                 $this->serveBadSrc([
-                    'error' => 'File not found: ' . $usefile,
+                    'error' => 'File not found: ' . $sLocalPath,
                 ]);
             } else {
                 $this->serveBadSrc([
@@ -186,29 +195,26 @@ class Serve extends Base
             header('Pragma: public', true);
 
             //  If the object is known about, add some extra headers
-            if ($object) {
-
-                header('Content-Disposition: attachment; filename="' . $object->file->name->human . '"', true);
-                header('Content-Length: ' . $object->file->size->bytes, true);
-
+            if ($oObject) {
+                header('Content-Disposition: attachment; filename="' . $oObject->file->name->human . '"', true);
+                header('Content-Length: ' . $oObject->file->size->bytes, true);
             } else {
-
                 header('Content-Disposition: attachment; filename="' . $this->object . '"', true);
             }
 
         } else {
 
             //  Determine headers to send
-            header('Content-Type: ' . $object->file->mime, true);
+            header('Content-Type: ' . $oObject->file->mime, true);
 
-            $stats = stat($usefile);
-            $this->setCacheHeaders($stats[9], $this->bucket . $this->object, false);
+            $aStats = stat($sLocalPath);
+            $this->setCacheHeaders($aStats[9], $this->bucket . $this->object, false);
 
             // --------------------------------------------------------------------------
 
             //  If the object is known about, add some extra headers
-            if ($object) {
-                header('Content-Length: ' . $object->file->size->bytes, true);
+            if ($oObject) {
+                header('Content-Length: ' . $oObject->file->size->bytes, true);
             }
         }
 
@@ -225,17 +231,17 @@ class Serve extends Base
         } else {
 
             Factory::helper('file');
-            readFileChunked($usefile);
+            readFileChunked($sLocalPath);
         }
 
         // --------------------------------------------------------------------------
 
         //  Bump the counter
-        if ($object) {
+        if ($oObject) {
             if ($oInput->get('dl')) {
-                $oCdn->objectIncrementCount('DOWNLOAD', $object->id);
+                $oCdn->objectIncrementCount('DOWNLOAD', $oObject->id);
             } else {
-                $oCdn->objectIncrementCount('SERVE', $object->id);
+                $oCdn->objectIncrementCount('SERVE', $oObject->id);
             }
         }
 
@@ -261,8 +267,9 @@ class Serve extends Base
      */
     protected function serveBadSrc(array $params)
     {
-        $error = $params['error'];
+        $sError = $params['error'];
 
+        /** @var \Nails\Common\Service\Input $oInput */
         $oInput = Factory::service('Input');
         header('Cache-Control: no-cache, must-revalidate', true);
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
@@ -271,16 +278,16 @@ class Serve extends Base
 
         // --------------------------------------------------------------------------
 
-        $out = [
+        $aOut = [
             'status'  => 400,
             'message' => 'Invalid Request',
         ];
 
-        if (!empty($error)) {
-            $out['error'] = $error;
+        if (!empty($sError)) {
+            $aOut['error'] = $sError;
         }
 
-        echo json_encode($out);
+        echo json_encode($aOut);
 
         // --------------------------------------------------------------------------
 
