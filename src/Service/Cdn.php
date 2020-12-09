@@ -795,6 +795,7 @@ class Cdn
                     /** @var Get $oHttpClient */
                     $oHttpClient = Factory::factory('HttpRequestGet');
                     $aUrl        = parse_url($object);
+
                     $oHttpClient
                         ->baseUri(
                             getFromArray('scheme', $aUrl, 'http') . '://' .
@@ -804,9 +805,17 @@ class Cdn
 
                     $oResponse = $oHttpClient->execute();
 
-                    if (!isset($aOptions['Content-Type'])) {
+                    if (empty($aOptions['Content-Type'])) {
                         $aContentType             = $oResponse->getHeader('Content-Type');
                         $aOptions['Content-Type'] = reset($aContentType);
+                    }
+
+                    if (empty($aOptions['filename_display'])) {
+                        $aContentDisposition = $oResponse->getHeader('Content-Disposition');
+                        preg_match('/filename="(.*?)"/', reset($aContentDisposition), $aMatches);
+                        if (!empty($aMatches[1])) {
+                            $aOptions['filename_display'] = $aMatches[1];
+                        }
                     }
 
                     $object    = $oResponse->getBody(false);
