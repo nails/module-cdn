@@ -13,6 +13,7 @@ use Nails\Factory;
  * Class Picture
  *
  * @package Nails\Cdn\Helper
+ * @link    https://docs.nailsapp.co.uk/modules/cdn/helpers/picture
  */
 class Picture
 {

@@ -8,6 +8,7 @@ use Nails\Cdn\Service\Cdn;
  * Class Source
  *
  * @package Nails\Cdn\Helper\Picture
+ * @link    https://docs.nailsapp.co.uk/modules/cdn/helpers/picture
  */
 class Source
 {
