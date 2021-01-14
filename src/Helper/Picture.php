@@ -85,7 +85,7 @@ class Picture
      */
     public function source(int $iWidth, int $iHeight, ?int $iBreakpoint, float $iDensity = null): self
     {
-        $this->aSources = new Source(
+        $this->aSources[] = new Source(
             $this->oCdn,
             $this->iCdnObjectId,
             $iWidth,
