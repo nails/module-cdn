@@ -29,6 +29,15 @@ class CdnObject extends Base
     // --------------------------------------------------------------------------
 
     /**
+     * The name of the "label" column
+     *
+     * @var string
+     */
+    protected $tableLabelColumn = 'filename_display';
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Object constructor.
      */
     public function __construct()
@@ -37,7 +46,6 @@ class CdnObject extends Base
         $this->table             = Config::get('NAILS_DB_PREFIX') . 'cdn_object';
         $this->defaultSortColumn = 'modified';
         $this->defaultSortOrder  = 'desc';
-        $this->tableLabelColumn  = 'filename_display';
         $this->searchableFields  = [
             'id',
             'filename',
