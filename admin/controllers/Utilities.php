@@ -30,7 +30,7 @@ class Utilities extends BaseAdmin
      */
     public static function announce()
     {
-        $oNavGroup = Factory::factory('Nav', 'nails/module-admin');
+        $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
         $oNavGroup->setLabel('Utilities');
 
         if (userHasPermission('admin:cdn:utilities:findOrphan')) {

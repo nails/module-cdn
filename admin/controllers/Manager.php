@@ -31,7 +31,7 @@ class Manager extends BaseAdmin
     public static function announce()
     {
         if (userHasPermission('admin:cdn:manager:object:browse')) {
-            $oNavGroup = Factory::factory('Nav', 'nails/module-admin');
+            $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
             $oNavGroup
                 ->setLabel('Media')
                 ->setIcon('fa-images')
