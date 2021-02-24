@@ -23,8 +23,11 @@ use Nails\Config;
  */
 class Bucket extends Base
 {
-    const RESOURCE_NAME     = 'Bucket';
-    const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
+    const TABLE               = NAILS_DB_PREFIX . 'cdn_bucket';
+    const RESOURCE_NAME       = 'Bucket';
+    const RESOURCE_PROVIDER   = Constants::MODULE_SLUG;
+    const AUTO_SET_SLUG       = true;
+    const DEFAULT_SORT_COLUMN = 'label';
 
     // --------------------------------------------------------------------------
 
@@ -34,9 +37,6 @@ class Bucket extends Base
     public function __construct()
     {
         parent::__construct();
-        $this->table             = Config::get('NAILS_DB_PREFIX') . 'cdn_bucket';
-        $this->tableAutoSetSlugs = true;
-        $this->defaultSortColumn = 'label';
         $this
             ->addExpandableField([
                 'trigger'   => 'objects',

@@ -901,11 +901,6 @@ class Cdn
                 /**
                  * Specify the file specifics
                  * ==========================
-                 *
-                 * Content-Type; using finfo because the $_FILES variable can't be trusted
-                 * (uploads from Uploadify always report as application/octet-stream;
-                 * stupid flash. Unless, of course, the Content-Type has been set explicitly
-                 * by the developer
                  */
 
                 if (isset($aOptions['Content-Type'])) {

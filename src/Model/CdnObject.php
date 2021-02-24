@@ -23,8 +23,11 @@ use Nails\Config;
  */
 class CdnObject extends Base
 {
-    const RESOURCE_NAME     = 'Object';
-    const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
+    const TABLE               = NAILS_DB_PREFIX . 'cdn_object';
+    const RESOURCE_NAME       = 'Object';
+    const RESOURCE_PROVIDER   = Constants::MODULE_SLUG;
+    const DEFAULT_SORT_COLUMN = 'modified';
+    const DEFAULT_SORT_ORDER  = self::SORT_DESC;
 
     // --------------------------------------------------------------------------
 
@@ -43,10 +46,7 @@ class CdnObject extends Base
     public function __construct()
     {
         parent::__construct();
-        $this->table             = Config::get('NAILS_DB_PREFIX') . 'cdn_object';
-        $this->defaultSortColumn = 'modified';
-        $this->defaultSortOrder  = 'desc';
-        $this->searchableFields  = [
+        $this->searchableFields = [
             'id',
             'filename',
             'filename_display',

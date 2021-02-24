@@ -22,17 +22,7 @@ use Nails\Config;
  */
 class Trash extends CdnObject
 {
+    const TABLE             = NAILS_DB_PREFIX . 'cdn_object_trash';
     const RESOURCE_NAME     = 'ObjectTrash';
     const RESOURCE_PROVIDER = Constants::MODULE_SLUG;
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Trash constructor.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-        $this->table = Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash';
-    }
 }
