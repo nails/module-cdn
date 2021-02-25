@@ -46,9 +46,9 @@ class CdnObject extends Api\Controller\Base
      * @param string $sHttpMethod The HTTP Method protocol being used
      * @param string $sMethod     The controller method being executed
      *
-     * @return boolean/array       Boolean true or false. Can also return an array
-     *                             with two elements (status and error) which
-     *                             will customise the response code and message.
+     * @return bool|array       Boolean true or false. Can also return an array
+     *                          with two elements (status and error) which
+     *                          will customise the response code and message.
      */
     public static function isAuthenticated($sHttpMethod = '', $sMethod = ''): bool
     {
@@ -237,11 +237,9 @@ class CdnObject extends Api\Controller\Base
             );
         }
 
-        if ($bIsTrash) {
-            $bDelete = $oCdn->purgeTrash([$iObjectId]);
-        } else {
-            $bDelete = $oCdn->objectDelete($iObjectId);
-        }
+        $bDelete = $bIsTrash
+            ? $oCdn->purgeTrash([$iObjectId])
+            : $oCdn->objectDelete($iObjectId);
 
         if (!$bDelete) {
             throw new Api\Exception\ApiException(
