@@ -1289,7 +1289,7 @@ class Cdn
             }
 
             //  Start transaction
-            $oDb->trans_begin();
+            $oDb->transaction()->start();
 
             //  Create trash object
             if (!$oDb->insert(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash')) {
@@ -1302,7 +1302,7 @@ class Cdn
                 throw new CdnException('Failed to remove original object.');
             }
 
-            $oDb->trans_commit();
+            $oDb->transaction()->commit();
 
             //  Clear caches
             $this->unsetCacheObject($object);
@@ -1311,7 +1311,7 @@ class Cdn
 
         } catch (\Exception $e) {
 
-            $oDb->trans_rollback();
+            $oDb->transaction()->rollback();
             $this->setError($e->getMessage());
 
             return false;
@@ -1368,7 +1368,7 @@ class Cdn
             $oDb->set('modified', 'NOW()', false);
 
             //  Start transaction
-            $oDb->trans_begin();
+            $oDb->transaction()->start();
 
             //  Restore object
             if (!$oDb->insert(Config::get('NAILS_DB_PREFIX') . 'cdn_object')) {
@@ -1381,12 +1381,12 @@ class Cdn
                 throw new CdnException('Failed to remove the trash object.');
             }
 
-            $oDb->trans_commit();
+            $oDb->transaction()->commit();
 
             return true;
 
         } catch (\Exception $e) {
-            $oDb->trans_rollback();
+            $oDb->transaction()->rollback();
             $this->setError($e->getMessage());
             return false;
         }
@@ -1434,7 +1434,7 @@ class Cdn
             //  Remove the database entries
             /** @var Database $oDb */
             $oDb = Factory::service('Database');
-            $oDb->trans_begin();
+            $oDb->transaction()->start();
 
             $oDb->where('id', $oObject->id);
             $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
@@ -1442,14 +1442,14 @@ class Cdn
             $oDb->where('id', $oObject->id);
             $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash');
 
-            if ($oDb->trans_status() === false) {
+            if ($oDb->transaction()->status() === false) {
 
-                $oDb->trans_rollback();
+                $oDb->transaction()->rollback();
                 return false;
 
             } else {
 
-                $oDb->trans_commit();
+                $oDb->transaction()->commit();
                 $this->unsetCacheObject($oObject);
                 return true;
             }
