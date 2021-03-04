@@ -197,6 +197,11 @@ class UrlGenerator
 
         $aMissing = array_diff($aNewIds, array_keys($this->aCachedObjects));
         if (!empty($aMissing)) {
+
+            foreach ($aMissing as $iMissingId) {
+                $this->aCachedObjects[$iMissingId] = null;
+            }
+
             throw new CdnException(
                 sprintf(
                     'Attempted to generate URLs for objects which do not exist: %s',
@@ -207,9 +212,13 @@ class UrlGenerator
 
         foreach ($this->aGenerators as $oUrlObject) {
             if (in_array($oUrlObject->getObjectId(), $aObjectIds)) {
-                $oUrlObject->generate(
-                    $this->aCachedObjects[$oUrlObject->getObjectId()]
-                );
+
+                $oObject = $this->aCachedObjects[$oUrlObject->getObjectId()];
+                if (!empty($oObject)) {
+                    $oUrlObject->generate(
+                        $this->aCachedObjects[$oUrlObject->getObjectId()]
+                    );
+                }
             }
         }
     }
