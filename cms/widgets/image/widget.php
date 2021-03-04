@@ -16,10 +16,15 @@ use Nails\Cdn\Constants;
 use Nails\Factory;
 use Nails\Cms\Widget\WidgetBase;
 
+/**
+ * Class Image
+ *
+ * @package Nails\Cdn\Cms\Widget
+ */
 class Image extends WidgetBase
 {
     /**
-     * Construct and define the widget
+     * Image constructor.
      */
     public function __construct()
     {

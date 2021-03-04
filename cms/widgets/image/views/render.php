@@ -13,37 +13,47 @@
 if ($iImageId && $sSize) {
 
     //  Determine image URL
-    list($sWidth, $sHeight) = explode('x', $sSize);
+    [$sWidth, $sHeight] = explode('x', $sSize);
 
-    if ($sScaling == 'CROP' && $sWidth && $sHeight) {
-        $sImgUrl = cdnCrop($iImageId, $sWidth, $sHeight);
-    } elseif ($sScaling == 'SCALE' && $sWidth && $sHeight) {
-        $sImgUrl = cdnScale($iImageId, $sWidth, $sHeight);
-    } else {
-        $sImgUrl = cdnServe($iImageId);
+    try {
+
+        if ($sScaling == 'CROP' && $sWidth && $sHeight) {
+            $sImgUrl = (string) cdnCrop($iImageId, $sWidth, $sHeight);
+
+        } elseif ($sScaling == 'SCALE' && $sWidth && $sHeight) {
+            $sImgUrl = (string) cdnScale($iImageId, $sWidth, $sHeight);
+
+        } else {
+            $sImgUrl = (string) cdnServe($iImageId);
+        }
+
+        // --------------------------------------------------------------------------
+
+        //  Determine linking
+        if ($sLinking == 'CUSTOM' && $sUrl) {
+            $sLinkUrl    = $sUrl;
+            $sLinkTarget = $sTarget ? 'target="' . $sTarget . '"' : '';
+
+        } elseif ($sLinking == 'FULLSIZE') {
+            $sLinkUrl    = (string) cdnServe($iImageId);
+            $sLinkTarget = $sTarget ? 'target="' . $sTarget . '"' : '';
+
+        } else {
+            $sLinkUrl    = '';
+            $sLinkTarget = '';
+        }
+
+        // --------------------------------------------------------------------------
+
+        // Render
+        $sOut = '';
+        $sOut .= $sLinkUrl ? '<a href="' . $sLinkUrl . '" ' . $sLinkAttr . $sLinkTarget . '>' : '';
+        $sOut .= '<img src="' . $sImgUrl . '" ' . $sImgAttr . '/>';
+        $sOut .= $sLinkUrl ? '</a>' : '';
+
+        echo $sOut;
+
+    } catch (\Nails\Cdn\Exception\CdnException $e) {
+        //  Don't output anything
     }
-
-    // --------------------------------------------------------------------------
-
-    //  Determine linking
-    if ($sLinking == 'CUSTOM' && $sUrl) {
-        $sLinkUrl    = $sUrl;
-        $sLinkTarget = $sTarget ? 'target="' . $sTarget . '"' : '';
-    } elseif ($sLinking == 'FULLSIZE') {
-        $sLinkUrl    = cdnServe($iImageId);
-        $sLinkTarget = $sTarget ? 'target="' . $sTarget . '"' : '';
-    } else {
-        $sLinkUrl    = '';
-        $sLinkTarget = '';
-    }
-
-    // --------------------------------------------------------------------------
-
-    // Render
-    $sOut = '';
-    $sOut .= $sLinkUrl ? '<a href="' . $sLinkUrl . '" ' . $sLinkAttr . $sLinkTarget . '>' : '';
-    $sOut .= '<img src="' . $sImgUrl . '" ' . $sImgAttr . '/>';
-    $sOut .= $sLinkUrl ? '</a>' : '';
-
-    echo $sOut;
 }
