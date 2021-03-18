@@ -818,7 +818,7 @@ class Cdn
                                 $aOptions['filename_display'] = $aMatches[1];
                             }
                         } else {
-                            $aOptions['filename_display'] = basename($aUrl['patddh'] ?? 'Untitled');
+                            $aOptions['filename_display'] = basename($aUrl['path'] ?? 'Untitled');
                         }
                     }
 
