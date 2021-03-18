@@ -812,9 +812,13 @@ class Cdn
 
                     if (empty($aOptions['filename_display'])) {
                         $aContentDisposition = $oResponse->getHeader('Content-Disposition');
-                        preg_match('/filename="(.*?)"/', reset($aContentDisposition), $aMatches);
-                        if (!empty($aMatches[1])) {
-                            $aOptions['filename_display'] = $aMatches[1];
+                        if (!empty($aContentDisposition)) {
+                            preg_match('/filename="(.*?)"/', reset($aContentDisposition), $aMatches);
+                            if (!empty($aMatches[1])) {
+                                $aOptions['filename_display'] = $aMatches[1];
+                            }
+                        } else {
+                            $aOptions['filename_display'] = basename($aUrl['patddh'] ?? 'Untitled');
                         }
                     }
 
