@@ -14,6 +14,7 @@ namespace Nails\Cdn\Controller;
 
 use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\PermittedDimensionException;
+use Nails\Common\Exception\NailsException;
 use Nails\Environment;
 use Nails\Factory;
 
