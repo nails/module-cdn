@@ -26,7 +26,7 @@ use Nails\Cdn\Resource\CdnObject\Import;
 
     ?>
     <p>
-        The maximum uplaod size accepted by this server is <?=$sMaxUploadSize?>. To circumvent this limit,
+        The maximum upload size accepted by this server is <?=$sMaxUploadSize?>. To circumvent this limit,
         you may import large files via a publicly accessible URL. Once imported, the file may be selected
         in the <?=anchor('admin/cdn/manager/index', 'Media Manager')?>.
     </p>
