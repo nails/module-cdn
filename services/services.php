@@ -7,7 +7,7 @@ use Nails\Cdn\Model;
 use Nails\Factory;
 
 return [
-    'services'   => [
+    'services'  => [
         'Cdn'           => function (Common\Service\Mime $oMimeService = null): Service\Cdn {
 
             $oMimeService = $oMimeService ?? Factory::service('Mime');
@@ -33,29 +33,36 @@ return [
             }
         },
     ],
-    'models'     => [
-        'Bucket'      => function () {
+    'models'    => [
+        'Bucket'       => function (): Model\Bucket {
             if (class_exists('\App\Cdn\Model\Bucket')) {
                 return new \App\Cdn\Model\Bucket();
             } else {
                 return new Model\Bucket();
             }
         },
-        'Object'      => function () {
+        'Object'       => function (): Model\CdnObject {
             if (class_exists('\App\Cdn\Model\CdnObject')) {
                 return new \App\Cdn\Model\CdnObject();
             } else {
                 return new Model\CdnObject();
             }
         },
-        'ObjectTrash' => function () {
+        'ObjectImport' => function (): Model\CdnObject\Import {
+            if (class_exists('\App\Cdn\Model\CdnObject\Import')) {
+                return new \App\Cdn\Model\CdnObject\Import();
+            } else {
+                return new Model\CdnObject\Import();
+            }
+        },
+        'ObjectTrash'  => function (): Model\CdnObject\Trash {
             if (class_exists('\App\Cdn\Model\CdnObject\Trash')) {
                 return new \App\Cdn\Model\CdnObject\Trash();
             } else {
                 return new Model\CdnObject\Trash();
             }
         },
-        'Token'       => function () {
+        'Token'        => function (): Model\Token {
             if (class_exists('\App\Cdn\Model\Token')) {
                 return new \App\Cdn\Model\Token();
             } else {
@@ -63,7 +70,7 @@ return [
             }
         },
     ],
-    'resources'  => [
+    'resources' => [
         'Bucket'            => function ($oObj): Resource\Bucket {
             if (class_exists('\App\Cdn\Resource\Bucket')) {
                 return new \App\Cdn\Resource\Bucket($oObj);
@@ -111,6 +118,13 @@ return [
                 return new \App\Cdn\Resource\CdnObject\Url($oObj);
             } else {
                 return new Resource\CdnObject\Url($oObj);
+            }
+        },
+        'ObjectImport'      => function ($oObj): Resource\CdnObject\Import {
+            if (class_exists('\App\Cdn\Resource\CdnObject\Import')) {
+                return new \App\Cdn\Resource\CdnObject\Import($oObj);
+            } else {
+                return new Resource\CdnObject\Import($oObj);
             }
         },
         'ObjectTrash'       => function ($oObj): Resource\CdnObject {

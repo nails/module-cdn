@@ -78,11 +78,7 @@ class Migrate extends Base
     {
         parent::execute($oInput, $oOutput);
 
-        $oOutput->writeln('');
-        $oOutput->writeln('<info>--------------------</info>');
-        $oOutput->writeln('<info>CDN Driver Migration</info>');
-        $oOutput->writeln('<info>--------------------</info>');
-        $oOutput->writeln('');
+        $this->banner('CDN: Driver Migration');
 
         /** @var StorageDriver $oStorageDriver */
         $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
@@ -146,7 +142,6 @@ class Migrate extends Base
         ]);
 
         //  Summarise for the user and seek confirmation
-        $oOutput->writeln('');
         $oOutput->writeln('Migrate CDN objects to <info>' . $sDriver . '</info>');
         $oOutput->writeln('');
         if ($iToMigrate) {
