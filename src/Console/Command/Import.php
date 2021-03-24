@@ -23,28 +23,6 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class Import extends Base
 {
-    /** @var Model\CdnObject\Import */
-    private $oModel;
-
-    /** @var Cdn */
-    private $oCdn;
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Import constructor.
-     *
-     * @throws FactoryException
-     */
-    public function __construct()
-    {
-        parent::__construct();
-        $this->oModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
-        $this->oCdn   = Factory::service('Cdn', Constants::MODULE_SLUG);
-    }
-
-    // --------------------------------------------------------------------------
-
     /**
      * Configures the command
      *
@@ -78,6 +56,13 @@ class Import extends Base
 
         // --------------------------------------------------------------------------
 
+        /** @var Model\CdnObject\Import $oModel */
+        $oModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+
+        // --------------------------------------------------------------------------
+
         while ($oItem = $this->fetchPendingItem()) {
 
             $oOutput->writeln('Picked up item #' . $oItem->id);
@@ -88,19 +73,19 @@ class Import extends Base
 
             try {
 
-                if (!$this->oCdn->objectCreate($oItem->url, $oItem->bucket->slug)) {
+                if (!$oCdn->objectCreate($oItem->url, $oItem->bucket->slug)) {
                     throw new CdnException(sprintf(
                         'Failed to import. %s',
-                        $this->oCdn->lastError()
+                        $oCdn->lastError()
                     ));
                 }
 
-                $this->setStatus($oItem, $this->oModel::STATUS_COMPLETE);
+                $this->setStatus($oItem, $oModel::STATUS_COMPLETE);
                 $oOutput->writeln('<info>done!</info>');
 
             } catch (\Exception $e) {
                 $oOutput->writeln('<error>ERROR: ' . $e->getMessage() . '</error>');
-                $this->setStatus($oItem, $this->oModel::STATUS_ERROR, $e->getMessage());
+                $this->setStatus($oItem, $oModel::STATUS_ERROR, $e->getMessage());
             }
         }
 
@@ -129,15 +114,17 @@ class Import extends Base
      */
     protected function fetchPendingItem(): ?Resource\CdnObject\Import
     {
-        $aItems = $this->oModel
+        /** @var Model\CdnObject\Import $oModel */
+        $oModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
+        $aItems = $oModel
             ->skipCache()
             ->getAll([
                 new Expand('bucket'),
                 'where' => [
-                    ['status', $this->oModel::STATUS_PENDING],
+                    ['status', $oModel::STATUS_PENDING],
                 ],
                 'sort'  => [
-                    ['created', $this->oModel::SORT_ASC],
+                    ['created', $oModel::SORT_ASC],
                 ],
                 'limit' => 1,
             ]);
@@ -145,7 +132,7 @@ class Import extends Base
         $oItem = current($aItems) ?: null;
 
         if (!empty($oItem)) {
-            $this->setStatus($oItem, $this->oModel::STATUS_IN_PROGRESS);
+            $this->setStatus($oItem, $oModel::STATUS_IN_PROGRESS);
         }
 
         return $oItem;
@@ -164,9 +151,11 @@ class Import extends Base
      */
     private function setStatus(Resource\CdnObject\Import $oItem, string $sStatus, string $sError = null): void
     {
-        if (!$this->oModel->update($oItem->id, ['status' => $sStatus, 'error' => $sError])) {
+        /** @var Model\CdnObject\Import $oModel */
+        $oModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
+        if (!$oModel->update($oItem->id, ['status' => $sStatus, 'error' => $sError])) {
             throw new CdnException(
-                'Failed to mark item as `' . $sStatus . '`. ' . $this->oModel->lastError()
+                'Failed to mark item as `' . $sStatus . '`. ' . $oModel->lastError()
             );
         }
     }
