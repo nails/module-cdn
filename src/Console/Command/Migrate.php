@@ -163,7 +163,7 @@ class Migrate extends Base
 
             $oOutput->writeln('');
             if ($this->confirm('Continue?', true)) {
-                $oOutput->writeln('<comment>Migrating...</comment>');
+                $oOutput->writeln('<comment>Migrating</comment>...');
                 $this->doMigrate($sDriver, $bOverwrite, $bRemove, $aDriversOld);
             } else {
                 $oOutput->writeln('');
@@ -178,7 +178,7 @@ class Migrate extends Base
 
         //  Cleaning up
         $oOutput->writeln('');
-        $oOutput->writeln('<comment>Cleaning up...</comment>');
+        $oOutput->writeln('<comment>Cleaning up</comment>...');
 
         //  And we're done!
         $oOutput->writeln('');

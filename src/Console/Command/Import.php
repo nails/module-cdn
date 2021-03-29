@@ -81,7 +81,7 @@ class Import extends Base
                 }
 
                 $this->setStatus($oItem, $oModel::STATUS_COMPLETE);
-                $oOutput->writeln('<info>done!</info>');
+                $oOutput->writeln('<info>done</info>');
 
             } catch (\Exception $e) {
                 $oOutput->writeln('<error>ERROR: ' . $e->getMessage() . '</error>');
@@ -93,7 +93,7 @@ class Import extends Base
 
         //  Cleaning up
         $oOutput->writeln('');
-        $oOutput->writeln('<comment>Cleaning up...</comment>');
+        $oOutput->writeln('<comment>Cleaning up</comment>...');
 
         //  And we're done!
         $oOutput->writeln('');
