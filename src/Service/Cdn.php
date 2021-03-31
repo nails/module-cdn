@@ -83,6 +83,20 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
+     * Maps variants of an extension to a definitive one, for consistency. Can be
+     * overloaded by the developer to satisfy any preferences with regards file
+     * extensions
+     *
+     * @var string[]
+     */
+    const EXTENSION_MAP = [
+        'jpeg' => 'jpg',
+        'mpga' => 'mp3',
+    ];
+
+    // --------------------------------------------------------------------------
+
+    /**
      * All available CDN drivers
      *
      * @var array
@@ -3006,13 +3020,7 @@ class Cdn
         $sExt = trim(strtolower($sExt));
         $sExt = preg_replace('/^\./', '', $sExt);
 
-        switch ($sExt) {
-            case 'jpeg':
-                $sExt = 'jpg';
-                break;
-        }
-
-        return $sExt;
+        return static::EXTENSION_MAP[$sExt] ?? $sExt;
     }
 
     // --------------------------------------------------------------------------
