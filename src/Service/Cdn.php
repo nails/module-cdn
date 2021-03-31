@@ -1231,7 +1231,7 @@ class Cdn
             throw new CdnException('Failed to open cache file for writing');
         }
 
-        if (fwrite($data) === false) {
+        if (fwrite($fh, $data) === false) {
             throw new CdnException('Failed to write data to cache file');
         }
 
