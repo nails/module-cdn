@@ -25,6 +25,7 @@ use Nails\Cdn\Resource;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
+use Nails\Common\Factory\HttpResponse;
 use Nails\Common\Helper\Directory;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\FileCache;
@@ -117,11 +118,18 @@ class Cdn
     protected $oMimeService;
 
     /**
-     * The cache directory
+     * The public cache directory
      *
      * @var string
      */
-    protected $sCacheDirectory;
+    protected $sCacheDirectoryPublic;
+
+    /**
+     * The private cache directory
+     *
+     * @var string
+     */
+    protected $sCacheDirectoryPrivate;
 
     // --------------------------------------------------------------------------
 
@@ -142,8 +150,9 @@ class Cdn
 
         //  @todo (Pablo - 2019-05-09) - Make better use of the FileCache service
         /** @var FileCache $oFileCache */
-        $oFileCache            = Factory::service('FileCache');
-        $this->sCacheDirectory = $oFileCache->public()->getDir();
+        $oFileCache                   = Factory::service('FileCache');
+        $this->sCacheDirectoryPublic  = $oFileCache->public()->getDir();
+        $this->sCacheDirectoryPrivate = $oFileCache->getDir();
 
         // --------------------------------------------------------------------------
 
@@ -334,7 +343,7 @@ class Cdn
 
             // Create a handler for the directory
             $pattern = '#^' . $bucketSlug . '-' . substr($objectFilename, 0, strrpos($objectFilename, '.')) . '#';
-            $fh      = @opendir($this->sCacheDirectory);
+            $fh      = @opendir($this->sCacheDirectoryPublic);
 
             if ($fh !== false) {
 
@@ -345,8 +354,8 @@ class Cdn
                     if ($file != '.' && $file != '..') {
 
                         // Check with regex that the file format is what we're expecting and not something else
-                        if (preg_match($pattern, $file) && file_exists($this->sCacheDirectory . $file)) {
-                            unlink($this->sCacheDirectory . $file);
+                        if (preg_match($pattern, $file) && file_exists($this->sCacheDirectoryPublic . $file)) {
+                            unlink($this->sCacheDirectoryPublic . $file);
                         }
                     }
                 }
@@ -766,6 +775,7 @@ class Cdn
                 $aBucketData = $mBucket;
                 unset($aBucketData['slug']);
                 unset($aBucketData[0]);
+
             } else {
                 $sBucket     = $mBucket;
                 $aBucketData = [];
@@ -778,188 +788,147 @@ class Cdn
 
             // --------------------------------------------------------------------------
 
-            //  Are we uploading a URL?
-            if (!$bIsStream && preg_match('/^https?:\/\//', $object)) {
-
-                try {
-
-                    if (empty($oData->ext)) {
-                        //  Attempt to maintain the existing extension if there is one
-                        preg_match('/.*\.([a-z0-9]+)$/', $object, $aMatches);
-                        $sExt = getFromArray(1, $aMatches);
-                        if (!empty($sExt)) {
-                            $aOptions['extension'] = $sExt;
-                        }
-                    }
-
-                    /** @var Get $oHttpClient */
-                    $oHttpClient = Factory::factory('HttpRequestGet');
-                    $aUrl        = parse_url($object);
-
-                    $oHttpClient
-                        ->baseUri(
-                            getFromArray('scheme', $aUrl, 'http') . '://' .
-                            getFromArray('host', $aUrl) . '/'
-                        )
-                        ->path(getFromArray('path', $aUrl));
-
-                    $oResponse = $oHttpClient->execute();
-
-                    if (empty($aOptions['Content-Type'])) {
-                        $aContentType             = $oResponse->getHeader('Content-Type');
-                        $aOptions['Content-Type'] = reset($aContentType);
-                    }
-
-                    if (empty($aOptions['filename_display'])) {
-                        $aContentDisposition = $oResponse->getHeader('Content-Disposition');
-                        if (!empty($aContentDisposition)) {
-                            preg_match('/filename="(.*?)"/', reset($aContentDisposition), $aMatches);
-                            if (!empty($aMatches[1])) {
-                                $aOptions['filename_display'] = $aMatches[1];
-                            }
-                        } else {
-                            $aOptions['filename_display'] = basename($aUrl['path'] ?? 'Untitled');
-                        }
-                    }
-
-                    $object    = $oResponse->getBody(false);
-                    $bIsStream = true;
-
-                } catch (\Exception $e) {
-                    throw new UrlException($e->getMessage(), $e->getCode(), $e);
-                }
-            }
-
-            // --------------------------------------------------------------------------
-
-            //  Fetch the contents of the file
-            if (!$bIsStream) {
-
-                //  Check file exists in $_FILES
-                if (!isset($_FILES[$object])) {
-
-                    //  If it's not in $_FILES does that file exist on the file system?
-                    if (!is_file($object)) {
-                        //  Is it a data URI?
-                        if (!preg_match('/^data:(.*?)(;(base64))?,(.+)/', $object, $aMatches)) {
-                            throw new ObjectCreateException('You did not select a file to upload [' . $object . ']');
-                        }
-
-                        $sCacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
-                        $sMime      = getFromArray(1, $aMatches);
-                        $bEncoded   = getFromArray(3, $aMatches) === 'base64';
-                        $sData      = getFromArray(4, $aMatches);
-                        $sExt       = $this->getExtFromMime($sMime);
-
-                        if (empty($aOptions['filename_display'])) {
-                            $aOptions['filename_display'] = date('Y-m-d-H-i-s') . '.' . $sExt;
-                        }
-
-                        if (empty($aOptions['Content-Type'])) {
-                            $aOptions['Content-Type'] = $sMime;
-                        }
-
-                        $fh = fopen($this->sCacheDirectory . $sCacheFile, 'w');
-                        fwrite($fh, $bEncoded ? base64_decode($sData) : $sData);
-                        fclose($fh);
-
-                        $object = $this->sCacheDirectory . $sCacheFile;
-                    }
-
-                    $oData->file = $object;
-                    $oData->name = empty($aOptions['filename_display']) ? basename($object) : $aOptions['filename_display'];
-
-                    //  Determine the extension
-                    $oData->ext = substr(strrchr($oData->file, '.'), 1);
-                    $oData->ext = $this->sanitiseExtension($oData->ext);
-
-                } else {
-
-                    //  It's in $_FILES, check the upload was successful
-                    if ($_FILES[$object]['error'] == UPLOAD_ERR_OK) {
-
-                        //  Move the file to a tmp directory and call it the original name
-                        $sTmpPath = Directory::tempdir() . $_FILES[$object]['name'];
-                        if (!move_uploaded_file($_FILES[$object]['tmp_name'], $sTmpPath)) {
-                            throw new ObjectCreateException(
-                                'Failed to move uploaded file to temporary directory'
-                            );
-                        }
-
-                        $oData->file = $sTmpPath;
-                        $oData->name = getFromArray('filename_display', $aOptions, $_FILES[$object]['name']);
-
-                        //  Determine the supplied extension
-                        $oData->ext = substr(strrchr($_FILES[$object]['name'], '.'), 1);
-                        $oData->ext = $this->sanitiseExtension($oData->ext);
-
-                    } else {
-                        throw new ObjectCreateException(
-                            static::getUploadError($_FILES[$object]['error'])
-                        );
-                    }
-                }
-
-                // --------------------------------------------------------------------------
+            if ($bIsStream) {
 
                 /**
-                 * Specify the file specifics
-                 * ==========================
-                 */
-
-                if (isset($aOptions['Content-Type'])) {
-                    $oData->mime = $aOptions['Content-Type'];
-                } else {
-                    $oData->mime = $this->getMimeFromFile($oData->file);
-                }
-
-                // --------------------------------------------------------------------------
-
-                //  If no extension, then guess it
-                if (empty($oData->ext)) {
-                    $oData->ext = $this->getExtFromMime($oData->mime);
-                }
-
-            } else {
-
-                /**
-                 * We've been given a data stream, use that. If no Content-Type has been set
-                 * then fall over - we need to know what we're dealing with.
+                 * Upload is a data stream, i.e the raw data to upload (might be binary, might be plain text)
                  */
 
                 if (!isset($aOptions['Content-Type'])) {
                     throw new ObjectCreateException('A Content-Type must be defined for data stream uploads');
                 }
 
-                $sCacheFile = sha1(microtime() . rand(0, 999) . activeUser('id'));
-                $fh         = fopen($this->sCacheDirectory . $sCacheFile, 'w');
-                fwrite($fh, $object);
-                fclose($fh);
-
-                // --------------------------------------------------------------------------
-
-                //  File mime types
-                $oData->mime = $aOptions['Content-Type'];
-
-                // --------------------------------------------------------------------------
-
-                //  If an extension has been supplied use that, if not detect from mime type
-                if (!empty($aOptions['extension'])) {
-                    $oData->ext = $aOptions['extension'];
-                    $oData->ext = $this->sanitiseExtension($oData->ext);
-                } else {
-                    $oData->ext = $this->getExtFromMime($oData->mime);
-                }
-
-                // --------------------------------------------------------------------------
+                $sCacheFile  = $this->saveDataToCacheFile($object);
+                $oData->file = $sCacheFile;
 
                 //  Specify the file specifics
                 if (empty($aOptions['filename_display'])) {
-                    $oData->name = $sCacheFile . '.' . $oData->ext;
+                    $oData->name = basename($sCacheFile) . '.' . $oData->ext;
+
                 } else {
                     $oData->name = $aOptions['filename_display'];
                 }
-                $oData->file = $this->sCacheDirectory . $sCacheFile;
+
+            } elseif (is_string($object) && preg_match('/^https?:\/\//', $object)) {
+
+                /**
+                 * Upload is a URL, import it
+                 */
+
+                try {
+
+                    $oResponse   = $this->makeHttpRequest($object);
+                    $sCacheFile  = $this->saveHttpResponseToFile($oResponse);
+                    $oData->file = $sCacheFile;
+
+                    if (empty($aOptions['filename_display'])) {
+                        $oData->name = $this->determineFileNameFromHttpResponse($oResponse);
+                    } else {
+                        $oData->name = $aOptions['filename_display'];
+                    }
+
+                    //  Incase of large download, clear out memory
+                    $oResponse = null;
+
+                } catch (\Exception $e) {
+                    throw new UrlException($e->getMessage(), $e->getCode(), $e);
+                }
+
+            } elseif (is_string($object) && preg_match('/^data:(.*?)(;(base64))?,(.+)/', $object, $aMatches)) {
+
+                /**
+                 * Object is a data-uri
+                 */
+
+                /** @var \DateTime $oNow */
+                $oNow = Factory::factory('DateTie');
+
+                $sMime    = getFromArray(1, $aMatches);
+                $bEncoded = getFromArray(3, $aMatches) === 'base64';
+                $sData    = getFromArray(4, $aMatches);
+                $sExt     = $this->getExtFromMime($sMime);
+
+                $sCacheFile  = $this->saveDataToCacheFile($bEncoded ? base64_decode($sData) : $sData);
+                $oData->file = $sCacheFile;
+
+                if (empty($aOptions['filename_display'])) {
+                    $oData->name = $oNow->format('Y-m-d-H-i-s') . '.' . $sExt;
+                } else {
+                    $oData->name = $aOptions['filename_display'];
+                }
+
+            } elseif (is_file($object)) {
+
+                /**
+                 * Object is a file path
+                 */
+                $oData->file = $object;
+                $oData->name = empty($aOptions['filename_display'])
+                    ? basename($object)
+                    : $aOptions['filename_display'];
+
+            } elseif (isset($_FILES[$object])) {
+
+                /**
+                 * Object is an uploaded file
+                 */
+
+                //  It's in $_FILES, check the upload was successful
+                if ($_FILES[$object]['error'] !== UPLOAD_ERR_OK) {
+                    throw new ObjectCreateException(
+                        static::getUploadError($_FILES[$object]['error'])
+                    );
+                }
+
+                //  Move the file to a tmp directory and call it the original name
+                $sCacheFile = $this->getTempFile();
+                if (!move_uploaded_file($_FILES[$object]['tmp_name'], $sCacheFile)) {
+                    throw new ObjectCreateException(
+                        'Failed to move uploaded file to temporary directory'
+                    );
+                }
+
+                $oData->file = $sCacheFile;
+                $oData->name = getFromArray('filename_display', $aOptions, $_FILES[$object]['name']);
+
+            } else {
+                throw new ObjectCreateException(sprintf(
+                    'You did not select a file to upload [%s]',
+                    $object
+                ));
+            }
+
+            /**
+             * Specify the file specifics
+             * ==========================
+             */
+
+            if (!empty($aOptions['Content-Type'])) {
+                $oData->mime = $aOptions['Content-Type'];
+            } else {
+                $oData->mime = $this->getMimeFromFile($oData->file);
+            }
+
+            if (!empty($aOptions['extension'])) {
+                $oData->ext = $aOptions['extension'];
+            } else {
+                $oData->ext = $this->getExtFromMime($oData->mime);
+            }
+
+            /**
+             * If a certain filename has been specified then send that to the CDN (this
+             * will overwrite any existing file so use with caution).
+             */
+            if (!empty($aOptions['filename'])) {
+                $oData->filename = $aOptions['filename'];
+
+            } else {
+                $oData->filename = sprintf(
+                    '%s-%s.%s',
+                    time(),
+                    md5(activeUser('id') . microtime(true) . rand(0, 999)),
+                    $oData->ext
+                );
             }
 
             // --------------------------------------------------------------------------
@@ -985,9 +954,11 @@ class Cdn
 
             //  Valid extension for mime type?
             if (!$this->validExtForMime($oData->ext, $oData->mime)) {
-                throw new ObjectCreateException(
-                    sprintf('%s is not a valid extension for this file type (%s)', $oData->ext, $oData->mime)
-                );
+                throw new ObjectCreateException(sprintf(
+                    '%s is not a valid extension for this file type (%s)',
+                    $oData->ext,
+                    $oData->mime
+                ));
             }
 
             // --------------------------------------------------------------------------
@@ -995,8 +966,16 @@ class Cdn
             //  Test and set the bucket, if it doesn't exist, create it
             if (is_numeric($sBucket) || is_string($sBucket)) {
                 $oBucket = $this->getBucket($sBucket);
-            } else {
+
+            } elseif ($sBucket instanceof Resource\Bucket) {
                 $oBucket = $sBucket;
+
+            } else {
+                throw new ObjectCreateException(sprintf(
+                    'Expected string, numeric or %s for bucket, got %s',
+                    Resource\Bucket::class,
+                    gettype($sBucket)
+                ));
             }
 
             if (!$oBucket) {
@@ -1010,6 +989,7 @@ class Cdn
                 } else {
                     throw new ObjectCreateException('Failed to create bucket. ' . $this->lastError());
                 }
+
             } else {
                 $oData->bucket = (object) [
                     'id'   => $oBucket->id,
@@ -1027,15 +1007,19 @@ class Cdn
                     array_splice($oBucket->allowed_types, count($oBucket->allowed_types) - 1, 0, [' and ']);
                     $sAccepted = implode(', .', $oBucket->allowed_types);
                     $sAccepted = str_replace(', . and , ', ' and ', $sAccepted);
-                    throw new ObjectCreateException(
-                        sprintf('The file type .' . $oData->ext . ' is not allowed, accepted file types are: %s', $sAccepted)
-                    );
+                    throw new ObjectCreateException(sprintf(
+                        'The file type .%s is not allowed, accepted file types are: %s',
+                        $oData->ext,
+                        $sAccepted
+                    ));
 
                 } else {
                     $sAccepted = implode('', $oBucket->allowed_types);
-                    throw new ObjectCreateException(
-                        sprintf('The file type .' . $oData->ext . ' is not allowed, accepted file type is %s', $sAccepted)
-                    );
+                    throw new ObjectCreateException(sprintf(
+                        'The file type .%s is not allowed, accepted file type is %s',
+                        $oData->ext,
+                        $sAccepted
+                    ));
                 }
             }
 
@@ -1078,8 +1062,10 @@ class Cdn
 
                 if ($oData->img->width > $oData->img->height) {
                     $oData->img->orientation = static::ORIENTATION_LANDSCAPE;
+
                 } elseif ($oData->img->width < $oData->img->height) {
                     $oData->img->orientation = static::ORIENTATION_PORTRAIT;
+
                 } elseif ($oData->img->width == $oData->img->height) {
                     $oData->img->orientation = static::ORIENTATION_SQUARE;
                 }
@@ -1131,19 +1117,6 @@ class Cdn
 
             // --------------------------------------------------------------------------
 
-            /**
-             * If a certain filename has been specified then send that to the CDN (this
-             * will overwrite any existing file so use with caution).
-             */
-            if (isset($aOptions['filename']) && $aOptions['filename']) {
-                $oData->filename = $aOptions['filename'];
-            } else {
-                //  Generate a filename
-                $oData->filename = time() . '-' . md5(activeUser('id') . microtime(true) . rand(0, 999)) . '.' . $oData->ext;
-            }
-
-            // --------------------------------------------------------------------------
-
             $upload = $this->callDriver('objectCreate', [$oData]);
 
             // --------------------------------------------------------------------------
@@ -1166,15 +1139,117 @@ class Cdn
             $this->setError($e->getMessage());
 
         } finally {
-            //  If a cache file was created then we should remove it
-            if (!empty($sCacheFile) && file_exists($this->sCacheDirectory . $sCacheFile)) {
-                unlink($this->sCacheDirectory . $sCacheFile);
+            if (!empty($sCacheFile) && file_exists($sCacheFile)) {
+                unlink($sCacheFile);
             }
-
-            //  @todo (Pablo - 2019-03-27) - Remove temporary file, if created
         }
 
         return false;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Make an HTTP request for a URL
+     *
+     * @param string $sUrl
+     *
+     * @return HttpResponse
+     * @throws FactoryException
+     */
+    protected function makeHttpRequest(string $sUrl): HttpResponse
+    {
+        /** @var Get $oHttpClient */
+        $oHttpClient = Factory::factory('HttpRequestGet');
+        $aUrl        = parse_url($sUrl);
+
+        return $oHttpClient
+            ->baseUri(
+                getFromArray('scheme', $aUrl, 'http') . '://' .
+                getFromArray('host', $aUrl) . '/'
+            )
+            ->path(getFromArray('path', $aUrl))
+            ->execute();
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Determine the filename from an HttpResponse
+     *
+     * @param HttpResponse $oResponse
+     *
+     * @return string|null
+     */
+    protected function determineFileNameFromHttpResponse(HttpResponse $oResponse): ?string
+    {
+        $aContentDisposition = $oResponse->getHeader('Content-Disposition');
+
+        if (!empty($aContentDisposition)) {
+            preg_match('/filename="(.*?)"/', reset($aContentDisposition), $aMatches);
+            if (!empty($aMatches[1])) {
+                return $aMatches[1];
+            }
+        }
+
+        return $oResponse->getRequest()->path()
+            ? basename($oResponse->getRequest()->path())
+            : 'Untitled';
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Save the body of an HttpResponse to a cache file
+     *
+     * @param HttpResponse $oResponse
+     *
+     * @return string
+     * @throws CdnException
+     */
+    protected function saveHttpResponseToFile(HttpResponse $oResponse): string
+    {
+        return $this->saveDataToCacheFile($oResponse->getBody(false));
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Save data to a cache file
+     *
+     * @param $data
+     *
+     * @return string
+     * @throws CdnException
+     */
+    protected function saveDataToCacheFile($data)
+    {
+        $sPath = $this->getTempFile();
+        $fh    = fopen($sPath, 'w+');
+
+        if ($fh === false) {
+            throw new CdnException('Failed to open cache file for writing');
+        }
+
+        if (fwrite($data) === false) {
+            throw new CdnException('Failed to write data to cache file');
+        }
+
+        fclose($fh);
+
+        return $sPath;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Get the path of a temporary file
+     *
+     * @return string
+     */
+    protected function getTempFile(): string
+    {
+        return $this->sCacheDirectoryPrivate . uniqid();
     }
 
     // --------------------------------------------------------------------------
@@ -2132,13 +2207,13 @@ class Cdn
      * Attempts to detect whether a gif is animated or not
      * Credit where credit's due: http://php.net/manual/en/function.imagecreatefromgif.php#59787
      *
-     * @param string $file the path to the file to check
+     * @param string $sFile the path to the file to check
      *
      * @return  boolean
      **/
-    protected function detectAnimatedGif($file)
+    protected function detectAnimatedGif(string $sFile)
     {
-        $sFileContents = file_get_contents($file);
+        $sFileContents = file_get_contents($sFile);
         $str_loc       = 0;
         $count         = 0;
 
@@ -2534,7 +2609,7 @@ class Cdn
      */
     public function getCacheDir(): string
     {
-        return $this->sCacheDirectory;
+        return $this->sCacheDirectoryPublic;
     }
 
     // --------------------------------------------------------------------------
@@ -3229,11 +3304,9 @@ class Cdn
     public function validateToken($mToken): bool
     {
         if ($mToken instanceof Resource\Token) {
-
             $sToken = $mToken->token;
 
         } elseif (is_string($mToken)) {
-
             $sToken = $mToken;
 
         } else {
