@@ -2253,7 +2253,10 @@ class Cdn
      */
     public function getExtFromPath($sPath)
     {
-        $sExtension = strpos($sPath, '.') !== false ? substr($sPath, (int) strrpos($sPath, '.') + 1) : $sPath;
+        $sExtension = strpos($sPath, '.') !== false
+            ? substr($sPath, (int) strrpos($sPath, '.') + 1)
+            : $sPath;
+
         return $this->sanitiseExtension($sExtension);
     }
 
@@ -2269,7 +2272,7 @@ class Cdn
     public function getExtFromMime($sMime)
     {
         $aExtensions = $this->oMimeService->getExtensionsForMime($sMime);
-        return reset($aExtensions);
+        return $this->sanitiseExtension(current($aExtensions));
     }
 
     // --------------------------------------------------------------------------
