@@ -1192,8 +1192,8 @@ class Cdn
             }
         }
 
-        return $oResponse->getRequest()->path()
-            ? basename($oResponse->getRequest()->path())
+        return $oResponse->getRequest()->getPath()
+            ? basename($oResponse->getRequest()->getPath())
             : 'Untitled';
     }
 
