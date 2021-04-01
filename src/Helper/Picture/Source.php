@@ -67,17 +67,13 @@ class Source
      */
     public function generate(): string
     {
-        $aConditions = array_filter([
-            $this->getBreakpointString(),
-            $this->getDensityString(),
-        ]);
-
         return sprintf(
-            '<source srcset="%s">',
+            '<source srcset="%s" media="%s">',
             implode(' ', array_filter([
                 $this->oCdn->urlCrop($this->iCdnObjectId, $this->iWidth, $this->iHeight),
-                reset($aConditions),
-            ]))
+                $this->getDensityString(),
+            ])),
+            $this->getBreakpointString()
         );
     }
 
@@ -85,7 +81,7 @@ class Source
 
     protected function getBreakpointString(): ?string
     {
-        return $this->iBreakpoint ? $this->iBreakpoint . 'w' : null;
+        return $this->iBreakpoint ? '(min-width: ' . $this->iBreakpoint . 'px)' : null;
     }
 
     // --------------------------------------------------------------------------
