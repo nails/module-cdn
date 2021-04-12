@@ -207,11 +207,6 @@ class Serve extends Base
             //  Determine headers to send
             header('Content-Type: ' . $oObject->file->mime, true);
 
-            $aStats = stat($sLocalPath);
-            $this->setCacheHeaders($aStats[9], $this->bucket . $this->object, false);
-
-            // --------------------------------------------------------------------------
-
             //  If the object is known about, add some extra headers
             if ($oObject) {
                 header('Content-Disposition: inline; filename="' . $oObject->file->name->human . '"', true);

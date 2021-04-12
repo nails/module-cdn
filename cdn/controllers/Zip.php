@@ -18,6 +18,7 @@ class Zip extends Base
 {
     /**
      * Serve a zip file containing objects
+     *
      * @return void
      */
     public function index()
@@ -55,11 +56,7 @@ class Zip extends Base
                  * to see if this image has been processed already; serve it up if it has.
                  */
 
-                if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) {
-
-                    $this->serveFromCache($this->cdnCacheFile);
-
-                } else {
+                if (!$this->cdnCache->exists($this->cdnCacheFile)) {
 
                     /**
                      * Cache object does not exist, fetch the originals, zip them and save a
@@ -81,9 +78,9 @@ class Zip extends Base
                         $temp->bucket   = $obj->bucket->label;
 
                         if (!$temp->path) {
-                            $this->serveBadSrc( [
-                                'error' => 'Object "' . $obj->filename . '" does not exist'
-                            ] );
+                            $this->serveBadSrc([
+                                'error' => 'Object "' . $obj->filename . '" does not exist',
+                            ]);
                         }
 
                         if (!$useBuckets && $prevBucket && $prevBucket !== $obj->bucket->id) {
@@ -109,37 +106,19 @@ class Zip extends Base
 
                     //  Save the Zip to the cache directory
                     get_instance()->zip->archive($this->cdnCacheDir . $this->cdnCacheFile);
-
-                    //  Set all the appropriate headers
-                    if (strpos($_SERVER['HTTP_USER_AGENT'], "MSIE") !== false) {
-
-                        header('Content-Disposition: attachment; filename="' . $filename . '"');
-                        header('Expires: 0');
-                        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-                        header("Content-Transfer-Encoding: binary");
-                        header('Pragma: public');
-
-                    } else {
-
-                        header('Content-Disposition: attachment; filename="' . $filename . '"');
-                        header("Content-Transfer-Encoding: binary");
-                        header('Expires: 0');
-                        header('Pragma: no-cache');
-                    }
-
-                    //  Serve to the people
-                    $this->serveFromCache($this->cdnCacheFile, null, false);
                 }
+
+                $this->serveFromCache($this->cdnCacheFile);
 
             } else {
                 $this->serveBadSrc([
-                    'error' => 'Could not verify token'
+                    'error' => 'Could not verify token',
                 ]);
             }
 
         } else {
-            $this->serveBadSrc( [
-                'error' => 'Missing parameters'
+            $this->serveBadSrc([
+                'error' => 'Missing parameters',
             ]);
         }
     }
@@ -151,7 +130,7 @@ class Zip extends Base
      *
      * @param array $params
      */
-    protected function serveBadSrc( array $params )
+    protected function serveBadSrc(array $params)
     {
         $error = $params['error'];
 
@@ -181,6 +160,7 @@ class Zip extends Base
          * our headers and setting an incorrect Content-Type
          */
 
+
         exit(0);
     }
 
@@ -188,6 +168,7 @@ class Zip extends Base
 
     /**
      * Map all requests to index()
+     *
      * @return void
      */
     public function _remap()

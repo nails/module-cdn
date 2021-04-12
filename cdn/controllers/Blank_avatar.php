@@ -24,7 +24,10 @@ class Blank_avatar extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Construct the class; set defaults
+     * Blank_avatar constructor.
+     *
+     * @throws \Nails\Cdn\Exception\PermittedDimensionException
+     * @throws \Nails\Common\Exception\FactoryException
      */
     public function __construct()
     {
@@ -39,8 +42,9 @@ class Blank_avatar extends Base
 
         // --------------------------------------------------------------------------
 
-        //  Determine dynamic values
-        $oUri         = Factory::service('Uri');
+        /** @var \Nails\Common\Service\Uri $oUri */
+        $oUri = Factory::service('Uri');
+
         $this->width  = (int) $oUri->segment(3, 100);
         $this->height = (int) $oUri->segment(4, 100);
         $this->sex    = strtolower($oUri->segment(5, 'neutral'));
@@ -56,12 +60,16 @@ class Blank_avatar extends Base
          * become higher.
          */
 
-        if (preg_match('/(.+)@2x/', $this->sex, $matches)) {
-
+        if (preg_match('/(.+)@(' . implode('|', static::PIXEL_DENSITY) . ')x/', $this->sex, $aMatches)) {
             $this->isRetina         = true;
-            $this->retinaMultiplier = 2;
-            $this->sex              = $matches[1];
+            $this->retinaMultiplier = (int) $aMatches[2];
+            $this->sex              = $aMatches[1];
         }
+
+        /** @var \Nails\Cdn\Service\Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', \Nails\Cdn\Constants::MODULE_SLUG);
+
+        $this->sex = $oCdn->blankAvatarNormaliseSex($this->sex);
 
         // --------------------------------------------------------------------------
 
@@ -73,10 +81,12 @@ class Blank_avatar extends Base
         $width  = $this->width * $this->retinaMultiplier;
         $height = $this->height * $this->retinaMultiplier;
 
-        $this->cdnCacheFile = 'blank_avatar';
-        $this->cdnCacheFile .= '-' . $width . 'x' . $height;
-        $this->cdnCacheFile .= '-' . $this->sex;
-        $this->cdnCacheFile .= '.png';
+        $this->cdnCacheFile = sprintf(
+            'blank_avatar-%sx%s-%s.png',
+            $iWidth,
+            $iHeight,
+            $mSex
+        );
     }
 
     // --------------------------------------------------------------------------
@@ -104,11 +114,7 @@ class Blank_avatar extends Base
          * to see if this image has been processed already; serve it up if it has.
          */
 
-        if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) {
-
-            $this->serveFromCache($this->cdnCacheFile);
-
-        } else {
+        if (!$this->cdnCache->exists($this->cdnCacheFile)) {
 
             /**
              * Cache object does not exist, fetch the original, process it and save a
@@ -119,23 +125,14 @@ class Blank_avatar extends Base
             switch ($this->sex) {
 
                 case 'female':
-                case 'woman':
-                case 'f':
-                case 'w':
-
                     $src = $this->avatarFemale;
                     break;
 
                 case 'male':
-                case 'man':
-                case 'm':
-
                     $src = $this->avatarMale;
                     break;
 
-                case 'neutral':
                 default:
-
                     $src = $this->avatarNeutral;
                     break;
             }
@@ -161,7 +158,6 @@ class Blank_avatar extends Base
 
                 //  Save local version and serve
                 $PHPThumb->save($this->cdnCacheDir . $this->cdnCacheFile);
-                $this->serveFromCache($this->cdnCacheFile);
 
             } else {
                 //  This object does not exist.
@@ -172,6 +168,8 @@ class Blank_avatar extends Base
                 ]);
             }
         }
+
+        $this->serveFromCache($this->cdnCacheFile);
     }
 
     // --------------------------------------------------------------------------

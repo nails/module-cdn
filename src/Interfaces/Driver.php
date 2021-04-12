@@ -2,6 +2,11 @@
 
 namespace Nails\Cdn\Interfaces;
 
+/**
+ * Interface Driver
+ *
+ * @package Nails\Cdn\Interfaces
+ */
 interface Driver
 {
     //  Error properties & methods
@@ -27,9 +32,9 @@ interface Driver
     public function urlCropScheme();
     public function urlScale($sObject, $sBucket, $iWidth, $iHeight);
     public function urlScaleScheme();
-    public function urlPlaceholder($iWidth, $iHeight, $iBorder = 0);
+    public function urlPlaceholder(int $iWidth, int $iHeight, int $iBorder = 0);
     public function urlPlaceholderScheme();
-    public function urlBlankAvatar($iWidth, $iHeight, $mSex = '');
+    public function urlBlankAvatar(int $iWidth, int $iHeight, string $sSex = '');
     public function urlBlankAvatarScheme();
     public function urlExpiring($sObject, $sBucket, $iExpires, $bForceDownload = false);
     public function urlExpiringScheme();

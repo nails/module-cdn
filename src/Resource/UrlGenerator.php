@@ -101,7 +101,7 @@ abstract class UrlGenerator extends Resource implements Interfaces\UrlGenerator,
         $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
         $oDriver        = $oStorageDriver->getInstance($oObject->driver);
 
-        $this->sUrl = $this->callDriver($oDriver, $oObject);
+        $this->sUrl = siteUrl($this->callDriver($oDriver, $oObject));
 
         if ($oObject instanceof CdnObject\Trash) {
             $this->sUrl .= (strpos('?', $this->sUrl) !== false ? '&' : '?') . 'trashed=1';

@@ -12,13 +12,16 @@
 
 require_once 'crop.php';
 
+/**
+ * Class Thumb
+ */
 class Thumb extends Crop
 {
     /**
      * Generate a thumbnail
      **/
-    public function index()
+    public function index(string $sCropMethod = 'CROP')
     {
-        return parent::index('CROP');
+        return parent::index($sCropMethod);
     }
 }

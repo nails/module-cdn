@@ -46,9 +46,26 @@ if (class_exists('\App\Cdn\Controller\Base')) {
 
 // --------------------------------------------------------------------------
 
+/**
+ * Class Base
+ *
+ * @package Nails\Cdn\Controller
+ */
 abstract class Base extends BaseMiddle
 {
+    /**
+     * Supported pixel densities for automatic scaling
+     *
+     * @var int[]
+     */
+    const PIXEL_DENSITY = [
+        2,
+    ];
+
+    // --------------------------------------------------------------------------
+
     protected $cdnRoot;
+    protected $cdnCache;
     protected $cdnCacheDir;
     protected $cdnCacheFile;
     protected $cdnCacheHeadersSet;
@@ -71,10 +88,12 @@ abstract class Base extends BaseMiddle
 
         // --------------------------------------------------------------------------
 
-        //  Define variables
-        $oCdn                     = Factory::service('Cdn', Constants::MODULE_SLUG);
+        /** @var \Nails\Cdn\Service\Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+
         $this->cdnRoot            = NAILS_PATH . 'module-cdn/cdn/';
-        $this->cdnCacheDir        = $oCdn->getCacheDir();
+        $this->cdnCache           = $oCdn->getCdnCachePublic();
+        $this->cdnCacheDir        = $this->cdnCache->getDir();
         $this->cdnCacheHeadersSet = false;
 
         /**
@@ -98,108 +117,13 @@ abstract class Base extends BaseMiddle
     /**
      * Serve a file from the app's cache
      *
-     * @param string  $file            The file to serve
-     * @param boolean $hit             Whether or not the request was a cache hit or not
-     * @param boolean $setCacheHeaders Whether tos et the cache headers or not
+     * @param string $sFile The file to serve
      *
      * @return void
      */
-    protected function serveFromCache($file, $hit = true, $setCacheHeaders = true)
+    protected function serveFromCache(string $sFile): void
     {
-        /**
-         * Cache object exists, set the appropriate headers and return the
-         * contents of the file.
-         **/
-
-        $aStats = stat($this->cdnCacheDir . $file);
-
-        //  Set cache headers
-        if ($setCacheHeaders) {
-            $this->setCacheHeaders($aStats['mtime'], $file, $hit);
-        }
-
-        //  Work out content type
-        $oCdn  = Factory::service('Cdn', Constants::MODULE_SLUG);
-        $sMime = $oCdn->getMimeFromFile($this->cdnCacheDir . $file);
-
-        header('Content-Type: ' . $sMime, true);
-        header('Content-Length: ' . $aStats['size']);
-
-        // --------------------------------------------------------------------------
-
-        //  Send the contents of the file to the browser
-        Factory::helper('file');
-        readFileChunked($this->cdnCacheDir . $file);
-
-        /**
-         * Kill script, th, th, that's all folks.
-         * Stop the output class from hijacking our headers and
-         * setting an incorrect Content-Type
-         **/
-
-        exit(0);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Set the cache headers of an object
-     *
-     * @param string  $lastModified The last modified date of the file
-     * @param string  $file         The file we're serving
-     * @param boolean $hit          Whether or not the request was a cache hit or not
-     */
-    protected function setCacheHeaders($lastModified, $file, $hit)
-    {
-        //  Set some flags
-        $this->cdnCacheHeadersSet          = true;
-        $this->cdnCacheHeadersLastModified = $lastModified;
-        $this->cdnCacheHeadersExpires      = time() + $this->cdnCacheHeadersMaxAge;
-        $this->cdnCacheHeadersFile         = $file;
-        $this->cdnCacheHeadersHit          = $hit ? 'HIT' : 'MISS';
-
-        // --------------------------------------------------------------------------
-
-        header('Cache-Control: max-age=' . $this->cdnCacheHeadersMaxAge . ', must-revalidate', true);
-        header('Last-Modified: ' . date('r', $this->cdnCacheHeadersLastModified), true);
-        header('Expires: ' . date('r', $this->cdnCacheHeadersExpires), true);
-        header('ETag: "' . md5($this->cdnCacheHeadersFile) . '"', true);
-        header('X-CDN-CACHE: ' . $this->cdnCacheHeadersHit, true);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Unset the cache headers of an object
-     *
-     * @return boolean
-     */
-    protected function unsetCacheHeaders()
-    {
-        if (empty($this->cdnCacheHeadersSet)) {
-            return false;
-        }
-
-        // --------------------------------------------------------------------------
-
-        //  Remove previously set headers
-        header_remove('Cache-Control');
-        header_remove('Last-Modified');
-        header_remove('Expires');
-        header_remove('ETag');
-        header_remove('X-CDN-CACHE');
-
-        // --------------------------------------------------------------------------
-
-        //  Set new "do not cache" headers
-        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT', true);
-        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT', true);
-        header('Cache-Control: no-store, no-cache, must-revalidate', true);
-        header('Cache-Control: post-check=0, pre-check=0', false);
-        header('Pragma: no-cache', true);
-        header('X-CDN-CACHE: MISS', true);
-
-        return true;
+        redirect($this->cdnCache->getUrl($sFile));
     }
 
     // --------------------------------------------------------------------------
@@ -284,17 +208,13 @@ abstract class Base extends BaseMiddle
         $height = isset($params['height']) ? $params['height'] : 100;
         $sError = isset($params['error']) ? $params['error'] : '';
 
-        //  Make sure this doesn't get cached
-        $this->unsetCacheHeaders();
-
         // --------------------------------------------------------------------------
 
         //  Create the icon
-        if ($this->isRetina) {
-            $icon = @imagecreatefrompng($this->cdnRoot . '_resources/img/fail@2x.png');
-        } else {
-            $icon = @imagecreatefrompng($this->cdnRoot . '_resources/img/fail.png');
-        }
+        $icon = $this->isRetina
+            ? @imagecreatefrompng($this->cdnRoot . '_resources/img/fail@2x.png')
+            : @imagecreatefrompng($this->cdnRoot . '_resources/img/fail.png');
+
         $iconW = imagesx($icon);
         $iconH = imagesy($icon);
 

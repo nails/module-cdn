@@ -14,6 +14,9 @@ use Nails\Cdn\Controller\Base;
 
 use Nails\Factory;
 
+/**
+ * Class Placeholder
+ */
 class Placeholder extends Base
 {
     private $tile;
@@ -24,7 +27,10 @@ class Placeholder extends Base
     // --------------------------------------------------------------------------
 
     /**
-     * Construct the controller
+     * Placeholder constructor.
+     *
+     * @throws \Nails\Cdn\Exception\PermittedDimensionException
+     * @throws \Nails\Common\Exception\FactoryException
      */
     public function __construct()
     {
@@ -38,12 +44,8 @@ class Placeholder extends Base
         //  Determine dynamic values
         $oUri         = Factory::service('Uri');
         $this->width  = (int) $oUri->segment(3, 100);
-        $this->height = (int) $oUri->segment(4, 100);
+        $this->height = $oUri->segment(4, 100);
         $this->border = $oUri->segment(5, 1);
-
-        // --------------------------------------------------------------------------
-
-        $this->checkDimensions($this->width, $this->height);
 
         // --------------------------------------------------------------------------
 
@@ -53,18 +55,28 @@ class Placeholder extends Base
          * of the border parameter in the URL.
          */
 
-        if (preg_match('/(.+)@2x/', $this->border, $matches)) {
+        if (preg_match('/(\d+)@(' . implode('|', static::PIXEL_DENSITY) . ')x/', $this->border, $aMatches)) {
 
             $this->isRetina         = true;
-            $this->retinaMultiplier = 2;
-            $this->border           = $matches[1];
+            $this->retinaMultiplier = (int) $aMatches[2];
+            $this->border           = (int) $aMatches[1];
+            $this->height           = (int) $this->height;
 
-        } elseif (preg_match('/(.+)@2x/', $this->height, $matches)) {
+        } elseif (preg_match('/(\d+)@(' . implode('|', static::PIXEL_DENSITY) . ')x/', $this->height, $aMatches)) {
 
             $this->isRetina         = true;
-            $this->retinaMultiplier = 2;
-            $this->height           = $matches[1];
+            $this->retinaMultiplier = (int) $aMatches[2];
+            $this->height           = (int) $aMatches[1];
+            $this->border           = (int) $this->border;
+
+        } else {
+            $this->height = (int) $this->height;
+            $this->border = (int) $this->border;
         }
+
+        // --------------------------------------------------------------------------
+
+        $this->checkDimensions($this->width, $this->height);
 
         // --------------------------------------------------------------------------
 
@@ -84,16 +96,19 @@ class Placeholder extends Base
         $height = $this->height * $this->retinaMultiplier;
         $border = $this->border * $this->retinaMultiplier;
 
-        $this->cdnCacheFile = 'placeholder';
-        $this->cdnCacheFile .= '-' . $width . 'x' . $height;
-        $this->cdnCacheFile .= '-' . $border;
-        $this->cdnCacheFile .= '.png';
+        $this->cdnCacheFile = sprintf(
+            'placeholder-%sx%s-%s.png',
+            $iWidth,
+            $iHeight,
+            $iBorder
+        );
     }
 
     // --------------------------------------------------------------------------
 
     /**
      * Render a placeholder
+     *
      * @return void
      */
     public function index()
@@ -116,11 +131,7 @@ class Placeholder extends Base
          * it up if it has.
          */
 
-        if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) {
-
-            $this->serveFromCache($this->cdnCacheFile);
-
-        } else {
+        if (!$this->cdnCache->exists($this->cdnCacheFile)) {
 
             //  Cache object does not exist, create a new one and cache it
             $width  = $this->width * $this->retinaMultiplier;
@@ -164,17 +175,6 @@ class Placeholder extends Base
 
             // --------------------------------------------------------------------------
 
-            //  Set the appropriate cache headers
-            $this->setCacheHeaders(time(), $this->cdnCacheFile, false);
-
-            // --------------------------------------------------------------------------
-
-            //  Output to browser
-            header('Content-Type: image/png', true);
-            imagepng($img);
-
-            // --------------------------------------------------------------------------
-
             //  Save local version, make sure cache is writable
             imagepng($img, $this->cdnCacheDir . $this->cdnCacheFile);
 
@@ -183,16 +183,9 @@ class Placeholder extends Base
             //  Destroy the images to free up resource
             imagedestroy($tile);
             imagedestroy($img);
-
         }
 
-        // --------------------------------------------------------------------------
-
-        //  Kill script, th, th, that's all folks.
-        //  Stop the output class from hijacking our headers and
-        //  setting an incorrect Content-Type
-
-        exit(0);
+        $this->serveFromCache($this->cdnCacheFile);
     }
 
 
@@ -200,6 +193,7 @@ class Placeholder extends Base
 
     /**
      * Map all requests to index()
+     *
      * @return void
      */
     public function _remap()

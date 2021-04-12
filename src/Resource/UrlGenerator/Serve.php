@@ -6,8 +6,14 @@ use Nails\Cdn\Interfaces;
 use Nails\Cdn\Resource;
 use Nails\Cdn\Service;
 
+/**
+ * Class Serve
+ *
+ * @package Nails\Cdn\Resource\UrlGenerator
+ */
 class Serve extends Resource\UrlGenerator
 {
+    /** @var bool */
     protected $bForceDownload;
 
     // --------------------------------------------------------------------------

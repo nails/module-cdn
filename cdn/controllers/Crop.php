@@ -14,19 +14,36 @@ use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\Base;
 use Nails\Factory;
 
+/**
+ * Class Crop
+ */
 class Crop extends Base
 {
+    /** @var string */
     protected $bucket;
+
+    /** @var string */
     protected $object;
+
+    /** @var int */
     protected $width;
+
+    /** @var int */
     protected $height;
+
+    /** @var string */
     protected $extension;
+
+    /** @var string */
     protected $cropQuadrant;
 
     // --------------------------------------------------------------------------
 
     /**
-     * Construct the controller
+     * Crop constructor.
+     *
+     * @throws \Nails\Cdn\Exception\PermittedDimensionException
+     * @throws \Nails\Common\Exception\FactoryException
      */
     public function __construct()
     {
@@ -34,8 +51,9 @@ class Crop extends Base
 
         // --------------------------------------------------------------------------
 
-        //  Determine dynamic values
-        $oUri            = Factory::service('Uri');
+        /** @var \Nails\Common\Service\Uri $oUri */
+        $oUri = Factory::service('Uri');
+
         $this->width     = (int) $oUri->segment(3, 100);
         $this->height    = (int) $oUri->segment(4, 100);
         $this->bucket    = $oUri->segment(5);
@@ -48,15 +66,10 @@ class Crop extends Base
 
         // --------------------------------------------------------------------------
 
-        /**
-         * Test for Retina - @2x just now, add more options as pixel densities
-         * become higher.
-         */
-
-        if (preg_match('/(.+)@2x(\..+)/', $this->object, $matches)) {
+        if (preg_match('/(.+)@(' . implode('|', static::PIXEL_DENSITY) . ')x(\..+)/', $this->object, $aMatches)) {
             $this->isRetina         = true;
-            $this->retinaMultiplier = 2;
-            $this->object           = $matches[1] . $matches[2];
+            $this->retinaMultiplier = (int) $aMatches[2];
+            $this->object           = $aMatches[1] . $aMatches[3];
         }
     }
 
@@ -65,27 +78,30 @@ class Crop extends Base
     /**
      * Generate the thumbnail
      *
-     * @param  string $cropMethod The crop method to use, either SCALE or CROP
+     * @param string $sCropMethod The crop method to use, either SCALE or CROP
      *
      * @return void
      */
-    public function index($cropMethod = 'CROP')
+    public function index(string $sCropMethod = 'CROP')
     {
-        $oInput  = Factory::service('Input');
+        /** @var \Nails\Common\Service\Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var \Nails\Common\Service\Logger $oLogger */
         $oLogger = Factory::service('Logger');
-        $oCdn    = Factory::service('Cdn', Constants::MODULE_SLUG);
+        /** @var \Nails\Cdn\Service\Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
 
-        switch ($cropMethod) {
+        switch ($sCropMethod) {
             case 'SCALE':
-                $phpCropMethod = 'resize';
+                $sPhpCropMethod = 'resize';
                 break;
 
             case 'CROP':
-                $phpCropMethod = 'adaptiveResizeQuadrant';
+                $sPhpCropMethod = 'adaptiveResizeQuadrant';
                 break;
 
             default:
-                throw new \Nails\Cdn\Exception\CdnException('"' . $cropMethod . '" is not a valid crop method.');
+                throw new \Nails\Cdn\Exception\CdnException('"' . $sCropMethod . '" is not a valid crop method.');
                 break;
         }
 
@@ -93,7 +109,7 @@ class Crop extends Base
 
         //  We must have a bucket, object and extension in order to work with this
         if (!$this->bucket || !$this->object || !$this->extension) {
-            $oLogger->line('CDN: ' . $cropMethod . ': Missing _bucket, _object or _extension');
+            $oLogger->line('CDN: ' . $sCropMethod . ': Missing _bucket, _object or _extension');
             $this->serveBadSrc([
                 'width'  => $this->width,
                 'height' => $this->height,
@@ -152,7 +168,7 @@ class Crop extends Base
         $height = $this->height * $this->retinaMultiplier;
 
         //  Take a note of the image's orientation, and work out the quadrant accordingly
-        if ($phpCropMethod == 'adaptiveResizeQuadrant') {
+        if ($sPhpCropMethod == 'adaptiveResizeQuadrant') {
             $this->cropQuadrant = $oCdn::getCropQuadrant($object->img_orientation);
         }
 
@@ -160,7 +176,7 @@ class Crop extends Base
             $this->bucket,
             $this->object,
             $this->extension,
-            $cropMethod,
+            $sCropMethod,
             $object->img_orientation,
             $width,
             $height
@@ -174,7 +190,7 @@ class Crop extends Base
          */
 
         if ($this->serveNotModified($this->cdnCacheFile)) {
-            $oCdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
+            $oCdn->objectIncrementCount($sCropMethod, $this->object, $this->bucket);
             return;
         }
 
@@ -186,12 +202,7 @@ class Crop extends Base
          * it has.
          */
 
-        if (file_exists($this->cdnCacheDir . $this->cdnCacheFile)) {
-
-            $oCdn->objectIncrementCount($cropMethod, $this->object, $this->bucket);
-            $this->serveFromCache($this->cdnCacheFile);
-
-        } else {
+        if (!$this->cdnCache->exists($this->cdnCacheFile)) {
 
             /**
              * Cache object does not exist, fetch the original, process it and save a
@@ -199,42 +210,42 @@ class Crop extends Base
              */
 
             //  Fetch the file to use
-            $filePath = $oCdn->objectLocalPath($object->id, $bIsTrash);
+            $sFilePath = $oCdn->objectLocalPath($object->id, $bIsTrash);
 
-            if (!$filePath) {
+            if (!$sFilePath) {
 
-                $oLogger->line('CDN: ' . $cropMethod . ': No local path was returned.');
-                $oLogger->line('CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
+                $oLogger->line('CDN: ' . $sCropMethod . ': No local path was returned.');
+                $oLogger->line('CDN: ' . $sCropMethod . ': ' . $oCdn->lastError());
                 $this->serveBadSrc([
                     'width'  => $width,
                     'height' => $height,
                 ]);
 
-            } elseif (!filesize($filePath)) {
+            } elseif (!filesize($sFilePath)) {
 
                 /**
                  * Sometimes a file is created but not tidied up properly resulting in a zero byte file.
                  * If we see this, delete it and try again.
                  */
 
-                if (file_exists($filePath)) {
-                    unlink($filePath);
+                if (file_exists($sFilePath)) {
+                    unlink($sFilePath);
                 }
 
-                $filePath = $oCdn->objectLocalPath($object->id);
+                $sFilePath = $oCdn->objectLocalPath($object->id);
 
-                if (!$filePath) {
+                if (!$sFilePath) {
 
-                    $oLogger->line('CDN: ' . $cropMethod . ': No local path was returned, second attempt.');
-                    $oLogger->line('CDN: ' . $cropMethod . ': ' . $oCdn->lastError());
+                    $oLogger->line('CDN: ' . $sCropMethod . ': No local path was returned, second attempt.');
+                    $oLogger->line('CDN: ' . $sCropMethod . ': ' . $oCdn->lastError());
                     $this->serveBadSrc([
                         'width'  => $width,
                         'height' => $height,
                     ]);
 
-                } elseif (!filesize($filePath)) {
+                } elseif (!filesize($sFilePath)) {
 
-                    $oLogger->line('CDN: ' . $cropMethod . ': local path exists, but has a zero file size.');
+                    $oLogger->line('CDN: ' . $sCropMethod . ': local path exists, but has a zero file size.');
                     $this->serveBadSrc([
                         'width'  => $width,
                         'height' => $height,
@@ -246,27 +257,25 @@ class Crop extends Base
 
             /**
              * Time to start Image processing
-             * Are we dealing with an animated Gif? If so handle differently - extract each
+             * Are we dealing with an animated gif? If so handle differently - extract each
              * frame, resize, then recompile. Otherwise, just resize
              */
 
-            //  Set the appropriate cache headers
-            $this->setCacheHeaders(time(), $this->cdnCacheFile, false);
+            //  Bump the counter
+            $oCdn->objectIncrementCount($sCropMethod, $object->id);
 
             // --------------------------------------------------------------------------
 
             //  Handle the actual resize
             if ($object->is_animated) {
-                $this->resizeAnimated($filePath, $phpCropMethod);
+                $this->resizeAnimated($sFilePath, $sPhpCropMethod);
             } else {
-                $this->resize($filePath, $phpCropMethod);
+                $this->resize($sFilePath, $sPhpCropMethod);
             }
-
-            // --------------------------------------------------------------------------
-
-            //  Bump the counter
-            $oCdn->objectIncrementCount($cropMethod, $object->id);
         }
+
+        $oCdn->objectIncrementCount($sCropMethod, $this->object, $this->bucket);
+        $this->serveFromCache($this->cdnCacheFile);
     }
 
     // --------------------------------------------------------------------------
@@ -274,21 +283,15 @@ class Crop extends Base
     /**
      * Resize a static image
      *
-     * @param  string $filePath      The file to resize
-     * @param  string $phpCropMethod The PHPThumb method to use for resizing
+     * @param string $sFilePath      The file to resize
+     * @param string $sPhpCropMethod The PHPThumb method to use for resizing
      *
      * @return void
      */
     private function resize(
-        $filePath,
-        $phpCropMethod
+        string $sFilePath,
+        $sPhpCropMethod
     ) {
-        //  Set some PHPThumb options
-        $_options                = [];
-        $_options['resizeUp']    = true;
-        $_options['jpegQuality'] = 80;
-
-        // --------------------------------------------------------------------------
 
         /**
          * Perform the resize
@@ -316,7 +319,10 @@ class Crop extends Base
 
             ob_start();
 
-            $PHPThumb = new \PHPThumb\GD($filePath, $_options);
+            $oPhpThumb = new \PHPThumb\GD($sFilePath, [
+                'resizeUp'    => true,
+                'jpegQuality' => 80,
+            ]);
 
             //  Prepare the parameters and call the method
             $aParams = [
@@ -325,10 +331,10 @@ class Crop extends Base
                 $this->cropQuadrant,
             ];
 
-            call_user_func_array([$PHPThumb, $phpCropMethod], $aParams);
+            call_user_func_array([$oPhpThumb, $sPhpCropMethod], $aParams);
 
             //  Save cache version
-            $PHPThumb->save($this->cdnCacheDir . $this->cdnCacheFile, $ext);
+            $oPhpThumb->save($this->cdnCacheDir . $this->cdnCacheFile, $ext);
 
             //  Flush the buffer
             ob_end_clean();
@@ -336,7 +342,7 @@ class Crop extends Base
         } catch (Exception $e) {
 
             //  Log the error
-            Factory::service('Logger')->line('CDN: ' . $phpCropMethod . ': ' . $e->getMessage());
+            Factory::service('Logger')->line('CDN: ' . $sPhpCropMethod . ': ' . $e->getMessage());
 
             //  Switch error reporting back how it was
             error_reporting($oldErrorReporting);
@@ -350,11 +356,6 @@ class Crop extends Base
                 'height' => $height,
             ]);
         }
-
-        $this->serveFromCache($this->cdnCacheFile, false);
-
-        //  Switch error reporting back how it was
-        error_reporting($oldErrorReporting);
     }
 
     // --------------------------------------------------------------------------
@@ -362,15 +363,22 @@ class Crop extends Base
     /**
      * Resize an animated image
      *
-     * @param  string $filePath      The file to resize
-     * @param  string $phpCropMethod The PHPThumb method to use for resizing
+     * @param string $sFilePath      The file to resize
+     * @param string $sPhpCropMethod The PHPThumb method to use for resizing
      *
      * @return void
      */
     private function resizeAnimated(
-        $filePath,
-        $phpCropMethod
+        string $sFilePath,
+        $sPhpCropMethod
     ) {
+
+        /**
+         * The GifCreator class is old and renders a bunch of deprecation warnings.
+         * Mute them until we can replace it.
+         */
+        $iErrorReporting = error_reporting(0);
+
         $hash       = md5(microtime(true) . uniqid()) . uniqid();
         $frames     = [];
         $cacheFiles = [];
@@ -383,7 +391,7 @@ class Crop extends Base
         // --------------------------------------------------------------------------
 
         //  Extract all the frames, resize them and save to the cache
-        $gfe->extract($filePath);
+        $gfe->extract($sFilePath);
 
         $i = 0;
         foreach ($gfe->getFrames() as $frame) {
@@ -410,7 +418,7 @@ class Crop extends Base
             //  Perform the resize; first save the original frame to disk
             imagegif($frame['image'], $this->cdnCacheDir . $tempFilename);
 
-            $PHPThumb = new \PHPThumb\GD($this->cdnCacheDir . $tempFilename, $options);
+            $oPhpThumb = new \PHPThumb\GD($this->cdnCacheDir . $tempFilename, $options);
 
             //  Prepare the parameters and call the method
             $aParams = [
@@ -419,12 +427,12 @@ class Crop extends Base
                 $this->cropQuadrant,
             ];
 
-            call_user_func_array([$PHPThumb, $phpCropMethod], $aParams);
+            call_user_func_array([$oPhpThumb, $sPhpCropMethod], $aParams);
 
             // --------------------------------------------------------------------------
 
             //  Save cache version
-            $PHPThumb->save($this->cdnCacheDir . $filename, strtoupper(substr($this->extension, 1)));
+            $oPhpThumb->save($this->cdnCacheDir . $filename, strtoupper(substr($this->extension, 1)));
         }
 
         /**
@@ -438,11 +446,8 @@ class Crop extends Base
         $gc->create($frames, $durations, 0);
         $data = $gc->getGif();
 
-        // --------------------------------------------------------------------------
-
-        //  Output to browser
-        header('Content-Type: image/gif', true);
-        echo $data;
+        //  Restore error eeporting
+        error_reporting($iErrorReporting);
 
         // --------------------------------------------------------------------------
 
@@ -464,16 +469,6 @@ class Crop extends Base
                 unlink($frame);
             }
         }
-
-        // --------------------------------------------------------------------------
-
-        /**
-         * Kill script, th, th, that's all folks.
-         * Stop the output class from hijacking our headers and
-         * setting an incorrect Content-Type
-         */
-
-        exit(0);
     }
 
     // --------------------------------------------------------------------------

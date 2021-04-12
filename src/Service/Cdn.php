@@ -27,6 +27,7 @@ use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Factory\HttpResponse;
 use Nails\Common\Helper\Directory;
+use Nails\Common\Interfaces\Service\FileCache\Driver;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\FileCache;
 use Nails\Common\Service\Mime;
@@ -131,19 +132,11 @@ class Cdn
      */
     protected $oMimeService;
 
-    /**
-     * The public cache directory
-     *
-     * @var string
-     */
-    protected $sCacheDirectoryPublic;
+    /** @var \Nails\Common\Service\FileCache */
+    protected $oCache;
 
-    /**
-     * The private cache directory
-     *
-     * @var string
-     */
-    protected $sCacheDirectoryPrivate;
+    /** @var \Nails\Common\Interfaces\Service\FileCache\Driver\AccessibleByUrl */
+    protected $oCachePublic;
 
     // --------------------------------------------------------------------------
 
@@ -164,9 +157,10 @@ class Cdn
 
         //  @todo (Pablo - 2019-05-09) - Make better use of the FileCache service
         /** @var FileCache $oFileCache */
-        $oFileCache                   = Factory::service('FileCache');
-        $this->sCacheDirectoryPublic  = $oFileCache->public()->getDir();
-        $this->sCacheDirectoryPrivate = $oFileCache->getDir();
+        $oFileCache = Factory::service('FileCache');
+
+        $this->oCache       = $oFileCache;
+        $this->oCachePublic = $oFileCache->public();
 
         // --------------------------------------------------------------------------
 
@@ -357,7 +351,7 @@ class Cdn
 
             // Create a handler for the directory
             $pattern = '#^' . $bucketSlug . '-' . substr($objectFilename, 0, strrpos($objectFilename, '.')) . '#';
-            $fh      = @opendir($this->sCacheDirectoryPublic);
+            $fh      = @opendir($this->getCacheDir());
 
             if ($fh !== false) {
 
@@ -368,8 +362,8 @@ class Cdn
                     if ($file != '.' && $file != '..') {
 
                         // Check with regex that the file format is what we're expecting and not something else
-                        if (preg_match($pattern, $file) && file_exists($this->sCacheDirectoryPublic . $file)) {
-                            unlink($this->sCacheDirectoryPublic . $file);
+                        if (preg_match($pattern, $file) && file_exists($this->getCacheDir() . $file)) {
+                            unlink($this->getCacheDir() . $file);
                         }
                     }
                 }
@@ -1263,7 +1257,7 @@ class Cdn
      */
     protected function getTempFile(): string
     {
-        return $this->sCacheDirectoryPrivate . uniqid();
+        return $this->getCacheDir() . uniqid();
     }
 
     // --------------------------------------------------------------------------
@@ -2620,13 +2614,37 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
+     * Returns the private cache
+     *
+     * @return \Nails\Common\Service\FileCache
+     */
+    public function getCdnCache(): \Nails\Common\Service\FileCache
+    {
+        return $this->oCache;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the public cache
+     *
+     * @return \Nails\Common\Interfaces\Service\FileCache\Driver\AccessibleByUrl
+     */
+    public function getCdnCachePublic(): Driver\AccessibleByUrl
+    {
+        return $this->oCachePublic;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Returns the directory being used by the CDN for caching
      *
      * @return string
      */
     public function getCacheDir(): string
     {
-        return $this->sCacheDirectoryPublic;
+        return $this->oCachePublic->getDir();
     }
 
     // --------------------------------------------------------------------------
@@ -2812,6 +2830,33 @@ class Cdn
     public function urlBlankAvatarScheme()
     {
         return $this->callDriver('urlBlankAvatarScheme');
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @param string $sSex
+     *
+     * @return string
+     */
+    public function blankAvatarNormaliseSex(string $sSex): string
+    {
+        switch (trim(strtolower($sSex))) {
+
+            case 'female':
+            case 'woman':
+            case 'f':
+            case 'w':
+                return 'female';
+
+            case 'male':
+            case 'man':
+            case 'm':
+                return 'male';
+
+            default:
+                return 'neutral';
+        }
     }
 
     // --------------------------------------------------------------------------
