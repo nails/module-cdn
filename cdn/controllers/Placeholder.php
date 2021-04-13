@@ -92,15 +92,11 @@ class Placeholder extends Base
          * no random values)
          */
 
-        $width  = $this->width * $this->retinaMultiplier;
-        $height = $this->height * $this->retinaMultiplier;
-        $border = $this->border * $this->retinaMultiplier;
-
         $this->cdnCacheFile = sprintf(
             'placeholder-%sx%s-%s.png',
-            $iWidth,
-            $iHeight,
-            $iBorder
+            $this->width * $this->retinaMultiplier,
+            $this->height * $this->retinaMultiplier,
+            $this->border * $this->retinaMultiplier
         );
     }
 

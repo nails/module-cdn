@@ -33,7 +33,7 @@ class Scale extends Crop
             $this->iHeight
         );
 
-        return sCacheUrl
+        return $sCacheUrl
             ?? $oDriver->urlScale(
                 $oObject->file->name->disk,
                 $oObject->bucket->slug,

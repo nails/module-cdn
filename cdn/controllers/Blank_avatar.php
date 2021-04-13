@@ -13,6 +13,9 @@
 use Nails\Cdn\Controller\Base;
 use Nails\Factory;
 
+/**
+ * Class Blank_avatar
+ */
 class Blank_avatar extends Base
 {
     protected $avatarMale;
@@ -78,14 +81,11 @@ class Blank_avatar extends Base
          * no random values)
          */
 
-        $width  = $this->width * $this->retinaMultiplier;
-        $height = $this->height * $this->retinaMultiplier;
-
         $this->cdnCacheFile = sprintf(
             'blank_avatar-%sx%s-%s.png',
-            $iWidth,
-            $iHeight,
-            $mSex
+            $this->width * $this->retinaMultiplier,
+            $this->height * $this->retinaMultiplier,
+            $this->sex
         );
     }
 
