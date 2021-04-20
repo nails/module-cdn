@@ -16,7 +16,7 @@ use Nails\Cdn\Constants;
     <p class="alert alert-warning">
         <strong>Please note:</strong> This process can take some time to execute on large CDNs and may time out. If
         you are experiencing timeouts consider increasing the timeout limit for PHP temporarily or executing
-        <u rel="tipsy" title="Use command: `php index.php admin cdn utilities index`">via the command line</u>.
+        <u class="hint--bottom" aria-label="Use command: `php index.php admin cdn utilities index`">via the command line</u>.
     </p>
     <hr/>
     <?=form_open(null, 'id="cdn-orphan-search-form"')?>
