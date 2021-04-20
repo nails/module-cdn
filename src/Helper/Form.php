@@ -58,8 +58,7 @@ class Form
         $_field_bucket = isset($field['bucket']) ? $field['bucket'] : null;
 
         $_tip          = [];
-        $_tip['class'] = is_array($_field_tip) && isset($_field_tip['class']) ? $_field_tip['class'] : 'fa fa-question-circle fa-lg tip';
-        $_tip['rel']   = is_array($_field_tip) && isset($_field_tip['rel']) ? $_field_tip['rel'] : 'tipsy-left';
+        $_tip['class'] = is_array($_field_tip) && isset($_field_tip['class']) ? $_field_tip['class'] : 'fa fa-question-circle fa-lg tip hint--bottom-left';
         $_tip['title'] = is_array($_field_tip) && isset($_field_tip['title']) ? $_field_tip['title'] : null;
         $_tip['title'] = is_string($_field_tip) ? $_field_tip : $_tip['title'];
 
@@ -210,8 +209,7 @@ EOT;
         $_field_bucket = isset($field['bucket']) ? $field['bucket'] : null;
 
         $_tip          = [];
-        $_tip['class'] = is_array($_field_tip) && isset($_field_tip['class']) ? $_field_tip['class'] : 'fa fa-question-circle fa-lg tip';
-        $_tip['rel']   = is_array($_field_tip) && isset($_field_tip['rel']) ? $_field_tip['rel'] : 'tipsy-left';
+        $_tip['class'] = is_array($_field_tip) && isset($_field_tip['class']) ? $_field_tip['class'] : 'fa fa-question-circle fa-lg tip hint--bottom-left';
         $_tip['title'] = is_array($_field_tip) && isset($_field_tip['title']) ? $_field_tip['title'] : null;
         $_tip['title'] = is_string($_field_tip) ? $_field_tip : $_tip['title'];
 
@@ -439,8 +437,7 @@ EOT;
         $sFieldBucket = isset($aConfig['bucket']) ? $aConfig['bucket'] : null;
 
         $aTip = [
-            'class' => ArrayHelper::getFromArray('class', (array) $sFieldTip, 'fa fa-question-circle fa-lg tip'),
-            'rel'   => ArrayHelper::getFromArray('rel', (array) $sFieldTip, 'tipsy-left'),
+            'class' => ArrayHelper::getFromArray('class', (array) $sFieldTip, 'fa fa-question-circle fa-lg tip hint--bottom-left'),
             'title' => ArrayHelper::getFromArray('title', (array) $sFieldTip, $sFieldTip),
         ];
 
