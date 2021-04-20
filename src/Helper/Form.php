@@ -153,22 +153,22 @@ class Form
 
         $_out = <<<EOT
 
-    <div class="field $_error_class $_field_oddeven $_readonly_cls $_field_type" $_field_id_top $_field_attributes>
-        <label>
-            <span class="label">
-                $_field_label
-                $_field_sub_label
-            </span>
-            <span class="input $_tipclass">
-                $_field_html
-                $_tip
-                $_error
-                $info_block
-            <span>
-        </label>
-    </div>
+        <div class="field $_error_class $_field_oddeven $_readonly_cls $_field_type" $_field_id_top $_field_attributes>
+            <label>
+                <span class="label">
+                    $_field_label
+                    $_field_sub_label
+                </span>
+                <span class="input $_tipclass">
+                    $_field_html
+                    $_tip
+                    $_error
+                    $info_block
+                <span>
+            </label>
+        </div>
 
-EOT;
+        EOT;
 
         return $_out;
     }
