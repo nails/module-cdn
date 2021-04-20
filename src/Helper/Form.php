@@ -12,6 +12,7 @@
 namespace Nails\Cdn\Helper;
 
 use Nails\Common\Helper\ArrayHelper;
+use Nails\Common\Helper\Form\Field;
 use Nails\Factory;
 
 class Form
@@ -58,7 +59,7 @@ class Form
         $_field_bucket = isset($field['bucket']) ? $field['bucket'] : null;
 
         $_tip          = [];
-        $_tip['class'] = is_array($_field_tip) && isset($_field_tip['class']) ? $_field_tip['class'] : 'fa fa-question-circle fa-lg tip hint--bottom-left';
+        $_tip['class'] = is_array($_field_tip) && isset($_field_tip['class']) ? $_field_tip['class'] : null;
         $_tip['title'] = is_array($_field_tip) && isset($_field_tip['title']) ? $_field_tip['title'] : null;
         $_tip['title'] = is_string($_field_tip) ? $_field_tip : $_tip['title'];
 
@@ -78,7 +79,7 @@ class Form
 
         //  Has the field got a tip?
         $_tipclass = $_tip['title'] ? 'with-tip' : '';
-        $_tip      = $_tip['title'] ? '<b class="' . $_tip['class'] . '" rel="' . $_tip['rel'] . '" title="' . htmlentities($_tip['title'], ENT_QUOTES) . '"></b>' : '';
+        $_tip      = Field::getTipHtml((object) $_tip);
 
         // --------------------------------------------------------------------------
 
@@ -209,7 +210,7 @@ EOT;
         $_field_bucket = isset($field['bucket']) ? $field['bucket'] : null;
 
         $_tip          = [];
-        $_tip['class'] = is_array($_field_tip) && isset($_field_tip['class']) ? $_field_tip['class'] : 'fa fa-question-circle fa-lg tip hint--bottom-left';
+        $_tip['class'] = is_array($_field_tip) && isset($_field_tip['class']) ? $_field_tip['class'] : null;
         $_tip['title'] = is_array($_field_tip) && isset($_field_tip['title']) ? $_field_tip['title'] : null;
         $_tip['title'] = is_string($_field_tip) ? $_field_tip : $_tip['title'];
 
@@ -229,7 +230,7 @@ EOT;
 
         //  Has the field got a tip?
         $_tipclass = $_tip['title'] ? 'with-tip' : '';
-        $_tip      = $_tip['title'] ? '<b class="' . $_tip['class'] . '" rel="' . $_tip['rel'] . '" title="' . htmlentities($_tip['title'], ENT_QUOTES) . '"></b>' : '';
+        $_tip      = Field::getTipHtml((object) $_tip);
 
         // --------------------------------------------------------------------------
 
@@ -315,7 +316,7 @@ EOT;
                     $_field_html_remove
                 </td>
             </tr>
-EOT;
+        EOT;
 
         //  Generate the initial objects
         $_default_html = '';
@@ -390,7 +391,7 @@ EOT;
                     $jsTpl
                 </script>
             </div>
-EOT;
+        EOT;
 
         return $_out;
     }
@@ -437,7 +438,7 @@ EOT;
         $sFieldBucket = isset($aConfig['bucket']) ? $aConfig['bucket'] : null;
 
         $aTip = [
-            'class' => ArrayHelper::getFromArray('class', (array) $sFieldTip, 'fa fa-question-circle fa-lg tip hint--bottom-left'),
+            'class' => ArrayHelper::getFromArray('class', (array) $sFieldTip, null),
             'title' => ArrayHelper::getFromArray('title', (array) $sFieldTip, $sFieldTip),
         ];
 
@@ -457,7 +458,7 @@ EOT;
 
         //  Has the field got a tip?
         $sTipClass = $aTip['title'] ? 'with-tip' : '';
-        $sTip      = $aTip['title'] ? '<b class="' . $aTip['class'] . '" rel="' . $aTip['rel'] . '" title="' . htmlentities($aTip['title'], ENT_QUOTES) . '"></b>' : '';
+        $sTip      = Field::getTipHtml((object) $aTip);
 
         // --------------------------------------------------------------------------
 
@@ -537,7 +538,7 @@ EOT;
                     $sFieldHtmlRemove
                 </td>
             </tr>
-EOT;
+        EOT;
 
         //  Generate the initial objects
         $sDefaultHtml = '';
@@ -615,7 +616,7 @@ EOT;
                     $jsTpl
                 </script>
             </div>
-EOT;
+        EOT;
 
         return $_out;
     }
