@@ -12,7 +12,7 @@
  * @link
  */
 
-namespace Nails\Database\Migration\Nails\ModuleCdn;
+namespace Nails\Cdn\Database\Migration;
 
 use Nails\Cdn\Constants;
 use Nails\Cdn\Service\Cdn;
