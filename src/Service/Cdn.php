@@ -3216,26 +3216,38 @@ class Cdn
      * Returns the configured maximum upload size for this system by inspecting
      * upload_max_filesize and post_max_size, if available.
      *
-     * @param boolean $bFormat Whether to format the string using formatBytes
+     * @param bool            $bFormat Whether to format the string using formatBytes
+     * @param int|string|null $mBucket Whether to factor a bucket's max upload size into the equation
      *
-     * @return integer|string
+     * @return mixed|string|null
+     * @throws FactoryException
      */
-    public static function maxUploadSize($bFormat = true)
+    public static function maxUploadSize($bFormat = true, $mBucket = null)
     {
-        if (function_exists('ini_get')) {
+        $aMaxSizes = [
+            function_exists('ini_get') ? returnBytes(ini_get('upload_max_filesize')) : null,
+            function_exists('ini_get') ? returnBytes(ini_get('post_max_size')) : null,
+        ];
 
-            $aMaxSizes = [
-                returnBytes(ini_get('upload_max_filesize')),
-                returnBytes(ini_get('post_max_size')),
-            ];
+        // max_file_uploads
 
-            $iMaxSize = min($aMaxSizes);
+        if ($mBucket) {
+            /** @var Model\Bucket $oModel */
+            $oModel = Factory::model('Bucket', Constants::MODULE_SLUG);
+            /** @var Resource\Bucket $oBucket */
+            $oBucket     = $oModel->getByIdOrSlug($mBucket);
+            $aMaxSizes[] = $oBucket->max_size ?? null;
+        }
 
-            return $bFormat ? formatBytes($iMaxSize) : $iMaxSize;
+        $aMaxSizes = array_filter($aMaxSizes);
 
-        } else {
+        if (empty($aMaxSizes)) {
             return null;
         }
+
+        $iMaxSize = min($aMaxSizes);
+
+        return $bFormat ? formatBytes($iMaxSize) : $iMaxSize;
     }
 
     // --------------------------------------------------------------------------

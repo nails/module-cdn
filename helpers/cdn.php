@@ -62,15 +62,16 @@ if (!function_exists('maxUploadSize')) {
      * Returns the configured maximum upload size for this system by inspecting
      * upload_max_filesize and post_max_size, if available.
      *
-     * @param bool $bFormat Whether to format the string using formatBytes
+     * @param bool            $bFormat Whether to format the string using formatBytes
+     * @param int|string|null $mBucket Whether to factor a bucket's max upload size into the equation
      *
      * @return int|string
      */
-    function maxUploadSize($bFormat = true)
+    function maxUploadSize($bFormat = true, $mBucket = null)
     {
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
-        return $oCdn->maxUploadSize($bFormat);
+        return $oCdn->maxUploadSize($bFormat, $mBucket);
     }
 }
 
