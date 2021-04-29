@@ -19,8 +19,7 @@ use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
-use Nails\Cdn\Model\CdnObject;
-use Nails\Cdn\Model\Token;
+use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
@@ -61,7 +60,7 @@ class Cdn
     /**
      * Byte Multipliers
      *
-     * @var integer
+     * @var int
      */
     const BYTE_MULTIPLIER_KB = 1024;
     const BYTE_MULTIPLIER_MB = self::BYTE_MULTIPLIER_KB * 1024;
@@ -70,7 +69,7 @@ class Cdn
     /**
      * How precise to make human friendly file sizes
      *
-     * @var integer
+     * @var int
      */
     const FILE_SIZE_PRECISION = 6;
 
@@ -404,9 +403,9 @@ class Cdn
     /**
      * Returns an array of objects
      *
-     * @param integer $iPage    The page to return
-     * @param integer $iPerPage The number of items to return per page
-     * @param array   $aData    An array of data to pass to getCountCommonBuckets()
+     * @param int   $iPage    The page to return
+     * @param int   $iPerPage The number of items to return per page
+     * @param array $aData    An array of data to pass to getCountCommonBuckets()
      *
      * @return array
      */
@@ -766,7 +765,7 @@ class Cdn
      * @param mixed        $object    The object to create: $_FILE key, path or data stream
      * @param string|array $mBucket   The bucket to upload to
      * @param array        $aOptions  Upload options
-     * @param boolean      $bIsStream Whether the upload is a stream or not
+     * @param bool         $bIsStream Whether the upload is a stream or not
      *
      * @return mixed        stdClass on success, false on failure
      */
@@ -945,7 +944,7 @@ class Cdn
             $oData->md5_hash = md5_file($oData->file);
             if (empty($aOptions['no-md5-check'])) {
 
-                /** @var CdnObject $oObjectModel */
+                /** @var Model\CdnObject $oObjectModel */
                 $oObjectModel    = Factory::model('Object', Constants::MODULE_SLUG);
                 $oExistingObject = $oObjectModel->getByMd5Hash($oData->md5_hash, ['expand' => ['bucket']]);
 
@@ -1265,7 +1264,7 @@ class Cdn
     /**
      * Returns a string representation of an upload error number
      *
-     * @param integer $iErrorNumber The error number
+     * @param int $iErrorNumber The error number
      *
      * @return string
      */
@@ -1331,7 +1330,7 @@ class Cdn
      *
      * @param int $iObjectId The object's ID or filename
      *
-     * @return boolean
+     * @return bool
      */
     public function objectDelete($iObjectId)
     {
@@ -1412,7 +1411,7 @@ class Cdn
      *
      * @param mixed $iObjectId The object's ID or filename
      *
-     * @return boolean
+     * @return bool
      */
     public function objectRestore($iObjectId)
     {
@@ -1556,7 +1555,7 @@ class Cdn
      * @param mixed $newBucket      The ID or slug of the destination bucket, leave as null to copy to same bucket
      * @param array $options        An array of options to apply to the new object
      *
-     * @return boolean
+     * @return bool
      */
     public function objectCopy($sourceObjectId, $newBucket = null, $options = [])
     {
@@ -1572,7 +1571,7 @@ class Cdn
      * @param int   $sourceObjectId The ID of the object to move
      * @param mixed $newBucket      The ID or slug of the destination bucket
      *
-     * @return boolean
+     * @return bool
      */
     public function objectMove($sourceObjectId, $newBucket)
     {
@@ -1585,11 +1584,11 @@ class Cdn
     /**
      * Uploads an object and, if successful, removes the old object. Note that a new Object ID is created.
      *
-     * @param mixed   $object      The existing object's ID or filename
-     * @param mixed   $bucket      The bucket's ID or slug
-     * @param mixed   $replaceWith The replacement: $_FILE key, path or data stream
-     * @param array   $options     An array of options to apply to the upload
-     * @param boolean $bIsStream   Whether the replacement object is a data stream or not
+     * @param mixed $object      The existing object's ID or filename
+     * @param mixed $bucket      The bucket's ID or slug
+     * @param mixed $replaceWith The replacement: $_FILE key, path or data stream
+     * @param array $options     An array of options to apply to the upload
+     * @param bool  $bIsStream   Whether the replacement object is a data stream or not
      *
      * @return mixed                stdClass on success, false on failure
      */
@@ -1622,7 +1621,7 @@ class Cdn
      * @param mixed  $object The object's ID or filename
      * @param mixed  $bucket The bucket's ID or slug
      *
-     * @return boolean
+     * @return bool
      */
     public function objectIncrementCount($action, $object, $bucket = null)
     {
@@ -1671,8 +1670,8 @@ class Cdn
     /**
      * Returns a local path for an object ID
      *
-     * @param int     $iId      The object's ID
-     * @param boolean $bIsTrash Whether to look in the trash or not
+     * @param int  $iId      The object's ID
+     * @param bool $bIsTrash Whether to look in the trash or not
      *
      * @return mixed
      */
@@ -1712,7 +1711,7 @@ class Cdn
      * Creates a new object record in the DB; called from various other methods
      *
      * @param \stdClass $oData         The data to create the object with
-     * @param boolean   $bReturnObject Whether to return the object, or just it's ID
+     * @param bool      $bReturnObject Whether to return the object, or just it's ID
      *
      * @return mixed
      */
@@ -1844,9 +1843,9 @@ class Cdn
     /**
      * Returns an array of buckets
      *
-     * @param integer $iPage    The page to return
-     * @param integer $iPerPage The number of items to return per page
-     * @param array   $aData    An array of data to pass to getCountCommonBuckets()
+     * @param int   $iPage    The page to return
+     * @param int   $iPerPage The number of items to return per page
+     * @param array $aData    An array of data to pass to getCountCommonBuckets()
      *
      * @return array
      */
@@ -1927,9 +1926,9 @@ class Cdn
     /**
      * Returns an array of buckets as a flat array
      *
-     * @param integer $iPage    The page to return
-     * @param integer $iPerPage The number of items to return per page
-     * @param array   $aData    An array of data to pass to getCountCommonBuckets()
+     * @param int   $iPage    The page to return
+     * @param int   $iPerPage The number of items to return per page
+     * @param array $aData    An array of data to pass to getCountCommonBuckets()
      *
      * @return array
      */
@@ -1997,7 +1996,7 @@ class Cdn
      * @param string $sLabel        The label to give the bucket
      * @param array  $aAllowedTypes An array of file types the bucket will accept
      *
-     * @return boolean
+     * @return bool
      */
     public function bucketCreate($sSlug, $sLabel = null, $aAllowedTypes = [])
     {
@@ -2120,7 +2119,7 @@ class Cdn
      *
      * @param string
      *
-     * @return  boolean
+     * @return  bool
      **/
     public function bucketDestroy($bucket)
     {
@@ -2217,7 +2216,7 @@ class Cdn
      *
      * @param string $sFile the path to the file to check
      *
-     * @return  boolean
+     * @return  bool
      **/
     protected function detectAnimatedGif(string $sFile)
     {
@@ -2397,7 +2396,7 @@ class Cdn
     /**
      * Returns the URL for serving raw content from the CDN driver's source and not running it through the main CDN
      *
-     * @param integer $iObjectId The ID of the object to serve
+     * @param int $iObjectId The ID of the object to serve
      *
      * @return string
      * @throws UrlException
@@ -2462,7 +2461,7 @@ class Cdn
     /**
      * Calls the driver's public urlServeScheme method
      *
-     * @param boolean $force_download Whether to force the download
+     * @param bool $force_download Whether to force the download
      *
      * @return  string
      */
@@ -2652,12 +2651,12 @@ class Cdn
     /**
      * Checks the public cache for an image, and if it's there will return it's URL
      *
-     * @param string  $sBucket     The bucket slug
-     * @param string  $sObject     The name on disk
-     * @param string  $sExtension  The file extension
-     * @param string  $sCropMethod The crop method
-     * @param integer $iWidth      The width
-     * @param integer $iHeight     The height
+     * @param string $sBucket     The bucket slug
+     * @param string $sObject     The name on disk
+     * @param string $sExtension  The file extension
+     * @param string $sCropMethod The crop method
+     * @param int    $iWidth      The width
+     * @param int    $iHeight     The height
      *
      * @return null|string
      */
@@ -2697,12 +2696,12 @@ class Cdn
     /**
      * Generate the name of the cache file for the image
      *
-     * @param string  $sBucket     The bucket slug
-     * @param string  $sObject     The name on disk
-     * @param string  $sExtension  The file extension
-     * @param string  $sCropMethod The crop method
-     * @param integer $iWidth      The width
-     * @param integer $iHeight     The height
+     * @param string $sBucket     The bucket slug
+     * @param string $sObject     The name on disk
+     * @param string $sExtension  The file extension
+     * @param string $sCropMethod The crop method
+     * @param int    $iWidth      The width
+     * @param int    $iHeight     The height
      *
      * @return string
      */
@@ -2898,7 +2897,7 @@ class Cdn
     /**
      * Determines which scheme to use for a user's avatar and returns the appropriate one
      *
-     * @param integer $iUserId The User ID to check
+     * @param int $iUserId The User ID to check
      *
      * @return string
      */
@@ -2928,9 +2927,9 @@ class Cdn
     /**
      * Generates an expiring URL for an object
      *
-     * @param integer $iObjectId      The object's ID
-     * @param integer $expires        The length of time the URL should be valid for, in seconds
-     * @param boolean $bForceDownload Whether to force the download or not
+     * @param int  $iObjectId      The object's ID
+     * @param int  $expires        The length of time the URL should be valid for, in seconds
+     * @param bool $bForceDownload Whether to force the download or not
      *
      * @return string
      */
@@ -3027,7 +3026,7 @@ class Cdn
      * @param string $sExtension  The extension to test
      * @param array  $aAllowedExt An array of valid extensions
      *
-     * @return boolean
+     * @return bool
      */
     protected function isAllowedExt($sExtension, array $aAllowedExt)
     {
@@ -3153,8 +3152,8 @@ class Cdn
     /**
      * Formats a file size given in bytes into a human-friendly string
      *
-     * @param integer $iBytes     The file size, in bytes
-     * @param integer $iPrecision The precision to use
+     * @param int $iBytes     The file size, in bytes
+     * @param int $iPrecision The precision to use
      *
      * @return string
      */
@@ -3188,7 +3187,7 @@ class Cdn
      *
      * @param string $sSize The string to convert to bytes
      *
-     * @return integer
+     * @return int
      */
     public static function returnBytes($sSize): int
     {
@@ -3349,7 +3348,7 @@ class Cdn
             throw new ValidationException('Invalid type "' . gettype($mExpire) . '" passed to ' . __METHOD__);
         }
 
-        /** @var Token $oModel */
+        /** @var Model\Token $oModel */
         $oModel = Factory::model('Token', Constants::MODULE_SLUG);
         $oToken = $oModel->create(['expires' => $sExpire], true);
 
@@ -3381,7 +3380,7 @@ class Cdn
             return false;
         }
 
-        /** @var Token $oModel */
+        /** @var Model\Token $oModel */
         $oModel = Factory::model('Token', Constants::MODULE_SLUG);
         return (bool) $oModel->getByToken($sToken, ['where' => [['expires >', 'NOW()', false]]]);
     }
