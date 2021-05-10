@@ -48,7 +48,10 @@ class General implements Interfaces\Component\Settings
         /** @var Setting $oDriver */
         $oDriver = Factory::factory('ComponentSetting');
         $oDriver
-            ->setKey($oDriverService->getSettingKey())
+            ->setKey($oDriverService->isMultiple()
+                ? $oDriverService->getSettingKey() . '[]'
+                : $oDriverService->getSettingKey()
+            )
             ->setType($oDriverService->isMultiple()
                 ? Form::FIELD_DROPDOWN_MULTIPLE
                 : Form::FIELD_DROPDOWN
