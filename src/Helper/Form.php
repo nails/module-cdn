@@ -339,7 +339,7 @@ class Form
                 //  @todo find a way to not be evil
                 $aValues = eval('return !empty(' . $sPostKey . ') ? ' . $sPostKey . ' : [];');
             } else {
-                $aValues = ArrayHelper::getFromArray($_field_key, $_POST);
+                $aValues = ArrayHelper::get($_field_key, $_POST);
             }
         } else {
             $aValues = $_field_default;
@@ -411,35 +411,35 @@ class Form
     public static function form_field_cdn_object_picker_multi_with_label($aConfig, $sTip = ''): string
     {
         //  Set var defaults
-        $sFieldId        = ArrayHelper::getFromArray('id', $aConfig, null);
-        $sFieldType      = ArrayHelper::getFromArray('type', $aConfig, 'text');
-        $sFieldOddEven   = ArrayHelper::getFromArray('oddeven', $aConfig, null);
-        $sFieldKey       = ArrayHelper::getFromArray('key', $aConfig, null);
-        $sFieldLabel     = ArrayHelper::getFromArray('label', $aConfig, null);
-        $sFieldDefault   = array_filter((array) ArrayHelper::getFromArray('default', $aConfig));
-        $sFieldSubLabel  = ArrayHelper::getFromArray('sub_label', $aConfig, null);
-        $sFieldRequired  = ArrayHelper::getFromArray('required', $aConfig, false);
-        $sFieldReadonly  = ArrayHelper::getFromArray('readonly', $aConfig, false);
-        $sFieldError     = ArrayHelper::getFromArray('error', $aConfig, false);
-        $sFieldClass     = ArrayHelper::getFromArray('class', $aConfig, '');
-        $sFieldData      = ArrayHelper::getFromArray('data', $aConfig, []);
-        $sFieldInfo      = ArrayHelper::getFromArray('info', $aConfig, false);
-        $sFieldInfoClass = ArrayHelper::getFromArray('info_class', $aConfig, false);
-        $sFieldTip       = ArrayHelper::getFromArray('tip', $aConfig, $sTip);
-        $sFieldSortable  = ArrayHelper::getFromArray('sortable', $aConfig, false);
+        $sFieldId        = ArrayHelper::get('id', $aConfig, null);
+        $sFieldType      = ArrayHelper::get('type', $aConfig, 'text');
+        $sFieldOddEven   = ArrayHelper::get('oddeven', $aConfig, null);
+        $sFieldKey       = ArrayHelper::get('key', $aConfig, null);
+        $sFieldLabel     = ArrayHelper::get('label', $aConfig, null);
+        $sFieldDefault   = array_filter((array) ArrayHelper::get('default', $aConfig));
+        $sFieldSubLabel  = ArrayHelper::get('sub_label', $aConfig, null);
+        $sFieldRequired  = ArrayHelper::get('required', $aConfig, false);
+        $sFieldReadonly  = ArrayHelper::get('readonly', $aConfig, false);
+        $sFieldError     = ArrayHelper::get('error', $aConfig, false);
+        $sFieldClass     = ArrayHelper::get('class', $aConfig, '');
+        $sFieldData      = ArrayHelper::get('data', $aConfig, []);
+        $sFieldInfo      = ArrayHelper::get('info', $aConfig, false);
+        $sFieldInfoClass = ArrayHelper::get('info_class', $aConfig, false);
+        $sFieldTip       = ArrayHelper::get('tip', $aConfig, $sTip);
+        $sFieldSortable  = ArrayHelper::get('sortable', $aConfig, false);
 
-        $sFieldObjectKey        = ArrayHelper::getFromArray('object_key', $aConfig, 'object_id');
-        $sFieldTableLabelObject = ArrayHelper::getFromArray('table_label_object', $aConfig, 'File');
+        $sFieldObjectKey        = ArrayHelper::get('object_key', $aConfig, 'object_id');
+        $sFieldTableLabelObject = ArrayHelper::get('table_label_object', $aConfig, 'File');
 
-        $sFieldLabelKey        = ArrayHelper::getFromArray('label_key', $aConfig, 'label');
-        $sFieldTableLabelLabel = ArrayHelper::getFromArray('table_label_label', $aConfig, 'Label');
+        $sFieldLabelKey        = ArrayHelper::get('label_key', $aConfig, 'label');
+        $sFieldTableLabelLabel = ArrayHelper::get('table_label_label', $aConfig, 'Label');
 
         //  CDN Specific
         $sFieldBucket = isset($aConfig['bucket']) ? $aConfig['bucket'] : null;
 
         $aTip = [
-            'class' => ArrayHelper::getFromArray('class', (array) $sFieldTip, null),
-            'title' => ArrayHelper::getFromArray('title', (array) $sFieldTip, $sFieldTip),
+            'class' => ArrayHelper::get('class', (array) $sFieldTip, null),
+            'title' => ArrayHelper::get('title', (array) $sFieldTip, $sFieldTip),
         ];
 
         $sFieldIdTop    = $sFieldId ? 'id="field-' . $sFieldId . '"' : '';
@@ -561,7 +561,7 @@ class Form
                 //  @todo find a way to not be evil
                 $aValues = eval('return !empty(' . $sPostKey . ') ? ' . $sPostKey . ' : [];');
             } else {
-                $aValues = ArrayHelper::getFromArray($sFieldKey, $_POST, []);
+                $aValues = ArrayHelper::get($sFieldKey, $_POST, []);
             }
 
         } else {
