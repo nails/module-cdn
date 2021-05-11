@@ -46,11 +46,6 @@ class CdnObject extends Base
     public function __construct()
     {
         parent::__construct();
-        $this->searchableFields = [
-            'id',
-            'filename',
-            'filename_display',
-        ];
         $this
             ->addExpandableField([
                 'trigger'   => 'bucket',
@@ -60,6 +55,22 @@ class CdnObject extends Base
                 'provider'  => Constants::MODULE_SLUG,
                 'id_column' => 'bucket_id',
             ]);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns the searchable columns for this module
+     *
+     * @return string[]
+     */
+    public function getSearchableColumns(): array
+    {
+        return [
+            'id',
+            'filename',
+            'filename_display'
+        ];
     }
 
     // --------------------------------------------------------------------------
