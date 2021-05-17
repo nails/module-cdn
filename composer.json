@@ -55,6 +55,12 @@
             "Nails\\Cdn\\": "src/"
         }
     },
+    "suggest": {
+        "nails/driver-cdn-local": "Use the local file system for file storage.",
+        "nails/driver-cdn-awslocal": "Use AWS S3 for file storage.",
+        "nails/driver-cdn-digital-ocean": "Use DigitalOcean Spaces for file storage.",
+        "nails/driver-cdn-google-cloud-storage": "Use Google Cloud Storage for file storage."
+    },
     "extra": {
         "nails": {
             "moduleName": "cdn",
