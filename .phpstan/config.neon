@@ -4,3 +4,7 @@ parameters:
         - ../helpers
         - ../src
         - ../tests
+    scanFiles:
+        - ../vendor/codeigniter/framework/system/helpers/form_helper.php
+        - ../vendor/nails/common/helpers/url.php
+        - ../vendor/nails/module-auth/helpers/user.php

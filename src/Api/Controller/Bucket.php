@@ -13,6 +13,7 @@
 namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api;
+use Nails\Api\Factory\ApiResponse;
 use Nails\Cdn\Constants;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
@@ -44,19 +45,19 @@ class Bucket extends Api\Controller\CrudController
      */
     public function getList()
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            throw new Api\Exception\ApiException(
-                'You do not have permission to access this resource',
-                $oHttpCodes::STATUS_UNAUTHORIZED
-            );
-        }
-
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
         /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
+
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            throw new Api\Exception\ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
 
         $iBucketId = (int) $oInput->get('bucket_id') ?: null;
         $iPage     = (int) $oInput->get('page') ?: 1;
@@ -95,7 +96,7 @@ class Bucket extends Api\Controller\CrudController
      *
      * @return array
      */
-    public function postIndex()
+    public function create(): ApiResponse
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
@@ -117,7 +118,7 @@ class Bucket extends Api\Controller\CrudController
             );
         }
 
-        return parent::postIndex();
+        return parent::create();
     }
 
     // --------------------------------------------------------------------------

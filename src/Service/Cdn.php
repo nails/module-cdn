@@ -25,6 +25,7 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Factory\HttpResponse;
+use Nails\Common\Helper\ArrayHelper;
 use Nails\Common\Helper\Directory;
 use Nails\Common\Interfaces\Service\FileCache\Driver;
 use Nails\Common\Service\Database;
@@ -264,8 +265,8 @@ class Cdn
             function ($sDimensions) {
                 if (is_array($sDimensions)) {
                     return [
-                        (int) getFromArray('width', $sDimensions, getFromArray(0, $sDimensions)),
-                        (int) getFromArray('height', $sDimensions, getFromArray(1, $sDimensions)),
+                        (int) ArrayHelper::get(['width', 0], $sDimensions),
+                        (int) ArrayHelper::get(['height', 1], $sDimensions),
                     ];
                 } elseif (preg_match('/^\d+x\d+$/i', $sDimensions)) {
                     return explode('x', strtolower($sDimensions));
@@ -778,7 +779,7 @@ class Cdn
 
             //  Support creating buckets with additional parameters
             if (is_array($mBucket)) {
-                $sBucket     = getFromArray(['slug', 0], $mBucket);
+                $sBucket     = ArrayHelper::get(['slug', 0], $mBucket);
                 $aBucketData = $mBucket;
                 unset($aBucketData['slug']);
                 unset($aBucketData[0]);
@@ -850,9 +851,9 @@ class Cdn
                 /** @var \DateTime $oNow */
                 $oNow = Factory::factory('DateTie');
 
-                $sMime    = getFromArray(1, $aMatches);
-                $bEncoded = getFromArray(3, $aMatches) === 'base64';
-                $sData    = getFromArray(4, $aMatches);
+                $sMime    = ArrayHelper::get(1, $aMatches);
+                $bEncoded = ArrayHelper::get(3, $aMatches) === 'base64';
+                $sData    = ArrayHelper::get(4, $aMatches);
                 $sExt     = $this->getExtFromMime($sMime);
 
                 $sCacheFile  = $this->saveDataToCacheFile($bEncoded ? base64_decode($sData) : $sData);
@@ -896,7 +897,7 @@ class Cdn
                 }
 
                 $oData->file = $sCacheFile;
-                $oData->name = getFromArray('filename_display', $aOptions, $_FILES[$object]['name']);
+                $oData->name = ArrayHelper::get('filename_display', $aOptions, $_FILES[$object]['name']);
 
             } else {
                 throw new ObjectCreateException(sprintf(
@@ -1172,10 +1173,10 @@ class Cdn
 
         return $oHttpClient
             ->baseUri(
-                getFromArray('scheme', $aUrl, 'http') . '://' .
-                getFromArray('host', $aUrl) . '/'
+                ArrayHelper::get('scheme', $aUrl, 'http') . '://' .
+                ArrayHelper::get('host', $aUrl) . '/'
             )
-            ->path(getFromArray('path', $aUrl))
+            ->path(ArrayHelper::get('path', $aUrl))
             ->execute();
     }
 
@@ -2010,7 +2011,7 @@ class Cdn
             ];
         }
 
-        $sSlug = getFromArray('slug', $aBucketData);
+        $sSlug = ArrayHelper::get('slug', $aBucketData);
 
         //  Test if bucket exists, if it does stop, job done.
         $oBucket = $this->getBucket($sSlug);
@@ -3289,7 +3290,7 @@ class Cdn
             );
         }, $this->aPermittedDimensions);
 
-        arraySortMulti($aDimensions, 'width');
+        ArrayHelper::arraySortMulti($aDimensions, 'width');
 
         return array_values($aDimensions);
     }

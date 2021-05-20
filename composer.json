@@ -36,8 +36,10 @@
     ],
     "require": {
         "nails/common": "dev-develop",
+        "nails/module-api": "dev-develop",
         "nails/module-auth": "dev-develop",
         "nails/module-console": "dev-develop",
+        "nails/module-cron": "dev-develop",
         "sybio/gif-creator": "~1.0.0",
         "sybio/gif-frame-extractor": "~1.0.0",
         "masterexploder/phpthumb": "dev-master"
