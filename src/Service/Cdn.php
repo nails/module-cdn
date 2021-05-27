@@ -849,7 +849,7 @@ class Cdn
                  */
 
                 /** @var \DateTime $oNow */
-                $oNow = Factory::factory('DateTie');
+                $oNow = Factory::factory('DateTime');
 
                 $sMime    = ArrayHelper::get(1, $aMatches);
                 $bEncoded = ArrayHelper::get(3, $aMatches) === 'base64';
