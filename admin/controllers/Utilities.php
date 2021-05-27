@@ -96,7 +96,7 @@ class Utilities extends BaseAdmin
                         //  @TODO
                         case 'file':
 
-                            $this->data['message'] = '<strong>TODO:</strong> find orphaned files.';
+                            $this->data['warning'] = '<strong>TODO:</strong> find orphaned files.';
                             break;
 
                         //  Invalid request
@@ -118,13 +118,13 @@ class Utilities extends BaseAdmin
                             //  @todo: keep the unset(), it prevents the table from rendering
                             case 'purge':
 
-                                $this->data['message'] = '<strong>TODO:</strong> purge results.';
+                                $this->data['warning'] = '<strong>TODO:</strong> purge results.';
                                 unset($this->data['orphans']);
                                 break;
 
                             case 'create':
 
-                                $this->data['message'] = '<strong>TODO:</strong> create objects using results.';
+                                $this->data['warning'] = '<strong>TODO:</strong> create objects using results.';
                                 unset($this->data['orphans']);
                                 break;
 
