@@ -263,8 +263,8 @@ class Manager extends BaseAdmin
      */
     private function importCancel(int $iImportId)
     {
-        /** @var Session $oSession */
-        $oSession = Factory::service('Session');
+        /** @var UserFeedback $oUserFeedback */
+        $oUserFeedback = Factory::service('UserFeedback');
         /** @var Import $oImportModel */
         $oImportModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
 
@@ -284,10 +284,10 @@ class Manager extends BaseAdmin
                 throw new NailsException($oImportModel->lastError());
             }
 
-            $oSession->setFlashData('success', 'Import cancelled');
+            $oUserFeedback->success('Import cancelled');
 
         } catch (\Exception $e) {
-            $oSession->setFlashData('error', 'Failed to cancel import. ' . $e->getMessage());
+            $oUserFeedback->error('Failed to cancel import. ' . $e->getMessage());
         }
 
         redirect('admin/cdn/manager/import');
