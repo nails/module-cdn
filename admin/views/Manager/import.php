@@ -50,7 +50,7 @@ use Nails\Cdn\Resource\CdnObject\Import;
         ?>
     </fieldset>
     <p>
-        <button tyoe="submit" class="btn btn-primary">
+        <button type="submit" class="btn btn-primary">
             Import
         </button>
     </p>
