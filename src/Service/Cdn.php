@@ -1274,19 +1274,10 @@ class Cdn
         switch ($iErrorNumber) {
 
             case UPLOAD_ERR_INI_SIZE:
-
-                $sMax = static::maxUploadSize();
-
-                if (!is_null($sMax)) {
-                    return sprintf(
-                        'The file exceeds the maximum size accepted by this server (which is %s).',
-                        $sMax
-                    );
-
-                } else {
-                    return 'The file exceeds the maximum size accepted by this server.';
-                }
-                break;
+                return sprintf(
+                    'The file exceeds the maximum size accepted by this server%s.',
+                    $sMax ? '(which is ' . $sMax . ')' : ''
+                );
 
             case UPLOAD_ERR_FORM_SIZE:
                 return 'The file exceeds the maximum size accepted by this server.';
