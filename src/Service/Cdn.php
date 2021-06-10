@@ -1269,59 +1269,46 @@ class Cdn
      *
      * @return string
      */
-    static function getUploadError($iErrorNumber)
+    static function getUploadError(int $iErrorNumber): string
     {
-        //  Upload was aborted, I wonder why?
         switch ($iErrorNumber) {
 
             case UPLOAD_ERR_INI_SIZE:
 
-                $iMaxFileSize = function_exists('ini_get') ? ini_get('upload_max_filesize') : null;
+                $sMax = static::maxUploadSize();
 
-                if (!is_null($iMaxFileSize)) {
-
-                    $iMaxFileSize = static::returnBytes($iMaxFileSize);
-                    $iMaxFileSize = static::formatBytes($iMaxFileSize);
-                    $sError       = sprintf(
+                if (!is_null($sMax)) {
+                    return sprintf(
                         'The file exceeds the maximum size accepted by this server (which is %s).',
-                        $iMaxFileSize
+                        $sMax
                     );
 
                 } else {
-                    $sError = 'The file exceeds the maximum size accepted by this server.';
+                    return 'The file exceeds the maximum size accepted by this server.';
                 }
                 break;
 
             case UPLOAD_ERR_FORM_SIZE:
-                $sError = 'The file exceeds the maximum size accepted by this server.';
-                break;
+                return 'The file exceeds the maximum size accepted by this server.';
 
             case UPLOAD_ERR_PARTIAL:
-                $sError = 'The file was only partially uploaded.';
-                break;
+                return 'The file was only partially uploaded.';
 
             case UPLOAD_ERR_NO_FILE:
-                $sError = 'No file was uploaded.';
-                break;
+                return 'No file was uploaded.';
 
             case UPLOAD_ERR_NO_TMP_DIR:
-                $sError = 'This server cannot accept uploads at this time.';
-                break;
+                return 'This server cannot accept uploads at this time.';
 
             case UPLOAD_ERR_CANT_WRITE:
-                $sError = 'Failed to write uploaded file to disk, you can try again.';
-                break;
+                return 'Failed to write uploaded file to disk, you can try again.';
 
             case UPLOAD_ERR_EXTENSION:
-                $sError = 'The file failed to upload due to a server configuration.';
-                break;
+                return 'The file failed to upload due to a server configuration.';
 
             default:
-                $sError = 'The file failed to upload.';
-                break;
+                return 'The file failed to upload.';
         }
-
-        return $sError;
     }
 
     // --------------------------------------------------------------------------
@@ -3228,8 +3215,6 @@ class Cdn
             function_exists('ini_get') ? returnBytes(ini_get('upload_max_filesize')) : null,
             function_exists('ini_get') ? returnBytes(ini_get('post_max_size')) : null,
         ];
-
-        // max_file_uploads
 
         if ($mBucket) {
             /** @var Model\Bucket $oModel */
