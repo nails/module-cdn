@@ -238,14 +238,17 @@ class Manager extends BaseAdmin
         }
 
         $this->data['page']->title     = 'Import via URL';
-        $this->data['sMaxUploadSize']      = maxUploadSize();
+        $this->data['sMaxUploadSize']  = maxUploadSize();
         $this->data['aBuckets']        = $aBuckets;
         $this->data['bImportAccepted'] = (bool) $oSession->getFlashData('import_accepted');
         $this->data['aImports']        = $oImportModel->getAll([
             new Expand('bucket'),
             'where' => [
-                ['created_by', activeUser('id')],
-                'created >= DATE_SUB(NOW(), INTERVAL 24 HOUR)',
+                [$oImportModel->getColumnCreatedBy(), activeUser('id')],
+                sprintf(
+                    '%s >= DATE_SUB(NOW(), INTERVAL 24 HOUR)',
+                    $oImportModel->getColumnCreated()
+                ),
             ],
         ]);
 
