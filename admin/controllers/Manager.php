@@ -230,10 +230,10 @@ class Manager extends BaseAdmin
                 redirect('admin/cdn/manager/import');
 
             } catch (ValidationException $e) {
-                $this->data['error'] = sprintf(
+                $this->oUserFeedback->error(sprintf(
                     'Failed to import file. %s',
                     $e->getMessage()
-                );
+                ));
             }
         }
 
@@ -266,8 +266,6 @@ class Manager extends BaseAdmin
      */
     private function importCancel(int $iImportId)
     {
-        /** @var UserFeedback $oUserFeedback */
-        $oUserFeedback = Factory::service('UserFeedback');
         /** @var Import $oImportModel */
         $oImportModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
 
@@ -287,10 +285,10 @@ class Manager extends BaseAdmin
                 throw new NailsException($oImportModel->lastError());
             }
 
-            $oUserFeedback->success('Import cancelled');
+            $this->oUserFeedback->success('Import cancelled');
 
         } catch (\Exception $e) {
-            $oUserFeedback->error('Failed to cancel import. ' . $e->getMessage());
+            $this->oUserFeedback->error('Failed to cancel import. ' . $e->getMessage());
         }
 
         redirect('admin/cdn/manager/import');

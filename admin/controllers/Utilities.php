@@ -26,6 +26,7 @@ class Utilities extends BaseAdmin
 {
     /**
      * Announces this controller's navGroups
+     *
      * @return \stdClass
      */
     public static function announce()
@@ -44,6 +45,7 @@ class Utilities extends BaseAdmin
 
     /**
      * Returns an array of permissions which can be configured for the user
+     *
      * @return array
      */
     public static function permissions(): array
@@ -57,6 +59,7 @@ class Utilities extends BaseAdmin
 
     /**
      * Find orphaned CDN objects
+     *
      * @return void
      */
     public function index()
@@ -67,7 +70,9 @@ class Utilities extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
+        /** @var \Nails\Common\Service\Input $oInput */
         $oInput = Factory::service('Input');
+
         if ($oInput::isCli()) {
             $this->indexCli();
         } else {
@@ -95,14 +100,13 @@ class Utilities extends BaseAdmin
 
                         //  @TODO
                         case 'file':
-
-                            $this->data['warning'] = '<strong>TODO:</strong> find orphaned files.';
+                            $this->oUserFeedback->warning('<strong>TODO:</strong> find orphaned files.');
                             break;
 
                         //  Invalid request
                         default:
 
-                            $this->data['error'] = 'Invalid search type.';
+                            $this->oUserFeedback->error('Invalid search type.');
                             break;
                     }
 
@@ -111,35 +115,31 @@ class Utilities extends BaseAdmin
                         switch ($parser) {
 
                             case 'list':
-
-                                $this->data['success'] = '<strong>Search complete!</strong> your results are show below.';
+                                $this->oUserFeedback->success('<strong>Search complete!</strong> Your results are show below.');
                                 break;
 
                             //  @todo: keep the unset(), it prevents the table from rendering
                             case 'purge':
-
-                                $this->data['warning'] = '<strong>TODO:</strong> purge results.';
+                                $this->oUserFeedback->warning('<strong>TODO:</strong> purge results.');
                                 unset($this->data['orphans']);
                                 break;
 
                             case 'create':
-
-                                $this->data['warning'] = '<strong>TODO:</strong> create objects using results.';
+                                $this->oUserFeedback->warning('<strong>TODO:</strong> create objects using results.');
                                 unset($this->data['orphans']);
                                 break;
 
                             //  Invalid request
                             default:
 
-                                $this->data['error'] = 'Invalid result parse selected.';
+                                $this->oUserFeedback->error('Invalid result parse selected.');
                                 unset($this->data['orphans']);
                                 break;
                         }
                     }
 
                 } else {
-
-                    $this->data['error'] = 'An error occurred. ' . $error;
+                    $this->oUserFeedback->error('An error occurred. ' . $error);
                 }
             }
 
@@ -157,6 +157,7 @@ class Utilities extends BaseAdmin
 
     /**
      * Find orphaned CDN objects (command line)
+     *
      * @return void
      */
     protected function indexCli()
