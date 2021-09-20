@@ -37,6 +37,7 @@ class Import extends Base
     const STATUS_IN_PROGRESS = 'IN_PROGRESS';
     const STATUS_COMPLETE    = 'COMPLETE';
     const STATUS_ERROR       = 'ERROR';
+    const STATUS_CANCELLED   = 'CANCELLED';
 
     // --------------------------------------------------------------------------
 
