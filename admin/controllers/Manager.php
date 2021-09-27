@@ -25,6 +25,7 @@ use Nails\Common\Exception\NailsException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Head;
 use Nails\Common\Helper\Model\Expand;
+use Nails\Common\Helper\Model\Where;
 use Nails\Common\Service\Asset;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\HttpCodes;
@@ -176,7 +177,9 @@ class Manager extends BaseAdmin
         /** @var Import $oImportModel */
         $oImportModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
 
-        $aBuckets = $oBucketModel->getAllFlat();
+        $aBuckets = $oBucketModel->getAllFlat([
+            new Where('is_hidden', false),
+        ]);
 
         if ($oInput->post()) {
             try {
