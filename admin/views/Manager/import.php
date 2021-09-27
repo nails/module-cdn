@@ -38,7 +38,7 @@ use Nails\Cdn\Resource\CdnObject\Import;
         echo form_field_url([
             'key'   => 'url',
             'label' => 'Public URL',
-            'info'  => sprinf(
+            'info'  => sprintf(
                 '<a href="%s" target="_blank">Learn how to make your files available in a suitable manner</a>',
                 'https://docs.nailsapp.co.uk/modules/cdn/admin#import-via-url'
             ),
