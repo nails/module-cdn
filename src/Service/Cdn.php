@@ -21,6 +21,7 @@ use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
+use Nails\Common\Exception\Database\QueryException;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
@@ -455,7 +456,18 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        $aObjects    = $oDb->get(Config::get('NAILS_DB_PREFIX') . 'cdn_object o')->result();
+        try {
+
+            /**
+             * Use try/catch to catch query exceptions from potentially malformed/malicious
+             * URLs and return no results.
+             */
+            $aObjects = $oDb->get(Config::get('NAILS_DB_PREFIX') . 'cdn_object o')->result();
+
+        } catch (\Throwable $e) {
+            return [];
+        }
+
         $iNumObjects = count($aObjects);
 
         for ($i = 0; $i < $iNumObjects; $i++) {
