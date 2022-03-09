@@ -37,7 +37,7 @@ $inpScaling
 
         switch ($(this).val()) {
             case 'CROP' :
-                $fieldSize.show();
+            case 'SCALE' :
                 $fieldSize.show();
                 break;
 
