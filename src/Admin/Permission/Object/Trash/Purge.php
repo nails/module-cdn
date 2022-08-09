@@ -1,6 +1,6 @@
 <?php
 
-namespace Nails\Cdn\Admin\Permission\Object;
+namespace Nails\Cdn\Admin\Permission\Object\Trash;
 
 use Nails\Admin\Interfaces\Permission;
 
