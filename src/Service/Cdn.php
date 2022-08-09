@@ -2422,7 +2422,7 @@ class Cdn
                  * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
                  */
 
-                if (userHasPermission('admin:cdn:trash:browse')) {
+                if (userHasPermission(\Nails\Cdn\Admin\Permission\Object\Trash\Browse::class)) {
                     $oObj = $this->getObjectFromTrash($iObjectId);
                     if (!$oObj) {
                         //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic

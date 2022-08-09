@@ -14,6 +14,7 @@ namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api;
 use Nails\Api\Factory\ApiResponse;
+use Nails\Cdn\Admin\Permission;
 use Nails\Cdn\Constants;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
@@ -52,7 +53,7 @@ class Bucket extends Api\Controller\CrudController
         /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
 
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission(Permission\Object\Browse::class)) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -103,7 +104,7 @@ class Bucket extends Api\Controller\CrudController
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:bucket:create')) {
+        if (!userHasPermission(Permission\Bucket\Create::class)) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to create this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED

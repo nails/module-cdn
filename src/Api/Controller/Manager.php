@@ -13,6 +13,7 @@
 namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api;
+use Nails\Cdn\Admin\Permission;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
 use Nails\Factory;
@@ -38,7 +39,7 @@ class Manager extends Api\Controller\Base
      */
     public function getUrl()
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission(Permission\Object\Browse::class)) {
             /** @var HttpCodes $oHttpCodes */
             $oHttpCodes = Factory::service('HttpCodes');
             throw new Api\Exception\ApiException(

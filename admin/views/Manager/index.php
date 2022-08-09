@@ -101,7 +101,7 @@
                 </li>
                 <!-- /ko -->
                 <?php
-                if (userHasPermission('admin:cdn:manager:bucket:create')) {
+                if (userHasPermission(\Nails\Cdn\Admin\Permission\Bucket\Create::class)) {
                     ?>
                     <!-- ko if: !$root.showAddBucket() -->
                     <li class="manager__browse__buckets__list__action">
@@ -134,7 +134,7 @@
             </div>
             <!-- /ko -->
             <?php
-            if (userHasPermission('admin:cdn:manager:object:create')) {
+            if (userHasPermission(\Nails\Cdn\Admin\Permission\Object\Create::class)) {
                 ?>
                 <!-- ko if: canUpload() -->
                 <div class="manager__upload" data-bind="

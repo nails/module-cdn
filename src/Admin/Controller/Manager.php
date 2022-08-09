@@ -10,12 +10,13 @@
  * @link
  */
 
-namespace Nails\Admin\Cdn;
+namespace Nails\Cdn\Admin\Controller;
 
+use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
+use Nails\Cdn\Admin\Permission;
 use Nails\Cdn\Constants;
-use Nails\Cdn\Controller\BaseAdmin;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Model\Bucket;
 use Nails\Cdn\Model\CdnObject\Import;
@@ -37,9 +38,9 @@ use Nails\Factory;
 /**
  * Class Manager
  *
- * @package Nails\Admin\Cdn
+ * @package Nails\Cdn\Admin\Controller
  */
-class Manager extends BaseAdmin
+class Manager extends Base
 {
     /**
      * Announces this controller's navGroups
@@ -48,7 +49,7 @@ class Manager extends BaseAdmin
      */
     public static function announce()
     {
-        if (userHasPermission('admin:cdn:manager:object:browse')) {
+        if (userHasPermission(Permission\Object\Browse::class)) {
             /** @var Nav $oNavGroup */
             $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
             $oNavGroup
@@ -65,23 +66,6 @@ class Manager extends BaseAdmin
 
     // --------------------------------------------------------------------------
 
-    public static function permissions(): array
-    {
-        $aPermissions = parent::permissions();
-
-        $aPermissions['object:browse']  = 'Can browse existing objects';
-        $aPermissions['object:create']  = 'Can create new objects';
-        $aPermissions['object:import']  = 'Can import via URL';
-        $aPermissions['object:delete']  = 'Can delete existing objects';
-        $aPermissions['object:restore'] = 'Can restore deleted objects';
-        $aPermissions['object:purge']   = 'Can purge deleted objects';
-        $aPermissions['bucket:create']  = 'Can create new buckets';
-
-        return $aPermissions;
-    }
-
-    // --------------------------------------------------------------------------
-
     /**
      * Browse CDN Objects
      *
@@ -89,7 +73,7 @@ class Manager extends BaseAdmin
      */
     public function index()
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission(Permission\Object\Browse::class)) {
             unauthorised();
         }
 
@@ -138,7 +122,7 @@ class Manager extends BaseAdmin
      */
     public function import()
     {
-        if (!userHasPermission('admin:cdn:manager:object:import')) {
+        if (!userHasPermission(Permission\Object\Import::class)) {
             unauthorised();
         }
 
