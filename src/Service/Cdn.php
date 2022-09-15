@@ -170,6 +170,7 @@ class Cdn
             'png',
             'jpg',
             'gif',
+            'svg',
             //  Documents & Text
             'pdf',
             'doc',
