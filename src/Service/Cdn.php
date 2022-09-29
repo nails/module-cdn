@@ -3140,6 +3140,7 @@ class Cdn
      * @param int $iPrecision The precision to use
      *
      * @return string
+     * @deprecated
      */
     public static function formatBytes(int $iBytes, int $iPrecision = 2): string
     {
@@ -3156,6 +3157,7 @@ class Cdn
      * @param string $sSize The string to convert to bytes
      *
      * @return int
+     * @deprecated
      */
     public static function returnBytes($sSize): int
     {
@@ -3169,7 +3171,7 @@ class Cdn
      * Returns the configured maximum upload size for this system by inspecting
      * upload_max_filesize and post_max_size, if available.
      *
-     * @param bool            $bFormat Whether to format the string using formatBytes
+     * @param bool            $bFormat Whether to format the string using File::formatBytes
      * @param int|string|null $mBucket Whether to factor a bucket's max upload size into the equation
      *
      * @return mixed|string|null
