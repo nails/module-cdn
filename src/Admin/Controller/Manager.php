@@ -214,7 +214,7 @@ class Manager extends Base
                 }
 
                 $oSession->setFlashData('import_accepted', true);
-                redirect('admin/cdn/manager/import');
+                redirect(self::url());
 
             } catch (ValidationException $e) {
                 $this->oUserFeedback->error(sprintf(
@@ -278,6 +278,6 @@ class Manager extends Base
             $this->oUserFeedback->error('Failed to cancel import. ' . $e->getMessage());
         }
 
-        redirect('admin/cdn/manager/import');
+        redirect(self::url());
     }
 }

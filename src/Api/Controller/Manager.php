@@ -53,7 +53,7 @@ class Manager extends Api\Controller\Base
 
         return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
             ->setData(siteUrl(
-                'admin/cdn/manager?' .
+                \Nails\Cdn\Admin\Controller\Manager::url() . '?' .
                 http_build_query([
                     'bucket'   => $oInput->get('bucket'),
                     'callback' => $oInput->get('callback'),
