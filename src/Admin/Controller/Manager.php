@@ -228,22 +228,22 @@ class Manager extends Base
             }
         }
 
-        $this->data['page']->title     = 'Import via URL';
-        $this->data['sMaxUploadSize']  = maxUploadSize();
-        $this->data['aBuckets']        = $aBuckets;
-        $this->data['bImportAccepted'] = (bool) $oSession->getFlashData('import_accepted');
-        $this->data['aImports']        = $oImportModel->getAll([
-            new Expand('bucket'),
-            'where' => [
-                [$oImportModel->getColumnCreatedBy(), activeUser('id')],
-                sprintf(
-                    '%s >= DATE_SUB(NOW(), INTERVAL 24 HOUR)',
-                    $oImportModel->getColumnCreated()
-                ),
-            ],
-        ]);
-
-        Helper::loadView('import');
+        $this
+            ->setData('sMaxUploadSize', maxUploadSize())
+            ->setData('aBuckets', $aBuckets)
+            ->setData('bImportAccepted', (bool) $oSession->getFlashData('import_accepted'))
+            ->setData('aImports', $oImportModel->getAll([
+                new Expand('bucket'),
+                'where' => [
+                    [$oImportModel->getColumnCreatedBy(), activeUser('id')],
+                    sprintf(
+                        '%s >= DATE_SUB(NOW(), INTERVAL 24 HOUR)',
+                        $oImportModel->getColumnCreated()
+                    ),
+                ],
+            ]))
+            ->setTitles(['Import via URL'])
+            ->loadView('import');
     }
 
     // --------------------------------------------------------------------------

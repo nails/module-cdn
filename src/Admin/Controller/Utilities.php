@@ -132,11 +132,9 @@ class Utilities extends Base
 
             // --------------------------------------------------------------------------
 
-            $this->data['page']->title = 'CDN: Find Orphaned Objects';
-
-            // --------------------------------------------------------------------------
-
-            Helper::loadView('index');
+            $this
+                ->setTitles(['CDN', 'Find Orphaned Objects'])
+                ->loadView('index');
         }
     }
 
