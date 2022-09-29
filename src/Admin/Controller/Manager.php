@@ -19,7 +19,7 @@ use Nails\Cdn\Admin\Permission;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Model\Bucket;
-use Nails\Cdn\Model\CdnObject\Import;
+use Nails\Cdn\Admin\Permission\Object\Import;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
@@ -55,8 +55,12 @@ class Manager extends Base
             $oNavGroup
                 ->setLabel('Media')
                 ->setIcon('fa-images')
-                ->addAction('Media Manager', 'index', [], 0)
-                ->addAction('Import via URL', 'import');
+                ->addAction('Media Manager', 'index', [], 0);
+
+            if (userHasPermission(Import::class)) {
+                $oNavGroup
+                    ->addAction('Import via URL', 'import');
+            }
 
             return $oNavGroup;
         }
