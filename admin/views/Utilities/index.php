@@ -87,7 +87,7 @@ use Nails\Cdn\Constants;
                             <tr>
                                 <td><?=$orphan->bucket?></td>
                                 <td><?=$orphan->filename_display?></td>
-                                <td><?=$oCdn::formatBytes($orphan->filesize)?></td>
+                                <td><?=formatBytes($orphan->filesize)?></td>
                                 <td>
                                     <?php
 
