@@ -35,7 +35,7 @@ class Migration14 implements Interfaces\Database\Migration
      */
     public function execute(): void
     {
-        $oResult = $this->query('SELECT id, acl FROM `nails_user_group`');
+        $oResult = $this->query('SELECT id, acl FROM `{{NAILS_DB_PREFIX}}user_group`');
         while ($row = $oResult->fetchObject()) {
 
             $acl = json_decode($row->acl) ?? [];
@@ -49,7 +49,7 @@ class Migration14 implements Interfaces\Database\Migration
             $acl = array_values($acl);
 
             $this
-                ->prepare('UPDATE `nails_user_group` SET `acl` = :acl WHERE `id` = :id')
+                ->prepare('UPDATE `{{NAILS_DB_PREFIX}}user_group` SET `acl` = :acl WHERE `id` = :id')
                 ->execute([
                     ':id'  => $row->id,
                     ':acl' => json_encode($acl),
