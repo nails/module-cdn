@@ -13,6 +13,7 @@
 namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api;
+use Nails\Cdn\Admin\Permission;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject\Trash;
 use Nails\Cdn\Service\Cdn;
@@ -202,7 +203,7 @@ class CdnObject extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:object:delete')) {
+        if (!userHasPermission(Permission\Object\Delete::class)) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -265,7 +266,7 @@ class CdnObject extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:object:restore')) {
+        if (!userHasPermission(Permission\Object\Restore::class)) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -303,7 +304,7 @@ class CdnObject extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission(Permission\Object\Browe::class)) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -354,7 +355,7 @@ class CdnObject extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission(Permission\Object\Browse::class)) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED

@@ -105,6 +105,8 @@
             flex: 0 0 250px;
 
             &__list {
+                padding-left: 0;
+
                 &__search,
                 &__item,
                 &__action,
@@ -113,6 +115,8 @@
                 }
 
                 &__search {
+                    list-style: none;
+
                     input {
                         margin: 0;
                         width: 100%;
@@ -125,6 +129,7 @@
 
                 &__item {
                     cursor: pointer;
+                    list-style: none;
 
                     svg {
                         float: right;
@@ -237,9 +242,8 @@
                     width: 200px;
                     height: 200px;
                     margin: 0.5rem;
-                    background: #ececec;
                     background-size: cover;
-                    background-position: center;
+                    background: #ececec center;
                     position: relative;
                 }
 
@@ -263,6 +267,8 @@
                 }
 
                 &__item {
+                    list-style: none;
+
                     &__ext,
                     &__label {
                         position: absolute;

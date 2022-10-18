@@ -28,7 +28,7 @@ use Nails\Cdn\Resource\CdnObject\Import;
     <p>
         The maximum upload size accepted by this server is <?=$sMaxUploadSize?>. To circumvent this limit,
         you may import large files via a publicly accessible URL. Once imported, the file may be selected
-        in the <?=anchor('admin/cdn/manager/index', 'Media Manager')?>.
+        in the <?=anchor(\Nails\Cdn\Admin\Controller\Manager::url(), 'Media Manager')?>.
     </p>
     <?=form_open()?>
     <fieldset>
@@ -138,7 +138,7 @@ use Nails\Cdn\Resource\CdnObject\Import;
                             echo '<td class="actions">';
                             if ($oImport->status === \Nails\Cdn\Model\CdnObject\Import::STATUS_PENDING) {
                                 echo anchor(
-                                    'admin/cdn/manager/import/cancel/' . $oImport->id,
+                                    \Nails\Cdn\Admin\Controller\Manager::url('import/cancel/' . $oImport->id),
                                     'Cancel',
                                     'class="btn btn-danger btn-xs"'
                                 );

@@ -10,19 +10,20 @@
  * @link
  */
 
-namespace Nails\Admin\Cdn;
+namespace Nails\Cdn\Admin\Controller;
 
+use Nails\Admin\Controller\Base;
 use Nails\Admin\Helper;
+use Nails\Cdn\Admin\Permission;
 use Nails\Cdn\Constants;
-use Nails\Cdn\Controller\BaseAdmin;
 use Nails\Factory;
 
 /**
  * Class Utilities
  *
- * @package Nails\Admin\Cdn
+ * @package Nails\Cdn\Admin\Controller
  */
-class Utilities extends BaseAdmin
+class Utilities extends Base
 {
     /**
      * Announces this controller's navGroups
@@ -34,25 +35,11 @@ class Utilities extends BaseAdmin
         $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
         $oNavGroup->setLabel('Utilities');
 
-        if (userHasPermission('admin:cdn:utilities:findOrphan')) {
+        if (userHasPermission(Permission\Object\FindOrphan::class)) {
             $oNavGroup->addAction('CDN: Find orphaned objects');
         }
 
         return $oNavGroup;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Returns an array of permissions which can be configured for the user
-     *
-     * @return array
-     */
-    public static function permissions(): array
-    {
-        $permissions               = parent::permissions();
-        $permissions['findOrphan'] = 'Can find orphans';
-        return $permissions;
     }
 
     // --------------------------------------------------------------------------
@@ -64,7 +51,7 @@ class Utilities extends BaseAdmin
      */
     public function index()
     {
-        if (!userHasPermission('admin:cdn:utilities:findOrphan')) {
+        if (!userHasPermission(Permission\Object\FindOrphan::class)) {
             unauthorised();
         }
 
@@ -145,11 +132,9 @@ class Utilities extends BaseAdmin
 
             // --------------------------------------------------------------------------
 
-            $this->data['page']->title = 'CDN: Find Orphaned Objects';
-
-            // --------------------------------------------------------------------------
-
-            Helper::loadView('index');
+            $this
+                ->setTitles(['CDN', 'Find Orphaned Objects'])
+                ->loadView('index');
         }
     }
 

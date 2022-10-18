@@ -363,8 +363,8 @@ class Form
                         $_field_sub_label
                     </span>
                     <span class="input $_tipclass">
-                        <table>
-                            <thead>
+                        <table class="table table-striped table-hover table-bordered table-responsive">
+                            <thead class="table-dark">
                                 <th width="*" $sFieldSortableColspan>File</th>
                                 <th width="10"></th>
                             </thead>
@@ -587,8 +587,8 @@ class Form
                         $sFieldSubLabel
                     </span>
                     <span class="input $sTipClass">
-                        <table>
-                            <thead>
+                        <table class="table table-striped table-hover table-bordered table-responsive">
+                            <thead class="table-dark">
                                 <th width="300" $sFieldSortableColspan>$sFieldTableLabelObject</th>
                                 <th width="*">$sFieldTableLabelLabel</th>
                                 <th width="10"></th>

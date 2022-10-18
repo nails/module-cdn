@@ -122,7 +122,7 @@ class Serve extends Base
              * can_browse_trash permission then have a look in the trash
              */
 
-            if ($oInput->get('trashed') && userHasPermission('admin:cdn:trash:browse')) {
+            if ($oInput->get('trashed') && userHasPermission(\Nails\Cdn\Admin\Permission\Object\Trash\Browse::class)) {
 
                 $oObject = $oCdn->getObjectFromTrash($this->object, $this->bucket);
 

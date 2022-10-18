@@ -16,46 +16,6 @@ use Nails\Cdn\Service\Cdn;
 use Nails\Common\Service\View;
 use Nails\Factory;
 
-if (!function_exists('formatBytes')) {
-
-    /**
-     * Formats a filesize given in bytes into a human-friendly string
-     *
-     * @param int $iBytes     The filesize, in bytes
-     * @param int $iPrecision The precision to use
-     *
-     * @return string
-     */
-    function formatBytes($iBytes, $iPrecision = 2): string
-    {
-        /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
-        return $oCdn->formatBytes($iBytes, $iPrecision);
-    }
-}
-
-// --------------------------------------------------------------------------
-
-if (!function_exists('returnBytes')) {
-
-    /**
-     * Formats a filesize as bytes (e.g max_upload_size)
-     * hat-tip: http://php.net/manual/en/function.ini-get.php#96996
-     *
-     * @param string $sSize The string to convert to bytes
-     *
-     * @return int
-     */
-    function returnBytes($sSize): int
-    {
-        /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
-        return $oCdn->returnBytes($sSize);
-    }
-}
-
-// --------------------------------------------------------------------------
-
 if (!function_exists('maxUploadSize')) {
 
     /**
