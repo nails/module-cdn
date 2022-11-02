@@ -304,7 +304,7 @@ class CdnObject extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission(Permission\Object\Browe::class)) {
+        if (!userHasPermission(Permission\Object\Browse::class)) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
