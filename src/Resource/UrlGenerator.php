@@ -137,7 +137,7 @@ abstract class UrlGenerator extends Resource implements Interfaces\UrlGenerator,
      * @throws FactoryException
      * @throws ModelException
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->__toString();
     }
