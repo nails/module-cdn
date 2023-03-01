@@ -35,6 +35,7 @@
         }
     ],
     "require": {
+        "php": ">=8",
         "nails/common": "dev-develop",
         "nails/module-api": "dev-develop",
         "nails/module-auth": "dev-develop",
