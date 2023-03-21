@@ -13,6 +13,7 @@ namespace Nails\Cdn\Helper;
 
 use Nails\Common\Helper\ArrayHelper;
 use Nails\Common\Helper\Form\Field;
+use Nails\Common\Service\Mustache;
 use Nails\Factory;
 
 class Form
@@ -320,7 +321,8 @@ class Form
 
         //  Generate the initial objects
         $_default_html = '';
-        $oMustache     = Factory::service('Mustache');
+        /** @var Mustache $oMustache */
+        $oMustache = Factory::service('Mustache');
 
         if (!empty($_POST)) {
 
@@ -542,7 +544,8 @@ class Form
 
         //  Generate the initial objects
         $sDefaultHtml = '';
-        $oMustache    = Factory::service('Mustache');
+        /** @var Mustache $oMustache */
+        $oMustache = Factory::service('Mustache');
 
         if (!empty($_POST)) {
 
