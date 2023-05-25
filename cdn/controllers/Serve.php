@@ -82,7 +82,7 @@ class Serve extends Base
             $oUri           = Factory::service('Uri');
             $this->badToken = false;
             $this->bucket   = $oUri->segment(3);
-            $this->object   = urldecode($oUri->segment(4));
+            $this->object   = urldecode((string) $oUri->segment(4));
         }
     }
 
