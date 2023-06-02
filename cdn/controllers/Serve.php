@@ -171,7 +171,7 @@ class Serve extends Base
             $oLogger->line('CDN: Serve: File does not exist');
             $oLogger->line('CDN: Serve: ' . $oCdn->lastError());
 
-            if (isSuperuser()) {
+            if (isSuperUser()) {
                 $this->serveBadSrc([
                     'error' => 'File not found: ' . $sLocalPath,
                 ]);
