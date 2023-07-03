@@ -2,7 +2,6 @@
 
 ![license](https://img.shields.io/badge/license-MIT-green.svg)
 [![tests](https://github.com/nails/module-cdn/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/nails/module-cdn/actions)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/nails/module-cdn/badges/quality-score.png)](https://scrutinizer-ci.com/g/nails/module-cdn)
 
 This is the CDN module for Nails, it brings simple file storage, management, and image manipulation to the app with support for popular object storage (e.g. S3) and distributed edges (e.g. CloudFront).
 
