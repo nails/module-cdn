@@ -2965,46 +2965,6 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
-     * Finds objects which have no file counterparts
-     *
-     * @return  array
-     **/
-    public function findOrphanedObjects()
-    {
-        $aOut = ['orphans' => [], 'elapsed_time' => 0];
-        $oDb  = Factory::service('Database');
-        $oDb->select('o.id, o.filename, o.filename_display, o.mime, o.filesize, o.driver');
-        $oDb->select('b.slug bucket_slug, b.label bucket');
-        $oDb->join(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b', 'o.bucket_id = b.id');
-        $oDb->order_by('b.label');
-        $oDb->order_by('o.filename_display');
-        $oQuery = $oDb->get(Config::get('NAILS_DB_PREFIX') . 'cdn_object o');
-
-        while ($oRow = $oQuery->unbuffered_row()) {
-            if (!$this->callDriver('objectExists', [$oRow->filename, $oRow->bucket_slug])) {
-                $aOut['orphans'][] = $oRow;
-            }
-        }
-
-        return $aOut;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Finds files which have no object counterparts
-     *
-     * @return  array
-     **/
-    public function findOrphanedFiles()
-    {
-        //  @todo (Pablo - 2017-12-14) - Complete this
-        return [];
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
      * Determines whether a supplied extension is valid for a given array of acceptable extensions
      *
      * @param string $sExtension  The extension to test
