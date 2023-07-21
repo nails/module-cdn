@@ -28,7 +28,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class Unused extends Base
 {
-    const CACHE_FILE      = 'cdn-monitor-unsed.txt';
+    const CACHE_FILE      = 'cdn-monitor-unused.txt';
     const PROGRESS_FORMAT = '%%current%%/%%max%% [%%bar%%] %%percent:3s%%%% %%elapsed:6s%% / %%estimated:-6s%% %%memory:6s%% (found %s unused items)';
 
     // --------------------------------------------------------------------------
