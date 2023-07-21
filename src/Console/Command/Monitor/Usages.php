@@ -1,6 +1,6 @@
 <?php
 
-namespace Nails\Cdn\Console\Command;
+namespace Nails\Cdn\Console\Command\Monitor;
 
 use Nails\Cdn\Constants;
 use Nails\Cdn\Factory\Monitor\Detail;
@@ -16,11 +16,11 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Class Monitor
+ * Class Usages
  *
  * @package Nails\Cdn\Console\Command
  */
-class Monitor extends Base
+class Usages extends Base
 {
     /**
      * Configures the command
@@ -30,7 +30,7 @@ class Monitor extends Base
     protected function configure()
     {
         $this
-            ->setName('cdn:monitor')
+            ->setName('cdn:monitor:usages')
             ->setDescription('Determines where a given object is being used')
             ->addArgument('object_id', InputArgument::REQUIRED);
     }
