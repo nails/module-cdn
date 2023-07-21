@@ -2,20 +2,27 @@
 
 use Nails\Common;
 use Nails\Cdn\Resource;
+use Nails\Cdn\Factory;
 use Nails\Cdn\Service;
 use Nails\Cdn\Model;
-use Nails\Factory;
 
 return [
     'services'  => [
         'Cdn'           => function (Common\Service\Mime $oMimeService = null): Service\Cdn {
 
-            $oMimeService = $oMimeService ?? Factory::service('Mime');
+            $oMimeService = $oMimeService ?? \Nails\Factory::service('Mime');
 
             if (class_exists('\App\Cdn\Service\Cdn')) {
                 return new \App\Cdn\Service\Cdn($oMimeService);
             } else {
                 return new Service\Cdn($oMimeService);
+            }
+        },
+        'Monitor'       => function (): Service\Monitor {
+            if (class_exists('\App\Cdn\Service\Monitor')) {
+                return new \App\Cdn\Service\Monitor();
+            } else {
+                return new Service\Monitor();
             }
         },
         'StorageDriver' => function (): Service\StorageDriver {
@@ -67,6 +74,15 @@ return [
                 return new \App\Cdn\Model\Token();
             } else {
                 return new Model\Token();
+            }
+        },
+    ],
+    'factories' => [
+        'MonitorDetail' => function (\Nails\Cdn\Interfaces\Monitor $oMonitor): Factory\Monitor\Detail {
+            if (class_exists('\App\Cdn\Factory\Monitor\Detail')) {
+                return new \App\Cdn\Factory\Monitor\Detail($oMonitor);
+            } else {
+                return new Factory\Monitor\Detail($oMonitor);
             }
         },
     ],
