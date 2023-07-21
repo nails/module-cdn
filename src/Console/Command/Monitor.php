@@ -9,6 +9,7 @@ use Nails\Console\Command\Base;
 use Nails\Console\Exception\ConsoleException;
 use Nails\Factory;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Helper\ProgressIndicator;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -58,7 +59,13 @@ class Monitor extends Base
         /** @var \Nails\Cdn\Service\Monitor $oService */
         $oService = Factory::service('Monitor', Constants::MODULE_SLUG);
 
-        $aResults = $oService->locate($oObject);
+        $oSection           = $oOutput->section();
+        $oProgressIndicator = new ProgressIndicator($oSection);
+        $oProgressIndicator->start('Locating usages...');
+
+        $aResults = $oService->locate($oObject, $oProgressIndicator);
+
+        $oSection->clear(1);
 
         if (empty($aResults)) {
 
@@ -92,7 +99,7 @@ class Monitor extends Base
         $sAnswer = $this->choose('What would you like to do next?', [
             'd' => 'Delete this object',
             'r' => 'Replace this object',
-            'e' => 'Exit',
+            'x' => 'Exit',
         ], 'e');
 
         switch ($sAnswer) {
