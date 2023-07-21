@@ -64,8 +64,6 @@ class Unused extends Base
 
         // --------------------------------------------------------------------------
 
-        /** @var FileCache $oFileCache */
-        $oFileCache = Factory::service('FileCache');
         /** @var \Nails\Cdn\Service\Monitor $oService */
         $oService = Factory::service('Monitor', Constants::MODULE_SLUG);
         /** @var CdnObject $oCdn */
@@ -75,7 +73,7 @@ class Unused extends Base
 
         // --------------------------------------------------------------------------
 
-        $sCacheFile = $oFileCache->getDir() . static::CACHE_FILE;
+        $sCacheFile = self::getCacheFile();
 
         // --------------------------------------------------------------------------
 
@@ -94,7 +92,7 @@ class Unused extends Base
 
         // --------------------------------------------------------------------------
 
-        if (appSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG)) {
+        if (self::isRunning()) {
             throw new ConsoleException(
                 'A scan is already running. Please wait for it to complete before starting another.'
             );
@@ -155,6 +153,22 @@ class Unused extends Base
         $this->markAsRunning(false);
 
         return static::EXIT_CODE_SUCCESS;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public static function getCacheFile(): string
+    {
+        /** @var FileCache $oFileCache */
+        $oFileCache = Factory::service('FileCache');
+        return $oFileCache->getDir() . static::CACHE_FILE;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public static function isRunning(): bool
+    {
+        return (bool) appSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG);
     }
 
     // --------------------------------------------------------------------------
