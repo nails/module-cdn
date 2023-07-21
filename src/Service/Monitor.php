@@ -20,6 +20,7 @@ use Nails\Common\Exception\NailsException;
 use Nails\Components;
 use Nails\Cdn\Interfaces;
 use Nails\Factory;
+use Symfony\Component\Console\Helper\ProgressIndicator;
 
 /**
  * Class Monitor
@@ -75,11 +76,14 @@ class Monitor
     /**
      * @return Detail[]
      */
-    public function locate(CdnObject $oObject): array
+    public function locate(CdnObject $oObject, ProgressIndicator $oProgressIndicator = null): array
     {
         $aLocations = [];
         foreach ($this->aMappers as $oMapper) {
             $aLocations = array_merge($aLocations, $oMapper->locate($oObject));
+            if ($oProgressIndicator) {
+                $oProgressIndicator->advance();
+            }
         }
         return $aLocations;
     }
