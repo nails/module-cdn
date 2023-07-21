@@ -169,8 +169,7 @@ class Monitor extends Base
         $oObject = $oModel->getById($iObjectId);
 
         if (empty($oObject)) {
-            $this->error('Invalid object ID');
-            return static::EXIT_CODE_FAILURE;
+            throw new ConsoleException('Invalid object ID');
         }
 
         $this->keyValueList([
