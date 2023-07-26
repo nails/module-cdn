@@ -229,8 +229,8 @@ abstract class Base extends BaseMiddle
         // --------------------------------------------------------------------------
 
         //  Merge the two
-        $centerX = ($width / 2) - ($iconW / 2);
-        $centerY = ($height / 2) - ($iconH / 2);
+        $centerX = (int) floor(($width / 2) - ($iconW / 2));
+        $centerY = (int) floor(($height / 2) - ($iconH / 2));
         imagecopymerge($bg, $icon, $centerX, $centerY, 0, 0, $iconW, $iconH, 100);
 
         // --------------------------------------------------------------------------
