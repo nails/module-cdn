@@ -17,7 +17,9 @@ use Nails\Cdn\Console\Command\Monitor\Unused;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\BaseAdmin;
 use Nails\Cdn\Exception\CdnException;
+use Nails\Cdn\Model\CdnObject;
 use Nails\Cdn\Service\Cdn;
+use Nails\Common\Service\Uri;
 use Nails\Factory;
 
 /**
@@ -66,6 +68,9 @@ class Utilities extends BaseAdmin
 
         try {
 
+            /** @var CdnObject $oModel */
+            $oModel = Factory::model('Object', Constants::MODULE_SLUG);
+
             if (Unused::isRunning()) {
                 throw new CdnException('Tool disabled whilst scan is running.');
             }
@@ -86,18 +91,84 @@ class Utilities extends BaseAdmin
                 }
             }
 
-            $this->data['oBegin'] = $oBegin;
-            $this->data['aIds']   = $aIds;
+            $aObjects = array_filter(
+                array_map(
+                    fn(int $iId) => $oModel->getById($iId),
+                    $aIds
+                )
+            );
+
+            $this->data['oBegin']   = $oBegin;
+            $this->data['aObjects'] = $aObjects;
 
         } catch (\Throwable $e) {
             $this->oUserFeedback->error($e->getMessage());
         }
 
-        if (!empty($aIds)) {
-            $this->data['page']->title = 'CDN: Unused Objects (' . count($aIds) . ')';
-        } else {
-            $this->data['page']->title = 'CDN: Unused Objects';
+        /** @var Uri $oUri */
+        $oUri = Factory::service('Uri');
+        $iId  = (int) $oUri->segment(5);
+
+        if ($iId) {
+
+            if (!in_array($iId, $aIds)) {
+                show404();
+            }
+
+            switch ($oUri->segment(6)) {
+                case 'delete':
+                    return $this->delete($iId);
+
+                default:
+                    show404();
+            }
         }
+
+        $this->index($aObjects ?? []);
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function index(array $aObjects)
+    {
+        $this->data['page']->title = sprintf(
+            'CDN: Unused Objects%s',
+            !empty($aObjects) ? ' (' . count($aObjects) . ')' : ''
+        );
+
         Helper::loadView('unused');
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function delete(int $iId)
+    {
+        try {
+
+            /** @var Cdn $oCdn */
+            $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+            /** @var CdnObject $oModel */
+            $oModel = Factory::model('Object', Constants::MODULE_SLUG);
+            /** @var \Nails\Cdn\Resource\CdnObject $oObject */
+            $oObject = $oModel->getById($iId);
+
+            $oCdn->objectDelete($oObject->id);
+
+            $this->oUserFeedback->success(sprintf(
+                'Object #%s (%s) deleted successfully.',
+                $oObject->id,
+                $oObject->file->name->human
+            ));
+
+        } catch (\Throwable $e) {
+            $this->oUserFeedback->error(sprintf(
+                'Failed to delete object #%s (%s): %s',
+                $oObject->id,
+                $oObject->file->name->human,
+                $e->getMessage()
+            ));
+        }
+
+        redirect('admin/cdn/utilities/unused');
     }
 }

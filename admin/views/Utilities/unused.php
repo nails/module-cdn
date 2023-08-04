@@ -1,6 +1,6 @@
 <?php
 
-if (!empty($oBegin) || !empty($aIds)) {
+if (!empty($oBegin) || !empty($aObjects)) {
 
     ?>
     <div class="cdn cdn-unused">
@@ -14,6 +14,7 @@ if (!empty($oBegin) || !empty($aIds)) {
             <thead>
                 <tr>
                     <th class="text-center">ID</th>
+                    <th>Preview</th>
                     <th>Filename</th>
                     <th>Type</th>
                     <th>Size</th>
@@ -23,22 +24,41 @@ if (!empty($oBegin) || !empty($aIds)) {
             <tbody>
                 <?php
 
-                if (!empty($aIds)) {
+                if (!empty($aObjects)) {
 
-                    $oModel = \Nails\Factory::model('Object', \Nails\Cdn\Constants::MODULE_SLUG);
-
-                    foreach ($aIds as $iId) {
-
-                        /** @var \Nails\Cdn\Resource\CdnObject $oObject */
-                        $oObject = $oModel->getById($iId);
+                    foreach ($aObjects as $oObject) {
 
                         ?>
                         <tr>
                             <td class="text-center"><?=$oObject->id?></td>
+                            <td class="text-center">
+                                <?php
+
+                                if ($oObject->is_img) {
+                                    echo anchor(
+                                        cdnServe($oObject->id),
+                                        img(
+                                            [
+                                                'src' => cdnCrop($oObject->id, 50, 50),
+                                                'alt' => $oObject->file->name->human,
+                                            ]
+                                        ),
+                                        'class="fancybox"'
+                                    );
+                                } else {
+                                    echo '<span class="text-muted">&mdash;</span>';
+                                }
+
+                                ?>
+                            </td>
                             <td><?=anchor(cdnServe($oObject->id), $oObject->file->name->human, 'target="_blank"')?></td>
                             <td><?=$oObject->file->mime?></td>
                             <td><?=$oObject->file->size->human?></td>
-                            <td class="actions"></td>
+                            <td class="actions">
+                                <a href="<?=siteUrl('admin/cdn/utilities/unused/' . $oObject->id . '/delete')?>" class="btn btn-xs btn-danger confirm">
+                                    Delete
+                                </a>
+                            </td>
                         </tr>
                         <?php
                     }
@@ -46,7 +66,7 @@ if (!empty($oBegin) || !empty($aIds)) {
                 } else {
                     ?>
                     <tr>
-                        <td colspan="2" class="no-data">
+                        <td colspan="6" class="no-data">
                             No unused objects found
                         </td>
                     </tr>
