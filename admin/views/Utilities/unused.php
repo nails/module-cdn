@@ -10,6 +10,20 @@ if (!empty($oBegin) || !empty($aObjects)) {
                 <strong><?=toUserDateTime($oBegin)?></strong>
             </p>
         </div>
+        <?php
+
+        if (count($aIds) > count($aObjects)) {
+            ?>
+            <div class="alert alert-info">
+                <p>
+                    ⚠️ &nbsp; For performance reasons only showing the first <?=count($aObjects)?> of
+                    <?=number_format(count($aIds))?> unused objects.
+                </p>
+            </div>
+            <?php
+        }
+
+        ?>
         <table>
             <thead>
                 <tr>

@@ -29,6 +29,10 @@ use Nails\Factory;
  */
 class Utilities extends BaseAdmin
 {
+    const MAX_UNUSED_OBJECTS = 100;
+
+    // --------------------------------------------------------------------------
+
     /**
      * Announces this controller's navGroups
      *
@@ -64,8 +68,6 @@ class Utilities extends BaseAdmin
 
     public function unused()
     {
-        //  @todo (Pablo 2023-07-21) - improve support for large lists of files
-
         try {
 
             /** @var CdnObject $oModel */
@@ -80,25 +82,33 @@ class Utilities extends BaseAdmin
                 throw new CdnException('No scan has been run. Scan should be executed on the command line using <code>cdn:monitor:unused</code>');
             }
 
-            $rCacheFile = fopen($sCacheFile, 'r');
-            $oBegin     = null;
-            $aIds       = [];
+            $rCacheFile     = fopen($sCacheFile, 'r');
+            $oBegin         = null;
+            $aIdsUnfiltered = [];
             while (($line = fgets($rCacheFile)) !== false) {
                 if (preg_match('/^BEGIN: \d+$/', $line)) {
                     $oBegin = \DateTime::createFromFormat('U', trim(substr($line, 7)));
                 } else {
-                    $aIds[] = (int) $line;
+                    $aIdsUnfiltered[] = (int) $line;
                 }
             }
 
-            $aObjects = array_filter(
-                array_map(
-                    fn(int $iId) => $oModel->getById($iId),
-                    $aIds
-                )
-            );
+            $aObjects = [];
+            $aIds     = [];
+            foreach ($aIdsUnfiltered as $iId) {
+
+                $aIds[] = $iId;
+
+                if (count($aObjects) < min(self::MAX_UNUSED_OBJECTS, count($aIds))) {
+                    $oObject = $oModel->getById($iId);
+                    if ($oObject) {
+                        $aObjects[] = $oObject;
+                    }
+                }
+            }
 
             $this->data['oBegin']   = $oBegin;
+            $this->data['aIds']     = $aIds;
             $this->data['aObjects'] = $aObjects;
 
         } catch (\Throwable $e) {
@@ -124,16 +134,16 @@ class Utilities extends BaseAdmin
             }
         }
 
-        $this->index($aObjects ?? []);
+        $this->index($aIds ?? []);
     }
 
     // --------------------------------------------------------------------------
 
-    private function index(array $aObjects)
+    private function index(array $aIds)
     {
         $this->data['page']->title = sprintf(
             'CDN: Unused Objects%s',
-            !empty($aObjects) ? ' (' . count($aObjects) . ')' : ''
+            !empty($aIds) ? ' (' . number_format(count($aIds)) . ')' : ''
         );
 
         Helper::loadView('unused');
