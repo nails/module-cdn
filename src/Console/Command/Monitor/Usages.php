@@ -100,7 +100,7 @@ class Usages extends Base
             'd' => 'Delete this object',
             'r' => 'Replace this object',
             'x' => 'Exit',
-        ], 'e');
+        ], 'x');
 
         switch ($sAnswer) {
             case 'd':
