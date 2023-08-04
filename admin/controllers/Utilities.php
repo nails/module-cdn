@@ -17,8 +17,11 @@ use Nails\Cdn\Console\Command\Monitor\Unused;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\BaseAdmin;
 use Nails\Cdn\Exception\CdnException;
+use Nails\Cdn\Factory\Monitor\Detail;
 use Nails\Cdn\Model\CdnObject;
 use Nails\Cdn\Service\Cdn;
+use Nails\Cdn\Service\Monitor;
+use Nails\Common\Service\Input;
 use Nails\Common\Service\Uri;
 use Nails\Factory;
 
@@ -43,8 +46,12 @@ class Utilities extends BaseAdmin
         $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
         $oNavGroup->setLabel('Utilities');
 
+        if (userHasPermission('admin:cdn:utilities:usages')) {
+            $oNavGroup->addAction('CDN: Find Usages', 'usages');
+        }
+
         if (userHasPermission('admin:cdn:utilities:unused')) {
-            $oNavGroup->addAction('CDN: Unused objects', 'unused');
+            $oNavGroup->addAction('CDN: Unused Objects', 'unused');
         }
 
         return $oNavGroup;
@@ -60,8 +67,151 @@ class Utilities extends BaseAdmin
     public static function permissions(): array
     {
         $permissions           = parent::permissions();
+        $permissions['usages'] = 'Can perform a scan to find where an object is in use';
         $permissions['unused'] = 'Can see results of unused object scan';
         return $permissions;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function usages()
+    {
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var CdnObject $oModel */
+        $oModel = Factory::model('Object', Constants::MODULE_SLUG);
+
+        if ($oInput::get('object')) {
+            $oObject = $oModel->getById($oInput::get('object'));
+            if ($oObject) {
+                return $this->usagesPreview($oObject);
+            }
+        }
+
+        $this->usagesIndex();
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function usagesIndex()
+    {
+        $this->data['page']->title = 'CDN: Find Usages';
+        Helper::loadView('usages/index');
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function usagesPreview(\Nails\Cdn\Resource\CdnObject $oObject)
+    {
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Monitor $oMonitor */
+        $oMonitor   = Factory::service('Monitor', Constants::MODULE_SLUG);
+        $aLocations = $oMonitor->locate($oObject);
+
+        switch ($oInput::get('action')) {
+            case 'delete':
+                return $this->usagesDelete($oObject, $aLocations);
+
+            case 'replace':
+                return $this->usagesReplace($oObject, $aLocations);
+        }
+
+        $this->data['page']->title = sprintf(
+            'CDN: Find Usages: #%s (%s)',
+            $oObject->id,
+            $oObject->file->name->human
+        );
+        $this->data['oObject']     = $oObject;
+        $this->data['aLocations']  = $aLocations;
+
+        Helper::loadView('usages/preview');
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @param Detail[] $aLocations
+     */
+    private function usagesDelete(\Nails\Cdn\Resource\CdnObject $oObject, array $aLocations): void
+    {
+        try {
+
+            foreach ($aLocations as $oDetail) {
+                $oDetail->delete();
+            }
+
+            $this->oUserFeedback->success(
+                sprintf(
+                    'Successfully removed references for object #%s (%s).',
+                    $oObject->id,
+                    $oObject->file->name->human
+                )
+            );
+
+            $this->oUserFeedback->warning('<strong>Note:</strong> This operation has only affected references to this object, the actual object has not been deleted.');
+
+        } catch (\Throwable $e) {
+            $this->oUserFeedback->error(
+                sprintf(
+                    'Failed to delete object #%s (%s): %s',
+                    $oObject->id,
+                    $oObject->file->name->human,
+                    $e->getMessage()
+                )
+            );
+        }
+
+        redirect('admin/cdn/utilities/usages?object=' . $oObject->id);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @param Detail[] $aLocations
+     */
+    private function usagesReplace(\Nails\Cdn\Resource\CdnObject $oObject, array $aLocations): void
+    {
+        try {
+
+            /** @var Input $oInput */
+            $oInput = Factory::service('Input');
+            /** @var CdnObject $oModel */
+            $oModel = Factory::model('Object', Constants::MODULE_SLUG);
+
+            $oReplacement = $oModel->getById($oInput::get('replacement'));
+            if (empty($oReplacement)) {
+                throw new CdnException('Invalid replacement object.');
+            }
+
+            //  @todo (Pablo 2023-08-04) - Should we enforce a like-for-like replacement? i.e don't replace an image with a PDF?
+
+            foreach ($aLocations as $oDetail) {
+                $oDetail->replace($oReplacement);
+            }
+
+            $this->oUserFeedback->success(
+                sprintf(
+                    'Successfully replaced object #%s (%s)',
+                    $oObject->id,
+                    $oObject->file->name->human
+                )
+            );
+
+            $this->oUserFeedback->warning('<strong>Note:</strong> This operation has only affected references to this object, the actual object has not been replaced.');
+
+        } catch (\Throwable $e) {
+            $this->oUserFeedback->error(
+                sprintf(
+                    'Failed to replace object #%s (%s): %s',
+                    $oObject->id,
+                    $oObject->file->name->human,
+                    $e->getMessage()
+                )
+            );
+        }
+
+        redirect('admin/cdn/utilities/usages?object=' . $oObject->id);
     }
 
     // --------------------------------------------------------------------------
@@ -127,19 +277,19 @@ class Utilities extends BaseAdmin
 
             switch ($oUri->segment(6)) {
                 case 'delete':
-                    return $this->delete($iId);
+                    return $this->unusedDelete($iId);
 
                 default:
                     show404();
             }
         }
 
-        $this->index($aIds ?? []);
+        $this->unusedIndex($aIds ?? []);
     }
 
     // --------------------------------------------------------------------------
 
-    private function index(array $aIds)
+    private function unusedIndex(array $aIds)
     {
         $this->data['page']->title = sprintf(
             'CDN: Unused Objects%s',
@@ -151,7 +301,7 @@ class Utilities extends BaseAdmin
 
     // --------------------------------------------------------------------------
 
-    private function delete(int $iId)
+    private function unusedDelete(int $iId)
     {
         try {
 
