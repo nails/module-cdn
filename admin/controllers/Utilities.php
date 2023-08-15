@@ -231,7 +231,9 @@ class Utilities extends BaseAdmin
 
             $sCacheFile = Unused::getCacheFile();
             if (!file_exists($sCacheFile)) {
-                throw new CdnException('No scan has been run. Scan should be executed on the command line using <code>cdn:monitor:unused</code>');
+                throw new CdnException(
+                    'No scan has been run. Scan should be executed on the command line using <code>cdn:monitor:unused</code>'
+                );
             }
 
             $rCacheFile     = fopen($sCacheFile, 'r');
