@@ -4,7 +4,8 @@ namespace Nails\Cdn\Console\Command\Monitor;
 
 use Nails\Cdn\Constants;
 use Nails\Cdn\Factory\Monitor\Detail;
-use Nails\Cdn\Model\CdnObject;
+use Nails\Cdn\Model;
+use Nails\Cdn\Resource;
 use Nails\Common\Helper\Model\Expand;
 use Nails\Console\Command\Base;
 use Nails\Console\Exception\ConsoleException;
@@ -162,11 +163,11 @@ class Usages extends Base
 
     // --------------------------------------------------------------------------
 
-    private function verifyObject(int $iObjectId): \Nails\Cdn\Resource\CdnObject
+    private function verifyObject(int $iObjectId): Resource\CdnObject
     {
-        /** @var CdnObject $oObjectModel */
+        /** @var Model\CdnObject $oObjectModel */
         $oModel = Factory::model('Object', Constants::MODULE_SLUG);
-        /** @var \Nails\Cdn\Resource\CdnObject|null $oObject */
+        /** @var Resource\CdnObject|null $oObject */
         $oObject = $oModel->getById($iObjectId, [
             new Expand('bucket'),
         ]);

@@ -18,7 +18,8 @@ use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\BaseAdmin;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Factory\Monitor\Detail;
-use Nails\Cdn\Model\CdnObject;
+use Nails\Cdn\Model;
+use Nails\Cdn\Resource;
 use Nails\Cdn\Service\Cdn;
 use Nails\Cdn\Service\Monitor;
 use Nails\Common\Service\Input;
@@ -78,7 +79,7 @@ class Utilities extends BaseAdmin
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var CdnObject $oModel */
+        /** @var Model\CdnObject $oModel */
         $oModel = Factory::model('Object', Constants::MODULE_SLUG);
 
         if ($oInput::get('object')) {
@@ -101,7 +102,7 @@ class Utilities extends BaseAdmin
 
     // --------------------------------------------------------------------------
 
-    private function usagesPreview(\Nails\Cdn\Resource\CdnObject $oObject)
+    private function usagesPreview(Resource\CdnObject $oObject)
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
@@ -133,7 +134,7 @@ class Utilities extends BaseAdmin
     /**
      * @param Detail[] $aLocations
      */
-    private function usagesDelete(\Nails\Cdn\Resource\CdnObject $oObject, array $aLocations): void
+    private function usagesDelete(Resource\CdnObject $oObject, array $aLocations): void
     {
         try {
 
@@ -170,15 +171,16 @@ class Utilities extends BaseAdmin
     /**
      * @param Detail[] $aLocations
      */
-    private function usagesReplace(\Nails\Cdn\Resource\CdnObject $oObject, array $aLocations): void
+    private function usagesReplace(Resource\CdnObject $oObject, array $aLocations): void
     {
         try {
 
             /** @var Input $oInput */
             $oInput = Factory::service('Input');
-            /** @var CdnObject $oModel */
+            /** @var Model\CdnObject $oModel */
             $oModel = Factory::model('Object', Constants::MODULE_SLUG);
 
+            /** @var Resource\CdnObject $oReplacement */
             $oReplacement = $oModel->getById($oInput::get('replacement'));
             if (empty($oReplacement)) {
                 throw new CdnException('Invalid replacement object.');
@@ -220,7 +222,7 @@ class Utilities extends BaseAdmin
     {
         try {
 
-            /** @var CdnObject $oModel */
+            /** @var Model\CdnObject $oModel */
             $oModel = Factory::model('Object', Constants::MODULE_SLUG);
 
             if (Unused::isRunning()) {
@@ -307,9 +309,9 @@ class Utilities extends BaseAdmin
 
             /** @var Cdn $oCdn */
             $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
-            /** @var CdnObject $oModel */
+            /** @var Model\CdnObject $oModel */
             $oModel = Factory::model('Object', Constants::MODULE_SLUG);
-            /** @var \Nails\Cdn\Resource\CdnObject $oObject */
+            /** @var Resource\CdnObject $oObject */
             $oObject = $oModel->getById($iId);
 
             $oCdn->objectDelete($oObject->id);
