@@ -5,6 +5,7 @@ namespace Nails\Cdn\Console\Command\Monitor;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Factory\Monitor\Detail;
 use Nails\Cdn\Model\CdnObject;
+use Nails\Common\Helper\Model\Expand;
 use Nails\Console\Command\Base;
 use Nails\Console\Exception\ConsoleException;
 use Nails\Factory;
@@ -166,7 +167,9 @@ class Usages extends Base
         /** @var CdnObject $oObjectModel */
         $oModel = Factory::model('Object', Constants::MODULE_SLUG);
         /** @var \Nails\Cdn\Resource\CdnObject|null $oObject */
-        $oObject = $oModel->getById($iObjectId);
+        $oObject = $oModel->getById($iObjectId, [
+            new Expand('bucket'),
+        ]);
 
         if (empty($oObject)) {
             throw new ConsoleException('Invalid object ID');
@@ -178,6 +181,11 @@ class Usages extends Base
             'Filename (on disk)' => $oObject->file->name->disk,
             'MIME'               => $oObject->file->mime,
             'Size'               => $oObject->file->size->human,
+            'Bucket'             => sprintf(
+                '%s (<info>%s</info>)',
+                $oObject->bucket->label,
+                $oObject->bucket->slug
+            ),
             'Driver'             => $oObject->driver,
         ]);
 
