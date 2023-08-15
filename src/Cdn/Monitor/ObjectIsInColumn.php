@@ -65,7 +65,7 @@ abstract class ObjectIsInColumn implements Monitor
      * @throws ModelException
      * @throws NailsException
      */
-    public function delete(Detail $oDetail): void
+    public function delete(Detail $oDetail, CdnObject $oObject): void
     {
         $this->setObjectId($oDetail->getData()->id, null);
     }
@@ -77,9 +77,9 @@ abstract class ObjectIsInColumn implements Monitor
      * @throws ModelException
      * @throws NailsException
      */
-    public function replace(CdnObject $oObject, Detail $oDetail): void
+    public function replace(Detail $oDetail, CdnObject $oObject, CdnObject $oReplacement): void
     {
-        $this->setObjectId($oDetail->getData()->id, $oObject->id);
+        $this->setObjectId($oDetail->getData()->id, $oReplacement->id);
     }
 
     // --------------------------------------------------------------------------

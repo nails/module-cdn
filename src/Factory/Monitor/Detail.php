@@ -51,15 +51,15 @@ class Detail
 
     // --------------------------------------------------------------------------
 
-    public function delete(): void
+    public function delete(CdnObject $oObject): void
     {
-        $this->oMonitor->delete($this);
+        $this->oMonitor->delete($this, $oObject);
     }
 
     // --------------------------------------------------------------------------
 
-    public function replace(CdnObject $oObject): void
+    public function replace(CdnObject $oObject, CdnObject $oReplacement): void
     {
-        $this->oMonitor->replace($oObject, $this);
+        $this->oMonitor->replace($this, $oObject, $oReplacement);
     }
 }

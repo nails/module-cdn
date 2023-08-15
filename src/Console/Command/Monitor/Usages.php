@@ -106,10 +106,11 @@ class Usages extends Base
 
         switch ($sAnswer) {
             case 'd':
-                return $this->delete($aResults);
+                return $this->delete($oObject, $aResults);
 
             case 'r':
                 return $this->replace(
+                    $oObject,
                     $aResults,
                     (int) $this->ask('Replace with (Object ID)', null)
                 );
@@ -122,13 +123,13 @@ class Usages extends Base
 
     // --------------------------------------------------------------------------
 
-    private function delete(array $aResults): int
+    private function delete(Resource\CdnObject $oObject, array $aResults): int
     {
         $this
             ->trackProgress(
                 'Deleting usages...',
-                function (Detail $oDetail) {
-                    $oDetail->delete();
+                function (Detail $oDetail) use ($oObject) {
+                    $oDetail->delete($oObject);
                 },
                 $aResults
             );
@@ -144,15 +145,15 @@ class Usages extends Base
 
     // --------------------------------------------------------------------------
 
-    private function replace(array $aResults, int $iReplacementId): int
+    private function replace(Resource\CdnObject $oObject, array $aResults, int $iReplacementId): int
     {
         $oReplacement = $this->verifyObject($iReplacementId);
         if ($this->confirm('Continue?', true)) {
             $this
                 ->trackProgress(
                     'Replacing usages...',
-                    function (Detail $oDetail) use ($oReplacement) {
-                        $oDetail->replace($oReplacement);
+                    function (Detail $oDetail) use ($oObject, $oReplacement) {
+                        $oDetail->replace($oObject, $oReplacement);
                     },
                     $aResults
                 );

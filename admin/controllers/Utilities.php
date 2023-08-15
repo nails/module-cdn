@@ -139,7 +139,7 @@ class Utilities extends BaseAdmin
         try {
 
             foreach ($aLocations as $oDetail) {
-                $oDetail->delete();
+                $oDetail->delete($oObject);
             }
 
             $this->oUserFeedback->success(
@@ -189,7 +189,7 @@ class Utilities extends BaseAdmin
             //  @todo (Pablo 2023-08-04) - Should we enforce a like-for-like replacement? i.e don't replace an image with a PDF?
 
             foreach ($aLocations as $oDetail) {
-                $oDetail->replace($oReplacement);
+                $oDetail->replace($oObject, $oReplacement);
             }
 
             $this->oUserFeedback->success(
