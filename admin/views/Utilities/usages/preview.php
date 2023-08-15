@@ -73,9 +73,7 @@
                                 <?=$oDetail->getMonitor()->getLabel()?>
                             </td>
                             <td>
-                                <code style="padding: 10px; display: block;">
-                                    <?=json_encode($oDetail->getData())?>
-                                </code>
+                                <code style="padding: 10px; display: block; white-space: pre"><?=json_encode($oDetail->getData(), JSON_PRETTY_PRINT)?></code>
                             </td>
                         </tr>
                         <?php
