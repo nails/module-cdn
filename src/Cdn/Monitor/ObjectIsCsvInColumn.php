@@ -15,6 +15,11 @@ use Nails\Factory;
 
 abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
 {
+    /**
+     * @return Detail[]
+     * @throws FactoryException
+     * @throws ModelException
+     */
     public function locate(CdnObject $oObject): array
     {
         /** @var Entity[] $aResults */
@@ -31,18 +36,7 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
 
             foreach ($aObjectIds as $iObjectId) {
                 if ($iObjectId === $oObject->id) {
-                    /** @var Detail $oDetail */
-                    $oDetail = Factory::factory('MonitorDetail', Constants::MODULE_SLUG, $this);
-                    $oDetail->setData((object) [
-                        'id'    => $oEntity->id,
-                        /**
-                         * Label isn't necessary, but helps humans
-                         * understand what the ID is referring to
-                         */
-                        'label' => $this->getEntityLabel($oEntity),
-                    ]);
-
-                    $aDetails[] = $oDetail;
+                    $aDetails[] = $this->createDetail($oEntity);
                 }
             }
         }

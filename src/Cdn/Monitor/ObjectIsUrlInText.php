@@ -15,21 +15,16 @@ use Nails\Factory;
 
 abstract class ObjectIsUrlInText extends ObjectIsInColumn
 {
+    /**
+     * @return Detail[]
+     * @throws FactoryException
+     * @throws ModelException
+     */
     public function locate(CdnObject $oObject): array
     {
         return array_map(
             function (Entity $oEntity): Detail {
-                /** @var Detail $oDetail */
-                $oDetail = Factory::factory('MonitorDetail', Constants::MODULE_SLUG, $this);
-                $oDetail->setData((object) [
-                    'id'    => $oEntity->id,
-                    /**
-                     * Label isn't necessary, but helps humans
-                     * understand what the ID is referring to
-                     */
-                    'label' => $this->getEntityLabel($oEntity),
-                ]);
-                return $oDetail;
+                return $this->createDetail($oEntity);
             },
             $this
                 ->getModel()

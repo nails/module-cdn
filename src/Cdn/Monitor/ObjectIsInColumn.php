@@ -31,6 +31,7 @@ abstract class ObjectIsInColumn implements Monitor
     // --------------------------------------------------------------------------
 
     /**
+     * @return Detail[]
      * @throws FactoryException
      * @throws ModelException
      */
@@ -38,17 +39,7 @@ abstract class ObjectIsInColumn implements Monitor
     {
         return array_map(
             function (Entity $oEntity): Detail {
-                /** @var Detail $oDetail */
-                $oDetail = Factory::factory('MonitorDetail', Constants::MODULE_SLUG, $this);
-                $oDetail->setData((object) [
-                    'id'    => $oEntity->id,
-                    /**
-                     * Label isn't necessary, but helps humans
-                     * understand what the ID is referring to
-                     */
-                    'label' => $this->getEntityLabel($oEntity),
-                ]);
-                return $oDetail;
+                return $this->createDetail($oEntity);
             },
             $this
                 ->getModel()
@@ -63,6 +54,28 @@ abstract class ObjectIsInColumn implements Monitor
     protected function getEntityLabel(Entity $oEntity): string
     {
         return $oEntity->label ?? '<no label>';
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @throws FactoryException
+     */
+    protected function createDetail(Entity $oEntity, array $aAdditionalData): Detail
+    {
+        /** @var Detail $oDetail */
+        $oDetail = Factory::factory('MonitorDetail', Constants::MODULE_SLUG, $this);
+        $oDetail->setData((object) array_merge(
+            [
+                'id'    => $oEntity->id,
+                /**
+                 * Label isn't necessary, but helps humans
+                 * understand what the ID is referring to
+                 */
+                'label' => $this->getEntityLabel($oEntity),
+            ],
+            $aAdditionalData
+        );
     }
 
     // --------------------------------------------------------------------------
