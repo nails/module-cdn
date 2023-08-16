@@ -22,6 +22,7 @@ use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
 use Nails\Cdn\Service\Cdn;
 use Nails\Cdn\Service\Monitor;
+use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Uri;
 use Nails\Factory;
@@ -254,7 +255,9 @@ class Utilities extends BaseAdmin
                 $aIds[] = $iId;
 
                 if (count($aObjects) < min(self::MAX_UNUSED_OBJECTS, count($aIds))) {
-                    $oObject = $oModel->getById($iId);
+                    $oObject = $oModel->getById($iId, [
+                        new Expand('bucket'),
+                    ]);
                     if ($oObject) {
                         $aObjects[] = $oObject;
                     }

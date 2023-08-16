@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @var \DateTime                       $oBegin
+ * @var \Nails\Cdn\Resource\CdnObject[] $aObjects
+ */
+
 if (!empty($oBegin) || !empty($aObjects)) {
 
     ?>
@@ -32,6 +37,8 @@ if (!empty($oBegin) || !empty($aObjects)) {
                     <th>Filename</th>
                     <th>Type</th>
                     <th>Size</th>
+                    <th>Bucket</th>
+                    <th>Created</th>
                     <th class="actions">Actions</th>
                 </tr>
             </thead>
@@ -68,6 +75,11 @@ if (!empty($oBegin) || !empty($aObjects)) {
                             <td><?=anchor(cdnServe($oObject->id), $oObject->file->name->human, 'target="_blank"')?></td>
                             <td><?=$oObject->file->mime?></td>
                             <td><?=$oObject->file->size->human?></td>
+                            <td>
+                                <?=$oObject->bucket->label?>
+                                <small><code><?=$oObject->bucket->slug?></code></small>
+                            </td>
+                            <?=\Nails\Admin\Helper::loadDateTimeCell($oObject->created)?>
                             <td class="actions">
                                 <a href="<?=siteUrl('admin/cdn/utilities/unused/' . $oObject->id . '/delete')?>" class="btn btn-xs btn-danger confirm">
                                     Delete
@@ -80,7 +92,7 @@ if (!empty($oBegin) || !empty($aObjects)) {
                 } else {
                     ?>
                     <tr>
-                        <td colspan="6" class="no-data">
+                        <td colspan="8" class="no-data">
                             No unused objects found
                         </td>
                     </tr>
