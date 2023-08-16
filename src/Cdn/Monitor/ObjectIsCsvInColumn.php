@@ -47,21 +47,22 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
     // --------------------------------------------------------------------------
 
     /**
-     * @return int[]
-     */
-    protected function extractIds(Entity $oEntity): array
-    {
-        return array_map('intval', array_map('trim', explode(',', $oEntity->{$this->getColumn()})));
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * @throws CdnException
+     * @throws FactoryException
+     * @throws ModelException
      */
     public function delete(Detail $oDetail, CdnObject $oObject): void
     {
-        dd(__FILE__, __LINE__);
+        $iId    = $oDetail->getData()->id;
+        $aFiles = $this->extractIdsFromEntityId($iId);
+
+        $aFiles = array_values(
+            array_filter(
+                $aFiles,
+                fn(int $iFileId) => $iFileId !== $oObject->id
+            )
+        );
+
+        $this->updateEntity($iId, $aFiles);
     }
 
     // --------------------------------------------------------------------------
@@ -72,6 +73,62 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
      */
     public function replace(Detail $oDetail, CdnObject $oObject, CdnObject $oReplacement): void
     {
-        dd(__FILE__, __LINE__);
+        $iId    = $oDetail->getData()->id;
+        $aFiles = $this->extractIdsFromEntityId($oDetail->getData()->id);
+
+        $aFiles = array_values(
+            array_map(
+                function (int $iFileId) use ($oObject, $oReplacement) {
+                    return $iFileId === $oObject->id
+                        ? $oReplacement->id
+                        : $iFileId;
+                },
+                $aFiles
+            )
+        );
+
+        $this->updateEntity($iId, $aFiles);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @return int[]
+     */
+    protected function extractIds(Entity $oEntity): array
+    {
+        return array_map('intval', array_map('trim', explode(',', $oEntity->{$this->getColumn()})));
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @throws ModelException
+     */
+    protected function extractIdsFromEntityId(int $iId): array
+    {
+        $oEntity = $this
+            ->getModel()
+            ->getById($iId);
+
+        return $this->extractIds($oEntity);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @throws FactoryException
+     * @throws ModelException
+     */
+    protected function updateEntity(int $iEntityId, array $aFileIds): void
+    {
+        $this
+            ->getModel()
+            ->update(
+                $iEntityId,
+                [
+                    $this->getColumn() => implode(',', $aFileIds),
+                ]
+            );
     }
 }
