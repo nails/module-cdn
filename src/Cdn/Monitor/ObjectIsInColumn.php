@@ -46,7 +46,7 @@ abstract class ObjectIsInColumn implements Monitor
                      * Label isn't necessary, but helps humans
                      * understand what the ID is referring to
                      */
-                    'label' => $oEntity->label ?? '<no label>',
+                    'label' => $this->getEntityLabel($oEntity),
                 ]);
                 return $oDetail;
             },
@@ -56,6 +56,13 @@ abstract class ObjectIsInColumn implements Monitor
                     new Where($this->getColumn(), $oObject->id),
                 ])
         );
+    }
+
+    // --------------------------------------------------------------------------
+
+    protected function getEntityLabel(Entity $oEntity): string
+    {
+        return $oEntity->label ?? '<no label>';
     }
 
     // --------------------------------------------------------------------------

@@ -27,7 +27,7 @@ abstract class ObjectIsUrlInText extends ObjectIsInColumn
                      * Label isn't necessary, but helps humans
                      * understand what the ID is referring to
                      */
-                    'label' => $oEntity->label ?? '<no label>',
+                    'label' => $this->getEntityLabel($oEntity),
                 ]);
                 return $oDetail;
             },
