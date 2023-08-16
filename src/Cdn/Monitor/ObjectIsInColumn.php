@@ -71,7 +71,7 @@ abstract class ObjectIsInColumn implements Monitor
     /**
      * @throws FactoryException
      */
-    protected function createDetail(Entity $oEntity, array $aAdditionalData): Detail
+    protected function createDetail(Entity $oEntity, array $aAdditionalData = []): Detail
     {
         /** @var Detail $oDetail */
         $oDetail = Factory::factory('MonitorDetail', Constants::MODULE_SLUG, $this);
@@ -85,7 +85,9 @@ abstract class ObjectIsInColumn implements Monitor
                 'label' => $this->getEntityLabel($oEntity),
             ],
             $aAdditionalData
-        );
+        ));
+
+        return $oDetail;
     }
 
     // --------------------------------------------------------------------------
