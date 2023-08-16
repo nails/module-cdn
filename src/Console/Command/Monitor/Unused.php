@@ -169,7 +169,7 @@ class Unused extends Base
 
     public static function isRunning(): bool
     {
-        return (bool) appSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG);
+        return (bool) appSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG, null, true);
     }
 
     // --------------------------------------------------------------------------
