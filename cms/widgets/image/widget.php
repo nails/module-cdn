@@ -13,6 +13,7 @@
 namespace Nails\Cdn\Cms\Widget;
 
 use Nails\Cdn\Constants;
+use Nails\Cms\Interfaces\Monitor;
 use Nails\Factory;
 use Nails\Cms\Widget\WidgetBase;
 
@@ -21,7 +22,7 @@ use Nails\Cms\Widget\WidgetBase;
  *
  * @package Nails\Cdn\Cms\Widget
  */
-class Image extends WidgetBase
+class Image extends WidgetBase implements Monitor\Cdn\Widget
 {
     /**
      * Image constructor.
@@ -74,7 +75,6 @@ class Image extends WidgetBase
 
         /**
          * Backwards compatability
-         *
          * The previous version of this widget allowed for arbritray image dimensions; if they are set,
          * and valid then allow them to be displayed.
          */
@@ -94,5 +94,12 @@ class Image extends WidgetBase
         }
 
         parent::populateWidgetData($aWidgetData);
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function getCdnMonitorPaths(): array
+    {
+        return ['iImageId'];
     }
 }
