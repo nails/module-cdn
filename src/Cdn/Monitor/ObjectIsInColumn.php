@@ -43,10 +43,20 @@ abstract class ObjectIsInColumn implements Monitor
             },
             $this
                 ->getModel()
-                ->getAll([
-                    new Where($this->getColumn(), $oObject->id),
-                ])
-        );
+                ->getAll(array_merge(
+                        [
+                            new Where($this->getColumn(), $oObject->id),
+                        ],
+                        $this->getAdditionalQueryData()
+                    )
+                ));
+    }
+
+    // --------------------------------------------------------------------------
+
+    protected function getAdditionalQueryData(): array
+    {
+        return [];
     }
 
     // --------------------------------------------------------------------------
