@@ -145,25 +145,31 @@ class Utilities extends BaseAdmin
                 $oDetail->delete($oObject);
             }
 
-            $this->oUserFeedback->success(
-                sprintf(
-                    'Successfully removed references for object #%s (%s).',
-                    $oObject->id,
-                    $oObject->file->name->human
-                )
-            );
+            $this
+                ->oUserFeedback
+                ->success(
+                    sprintf(
+                        'Successfully removed references for object #%s (%s).',
+                        $oObject->id,
+                        $oObject->file->name->human
+                    )
+                );
 
-            $this->oUserFeedback->warning('<strong>Note:</strong> This operation has only affected references to this object, the actual object has not been deleted.');
+            $this
+                ->oUserFeedback
+                ->warning('<strong>Note:</strong> This operation has only affected references to this object, the actual object has not been deleted.');
 
         } catch (\Throwable $e) {
-            $this->oUserFeedback->error(
-                sprintf(
-                    'Failed to delete object #%s (%s): %s',
-                    $oObject->id,
-                    $oObject->file->name->human,
-                    $e->getMessage()
-                )
-            );
+            $this
+                ->oUserFeedback
+                ->error(
+                    sprintf(
+                        'Failed to delete object #%s (%s): %s',
+                        $oObject->id,
+                        $oObject->file->name->human,
+                        $e->getMessage()
+                    )
+                );
         }
 
         redirect('admin/cdn/utilities/usages?object=' . $oObject->id);
@@ -195,25 +201,31 @@ class Utilities extends BaseAdmin
                 $oDetail->replace($oObject, $oReplacement);
             }
 
-            $this->oUserFeedback->success(
-                sprintf(
-                    'Successfully replaced object #%s (%s)',
-                    $oObject->id,
-                    $oObject->file->name->human
-                )
-            );
+            $this
+                ->oUserFeedback
+                ->success(
+                    sprintf(
+                        'Successfully replaced object #%s (%s)',
+                        $oObject->id,
+                        $oObject->file->name->human
+                    )
+                );
 
-            $this->oUserFeedback->warning('<strong>Note:</strong> This operation has only affected references to this object, the actual object has not been replaced.');
+            $this
+                ->oUserFeedback
+                ->warning('<strong>Note:</strong> This operation has only affected references to this object, the actual object has not been replaced.');
 
         } catch (\Throwable $e) {
-            $this->oUserFeedback->error(
-                sprintf(
-                    'Failed to replace object #%s (%s): %s',
-                    $oObject->id,
-                    $oObject->file->name->human,
-                    $e->getMessage()
-                )
-            );
+            $this
+                ->oUserFeedback
+                ->error(
+                    sprintf(
+                        'Failed to replace object #%s (%s): %s',
+                        $oObject->id,
+                        $oObject->file->name->human,
+                        $e->getMessage()
+                    )
+                );
         }
 
         redirect('admin/cdn/utilities/usages?object=' . $oObject->id);
@@ -271,7 +283,9 @@ class Utilities extends BaseAdmin
             $this->data['aObjects'] = $aObjects;
 
         } catch (\Throwable $e) {
-            $this->oUserFeedback->error($e->getMessage());
+            $this
+                ->oUserFeedback
+                ->error($e->getMessage());
         }
 
         /** @var Uri $oUri */
@@ -323,19 +337,23 @@ class Utilities extends BaseAdmin
 
             $oCdn->objectDelete($oObject->id);
 
-            $this->oUserFeedback->success(sprintf(
-                'Object #%s (%s) deleted successfully.',
-                $oObject->id,
-                $oObject->file->name->human
-            ));
+            $this
+                ->oUserFeedback
+                ->success(sprintf(
+                    'Object #%s (%s) deleted successfully.',
+                    $oObject->id,
+                    $oObject->file->name->human
+                ));
 
         } catch (\Throwable $e) {
-            $this->oUserFeedback->error(sprintf(
-                'Failed to delete object #%s (%s): %s',
-                $oObject->id,
-                $oObject->file->name->human,
-                $e->getMessage()
-            ));
+            $this
+                ->oUserFeedback
+                ->error(sprintf(
+                    'Failed to delete object #%s (%s): %s',
+                    $oObject->id,
+                    $oObject->file->name->human,
+                    $e->getMessage()
+                ));
         }
 
         redirect('admin/cdn/utilities/unused');
