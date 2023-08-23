@@ -84,7 +84,9 @@ class Utilities extends BaseAdmin
         $oModel = Factory::model('Object', Constants::MODULE_SLUG);
 
         if ($oInput::get('object')) {
-            $oObject = $oModel->getById($oInput::get('object'));
+            $oObject = $oModel->getById($oInput::get('object'), [
+                new Expand('bucket'),
+            ]);
             if ($oObject) {
                 return $this->usagesPreview($oObject);
             }
