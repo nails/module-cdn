@@ -80,6 +80,10 @@ class Utilities extends BaseAdmin
 
     public function usages()
     {
+        if (!userHasPermission('admin:cdn:utilities:usages')) {
+            show404();
+        }
+
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
         /** @var Model\CdnObject $oModel */
@@ -235,6 +239,10 @@ class Utilities extends BaseAdmin
 
     public function unused()
     {
+        if (!userHasPermission('admin:cdn:utilities:unused')) {
+            show404();
+        }
+
         try {
 
             /** @var Model\CdnObject $oModel */
