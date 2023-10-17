@@ -29,7 +29,7 @@ if (!empty($oBegin) || !empty($aObjects)) {
         }
 
         ?>
-        <table class="table table-striped table-hover table-bordered table-responsive">
+        <table class="table table-striped table-hover table-bordered table-responsive u-mb0">
             <thead class="table-dark">
                 <tr>
                     <th class="text-center">ID</th>
@@ -42,7 +42,7 @@ if (!empty($oBegin) || !empty($aObjects)) {
                     <th class="actions">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody<?=empty($aObjects) ? ' class="align-middle"' : ''?>>
                 <?php
 
                 if (!empty($aObjects)) {

@@ -10,7 +10,7 @@
 <?=form_hidden('object', $oObject->id)?>
     <fieldset>
         <legend>Object</legend>
-        <table class="table table-striped table-hover table-bordered table-responsive">
+        <table class="table table-striped table-hover table-bordered table-responsive u-mb0">
             <tbody>
                 <tr>
                     <?php
@@ -54,14 +54,14 @@
     </fieldset>
     <fieldset>
         <legend>Locations</legend>
-        <table class="table table-striped table-hover table-bordered table-responsive">
+        <table class="table table-striped table-hover table-bordered table-responsive u-mb0">
             <thead class="table-dark">
                 <tr>
                     <th>Monitor</th>
                     <th>Details</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody<?=empty($aLocations) ? ' class="align-middle"' : ''?>>
                 <?php
 
                 if (!empty($aLocations)) {
