@@ -10,7 +10,7 @@
 <?=form_hidden('object', $oObject->id)?>
     <fieldset>
         <legend>Object</legend>
-        <table>
+        <table class="table table-striped table-hover table-bordered table-responsive">
             <tbody>
                 <tr>
                     <?php
@@ -54,8 +54,8 @@
     </fieldset>
     <fieldset>
         <legend>Locations</legend>
-        <table>
-            <thead>
+        <table class="table table-striped table-hover table-bordered table-responsive">
+            <thead class="table-dark">
                 <tr>
                     <th>Monitor</th>
                     <th>Details</th>

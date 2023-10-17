@@ -29,8 +29,8 @@ if (!empty($oBegin) || !empty($aObjects)) {
         }
 
         ?>
-        <table>
-            <thead>
+        <table class="table table-striped table-hover table-bordered table-responsive">
+            <thead class="table-dark">
                 <tr>
                     <th class="text-center">ID</th>
                     <th>Preview</th>
