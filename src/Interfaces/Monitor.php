@@ -32,12 +32,12 @@ interface Monitor
     /**
      * Deletes the item identified by the Detail
      */
-    public function delete(Detail $oDetail): void;
+    public function delete(Detail $oDetail, CdnObject $oObject): void;
 
     // --------------------------------------------------------------------------
 
     /**
      * Replaces the item identified by the Detail with the supplied object
      */
-    public function replace(CdnObject $oObject, Detail $oDetail): void;
+    public function replace(Detail $oDetail, CdnObject $oObject, CdnObject $oReplacement): void;
 }
