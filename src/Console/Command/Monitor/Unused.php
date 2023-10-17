@@ -6,6 +6,7 @@ use Nails\Cdn\Constants;
 use Nails\Cdn\Factory\Monitor\Detail;
 use Nails\Cdn\Model\CdnObject;
 use Nails\Cdn\Service\Cdn;
+use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Helper\Model\Select;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\FileCache;
@@ -123,7 +124,7 @@ class Unused extends Base
 
         while ($oResult = $oQuery->unbuffered_row()) {
 
-            $oObject    = $oObjectModel->getById($oResult->id);
+            $oObject    = $oObjectModel->getById($oResult->id, [new Expand('bucket')]);
             $aLocations = $oService->locate($oObject);
 
             if (empty($aLocations)) {
@@ -168,7 +169,7 @@ class Unused extends Base
 
     public static function isRunning(): bool
     {
-        return (bool) appSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG);
+        return (bool) appSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG, null, true);
     }
 
     // --------------------------------------------------------------------------

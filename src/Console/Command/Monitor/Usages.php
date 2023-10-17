@@ -4,7 +4,9 @@ namespace Nails\Cdn\Console\Command\Monitor;
 
 use Nails\Cdn\Constants;
 use Nails\Cdn\Factory\Monitor\Detail;
-use Nails\Cdn\Model\CdnObject;
+use Nails\Cdn\Model;
+use Nails\Cdn\Resource;
+use Nails\Common\Helper\Model\Expand;
 use Nails\Console\Command\Base;
 use Nails\Console\Exception\ConsoleException;
 use Nails\Factory;
@@ -100,14 +102,15 @@ class Usages extends Base
             'd' => 'Delete this object',
             'r' => 'Replace this object',
             'x' => 'Exit',
-        ], 'e');
+        ], 'x');
 
         switch ($sAnswer) {
             case 'd':
-                return $this->delete($aResults);
+                return $this->delete($oObject, $aResults);
 
             case 'r':
                 return $this->replace(
+                    $oObject,
                     $aResults,
                     (int) $this->ask('Replace with (Object ID)', null)
                 );
@@ -120,13 +123,13 @@ class Usages extends Base
 
     // --------------------------------------------------------------------------
 
-    private function delete(array $aResults): int
+    private function delete(Resource\CdnObject $oObject, array $aResults): int
     {
         $this
             ->trackProgress(
                 'Deleting usages...',
-                function (Detail $oDetail) {
-                    $oDetail->delete();
+                function (Detail $oDetail) use ($oObject) {
+                    $oDetail->delete($oObject);
                 },
                 $aResults
             );
@@ -142,15 +145,15 @@ class Usages extends Base
 
     // --------------------------------------------------------------------------
 
-    private function replace(array $aResults, int $iReplacementId): int
+    private function replace(Resource\CdnObject $oObject, array $aResults, int $iReplacementId): int
     {
         $oReplacement = $this->verifyObject($iReplacementId);
         if ($this->confirm('Continue?', true)) {
             $this
                 ->trackProgress(
                     'Replacing usages...',
-                    function (Detail $oDetail) use ($oReplacement) {
-                        $oDetail->replace($oReplacement);
+                    function (Detail $oDetail) use ($oObject, $oReplacement) {
+                        $oDetail->replace($oObject, $oReplacement);
                     },
                     $aResults
                 );
@@ -161,12 +164,14 @@ class Usages extends Base
 
     // --------------------------------------------------------------------------
 
-    private function verifyObject(int $iObjectId): \Nails\Cdn\Resource\CdnObject
+    private function verifyObject(int $iObjectId): Resource\CdnObject
     {
-        /** @var CdnObject $oObjectModel */
+        /** @var Model\CdnObject $oObjectModel */
         $oModel = Factory::model('Object', Constants::MODULE_SLUG);
-        /** @var \Nails\Cdn\Resource\CdnObject|null $oObject */
-        $oObject = $oModel->getById($iObjectId);
+        /** @var Resource\CdnObject|null $oObject */
+        $oObject = $oModel->getById($iObjectId, [
+            new Expand('bucket'),
+        ]);
 
         if (empty($oObject)) {
             throw new ConsoleException('Invalid object ID');
@@ -178,6 +183,11 @@ class Usages extends Base
             'Filename (on disk)' => $oObject->file->name->disk,
             'MIME'               => $oObject->file->mime,
             'Size'               => $oObject->file->size->human,
+            'Bucket'             => sprintf(
+                '%s (<info>%s</info>)',
+                $oObject->bucket->label,
+                $oObject->bucket->slug
+            ),
             'Driver'             => $oObject->driver,
         ]);
 
