@@ -115,8 +115,6 @@ class Utilities extends Base
         $this->data['oObject']     = $oObject;
         $this->data['aLocations']  = $aLocations;
 
-        Helper::loadView('usages/preview');
-
         $this
             ->setTitles([
                 'CDN',
