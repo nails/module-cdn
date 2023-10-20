@@ -15,6 +15,7 @@ namespace Nails\Cdn\Admin\Controller;
 use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
+use Nails\Cdn\Admin\Permission;
 use Nails\Cdn\Console\Command\Monitor\Unused;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\CdnException;
