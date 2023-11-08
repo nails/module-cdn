@@ -123,7 +123,6 @@ class Form
 
         //  Generate the field's HTML
         $sFieldAttr = $_attr;
-        $sFieldAttr .= ' class="' . $_field_class . '" ';
 
         $_field_html = cdnObjectPicker(
             $_field_key,
@@ -154,7 +153,7 @@ class Form
 
         $_out = <<<EOT
 
-        <div class="field $_error_class $_field_oddeven $_readonly_cls $_field_type" $_field_id_top $_field_attributes>
+        <div class="field $_field_class $_error_class $_field_oddeven $_readonly_cls $_field_type" $_field_id_top $_field_attributes>
             <label>
                 <span class="label">
                     $_field_label
@@ -251,7 +250,6 @@ class Form
 
         //  Generate the field's HTML
         $sFieldAttr = $_attr;
-        $sFieldAttr .= ' class="' . $_field_class . '" ';
         $sFieldAttr .= $_readonly;
 
         // Small hack to inject data-bind into the input.
@@ -358,7 +356,7 @@ class Form
         // --------------------------------------------------------------------------
 
         $_out = <<<EOT
-            <div class="field cdn-multi cdn-multi-with-label $_error_class $_field_oddeven $_readonly_cls $_field_type" $_field_id_top $sFieldAttr>
+            <div class="field cdn-multi cdn-multi-with-label $_field_class $_error_class $_field_oddeven $_readonly_cls $_field_type" $_field_id_top $sFieldAttr>
                 <div>
                     <span class="label">
                         $_field_label
