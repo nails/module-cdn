@@ -57,7 +57,7 @@ class Crop extends Base
         $this->width     = (int) $oUri->segment(3, 100);
         $this->height    = (int) $oUri->segment(4, 100);
         $this->bucket    = $oUri->segment(5);
-        $this->object    = urldecode($oUri->segment(6));
+        $this->object    = urldecode($oUri->segment(6) ?? '');
         $this->extension = !empty($this->object) ? strtolower(substr($this->object, strrpos($this->object, '.'))) : '';
 
         // --------------------------------------------------------------------------
