@@ -46,10 +46,11 @@ if ($iImageId && $sSize) {
         // --------------------------------------------------------------------------
 
         // Render
-        $sOut = '';
+        $sOut = '<div class="cms-widget cms-widget-image">';
         $sOut .= $sLinkUrl ? '<a href="' . $sLinkUrl . '" ' . $sLinkAttr . $sLinkTarget . '>' : '';
         $sOut .= '<img src="' . $sImgUrl . '" ' . $sImgAttr . '/>';
         $sOut .= $sLinkUrl ? '</a>' : '';
+        $sOut .= '</div>';
 
         echo $sOut;
 
