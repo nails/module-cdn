@@ -98,6 +98,7 @@
                     "permitted-image-dimensions": [
                         "100x100",
                         "150x150",
+                        "200x200",
                         "400x400"
                     ]
                 }
