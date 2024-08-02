@@ -5,10 +5,26 @@
  * @var \Nails\Cdn\Resource\CdnObject[] $aObjects
  */
 
+use Nails\Cdn\Constants;
+
 if (!empty($oBegin) || !empty($aObjects)) {
 
     ?>
     <div class="cdn cdn-unused">
+        <?php
+
+        if (appSetting('cdn:monitor:unused:lasterror', Constants::MODULE_SLUG)) {
+            ?>
+            <div class="alert alert-danger">
+                <p>
+                    ⛔️ &nbsp; An error was encountered during the last scan:
+                    <pre style="padding: 1rem;margin-top:1rem"><?=appSetting('cdn:monitor:unused:lasterror', Constants::MODULE_SLUG)?></pre>
+                </p>
+            </div>
+            <?php
+        }
+
+        ?>
         <div class="alert alert-warning">
             <p>
                 ⚠️ &nbsp; The data below is produced using data generated on
