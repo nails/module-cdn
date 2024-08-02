@@ -72,6 +72,10 @@ class Unused extends Base
 
         // --------------------------------------------------------------------------
 
+        $this->clearLastError();
+
+        // --------------------------------------------------------------------------
+
         if ($oInput->getOption('reset') || $oInput->getOption('force')) {
 
             $this->markAsRunning(false);
@@ -149,6 +153,7 @@ class Unused extends Base
 
         } catch (\Throwable $e) {
 
+            $this->setLastError($e->getMessage());
             throw $e;
 
         } finally {
@@ -179,5 +184,19 @@ class Unused extends Base
     private function markAsRunning(bool $bRunning): void
     {
         setAppSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG, $bRunning);
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function clearLastError(): void
+    {
+        setAppSetting('cdn:monitor:unused:lasterror', Constants::MODULE_SLUG, null);
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function setLastError(string $error): void
+    {
+        setAppSetting('cdn:monitor:unused:lasterror', Constants::MODULE_SLUG, $error);
     }
 }
