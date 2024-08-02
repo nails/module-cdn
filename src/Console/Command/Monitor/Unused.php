@@ -3,9 +3,7 @@
 namespace Nails\Cdn\Console\Command\Monitor;
 
 use Nails\Cdn\Constants;
-use Nails\Cdn\Factory\Monitor\Detail;
 use Nails\Cdn\Model\CdnObject;
-use Nails\Cdn\Service\Cdn;
 use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Helper\Model\Select;
 use Nails\Common\Service\Database;
@@ -13,11 +11,7 @@ use Nails\Common\Service\FileCache;
 use Nails\Console\Command\Base;
 use Nails\Console\Exception\ConsoleException;
 use Nails\Factory;
-use Symfony\Component\Console\Command\SignalableCommandInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Helper\ProgressIndicator;
-use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -111,47 +105,55 @@ class Unused extends Base
 
         // --------------------------------------------------------------------------
 
-        $iNumUnsed = 0;
+        try {
 
-        $oOutput->writeln('');
-        $oOutput->writeln('Scanning objects...');
-        $oProgressBar = new ProgressBar($oOutput, $oObjectModel->countAll());
-        $oProgressBar->setFormat(sprintf(self::PROGRESS_FORMAT, $iNumUnsed));
-        $oProgressBar->start();
+            $iNumUnsed = 0;
 
-        $iStart = microtime(true);
-        $oQuery = $oObjectModel->getAllRawQuery([new Select(['id'])]);
+            $oOutput->writeln('');
+            $oOutput->writeln('Scanning objects...');
+            $oProgressBar = new ProgressBar($oOutput, $oObjectModel->countAll());
+            $oProgressBar->setFormat(sprintf(self::PROGRESS_FORMAT, $iNumUnsed));
+            $oProgressBar->start();
 
-        while ($oResult = $oQuery->unbuffered_row()) {
+            $iStart = microtime(true);
+            $oQuery = $oObjectModel->getAllRawQuery([new Select(['id'])]);
 
-            $oObject    = $oObjectModel->getById($oResult->id, [new Expand('bucket')]);
-            $aLocations = $oService->locate($oObject);
+            while ($oResult = $oQuery->unbuffered_row()) {
 
-            if (empty($aLocations)) {
-                fwrite($rCacheFile, $oObject->id . PHP_EOL);
-                $iNumUnsed++;
+                $oObject    = $oObjectModel->getById($oResult->id, [new Expand('bucket')]);
+                $aLocations = $oService->locate($oObject);
+
+                if (empty($aLocations)) {
+                    fwrite($rCacheFile, $oObject->id . PHP_EOL);
+                    $iNumUnsed++;
+                }
+
+                //  Clean up potential memory leaks
+                unset($aLocations);
+                $oObjectModel->clearCache();
+                $oDb->flushCache();
+
+                $oProgressBar->setFormat(sprintf(self::PROGRESS_FORMAT, $iNumUnsed));
+                $oProgressBar->advance();
             }
 
-            //  Clean up potential memory leaks
-            unset($aLocations);
-            $oObjectModel->clearCache();
-            $oDb->flushCache();
+            fclose($rCacheFile);
+            $iEnd = microtime(true);
+            $oProgressBar->finish();
+            $oOutput->writeln('');
+            $oOutput->writeln(sprintf(
+                '<comment>Complete!</comment> Job took %s seconds',
+                number_format($iEnd - $iStart, 2)
+            ));
+            $oOutput->writeln('');
 
-            $oProgressBar->setFormat(sprintf(self::PROGRESS_FORMAT, $iNumUnsed));
-            $oProgressBar->advance();
+        } catch (\Throwable $e) {
+
+            throw $e;
+
+        } finally {
+            $this->markAsRunning(false);
         }
-
-        fclose($rCacheFile);
-        $iEnd = microtime(true);
-        $oProgressBar->finish();
-        $oOutput->writeln('');
-        $oOutput->writeln(sprintf(
-            '<comment>Complete!</comment> Job took %s seconds',
-            number_format($iEnd - $iStart, 2)
-        ));
-        $oOutput->writeln('');
-
-        $this->markAsRunning(false);
 
         return static::EXIT_CODE_SUCCESS;
     }
