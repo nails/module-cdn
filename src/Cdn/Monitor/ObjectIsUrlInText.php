@@ -2,16 +2,16 @@
 
 namespace Nails\Cdn\Cdn\Monitor;
 
-use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Factory\Monitor\Detail;
 use Nails\Cdn\Resource\CdnObject;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
+use Nails\Common\Helper\Model\Condition;
 use Nails\Common\Helper\Model\Like;
+use Nails\Common\Helper\Model\Sort;
 use Nails\Common\Helper\Model\Where;
 use Nails\Common\Resource\Entity;
-use Nails\Factory;
 
 abstract class ObjectIsUrlInText extends ObjectIsInColumn
 {
@@ -28,11 +28,46 @@ abstract class ObjectIsUrlInText extends ObjectIsInColumn
             },
             $this
                 ->getModel()
-                ->getAll([
-                    new Like($this->getColumn(), $oObject->bucket->slug . '/' . $oObject->file->name->disk),
-                ])
+                ->getAll(array_filter(array_merge([
+                    $this->getQuerySelect(),
+                    $this->getQueryConditions($oObject),
+                    $this->getQuerySort(),
+                ])))
         );
     }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @return Select[]
+     */
+    protected function getQuerySelect(): array
+    {
+        return [];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @return Where[]|Condition[]
+     */
+    protected function getQueryConditions(CdnObject $oObject): array
+    {
+        return [
+            new Like($this->getColumn(), $oObject->bucket->slug . '/' . $oObject->file->name->disk),
+        ];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @return Sort[]
+     */
+    protected function getQuerySort(): array
+    {
+        return [];
+    }
+
 
     // --------------------------------------------------------------------------
 
