@@ -28,11 +28,11 @@ abstract class ObjectIsUrlInText extends ObjectIsInColumn
             },
             $this
                 ->getModel()
-                ->getAll(array_filter(array_merge([
+                ->getAll(array_filter(array_merge(
                     $this->getQuerySelect(),
                     $this->getQueryConditions($oObject),
                     $this->getQuerySort(),
-                ])))
+                )))
         );
     }
 
