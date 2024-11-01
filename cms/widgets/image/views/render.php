@@ -45,10 +45,16 @@ if ($iImageId && $sSize) {
 
         // --------------------------------------------------------------------------
 
+        //  Define the title and alt attributes
+        $sImgAlt   = $sImgAlt ? ' alt="' . $sImgAlt . '"' : ''
+        $sImgTitle = $sImgTitle ? ' title="' . $sImgTitle . '"' : ''
+
+        // --------------------------------------------------------------------------
+
         // Render
         $sOut = '<div class="cms-widget cms-widget-image">';
         $sOut .= $sLinkUrl ? '<a href="' . $sLinkUrl . '" ' . $sLinkAttr . $sLinkTarget . '>' : '';
-        $sOut .= '<img src="' . $sImgUrl . '" ' . $sImgAttr . '/>';
+        $sOut .= '<img src="' . $sImgUrl . '" ' . $sImgAttr . $sImgAlt . $sImgTitle . '/>';
         $sOut .= $sLinkUrl ? '</a>' : '';
         $sOut .= '</div>';
 
