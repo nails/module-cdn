@@ -46,8 +46,8 @@ if ($iImageId && $sSize) {
         // --------------------------------------------------------------------------
 
         //  Define the title and alt attributes
-        $sImgAlt   = $sImgAlt ? ' alt="' . $sImgAlt . '"' : ''
-        $sImgTitle = $sImgTitle ? ' title="' . $sImgTitle . '"' : ''
+        $sImgAlt   = $sImgAlt ? ' alt="' . htmlspecialchars($sImgAlt) . '"' : '';
+        $sImgTitle = $sImgTitle ? ' title="' . htmlspecialchars($sImgTitle) . '"' : '';
 
         // --------------------------------------------------------------------------
 

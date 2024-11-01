@@ -80,14 +80,14 @@
     echo form_field([
         'key'         => 'sImgAlt',
         'label'       => 'Alt',
-        'default'     => $sImgAttr,
+        'default'     => $sImgAlt,
         'placeholder' => 'The `alt` attribute you\'d like to give the image.',
     ]);
 
     echo form_field([
         'key'         => 'sImgTitle',
         'label'       => 'Title',
-        'default'     => $sImgAttr,
+        'default'     => $sImgTitle,
         'placeholder' => 'The `title` attribute you\'d like to give the image.',
     ]);
 
