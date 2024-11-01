@@ -50,6 +50,8 @@ class Image extends WidgetBase implements Monitor\Cdn\Widget
         $aWidgetData['sLinking']  = getFromArray(['sLinking', 'linking'], $aWidgetData);
         $aWidgetData['sUrl']      = getFromArray(['sUrl', 'url'], $aWidgetData);
         $aWidgetData['sTarget']   = getFromArray(['sTarget', 'target'], $aWidgetData);
+        $aWidgetData['sImgAlt']   = getFromArray('sImgAlt', $aWidgetData);
+        $aWidgetData['sImgTitle'] = getFromArray('sImgTitle', $aWidgetData);
         $aWidgetData['sImgAttr']  = getFromArray(['sImgAttr', 'img_attr'], $aWidgetData);
         $aWidgetData['sLinkAttr'] = getFromArray(['sLinkAttr', 'link_attr'], $aWidgetData);
 
