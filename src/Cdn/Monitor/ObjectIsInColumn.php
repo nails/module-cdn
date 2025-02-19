@@ -10,7 +10,6 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
 use Nails\Common\Helper\Model\Where;
-use Nails\Common\Helper\Strings;
 use Nails\Common\Model\Base;
 use Nails\Common\Resource\Entity;
 use Nails\Factory;
@@ -37,12 +36,16 @@ abstract class ObjectIsInColumn implements Monitor
      */
     public function locate(CdnObject $oObject): array
     {
+        $oModel = $this->getModel();
+        if (!$oModel->isDestructiveDelete()) {
+            $oModel->includeDeleted();
+        }
+
         return array_map(
-            function (Entity $oEntity): Detail {
-                return $this->createDetail($oEntity);
+            function (Entity $oEntity) use ($oModel): Detail {
+                return $this->createDetail($oEntity, $oModel);
             },
-            $this
-                ->getModel()
+            $oModel
                 ->getAll(array_merge(
                         [
                             new Where($this->getColumn(), $oObject->id),
@@ -71,19 +74,25 @@ abstract class ObjectIsInColumn implements Monitor
     /**
      * @throws FactoryException
      */
-    protected function createDetail(Entity $oEntity, array $aAdditionalData = []): Detail
+    protected function createDetail(Entity $oEntity, Base $oModel, array $aAdditionalData = []): Detail
     {
+        $aDetails = [
+            'id'    => $oEntity->id,
+            /**
+             * Label isn't necessary, but helps humans
+             * understand what the ID is referring to
+             */
+            'label' => $this->getEntityLabel($oEntity),
+        ];
+
+        if (!$oModel->isDestructiveDelete()) {
+            $aDetails[$oModel->getColumnIsDeleted()] = $oEntity->{$oModel->getColumnIsDeleted()};
+        }
+
         /** @var Detail $oDetail */
         $oDetail = Factory::factory('MonitorDetail', Constants::MODULE_SLUG, $this);
         $oDetail->setData((object) array_merge(
-            [
-                'id'    => $oEntity->id,
-                /**
-                 * Label isn't necessary, but helps humans
-                 * understand what the ID is referring to
-                 */
-                'label' => $this->getEntityLabel($oEntity),
-            ],
+            $aDetails,
             $aAdditionalData
         ));
 
