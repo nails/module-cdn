@@ -22,12 +22,16 @@ abstract class ObjectIsUrlInText extends ObjectIsInColumn
      */
     public function locate(CdnObject $oObject): array
     {
+        $oModel = $this->getModel();
+        if (!$oModel->isDestructiveDelete()) {
+            $oModel->includeDeleted();
+        }
+
         return array_map(
             function (Entity $oEntity): Detail {
-                return $this->createDetail($oEntity);
+                return $this->createDetail($oEntity, $oModel);
             },
-            $this
-                ->getModel()
+            $oModel
                 ->getAll(array_filter(array_merge(
                     $this->getQuerySelect(),
                     $this->getQueryConditions($oObject),

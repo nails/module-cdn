@@ -22,9 +22,13 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
      */
     public function locate(CdnObject $oObject): array
     {
+        $oModel = $this->getModel();
+        if (!$oModel->isDestructiveDelete()) {
+            $oModel->includeDeleted();
+        }
+
         /** @var Entity[] $aResults */
-        $aResults = $this
-            ->getModel()
+        $aResults = $oModel
             ->getAll([
                 new Like($this->getColumn(), $oObject->id),
             ]);
@@ -36,7 +40,7 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
 
             foreach ($aObjectIds as $iObjectId) {
                 if ($iObjectId === $oObject->id) {
-                    $aDetails[] = $this->createDetail($oEntity);
+                    $aDetails[] = $this->createDetail($oEntity, $oModel);
                 }
             }
         }
