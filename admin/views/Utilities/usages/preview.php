@@ -59,6 +59,7 @@
                 <tr>
                     <th>Monitor</th>
                     <th>Details</th>
+                    <th class="actions" style="width:175px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -75,13 +76,54 @@
                             <td>
                                 <code style="padding: 10px; display: block; white-space: pre"><?=json_encode($oDetail->getData(), JSON_PRETTY_PRINT)?></code>
                             </td>
+                            <?php
+
+                            if ($oDetail->getActions()) {
+                                ?>
+                                <td class="actions">
+                                    <?php
+
+                                    foreach ($oDetail->getActions() as $oAction) {
+
+                                        $aAttr = [
+                                            'target' => '_blank',
+                                            'class'  => 'btn btn-xs ' . $oAction->getClass(),
+                                        ];
+
+                                        if ($oAction->isConfirm()) {
+                                            $aAttr['class'] .= ' confirm';
+                                            if ($oAction->getConfirmTitle()) {
+                                                $aAttr['data-title'] = $oAction->getConfirmTitle();
+                                            }
+                                            if ($oAction->getConfirmBody()) {
+                                                $aAttr['data-body'] = $oAction->getConfirmBody();
+                                            }
+                                        }
+
+                                        echo anchor(
+                                            $oAction->getUrl(),
+                                            $oAction->getLabel(),
+                                            $aAttr
+                                        );
+                                    }
+
+                                    ?>
+                                </td>
+                                <?php
+
+                            } else {
+                                //  CSS :empty requires totally empty cell
+                                echo '<td class="actions"></td>';
+                            }
+
+                            ?>
                         </tr>
                         <?php
                     }
                 } else {
                     ?>
                     <tr>
-                        <td colspan="2" class="no-data">
+                        <td colspan="3" class="no-data">
                             This object does not seem to be in use
                         </td>
                     </tr>
