@@ -2,6 +2,7 @@
 
 namespace Nails\Cdn\Factory\Monitor;
 
+use Nails\Cdn\Factory\Monitor\Detail\Action;
 use Nails\Cdn\Interfaces\Monitor;
 use Nails\Cdn\Resource\CdnObject;
 
@@ -14,14 +15,19 @@ class Detail
      */
     protected ?object $oData = null;
 
+    /**
+     * An array of actions, rendered as links in the UI
+     */
+    protected array $aActions = [];
+
     // --------------------------------------------------------------------------
 
-    public function __construct(Monitor $oMonitor, object $oData = null)
+    public function __construct(Monitor $oMonitor, object $oData = null, array $aActions = [])
     {
         $this->oMonitor = $oMonitor;
-        if ($oData) {
-            $this->oData($oData);
-        }
+
+        $this->setData($oData);
+        $this->setActions($aActions);
     }
 
     // --------------------------------------------------------------------------
@@ -33,10 +39,25 @@ class Detail
 
     // --------------------------------------------------------------------------
 
+    public function setActions(array $aActions): self
+    {
+        $this->aActions = $aActions;
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
     /**
-     * @param object $oData
+     * @return Action[]
      */
-    public function setData(object $oData): self
+    public function getActions(): array
+    {
+        return $this->aActions;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function setData(?object $oData): self
     {
         $this->oData = $oData;
         return $this;

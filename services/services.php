@@ -1,10 +1,10 @@
 <?php
 
-use Nails\Common;
-use Nails\Cdn\Resource;
 use Nails\Cdn\Factory;
-use Nails\Cdn\Service;
 use Nails\Cdn\Model;
+use Nails\Cdn\Resource;
+use Nails\Cdn\Service;
+use Nails\Common;
 
 return [
     'services'  => [
@@ -78,11 +78,18 @@ return [
         },
     ],
     'factories' => [
-        'MonitorDetail' => function (\Nails\Cdn\Interfaces\Monitor $oMonitor): Factory\Monitor\Detail {
+        'MonitorDetail'       => function (\Nails\Cdn\Interfaces\Monitor $oMonitor): Factory\Monitor\Detail {
             if (class_exists('\App\Cdn\Factory\Monitor\Detail')) {
                 return new \App\Cdn\Factory\Monitor\Detail($oMonitor);
             } else {
                 return new Factory\Monitor\Detail($oMonitor);
+            }
+        },
+        'MonitorDetailAction' => function (): Factory\Monitor\Detail\Action {
+            if (class_exists('\App\Cdn\Factory\Monitor\Detail\Action')) {
+                return new \App\Cdn\Factory\Monitor\Detail\Action();
+            } else {
+                return new Factory\Monitor\Detail\Action();
             }
         },
     ],

@@ -16,7 +16,7 @@ use Nails\Factory;
 
 abstract class ObjectIsInColumn implements Monitor
 {
-    abstract protected function getModel(): Base;
+    abstract public function getModel(): Base;
 
     abstract protected function getColumn(): string;
 
@@ -91,12 +91,35 @@ abstract class ObjectIsInColumn implements Monitor
 
         /** @var Detail $oDetail */
         $oDetail = Factory::factory('MonitorDetail', Constants::MODULE_SLUG, $this);
-        $oDetail->setData((object) array_merge(
-            $aDetails,
-            $aAdditionalData
-        ));
+        $oDetail
+            ->setData((object) array_merge(
+                $aDetails,
+                $aAdditionalData
+            ))
+            ->setActions(
+                $this->generateActions($oEntity, $oModel)
+            );
 
         return $oDetail;
+    }
+
+    protected function generateActions(Entity $oEntity, Base $oModel): array
+    {
+        $aActions = [];
+
+        if (property_exists($oEntity, 'url')) {
+
+            if ($oModel->isDestructiveDelete() || empty($oEntity->{$oModel->getColumnIsDeleted()})) {
+
+                /** @var Detail\Action $oAction */
+                $oAction    = Factory::factory('MonitorDetailAction', Constants::MODULE_SLUG);
+                $aActions[] = $oAction
+                    ->setUrl($oEntity->url)
+                    ->setLabel('View');
+            }
+        }
+
+        return $aActions;
     }
 
     // --------------------------------------------------------------------------
