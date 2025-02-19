@@ -86,7 +86,7 @@
                                     foreach ($oDetail->getActions() as $oAction) {
 
                                         $aAttr = [
-                                            'target' => '_blank',
+                                            'target' => $oAction->getTarget(),
                                             'class'  => 'btn btn-xs ' . $oAction->getClass(),
                                         ];
 

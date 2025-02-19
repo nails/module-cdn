@@ -115,7 +115,8 @@ abstract class ObjectIsInColumn implements Monitor
                 $oAction    = Factory::factory('MonitorDetailAction', Constants::MODULE_SLUG);
                 $aActions[] = $oAction
                     ->setUrl($oEntity->url)
-                    ->setLabel('View');
+                    ->setLabel('View')
+                    ->setTarget('_blank');
             }
         }
 

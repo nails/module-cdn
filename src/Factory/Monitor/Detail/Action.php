@@ -8,6 +8,7 @@ class Action
         protected string $sUrl = '',
         protected string $sLabel = '',
         protected string $sClass = 'btn-default',
+        protected string $sTarget = '',
         protected bool $bConfirm = false,
         protected string $sConfirmTitle = '',
         protected string $sConfirmBody = ''
@@ -56,6 +57,21 @@ class Action
     public function setClass(string $sClass): self
     {
         $this->sClass = $sClass;
+        return $this;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function getTarget(): string
+    {
+        return $this->sTarget;
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function setTarget(string $sTarget): self
+    {
+        $this->sTarget = $sTarget;
         return $this;
     }
 
