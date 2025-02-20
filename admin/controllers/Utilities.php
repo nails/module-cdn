@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Manage the CDN Trash
+ * CDN Utilities
  *
  * @package     Nails
  * @subpackage  module-cdn
@@ -123,6 +123,9 @@ class Utilities extends BaseAdmin
             case 'delete':
                 return $this->usagesDelete($oObject, $aLocations);
 
+            case 'delete-object':
+                return $this->usagesDeleteObject($oObject);
+
             case 'replace':
                 return $this->usagesReplace($oObject, $aLocations);
         }
@@ -179,6 +182,44 @@ class Utilities extends BaseAdmin
         }
 
         redirect('admin/cdn/utilities/usages?object=' . $oObject->id);
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function usagesDeleteObject(Resource\CdnObject $oObject): void
+    {
+        try {
+
+            /** @var Cdn $oCdn */
+            $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+            if (!$oCdn->objectDelete($oObject->id)) {
+                throw new CdnException('Failed to delete object. ' . $oCdn->lastError());
+            }
+
+            $this
+                ->oUserFeedback
+                ->success(
+                    sprintf(
+                        'Successfully deleted file #%s (%s).',
+                        $oObject->id,
+                        $oObject->file->name->human
+                    )
+                );
+
+        } catch (\Throwable $e) {
+            $this
+                ->oUserFeedback
+                ->error(
+                    sprintf(
+                        'Failed to delete object #%s (%s): %s',
+                        $oObject->id,
+                        $oObject->file->name->human,
+                        $e->getMessage()
+                    )
+                );
+        }
+
+        redirect('admin/cdn/utilities/usages');
     }
 
     // --------------------------------------------------------------------------

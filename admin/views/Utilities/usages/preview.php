@@ -134,10 +134,6 @@
             </tbody>
         </table>
     </fieldset>
-<?php
-
-if (!empty($aLocations)) {
-    ?>
     <fieldset>
         <legend>Actions</legend>
         <?php
@@ -146,10 +142,11 @@ if (!empty($aLocations)) {
             'key'     => 'action',
             'label'   => 'Action',
             'class'   => 'select2',
-            'options' => [
-                'delete'  => 'Remove references',
-                'replace' => 'Replace references',
-            ],
+            'options' => array_filter([
+                'delete'        => !empty($aLocations) ? 'Remove references' : null,
+                'replace'       => !empty($aLocations) ? 'Replace references' : null,
+                'delete-object' => empty($aLocations) ? 'Delete File' : null,
+            ]),
             'data'    => [
                 'revealer' => 'usage-action',
             ],
@@ -167,13 +164,13 @@ if (!empty($aLocations)) {
 
         ?>
     </fieldset>
-    <?php
+<?php
 
-    echo \Nails\Admin\Helper::floatingControls([
-        'save' => [
-            'text'  => 'Confirm',
-            'class' => 'btn btn-danger',
-        ],
-    ]);
-}
+echo \Nails\Admin\Helper::floatingControls([
+    'save' => [
+        'text'  => 'Confirm',
+        'class' => 'btn btn-danger',
+    ],
+]);
+
 echo form_close();
