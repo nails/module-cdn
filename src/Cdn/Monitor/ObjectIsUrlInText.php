@@ -9,6 +9,7 @@ use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Helper\Model\Condition;
 use Nails\Common\Helper\Model\Like;
+use Nails\Common\Helper\Model\Select;
 use Nails\Common\Helper\Model\Sort;
 use Nails\Common\Helper\Model\Where;
 use Nails\Common\Resource\Entity;

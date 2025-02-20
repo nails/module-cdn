@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Manage the CDN Trash
+ * CDN Utilities
  *
  * @package     Nails
  * @subpackage  module-cdn
@@ -109,6 +109,9 @@ class Utilities extends Base
             case 'delete':
                 return $this->usagesDelete($oObject, $aLocations);
 
+            case 'delete-object':
+                return $this->usagesDeleteObject($oObject);
+
             case 'replace':
                 return $this->usagesReplace($oObject, $aLocations);
         }
@@ -154,6 +157,44 @@ class Utilities extends Base
             $this
                 ->oUserFeedback
                 ->warning('<strong>Note:</strong> This operation has only affected references to this object, the actual object has not been deleted.');
+
+        } catch (\Throwable $e) {
+            $this
+                ->oUserFeedback
+                ->error(
+                    sprintf(
+                        'Failed to delete object #%s (%s): %s',
+                        $oObject->id,
+                        $oObject->file->name->human,
+                        $e->getMessage()
+                    )
+                );
+        }
+
+        redirect(self::url('usages?object=' . $oObject->id));
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function usagesDeleteObject(Resource\CdnObject $oObject): void
+    {
+        try {
+
+            /** @var Cdn $oCdn */
+            $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+            if (!$oCdn->objectDelete($oObject->id)) {
+                throw new CdnException('Failed to delete object. ' . $oCdn->lastError());
+            }
+
+            $this
+                ->oUserFeedback
+                ->success(
+                    sprintf(
+                        'Successfully deleted file #%s (%s).',
+                        $oObject->id,
+                        $oObject->file->name->human
+                    )
+                );
 
         } catch (\Throwable $e) {
             $this
