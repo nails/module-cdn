@@ -207,12 +207,18 @@
                         </select>
                                 </div>
 
-                    <div class="error-message" v-if="uploadError">
-                        {{ uploadError }}
+                    <div v-if="uploadError" class="modal-message error-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        <span>{{ uploadError }}</span>
                                         </div>
                     
-                    <div class="success-message" v-if="uploadSuccess">
-                        Files uploaded successfully!
+                    <div v-if="uploadSuccess" class="modal-message success-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Files uploaded successfully!</span>
                                     </div>
 
                     <div class="file-list" v-if="filesToUpload.length > 0">
@@ -239,15 +245,61 @@
                     </div>
                     <div class="footer-buttons">
                         <button class="cancel-button" @click="showUploadModal = false" :disabled="isUploading">Cancel</button>
-                        <button
+                            <button
                             class="upload-button" 
                             @click="uploadFiles" 
                             :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
-                        >
+                            >
                             <span v-if="isUploading">Uploading...</span>
                             <span v-else>Upload</span>
-                        </button>
+                            </button>
+                        </div>
+                </div>
+                        </div>
                     </div>
+
+        <!-- Edit Modal -->
+        <div class="edit-modal" v-if="showEditModal">
+            <div class="edit-modal__overlay" @click="closeEditModal"></div>
+            <div class="edit-modal__container">
+                <div class="edit-modal__header">
+                    <h3>Edit Object</h3>
+                    <button class="close-button" @click="closeEditModal">&times;</button>
+                </div>
+                <div class="edit-modal__body">
+                    <div class="form-group">
+                        <label for="filename_display">Filename</label>
+                        <input 
+                            type="text" 
+                            id="filename_display"
+                            v-model="editingObject.filename_display"
+                            placeholder="Enter display name"
+                            :disabled="isEditing"
+                        />
+            </div>
+                    <div v-if="editError" class="modal-message error-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        <span>{{ editError }}</span>
+                    </div>
+                    <div v-if="editSuccess" class="modal-message success-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Object updated successfully!</span>
+                    </div>
+                </div>
+                <div class="edit-modal__footer">
+                    <button class="cancel-button" @click="closeEditModal" :disabled="isEditing">Cancel</button>
+                    <button 
+                        class="save-button" 
+                        @click="saveObjectEdit" 
+                        :disabled="!editingObject?.filename_display || isEditing"
+                    >
+                        <span v-if="isEditing">Saving...</span>
+                        <span v-else>Save Changes</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -297,6 +349,11 @@ export default {
             uploadSuccess: false,
             uploadProgress: {},
             overallProgress: 0,
+            showEditModal: false,
+            editingObject: null,
+            editError: null,
+            editSuccess: false,
+            isEditing: false,
         }
     },
 
@@ -465,7 +522,13 @@ export default {
         },
 
         editItem(item) {
-            console.log('Edit item:', item);
+            this.editingObject = {
+                id: item.id,
+                filename_display: item.filename_display || item.file.name.human
+            };
+            this.showEditModal = true;
+            this.editError = null;
+            this.editSuccess = false;
         },
 
         deleteItem(item) {
@@ -626,6 +689,48 @@ export default {
             this.selectedUploadBucket = null;
             this.uploadError = null;
             this.uploadSuccess = false;
+        },
+
+        closeEditModal() {
+            this.showEditModal = false;
+            this.editingObject = null;
+            this.editError = null;
+            this.editSuccess = false;
+        },
+
+        async saveObjectEdit() {
+            this.isEditing = true;
+            this.editError = null;
+
+            const formData = new FormData();
+            formData.append('object_id', this.editingObject.id);
+            formData.append('filename_display', this.editingObject.filename_display);
+
+            try {
+                const response = await axios.post(
+                    `${window.SITE_URL}api/cdn/object/edit`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                );
+
+                // Update the local object instance with the new data
+                const index = this.objects.findIndex(obj => obj.id === this.editingObject.id);
+                if (index !== -1) {
+                    this.objects[index].file.name.human = response.data.data.object.object.name;
+                }
+
+                this.editSuccess = true;
+                setTimeout(() => this.closeEditModal(), 1500);
+            } catch (error) {
+                console.log(error);
+                this.editError = error.response?.data?.error || 'Failed to update object';
+            } finally {
+                this.isEditing = false;
+            }
         },
 
     }
@@ -1157,7 +1262,6 @@ export default {
                 color: #6b7280;
                 margin: 0 1rem;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-                border: 1px solid #e5e7eb;
                     position: relative;
                 display: flex;
                 flex-direction: column;
@@ -1376,7 +1480,7 @@ export default {
             p {
                 margin: 0;
                 color: #6b7280;
-                font-size: 14px;
+                        font-size: 14px;
             }
 
             .file-input {
@@ -1410,44 +1514,11 @@ export default {
                 background-position: right 12px center;
                 background-size: 16px;
 
-                    &:focus {
-                        outline: none;
+                &:focus {
+                    outline: none;
                     border-color: #4f46e5;
                     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
                 }
-            }
-        }
-
-        .error-message {
-            margin-top: 16px;
-            padding: 12px 16px;
-            background-color: rgba(254, 226, 226, 0.6);
-            color: #b91c1c;
-            border-radius: 8px;
-            border-left: 4px solid #ef4444;
-            font-size: 14px;
-            animation: messageSlideIn 0.3s ease forwards;
-        }
-        
-        .success-message {
-            margin-top: 16px;
-            padding: 12px 16px;
-            background-color: rgba(220, 252, 231, 0.6);
-            color: #15803d;
-            border-radius: 8px;
-            border-left: 4px solid #22c55e;
-            font-size: 14px;
-            animation: messageSlideIn 0.3s ease forwards;
-        }
-
-        @keyframes messageSlideIn {
-            from {
-                transform: translateX(-10px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
             }
         }
 
@@ -1544,7 +1615,7 @@ export default {
     &__footer {
         padding: 20px 24px;
         border-top: 1px solid rgba(224, 224, 224, 0.6);
-                display: flex;
+        display: flex;
         justify-content: flex-end;
         gap: 12px;
         background: linear-gradient(to right, #f9fafb, #f3f4f6);
@@ -1571,7 +1642,7 @@ export default {
             &.upload-button {
                 background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
                 border: none;
-                color: white;
+                    color: white;
                 box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
 
                 &:hover {
@@ -1640,10 +1711,10 @@ export default {
         border-color: #d1d5db;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         color: #111827;
-    }
-    
-    &:focus {
-        outline: none;
+                    }
+
+                    &:focus {
+                        outline: none;
         border-color: #4f46e5;
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
     }
@@ -1668,7 +1739,7 @@ export default {
         position: absolute;
         right: 0;
         top: -18px;
-        font-size: 11px;
+                            font-size: 11px;
         color: #6b7280;
     }
 }
@@ -1701,5 +1772,235 @@ export default {
 .footer-buttons {
     display: flex;
     gap: 12px;
+}
+
+.edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: modalFadeIn 0.3s ease forwards;
+
+    &__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(4px);
+        animation: overlayFadeIn 0.3s ease forwards;
+    }
+
+    &__container {
+        position: relative;
+        width: 90%;
+        max-width: 500px;
+        background-color: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: containerSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        transform: translateY(20px);
+    }
+
+    &__header {
+        padding: 20px 24px;
+        border-bottom: 1px solid rgba(224, 224, 224, 0.6);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+                text-align: center;
+        position: relative;
+
+        h3 {
+            margin: 0 auto;
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            padding: 0 !important;
+            border: none !important;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+
+            &:hover {
+                background-color: rgba(243, 244, 246, 0.8);
+                color: #4f46e5;
+                transform: translateY(-50%) rotate(90deg);
+            }
+        }
+    }
+
+    &__body {
+        padding: 24px;
+        background: linear-gradient(to bottom, #ffffff, #f9fafb);
+
+        .form-group {
+            margin-bottom: 24px;
+
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #111827;
+                font-size: 15px;
+            }
+
+            input {
+                width: 100%;
+                padding: 12px 16px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                font-size: 14px;
+                background-color: white;
+                transition: all 0.2s ease;
+                color: #374151;
+
+                &:focus {
+                    outline: none;
+                    border-color: #4f46e5;
+                    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+                }
+
+                &:disabled {
+                    background-color: #f3f4f6;
+                    cursor: not-allowed;
+                }
+            }
+        }
+    }
+
+    &__footer {
+        padding: 20px 24px;
+        border-top: 1px solid rgba(224, 224, 224, 0.6);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: linear-gradient(to right, #f9fafb, #f3f4f6);
+
+        button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &.cancel-button {
+                background-color: white;
+                border: 1px solid #d1d5db;
+                color: #4b5563;
+
+                &:hover:not(:disabled) {
+                    background-color: #f3f4f6;
+                    border-color: #9ca3af;
+                }
+
+                &:disabled {
+                    opacity: 0.7;
+                    cursor: not-allowed;
+                }
+            }
+
+            &.save-button {
+                background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+                border: none;
+                color: white;
+                box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+
+                &:hover:not(:disabled) {
+                    background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+                    transform: translateY(-1px);
+                    box-shadow: 0 6px 10px -1px rgba(79, 70, 229, 0.3), 0 2px 4px -1px rgba(79, 70, 229, 0.2);
+                }
+
+                &:active:not(:disabled) {
+                    transform: translateY(1px);
+                }
+
+                &:disabled {
+                    background: linear-gradient(135deg, #c7d2fe 0%, #ddd6fe 100%);
+                    cursor: not-allowed;
+                    box-shadow: none;
+                }
+            }
+        }
+    }
+}
+
+/* Global Modal Message Styles */
+.modal-message {
+  margin-top: 16px;
+  margin-bottom: 1rem;
+  padding: 12px 16px;
+  border-radius: 0.375rem;
+                display: flex;
+                align-items: center;
+  border-left: 4px solid;
+  animation: messageSlideIn 0.3s ease forwards;
+  font-size: 14px;
+}
+
+.success-message {
+  background-color: rgba(220, 252, 231, 0.6);
+  color: #15803d;
+  border-color: #22c55e;
+}
+
+.success-message svg {
+  color: #22c55e;
+  height: 1.25rem;
+  width: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.error-message {
+  background-color: rgba(254, 226, 226, 0.6);
+  color: #b91c1c;
+  border-color: #ef4444;
+}
+
+.error-message svg {
+  color: #ef4444;
+  height: 1.25rem;
+  width: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+@keyframes messageSlideIn {
+    from {
+        transform: translateX(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 </style>
