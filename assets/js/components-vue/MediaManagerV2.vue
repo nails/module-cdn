@@ -551,6 +551,15 @@ export default {
                 // Clear the file list
                 this.filesToUpload = [];
                 
+                // Reset all filters
+                this.keywords = null;
+                this.selectedBuckets = [];
+                this.selectedFileTypes = [];
+                this.selectedUploaders = [];
+                this.dateLower = null;
+                this.dateUpper = null;
+                this.page = 1;
+                
                 // Refresh the object list
                 this.doSearch();
                 
