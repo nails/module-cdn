@@ -549,8 +549,7 @@ export default {
                         {
                             headers: {
                                 'Content-Type': 'multipart/form-data',
-                                'X-Cdn-Bucket': this.selectedUploadBucket,
-                                'X-Cdn-Urls': '120x120-crop,400x400-crop'
+                                'X-Cdn-Bucket': this.selectedUploadBucket
                             },
                             onUploadProgress: (progressEvent) => {
                                 // Update progress for this file
