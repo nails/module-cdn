@@ -51,17 +51,25 @@
         </div>
         <div class="body">
             <div class="body__switcher">
-                <div class="view-toggle">
-                    <span class="view-toggle__label" :class="{ 'active': viewMode === 'list' }">List</span>
-                    <label class="view-toggle__switch">
-                        <input 
-                            type="checkbox" 
-                            :checked="viewMode === 'grid'"
-                            @change="toggleViewMode"
+                <div class="body__actions">
+                    <button class="upload-button" @click="openUploadModal">
+                        <span class="upload-icon">+</span>
+                        Upload Files
+                    </button>
+                    <div class="view-toggle">
+                        <button 
+                            :class="{ active: viewMode === 'list' }" 
+                            @click="viewMode = 'list'"
                         >
-                        <span class="view-toggle__slider"></span>
-                    </label>
-                    <span class="view-toggle__label" :class="{ 'active': viewMode === 'grid' }">Grid</span>
+                            List
+                        </button>
+                        <button 
+                            :class="{ active: viewMode === 'grid' }" 
+                            @click="viewMode = 'grid'"
+                        >
+                            Grid
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="body__objects">
@@ -148,6 +156,77 @@
                 </div>
             </div>
         </div>
+
+        <!-- Upload Modal -->
+        <div class="upload-modal" v-if="showUploadModal">
+            <div class="upload-modal__overlay" @click="showUploadModal = false"></div>
+            <div class="upload-modal__container">
+                <div class="upload-modal__header">
+                    <h3>Upload Files</h3>
+                    <button class="close-button" @click="showUploadModal = false">&times;</button>
+                </div>
+                <div class="upload-modal__body">
+                    <div 
+                        class="upload-area" 
+                        @click="$refs.fileInput.click()"
+                        @dragover.prevent="dragOver = true"
+                        @dragleave.prevent="dragOver = false"
+                        @drop.prevent="handleFileDrop"
+                        :class="{ 'drag-over': dragOver }"
+                    >
+                        <div class="upload-icon">+</div>
+                        <h4>Drag and drop files here or click to browse</h4>
+                        <p>Max file size: 10MB</p>
+                        <input 
+                            type="file" 
+                            multiple 
+                            class="file-input" 
+                            @change="handleFileSelect"
+                            ref="fileInput"
+                        >
+                    </div>
+                    <div class="bucket-selector">
+                        <label>Select Bucket:</label>
+                        <select v-model="selectedUploadBucket">
+                            <option value="">-- Select a bucket --</option>
+                            <option v-for="bucket in buckets" :key="bucket.id" :value="bucket.id">
+                                {{ bucket.label }}
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="error-message" v-if="uploadError">
+                        {{ uploadError }}
+                    </div>
+                    
+                    <div class="success-message" v-if="uploadSuccess">
+                        Files uploaded successfully!
+                    </div>
+
+                    <div class="file-list" v-if="filesToUpload.length > 0">
+                        <h4>Files to Upload ({{ filesToUpload.length }})</h4>
+                        <div class="file-item" v-for="(file, index) in filesToUpload" :key="index">
+                            <div class="file-info">
+                                <span class="file-name">{{ file.name }}</span>
+                                <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                            </div>
+                            <button class="remove-button" @click="removeFile(index)">&times;</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="upload-modal__footer">
+                    <button class="cancel-button" @click="showUploadModal = false">Cancel</button>
+                    <button 
+                        class="upload-button" 
+                        @click="uploadFiles" 
+                        :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
+                    >
+                        <span v-if="isUploading">Uploading...</span>
+                        <span v-else>Upload</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -185,6 +264,13 @@ export default {
             viewMode: 'list',
             page: 1,
             meta: null,
+            showUploadModal: false,
+            filesToUpload: [],
+            selectedUploadBucket: null,
+            dragOver: false,
+            isUploading: false,
+            uploadError: null,
+            uploadSuccess: false,
         }
     },
 
@@ -385,9 +471,103 @@ export default {
             });
         },
 
-        toggleViewMode() {
-            this.viewMode = this.viewMode === 'list' ? 'grid' : 'list';
-        }
+        handleFileSelect(event) {
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                this.filesToUpload.push(file);
+            }
+            // Reset the input to allow selecting the same file again
+            this.$refs.fileInput.value = '';
+        },
+
+        removeFile(index) {
+            this.filesToUpload.splice(index, 1);
+        },
+
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+
+        async uploadFiles() {
+            if (this.filesToUpload.length === 0 || !this.selectedUploadBucket || this.isUploading) {
+                return;
+            }
+
+            try {
+                this.isUploading = true;
+                this.uploadError = null;
+                this.uploadSuccess = false;
+                
+                // Create FormData for the upload
+                const formData = new FormData();
+                formData.append('bucket_id', this.selectedUploadBucket);
+                
+                // Add all files to the FormData
+                this.filesToUpload.forEach((file, index) => {
+                    formData.append(`file${index}`, file);
+                });
+
+                // Send the upload request
+                const response = await axios.post(`${window.SITE_URL}api/cdn/object`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+
+                // Handle successful upload
+                console.log('Upload successful:', response.data);
+                
+                // Show success message
+                this.uploadSuccess = true;
+                
+                // Clear the file list
+                this.filesToUpload = [];
+                
+                // Refresh the object list
+                this.doSearch();
+                
+                // Close the modal after a delay
+                setTimeout(() => {
+                    this.showUploadModal = false;
+                    this.uploadSuccess = false;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Upload failed:', error);
+                // Handle upload error
+                if (error.response && error.response.data && error.response.data.error) {
+                    this.uploadError = error.response.data.error;
+                } else {
+                    this.uploadError = 'An error occurred during upload. Please try again.';
+                }
+            } finally {
+                this.isUploading = false;
+            }
+        },
+
+        handleFileDrop(event) {
+            this.dragOver = false;
+            const files = event.dataTransfer.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                this.filesToUpload.push(file);
+            }
+        },
+
+        openUploadModal() {
+            this.showUploadModal = true;
+            this.filesToUpload = [];
+            this.selectedUploadBucket = null;
+            this.uploadError = null;
+            this.uploadSuccess = false;
+        },
 
     }
 }
@@ -529,74 +709,63 @@ export default {
             padding: 0 1rem 1rem 1rem;
             text-align: right;
 
+            .body__actions {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .upload-button {
+                display: flex;
+                align-items: center;
+                background-color: #1a73e8;
+                color: white;
+                border: none;
+                border-radius: 20px;
+                padding: 8px 16px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                transition: background-color 0.2s ease;
+
+                &:hover {
+                    background-color: #1557b0;
+                }
+
+                .upload-icon {
+                    font-size: 18px;
+                    margin-right: 8px;
+                }
+            }
+
             .view-toggle {
                 display: inline-flex;
                 align-items: center;
                 background-color: #f8f9fa;
-                padding: 8px 12px;
+                padding: 4px;
                 border-radius: 20px;
                 border: 1px solid #dee1e6;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
-                &__label {
-                    margin: 0 8px;
+                button {
+                    background: none;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 16px;
                     font-size: 14px;
-                    color: #666;
-                    transition: color 0.3s ease;
-                    
+                    color: #5f6368;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+
                     &.active {
-                        font-weight: 600;
-                        color: #333;
-                    }
-                }
-
-                &__switch {
-                    position: relative;
-                    display: inline-block;
-                    width: 44px;
-                    height: 24px;
-
-                    input {
-                        opacity: 0;
-                        width: 0;
-                        height: 0;
+                        background-color: white;
+                        color: #1a73e8;
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
                     }
 
-                    .view-toggle__slider {
-                        position: absolute;
-                        cursor: pointer;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
-                        background-color: #ccc;
-                        transition: .4s;
-                        border-radius: 24px;
-
-                        &::before {
-                            position: absolute;
-                            content: "";
-                            height: 18px;
-                            width: 18px;
-                            left: 3px;
-                            bottom: 3px;
-                            background-color: white;
-                            transition: .4s;
-                            border-radius: 50%;
-                            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-                        }
-                    }
-
-                    input:checked + .view-toggle__slider {
-                        background-color: #1a73e8;
-                    }
-
-                    input:focus + .view-toggle__slider {
-                        box-shadow: 0 0 1px #1a73e8;
-                    }
-
-                    input:checked + .view-toggle__slider::before {
-                        transform: translateX(20px);
+                    &:hover:not(.active) {
+                        background-color: rgba(0, 0, 0, 0.05);
                     }
                 }
             }
@@ -758,6 +927,256 @@ export default {
                 p {
                     margin: 0;
                     font-size: 16px;
+                }
+            }
+        }
+    }
+}
+
+.upload-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    &__container {
+        position: relative;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    &__header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+
+            &:hover {
+                background-color: #f5f5f5;
+            }
+        }
+    }
+
+    &__body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: border-color 0.2s, background-color 0.2s;
+            cursor: pointer;
+
+            &:hover, &.drag-over {
+                border-color: #1a73e8;
+                background-color: rgba(26, 115, 232, 0.05);
+            }
+
+            .upload-icon {
+                font-size: 40px;
+                color: #666;
+                margin-bottom: 10px;
+            }
+
+            h4 {
+                margin: 0 0 10px;
+                font-weight: 500;
+                color: #333;
+            }
+
+            p {
+                margin: 0;
+                color: #666;
+                font-size: 14px;
+            }
+
+            .file-input {
+                display: none;
+            }
+        }
+
+        .bucket-selector {
+            margin-bottom: 20px;
+
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+                color: #333;
+            }
+
+            select {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-size: 14px;
+                background-color: white;
+            }
+        }
+
+        .error-message {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #ffebee;
+            color: #c62828;
+            border-radius: 4px;
+            border-left: 4px solid #c62828;
+            font-size: 14px;
+        }
+        
+        .success-message {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 4px;
+            border-left: 4px solid #2e7d32;
+            font-size: 14px;
+        }
+
+        .file-list {
+            margin-top: 20px;
+
+            h4 {
+                margin: 0 0 10px;
+                font-weight: 500;
+                color: #333;
+            }
+
+            .file-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px;
+                border: 1px solid #e0e0e0;
+                border-radius: 4px;
+                margin-bottom: 8px;
+                background-color: #f8f9fa;
+
+                .file-info {
+                    display: flex;
+                    flex-direction: column;
+                    flex: 1;
+                    overflow: hidden;
+
+                    .file-name {
+                        font-weight: 500;
+                        margin-bottom: 4px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    .file-size {
+                        font-size: 12px;
+                        color: #666;
+                    }
+                }
+
+                .remove-button {
+                    background: none;
+                    border: none;
+                    color: #666;
+                    cursor: pointer;
+                    padding: 4px 8px;
+                    font-size: 14px;
+                    border-radius: 4px;
+                    transition: background-color 0.2s;
+
+                    &:hover {
+                        background-color: #e0e0e0;
+                    }
+                }
+            }
+        }
+    }
+
+    &__footer {
+        padding: 16px 20px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+
+        button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+
+            &.cancel-button {
+                background-color: white;
+                border: 1px solid #ccc;
+                color: #333;
+
+                &:hover {
+                    background-color: #f5f5f5;
+                }
+            }
+
+            &.upload-button {
+                background-color: #1a73e8;
+                border: none;
+                color: white;
+
+                &:hover {
+                    background-color: #1557b0;
+                }
+
+                &:disabled {
+                    background-color: #a8c7fa;
+                    cursor: not-allowed;
                 }
             }
         }
