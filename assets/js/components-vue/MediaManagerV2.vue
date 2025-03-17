@@ -50,19 +50,19 @@
             </div>
         </div>
         <div class="body">
-            <div class="body__upload">
-                This is where objects will be uploaded
-            </div>
             <div class="body__switcher">
-                <select
-                    v-model="viewMode"
-                    class="view-switcher"
-                    @change="switchView"
-                >
-                    <option value="list">List View</option>
-                    <option value="grid">Grid View</option>
-                </select>
-
+                <div class="view-toggle">
+                    <span class="view-toggle__label" :class="{ 'active': viewMode === 'list' }">List</span>
+                    <label class="view-toggle__switch">
+                        <input 
+                            type="checkbox" 
+                            :checked="viewMode === 'grid'"
+                            @change="toggleViewMode"
+                        >
+                        <span class="view-toggle__slider"></span>
+                    </label>
+                    <span class="view-toggle__label" :class="{ 'active': viewMode === 'grid' }">Grid</span>
+                </div>
             </div>
             <div class="body__objects">
                 <div
@@ -98,19 +98,23 @@
                                     :item="item"
                                     @action="handleObjectAction"
                                 />
+                                <tr class="table-load-more" v-if="meta?.pagination?.next && !loadingMoreObjects">
+                                    <td colspan="8">
+                                        <button
+                                            class="btn btn-secondary"
+                                            @click="loadMoreObjects"
+                                        >
+                                            Load More
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="table-loading-more" v-if="loadingMoreObjects">
+                                    <td colspan="8">
+                                        Loading more objects...
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
-                        <div class="load-more" v-if="meta?.pagination?.next && !loadingMoreObjects">
-                            <button
-                                class="btn btn-secondary"
-                                @click="loadMoreObjects"
-                            >
-                                Load More
-                            </button>
-                        </div>
-                        <div class="loading-more" v-if="loadingMoreObjects">
-                            Loading more objects...
-                        </div>
                     </div>
                 </div>
                 <div
@@ -120,26 +124,27 @@
                     <div v-if="objects.length === 0" class="empty-state">
                         <p>No objects found matching your criteria</p>
                     </div>
-                    <div v-else class="grid-container">
-                        <object-grid-item
-                            v-for="item in objects"
-                            :key="item.id"
-                            :item="item"
-                            @action="handleObjectAction"
-                        />
-                        <div class="load-more" v-if="meta?.pagination?.next && !loadingMoreObjects">
-                            <button
-                                class="btn btn-secondary"
-                                @click="loadMoreObjects"
-                            >
-                                Load More
-                            </button>
-                        </div>
-                        <div class="loading-more" v-if="loadingMoreObjects">
-                            Loading more objects...
+                    <div v-else>
+                        <div class="grid-container">
+                            <object-grid-item
+                                v-for="item in objects"
+                                :key="item.id"
+                                :item="item"
+                                @action="handleObjectAction"
+                            />
+                            <div class="grid-load-more" v-if="meta?.pagination?.next && !loadingMoreObjects">
+                                <button
+                                    class="btn btn-secondary"
+                                    @click="loadMoreObjects"
+                                >
+                                    Load More
+                                </button>
+                            </div>
+                            <div class="grid-loading-more" v-if="loadingMoreObjects">
+                                Loading more objects...
+                            </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -378,6 +383,10 @@ export default {
                     this.$refs[ref].close();
                 }
             });
+        },
+
+        toggleViewMode() {
+            this.viewMode = this.viewMode === 'list' ? 'grid' : 'list';
         }
 
     }
@@ -512,31 +521,83 @@ export default {
     .body {
         flex-grow: 1;
         background: #ffffff;
-        padding: 1rem;
+        padding: 1rem 0;
         border-top-right-radius: 0.25rem;
         border-bottom-right-radius: 0.25rem;
 
-        &__upload {
-            padding: 1rem;
-            border: 1px dashed #cccccc;
-        }
-
         &__switcher {
-            padding: 1rem 0;
+            padding: 0 1rem 1rem 1rem;
             text-align: right;
 
-            .viewswitcher {
-                padding: 0.5rem;
+            .view-toggle {
+                display: inline-flex;
+                align-items: center;
+                background-color: #f8f9fa;
+                padding: 8px 12px;
+                border-radius: 20px;
                 border: 1px solid #dee1e6;
-                border-radius: 0.25rem;
-                background-color: #ffffff;
-                font-size: 0.875rem;
-                cursor: pointer;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
-                &:focus {
-                    outline: none;
-                    border-color: #80bdff;
-                    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+                &__label {
+                    margin: 0 8px;
+                    font-size: 14px;
+                    color: #666;
+                    transition: color 0.3s ease;
+                    
+                    &.active {
+                        font-weight: 600;
+                        color: #333;
+                    }
+                }
+
+                &__switch {
+                    position: relative;
+                    display: inline-block;
+                    width: 44px;
+                    height: 24px;
+
+                    input {
+                        opacity: 0;
+                        width: 0;
+                        height: 0;
+                    }
+
+                    .view-toggle__slider {
+                        position: absolute;
+                        cursor: pointer;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background-color: #ccc;
+                        transition: .4s;
+                        border-radius: 24px;
+
+                        &::before {
+                            position: absolute;
+                            content: "";
+                            height: 18px;
+                            width: 18px;
+                            left: 3px;
+                            bottom: 3px;
+                            background-color: white;
+                            transition: .4s;
+                            border-radius: 50%;
+                            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+                        }
+                    }
+
+                    input:checked + .view-toggle__slider {
+                        background-color: #1a73e8;
+                    }
+
+                    input:focus + .view-toggle__slider {
+                        box-shadow: 0 0 1px #1a73e8;
+                    }
+
+                    input:checked + .view-toggle__slider::before {
+                        transform: translateX(20px);
+                    }
                 }
             }
         }
@@ -547,6 +608,7 @@ export default {
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
                     margin: 0;
+                    padding: 0 1rem;
                 }
 
                 table {
@@ -582,6 +644,43 @@ export default {
                             text-align: center;
                         }
                     }
+
+                    .table-load-more,
+                    .table-loading-more {
+                        td {
+                            text-align: center;
+                            padding: 15px;
+                            background-color: #f8f9fa;
+                            border-top: 1px dashed #dee1e6;
+                        }
+                    }
+
+                    .table-load-more {
+                        td {
+                            button {
+                                min-width: 120px;
+                                height: 40px;
+                                background-color: #1a73e8;
+                                color: white;
+                                border: none;
+                                border-radius: 4px;
+                                cursor: pointer;
+                                font-weight: 500;
+                                transition: background-color 0.2s ease;
+
+                                &:hover {
+                                    background-color: #1557b0;
+                                }
+                            }
+                        }
+                    }
+
+                    .table-loading-more {
+                        td {
+                            color: #666;
+                            font-size: 14px;
+                        }
+                    }
                 }
             }
 
@@ -590,7 +689,43 @@ export default {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
                     gap: 20px;
+                    padding: 20px 1rem;
+                }
+
+                .grid-load-more,
+                .grid-loading-more {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: #f8f9fa;
+                    border-radius: 8px;
+                    border: 1px dashed #dee1e6;
+                    aspect-ratio: 1;
                     padding: 20px;
+                    text-align: center;
+                }
+
+                .grid-load-more {
+                    button {
+                        min-width: 120px;
+                        height: 40px;
+                        background-color: #1a73e8;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-weight: 500;
+                        transition: background-color 0.2s ease;
+
+                        &:hover {
+                            background-color: #1557b0;
+                        }
+                    }
+                }
+
+                .grid-loading-more {
+                    color: #666;
+                    font-size: 14px;
                 }
 
                 // Responsive adjustments
@@ -598,7 +733,7 @@ export default {
                     .grid-container {
                         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
                         gap: 15px;
-                        padding: 15px;
+                        padding: 15px 1rem;
                     }
                 }
 
@@ -606,40 +741,24 @@ export default {
                     .grid-container {
                         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
                         gap: 10px;
-                        padding: 10px;
+                        padding: 10px 1rem;
                     }
                 }
             }
 
             .empty-state,
-            &__loading,
-            .load-more,
-            .loading-more {
+            &__loading {
                 text-align: center;
-                padding: 40px;
+                padding: 40px 1rem;
                 background: #f5f5f5;
                 border-radius: 8px;
                 color: #666666;
+                margin: 0 1rem;
 
                 p {
                     margin: 0;
                     font-size: 16px;
                 }
-            }
-
-            .load-more,
-            .loading-more {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .loading-more {
-                padding: 10xpx;
-            }
-
-            .load-more button {
-                min-width: 120px;
             }
         }
     }
