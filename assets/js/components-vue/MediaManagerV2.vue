@@ -221,22 +221,34 @@
                             <div class="file-info">
                                 <span class="file-name">{{ file.name }}</span>
                                 <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                                <div class="progress-bar" v-if="isUploading && uploadProgress[index] !== undefined">
+                                    <div class="progress-bar__fill" :style="{ width: uploadProgress[index] + '%' }"></div>
+                                    <span class="progress-bar__text">{{ Math.round(uploadProgress[index]) }}%</span>
                                 </div>
-                            <button class="remove-button" @click="removeFile(index)">&times;</button>
                             </div>
+                            <button class="remove-button" @click="removeFile(index)" v-if="!isUploading">&times;</button>
                         </div>
+                    </div>
                 </div>
                 <div class="upload-modal__footer">
-                    <button class="cancel-button" @click="showUploadModal = false">Cancel</button>
-                            <button
-                        class="upload-button" 
-                        @click="uploadFiles" 
-                        :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
-                            >
-                        <span v-if="isUploading">Uploading...</span>
-                        <span v-else>Upload</span>
-                            </button>
+                    <div class="overall-progress" v-if="isUploading">
+                        <div class="overall-progress__bar">
+                            <div class="overall-progress__fill" :style="{ width: overallProgress + '%' }"></div>
                         </div>
+                        <span class="overall-progress__text">{{ Math.round(overallProgress) }}% Complete</span>
+                    </div>
+                    <div class="footer-buttons">
+                        <button class="cancel-button" @click="showUploadModal = false" :disabled="isUploading">Cancel</button>
+                        <button
+                            class="upload-button" 
+                            @click="uploadFiles" 
+                            :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
+                        >
+                            <span v-if="isUploading">Uploading...</span>
+                            <span v-else>Upload</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -283,6 +295,8 @@ export default {
             isUploading: false,
             uploadError: null,
             uploadSuccess: false,
+            uploadProgress: {},
+            overallProgress: 0,
         }
     },
 
@@ -516,14 +530,19 @@ export default {
                 this.isUploading = true;
                 this.uploadError = null;
                 this.uploadSuccess = false;
+                this.uploadProgress = {};
+                this.overallProgress = 0;
                 
                 // Upload each file individually
-                const uploadPromises = this.filesToUpload.map(async (file) => {
+                const uploadPromises = this.filesToUpload.map(async (file, index) => {
+                    // Initialize progress for this file
+                    this.$set(this.uploadProgress, index, 0);
+                    
                     // Create FormData for the upload
                     const formData = new FormData();
                     formData.append('upload', file);
                     
-                    // Send the upload request with proper headers
+                    // Send the upload request with proper headers and progress tracking
                     const response = await axios.post(
                         `${window.SITE_URL}api/cdn/object/create`, 
                         formData, 
@@ -532,6 +551,15 @@ export default {
                                 'Content-Type': 'multipart/form-data',
                                 'X-Cdn-Bucket': this.selectedUploadBucket,
                                 'X-Cdn-Urls': '120x120-crop,400x400-crop'
+                            },
+                            onUploadProgress: (progressEvent) => {
+                                // Update progress for this file
+                                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                                this.$set(this.uploadProgress, index, percentCompleted);
+                                
+                                // Calculate overall progress
+                                const totalProgress = Object.values(this.uploadProgress).reduce((sum, value) => sum + value, 0);
+                                this.overallProgress = totalProgress / this.filesToUpload.length;
                             }
                         }
                     );
@@ -567,6 +595,8 @@ export default {
                 setTimeout(() => {
                     this.showUploadModal = false;
                     this.uploadSuccess = false;
+                    this.uploadProgress = {};
+                    this.overallProgress = 0;
                 }, 2000);
                 
             } catch (error) {
@@ -1618,5 +1648,59 @@ export default {
         border-color: #4f46e5;
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
     }
+}
+
+.progress-bar {
+    height: 6px;
+    background-color: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+    position: relative;
+    
+    &__fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4f46e5, #7c3aed);
+        border-radius: 3px;
+        transition: width 0.2s ease;
+    }
+    
+    &__text {
+        position: absolute;
+        right: 0;
+        top: -18px;
+        font-size: 11px;
+        color: #6b7280;
+    }
+}
+
+.overall-progress {
+    flex: 1;
+    margin-right: 16px;
+    
+    &__bar {
+        height: 8px;
+        background-color: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 6px;
+    }
+    
+    &__fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4f46e5, #7c3aed);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    
+    &__text {
+        font-size: 12px;
+        color: #6b7280;
+    }
+}
+
+.footer-buttons {
+    display: flex;
+    gap: 12px;
 }
 </style>
