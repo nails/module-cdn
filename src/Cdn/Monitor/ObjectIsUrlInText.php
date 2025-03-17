@@ -29,7 +29,7 @@ abstract class ObjectIsUrlInText extends ObjectIsInColumn
         }
 
         return array_map(
-            function (Entity $oEntity): Detail {
+            function (Entity $oEntity) use ($oModel): Detail {
                 return $this->createDetail($oEntity, $oModel);
             },
             $oModel
