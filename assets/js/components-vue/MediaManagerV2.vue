@@ -689,7 +689,7 @@ export default {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
                     gap: 20px;
-                    padding: 20px 1rem;
+                    padding: 0 1rem;
                 }
 
                 .grid-load-more,
@@ -733,7 +733,7 @@ export default {
                     .grid-container {
                         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
                         gap: 15px;
-                        padding: 15px 1rem;
+                        padding: 0 1rem;
                     }
                 }
 
@@ -741,7 +741,7 @@ export default {
                     .grid-container {
                         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
                         gap: 10px;
-                        padding: 10px 1rem;
+                        padding: 0 1rem;
                     }
                 }
             }
