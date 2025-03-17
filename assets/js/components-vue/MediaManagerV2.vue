@@ -147,18 +147,18 @@
                                 @action="handleObjectAction"
                             />
                             <div class="grid-load-more" v-if="meta?.pagination?.next && !loadingMoreObjects">
-                                <button
-                                    class="btn btn-secondary"
-                                    @click="loadMoreObjects"
-                                >
-                                    Load More
-                                </button>
-                            </div>
+                            <button
+                                class="btn btn-secondary"
+                                @click="loadMoreObjects"
+                            >
+                                Load More
+                            </button>
+                        </div>
                             <div class="grid-loading-more" v-if="loadingMoreObjects">
                                 <div class="loading-spinner"></div>
-                            </div>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -186,7 +186,7 @@
                                 <polyline points="17 8 12 3 7 8"></polyline>
                                 <line x1="12" y1="3" x2="12" y2="15"></line>
                             </svg>
-                        </div>
+                    </div>
                         <h4>Drag and drop files here or click to browse</h4>
                         <p>Max file size: 10MB</p>
                         <input 
@@ -196,7 +196,7 @@
                             @change="handleFileSelect"
                             ref="fileInput"
                         >
-                    </div>
+                                    </div>
                     <div class="bucket-selector">
                         <label>Select Bucket:</label>
                         <select v-model="selectedUploadBucket">
@@ -205,15 +205,15 @@
                                 {{ bucket.label }}
                             </option>
                         </select>
-                    </div>
-                    
+                                </div>
+
                     <div class="error-message" v-if="uploadError">
                         {{ uploadError }}
-                    </div>
+                                        </div>
                     
                     <div class="success-message" v-if="uploadSuccess">
                         Files uploaded successfully!
-                    </div>
+                                    </div>
 
                     <div class="file-list" v-if="filesToUpload.length > 0">
                         <h4>Files to Upload ({{ filesToUpload.length }})</h4>
@@ -221,22 +221,22 @@
                             <div class="file-info">
                                 <span class="file-name">{{ file.name }}</span>
                                 <span class="file-size">{{ formatFileSize(file.size) }}</span>
-                            </div>
+                                </div>
                             <button class="remove-button" @click="removeFile(index)">&times;</button>
+                            </div>
                         </div>
-                    </div>
                 </div>
                 <div class="upload-modal__footer">
                     <button class="cancel-button" @click="showUploadModal = false">Cancel</button>
-                    <button 
+                            <button
                         class="upload-button" 
                         @click="uploadFiles" 
                         :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
-                    >
+                            >
                         <span v-if="isUploading">Uploading...</span>
                         <span v-else>Upload</span>
-                    </button>
-                </div>
+                            </button>
+                        </div>
             </div>
         </div>
     </div>
@@ -989,7 +989,7 @@ export default {
                             text-align: center;
 
                             .loading-spinner {
-                                display: inline-block;
+                    display: inline-block;
                                 width: 30px;
                                 height: 30px;
                                 border-radius: 50%;
@@ -1042,7 +1042,7 @@ export default {
                     
                     button {
                         min-width: 120px;
-                        height: 40px;
+                            height: 40px;
                         background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
                         color: white;
                         border: none;
@@ -1085,9 +1085,9 @@ export default {
 
                 // Responsive adjustments
                 @media (max-width: 768px) {
-                    .grid-container {
+                .grid-container {
                         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-                        gap: 20px;
+                    gap: 20px;
                         padding: 0 1rem;
                     }
                 }
@@ -1111,7 +1111,7 @@ export default {
                 margin: 0 1rem;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
                 border: 1px solid #e5e7eb;
-                position: relative;
+                    position: relative;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -1151,11 +1151,11 @@ export default {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+                    width: 100%;
+                    height: 100%;
     z-index: 1000;
-    display: flex;
-    justify-content: center;
+                    display: flex;
+                    justify-content: center;
     align-items: center;
     animation: modalFadeIn 0.3s ease forwards;
 
@@ -1172,8 +1172,8 @@ export default {
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
+                    width: 100%;
+                    height: 100%;
         background-color: rgba(15, 23, 42, 0.7);
         backdrop-filter: blur(4px);
         animation: overlayFadeIn 0.3s ease forwards;
@@ -1220,16 +1220,17 @@ export default {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: linear-gradient(to right, #f9fafb, #f3f4f6);
+        background: #ffffff;
+        text-align: center;
+        position: relative;
 
         h3 {
-            margin: 0;
+            margin: 0 auto;
             font-size: 20px;
             font-weight: 600;
             color: #111827;
-            background: linear-gradient(90deg, #4f46e5, #7c3aed);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            padding: 0 !important;
+            border: none !important;
         }
 
         .close-button {
@@ -1239,18 +1240,22 @@ export default {
             color: #6b7280;
             cursor: pointer;
             padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
             width: 36px;
             height: 36px;
             border-radius: 50%;
             transition: all 0.2s ease;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
 
             &:hover {
                 background-color: rgba(243, 244, 246, 0.8);
                 color: #4f46e5;
-                transform: rotate(90deg);
+                transform: translateY(-50%) rotate(90deg);
             }
         }
     }
@@ -1275,13 +1280,13 @@ export default {
 
             &::before {
                 content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
                 background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
-                opacity: 0;
+                    opacity: 0;
                 transition: opacity 0.3s ease;
             }
 
@@ -1357,9 +1362,9 @@ export default {
                 background-repeat: no-repeat;
                 background-position: right 12px center;
                 background-size: 16px;
-                
-                &:focus {
-                    outline: none;
+
+                    &:focus {
+                        outline: none;
                     border-color: #4f46e5;
                     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
                 }
@@ -1492,7 +1497,7 @@ export default {
     &__footer {
         padding: 20px 24px;
         border-top: 1px solid rgba(224, 224, 224, 0.6);
-        display: flex;
+                display: flex;
         justify-content: flex-end;
         gap: 12px;
         background: linear-gradient(to right, #f9fafb, #f3f4f6);
