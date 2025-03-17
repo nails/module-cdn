@@ -517,24 +517,33 @@ export default {
                 this.uploadError = null;
                 this.uploadSuccess = false;
                 
-                // Create FormData for the upload
-                const formData = new FormData();
-                formData.append('bucket_id', this.selectedUploadBucket);
+                // Upload each file individually
+                const uploadPromises = this.filesToUpload.map(async (file) => {
+                    // Create FormData for the upload
+                    const formData = new FormData();
+                    formData.append('upload', file);
+                    
+                    // Send the upload request with proper headers
+                    const response = await axios.post(
+                        `${window.SITE_URL}api/cdn/object/create`, 
+                        formData, 
+                        {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'X-Cdn-Bucket': this.selectedUploadBucket,
+                                'X-Cdn-Urls': '120x120-crop,400x400-crop'
+                            }
+                        }
+                    );
+                    
+                    return response.data.object;
+                });
                 
-                // Add all files to the FormData
-                this.filesToUpload.forEach((file, index) => {
-                    formData.append(`file${index}`, file);
-                });
-
-                // Send the upload request
-                const response = await axios.post(`${window.SITE_URL}api/cdn/object`, formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-
+                // Wait for all uploads to complete
+                const uploadedObjects = await Promise.all(uploadPromises);
+                
                 // Handle successful upload
-                console.log('Upload successful:', response.data);
+                console.log('Upload successful:', uploadedObjects);
                 
                 // Show success message
                 this.uploadSuccess = true;
