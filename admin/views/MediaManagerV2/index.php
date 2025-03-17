@@ -1,0 +1,3 @@
+<div id="nails-module-cdn-media-manager-v2">
+    Loading Media Manager...
+</div>

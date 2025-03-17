@@ -1,0 +1,51 @@
+import MediaManagerV2Vue from '../components-vue/MediaManagerV2.vue';
+import ObjectListItem from '../components-vue/MediaManagerV2/ObjectListItem.vue';
+import ObjectGridItem from '../components-vue/MediaManagerV2/ObjectGridItem.vue';
+import MultiSelect from '../components-vue/MultiSelect.vue';
+
+class MediaManagerV2 {
+    constructor(adminController) {
+        this.adminController = adminController;
+        this.adminController.log('Constructing');
+        this.initializeWhenVueReady();
+    }
+
+    waitForVue() {
+        return new Promise((resolve) => {
+            const checkVue = () => {
+                if (window.Vue) {
+                    resolve(window.Vue);
+                } else {
+                    setTimeout(checkVue, 100);
+                }
+            };
+            checkVue();
+        });
+    }
+
+    async initializeWhenVueReady() {
+        const mountPoint = document.querySelector('#nails-module-cdn-media-manager-v2');
+        if (mountPoint) {
+            try {
+                const Vue = await this.waitForVue();
+                this.adminController.log('Mounting MediaManagerV2');
+
+                // Create a new Vue instance with all components
+                new Vue({
+                    el: '#nails-module-cdn-media-manager-v2',
+                    components: {
+                        MediaManagerV2Vue,
+                        ObjectListItem,
+                        ObjectGridItem,
+                        MultiSelect
+                    },
+                    render: h => h(MediaManagerV2Vue)
+                });
+            } catch (error) {
+                this.adminController.log('Error initializing Vue:', error);
+            }
+        }
+    }
+}
+
+export default MediaManagerV2;
