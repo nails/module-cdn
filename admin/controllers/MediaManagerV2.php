@@ -17,6 +17,8 @@ use Nails\Admin\Helper;
 use Nails\Cdn\Controller\BaseAdmin;
 use Nails\Common\Helper\Model\Where;
 use Nails\Common\Service\Asset;
+use Nails\Common\Service\Input;
+use Nails\Common\Service\Session;
 use Nails\Factory;
 
 /**
@@ -58,5 +60,47 @@ class MediaManagerV2 extends BaseAdmin
         $oAsset->vue2();
 
         Helper::loadView('index');
+    }
+
+    public function set_default(): void
+    {
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            unauthorised();
+        }
+
+        /** @var Session $oSession */
+        $oSession = Factory::service('Session');
+        $oSession->setUserData('MEDIA_MANAGER_DEFAULT', 2);
+
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+
+        $sGoToUrl = siteUrl('admin/cdn/mediaManagerV2');
+        if ($oInput::get()) {
+            $sGoToUrl .= '?' . http_build_query($oInput::get());
+        }
+
+        redirect($sGoToUrl);
+    }
+
+    public function unset_default(): void
+    {
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            unauthorised();
+        }
+
+        /** @var Session $oSession */
+        $oSession = Factory::service('Session');
+        $oSession->setUserData('MEDIA_MANAGER_DEFAULT', 1);
+
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+
+        $sGoToUrl = siteUrl('admin/cdn/manager');
+        if ($oInput::get()) {
+            $sGoToUrl .= '?' . http_build_query($oInput::get());
+        }
+
+        redirect($sGoToUrl);
     }
 }

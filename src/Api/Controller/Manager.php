@@ -15,6 +15,7 @@ namespace Nails\Cdn\Api\Controller;
 use Nails\Api;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
+use Nails\Common\Service\Session;
 use Nails\Factory;
 
 /**
@@ -49,10 +50,16 @@ class Manager extends Api\Controller\Base
 
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
+        /** @var Session $oSession */
+        $oSession = Factory::service('Session');
+
+        $sBaseUrl = $oSession->getUserData('MEDIA_MANAGER_DEFAULT') === 2
+            ? 'admin/cdn/mediaManagerV2'
+            : 'admin/cdn/manager';
 
         return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
             ->setData(siteUrl(
-                'admin/cdn/manager?' .
+                $sBaseUrl . '?' .
                 http_build_query([
                     'bucket'   => $oInput->get('bucket'),
                     'callback' => $oInput->get('callback'),

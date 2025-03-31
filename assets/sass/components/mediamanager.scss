@@ -1,3 +1,22 @@
+.try-new-manager {
+    background-color: rgba(0, 0, 0, .75);
+    bottom: 0;
+    color: #ffffff;
+    padding: .5rem .85rem .5rem .5rem;
+    position: fixed;
+    z-index: 10;
+    margin: 0.25rem 0.4rem;
+    border-radius: 8px;
+
+    .btn {
+        margin-right: 0.75rem;
+    }
+
+    span {
+        position: relative;
+        top: 3px;
+    }
+}
 .manager {
     position: relative;
     border: 1px solid #cacaca;
