@@ -316,22 +316,40 @@
                 </div>
                 <div class="url-copy-modal__body">
                     <div class="form-group">
-                        <label for="url_to_copy">URL</label>
+                        <label>Source URL</label>
                         <div class="url-input-group">
                             <textarea
-                                id="url_to_copy"
-                                v-model="urlToCopy"
+                                v-model="urlToCopy.src"
                                 readonly
-                                rows="3"
-                                ref="urlTextarea"
+                                rows="2"
+                                ref="srcTextarea"
                             ></textarea>
-                            <button class="copy-button" @click="copyUrlFromTextarea">
+                            <button class="copy-button" @click="copyUrlFromTextarea('src')" title="Copy source URL">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                 </svg>
                             </button>
                         </div>
+                        <div class="url-description">Use this URL to display the file in a webpage or embed it in content. If accessed dirctly the browder will attempt to render it in-window (works well for images and PDFs)</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Download URL</label>
+                        <div class="url-input-group">
+                            <textarea
+                                v-model="urlToCopy.download"
+                                readonly
+                                rows="2"
+                                ref="downloadTextarea"
+                            ></textarea>
+                            <button class="copy-button" @click="copyUrlFromTextarea('download')" title="Copy download URL">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="url-description">Use this URL to force the browser to download the file instead of displaying it. The file will download to the user's device as "{{ urlToCopy.humanName || 'human-name.ext' }}"</div>
                     </div>
                     <div v-if="urlCopyError" class="modal-message error-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -406,7 +424,7 @@ export default {
             callbackFunction: [],
             callbackHandler: null,
             showUrlCopyModal: false,
-            urlToCopy: '',
+            urlToCopy: null,
             urlCopyError: null,
             urlCopySuccess: false,
         }
@@ -637,16 +655,20 @@ export default {
                 // You might want to add a toast notification here
             } catch (err) {
                 // If clipboard API fails, show the modal
-                this.urlToCopy = item.url.src;
+                this.urlToCopy = {
+                    src: item.url.src,
+                    download: item.url.download,
+                    humanName: item.file.name.human
+                };
                 this.showUrlCopyModal = true;
                 this.urlCopyError = null;
                 this.urlCopySuccess = false;
             }
         },
 
-        async copyUrlFromTextarea() {
+        async copyUrlFromTextarea(type) {
             try {
-                await navigator.clipboard.writeText(this.urlToCopy);
+                await navigator.clipboard.writeText(this.urlToCopy[type]);
                 this.urlCopySuccess = true;
                 this.urlCopyError = null;
                 setTimeout(() => {
@@ -660,7 +682,7 @@ export default {
 
         closeUrlCopyModal() {
             this.showUrlCopyModal = false;
-            this.urlToCopy = '';
+            this.urlToCopy = null;
             this.urlCopyError = null;
             this.urlCopySuccess = false;
         },
@@ -2276,12 +2298,26 @@ export default {
         .form-group {
             margin-bottom: 24px;
 
+            &:last-child {
+                margin-bottom: 0;
+            }
+
             label {
                 display: block;
                 margin-bottom: 8px;
                 font-weight: 600;
                 color: #111827;
                 font-size: 15px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                &::after {
+                    content: '';
+                    flex: 1;
+                    height: 1px;
+                    background: linear-gradient(to right, #d1d5db, transparent);
+                }
             }
 
             .url-input-group {
@@ -2300,7 +2336,7 @@ export default {
                     transition: all 0.2s ease;
                     color: #374151;
                     resize: vertical;
-                    min-height: 80px;
+                    min-height: 60px;
 
                     &:focus {
                         outline: none;
@@ -2320,6 +2356,7 @@ export default {
                     align-items: center;
                     justify-content: center;
                     color: #6b7280;
+                    flex-shrink: 0;
 
                     &:hover {
                         background-color: #f3f4f6;
@@ -2360,5 +2397,13 @@ export default {
             }
         }
     }
+}
+
+.url-description {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 6px;
+    line-height: 1.4;
+    font-style: italic;
 }
 </style>
