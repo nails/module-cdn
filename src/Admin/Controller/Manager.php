@@ -16,10 +16,10 @@ use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
 use Nails\Cdn\Admin\Permission;
+use Nails\Cdn\Admin\Permission\Object\Import;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Model\Bucket;
-use Nails\Cdn\Admin\Permission\Object\Import;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
@@ -113,6 +113,27 @@ class Manager extends Base
         );
 
         Helper::loadView('index');
+    }
+
+    // --------------------------------------------------------------------------
+
+    //  @todo (Pablo 2025-03-31) - This is a placeholder function so existing apps don't break
+    public function choose()
+    {
+        if (!userHasPermission(Permission\Object\Browse::class)) {
+            unauthorised();
+        }
+
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+
+        $sBaseUrl = self::url();
+
+        if ($oInput::get()) {
+            $sBaseUrl .= '?' . http_build_query($oInput::get());
+        }
+
+        redirect($sBaseUrl);
     }
 
     // --------------------------------------------------------------------------
