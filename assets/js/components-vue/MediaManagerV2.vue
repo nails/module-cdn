@@ -649,21 +649,15 @@ export default {
             window.open(item.url.download, '_blank');
         },
 
-        async copyUrl(item) {
-            try {
-                await navigator.clipboard.writeText(item.url.src);
-                // You might want to add a toast notification here
-            } catch (err) {
-                // If clipboard API fails, show the modal
-                this.urlToCopy = {
-                    src: item.url.src,
-                    download: item.url.download,
-                    humanName: item.file.name.human
-                };
-                this.showUrlCopyModal = true;
-                this.urlCopyError = null;
-                this.urlCopySuccess = false;
-            }
+        copyUrl(item) {
+            this.urlToCopy = {
+                src: item.url.src,
+                download: item.url.download,
+                humanName: item.file.name.human
+            };
+            this.showUrlCopyModal = true;
+            this.urlCopyError = null;
+            this.urlCopySuccess = false;
         },
 
         async copyUrlFromTextarea(type) {
