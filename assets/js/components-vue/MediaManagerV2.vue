@@ -110,6 +110,7 @@
                                     v-for="item in objects" 
                                     :key="item.id" 
                                     :item="item"
+                                    :has-callback="callbackFunction.length > 0"
                                     @action="handleObjectAction"
                                 />
                                 <tr class="table-load-more" v-if="meta?.pagination?.next && !loadingMoreObjects">
@@ -144,6 +145,7 @@
                                 v-for="item in objects"
                                 :key="item.id"
                                 :item="item"
+                                :has-callback="callbackFunction.length > 0"
                                 @action="handleObjectAction"
                             />
                             <div class="grid-load-more" v-if="meta?.pagination?.next && !loadingMoreObjects">
@@ -354,6 +356,9 @@ export default {
             editError: null,
             editSuccess: false,
             isEditing: false,
+            isModal: false,
+            callbackFunction: [],
+            callbackHandler: null
         }
     },
 
@@ -398,10 +403,34 @@ export default {
         parseUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
 
+            //  Modal
+            this.isModal = !!parseInt(urlParams.get('isModal'));
+
             //  Default Bucket
             const bucketId = urlParams.get('bucket_id');
             if (bucketId) {
                 this.selectedBuckets = [parseInt(bucketId)];
+            }
+
+            //  Callback
+            if (urlParams.has('CKEditorFuncNum')) {
+                this.callbackHandler = 'ckeditor';
+                this.callbackFunction = [
+                    urlParams.get('CKEditorFuncNum')
+                ];
+
+            } else {
+                this.callbackHandler = 'picker';
+                const callbackParams = [];
+                urlParams.forEach((value, key) => {
+                    if (key.startsWith('callback[')) {
+                        callbackParams.push(value);
+                    }
+                });
+
+                if (callbackParams.length > 0) {
+                    this.callbackFunction = callbackParams;
+                }
             }
         },
 
@@ -515,8 +544,11 @@ export default {
             }
         },
 
-        handleObjectAction({ action, item }) {
+        handleObjectAction({action, item}) {
             switch (action) {
+                case 'insert':
+                    this.invokeCallbackFunction(item);
+                    break;
                 case 'edit':
                     this.editItem(item);
                     break;
@@ -744,6 +776,71 @@ export default {
             }
         },
 
+        invokeCallbackFunction(selectedObject) {
+            if (this.callbackFunction.length) {
+                if (this.callbackHandler === 'picker') {
+                    this.callbackPicker(selectedObject);
+                } else if (this.callbackHandler === 'ckeditor') {
+                    this.callbackCkeditor(selectedObject);
+                }
+            }
+
+        },
+
+        callbackCkeditor(selectedObject) {
+            window.opener.CKEDITOR.tools.callFunction(this.callbackFunction[0], selectedObject.url.src);
+            window.close();
+        },
+
+        callbackPicker(selectedObject) {
+            if (this.isModal) {
+
+                let namespace = 'parent.' + this.callbackFunction[0];
+                let method = this.callbackFunction[1];
+
+                this
+                    .getFunctionFromString(namespace + '.' + method)
+                    .call(
+                        this.getFunctionFromString(namespace),
+                        selectedObject.id
+                    );
+
+                window.parent.$.fancybox.close();
+
+            } else {
+                window
+                    .opener[this.callbackFunction[0]][this.callbackFunction[1]]
+                    .call(null, selectedObject.id);
+            }
+        },
+
+        getFunctionFromString(string) {
+            let scope = window;
+            let scopeSplit = string.split('.');
+
+            for (let i = 0; i < scopeSplit.length - 1; i++) {
+
+                if (scopeSplit[i].indexOf('[') !== -1) {
+
+                    var arrayItem = scopeSplit[i].substr(0, scopeSplit[i].length - 1).split('[');
+                    scope = scope[arrayItem[0]];
+                    if (scope === undefined) {
+                        return;
+                    }
+
+                    scope = scope[arrayItem[1].replace(/^['"](.*)['"]$/, '$1')];
+
+                } else {
+                    scope = scope[scopeSplit[i]];
+                }
+
+                if (scope === undefined) {
+                    return;
+                }
+            }
+
+            return scope[scopeSplit[scopeSplit.length - 1]];
+        }
     }
 }
 </script>

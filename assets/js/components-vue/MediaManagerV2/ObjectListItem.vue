@@ -25,6 +25,7 @@
     <td class="actions-cell">
       <select @change="handleAction($event)" class="action-select">
         <option value="">Select action...</option>
+        <option v-if="hasCallback" value="insert">Insert</option>
         <option value="edit">Edit</option>
         <option value="delete">Delete</option>
         <option value="download">Download</option>
@@ -41,6 +42,10 @@ export default {
     item: {
       type: Object,
       required: true
+    },
+    hasCallback: {
+      type: Boolean,
+      default: false
     }
   },
   methods: {
