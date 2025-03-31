@@ -369,6 +369,68 @@
                 </div>
             </div>
         </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="delete-modal" v-if="showDeleteModal">
+            <div class="delete-modal__overlay" @click="closeDeleteModal"></div>
+            <div class="delete-modal__container">
+                <div class="delete-modal__header">
+                    <h3>Delete Object</h3>
+                    <button class="close-button" @click="closeDeleteModal">&times;</button>
+                </div>
+                <div class="delete-modal__body">
+                    <div class="warning-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <div class="warning-content">
+                            <h4>Are you sure you want to delete this object?</h4>
+                            <p>This action cannot be undone. The following object will be deleted:</p>
+                            <div class="object-details">
+                                <strong>Name:</strong> {{ deletingObject?.file?.name?.human }}
+                                <br>
+                                <strong>Type:</strong> {{ deletingObject?.group }}
+                                <br>
+                                <strong>Size:</strong> {{ deletingObject?.file?.size?.human }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="deleteError" class="modal-message error-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        <span>{{ deleteError }}</span>
+                        <a 
+                            v-if="deleteError.includes('Object is in use')" 
+                            :href="`${siteUrl}/admin/cdn/utilities/usages?object=${deletingObject.id}`"
+                            target="_blank"
+                            class="check-usages-button"
+                        >
+                            Check for usages
+                        </a>
+                    </div>
+
+                    <div v-if="deleteSuccess" class="modal-message success-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Object deleted successfully!</span>
+                    </div>
+                </div>
+                <div class="delete-modal__footer">
+                    <button class="cancel-button" @click="closeDeleteModal" :disabled="isDeleting">Cancel</button>
+                    <button
+                        class="delete-button"
+                        @click="confirmDelete"
+                        :disabled="isDeleting"
+                    >
+                        <span v-if="isDeleting">Deleting...</span>
+                        <span v-else>Delete Object</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -427,6 +489,12 @@ export default {
             urlToCopy: null,
             urlCopyError: null,
             urlCopySuccess: false,
+            showDeleteModal: false,
+            deletingObject: null,
+            deleteError: null,
+            deleteSuccess: false,
+            isDeleting: false,
+            siteUrl: window.SITE_URL || '',
         }
     },
 
@@ -502,7 +570,7 @@ export default {
             }
         },
 
-        async fetchAllBuckets(url = `${window.SITE_URL}api/cdn/bucket`) {
+        async fetchAllBuckets(url = `${this.siteUrl}api/cdn/bucket`) {
             try {
                 this.loadingBuckets = true;
                 this.buckets = await this.iterateOverApiPages(url);
@@ -513,7 +581,7 @@ export default {
             }
         },
 
-        async fetchAllFileTypes(url = `${window.SITE_URL}api/cdn/mediamanagerv2/filetypes`) {
+        async fetchAllFileTypes(url = `${this.siteUrl}api/cdn/mediamanagerv2/filetypes`) {
             try {
                 this.loadingFileTypes = true;
                 this.fileTypes = await this.iterateOverApiPages(url);
@@ -525,7 +593,7 @@ export default {
 
         },
 
-        async fetchAllUploaders(url = `${window.SITE_URL}api/cdn/mediamanagerv2/uploaders`) {
+        async fetchAllUploaders(url = `${this.siteUrl}api/cdn/mediamanagerv2/uploaders`) {
             try {
                 this.loadingUploaders = true;
                 this.uploaders = await this.iterateOverApiPages(url);
@@ -580,7 +648,7 @@ export default {
             this.page = 1;
             try {
                 console.log('Searching with filters:', this.getFilterValues());
-                const response = await axios.get(`${window.SITE_URL}api/cdn/mediamanagerv2/objects`, {
+                const response = await axios.get(`${this.siteUrl}api/cdn/mediamanagerv2/objects`, {
                     params: this.getFilterValues()
                 });
                 this.objects = response.data.data;
@@ -598,7 +666,7 @@ export default {
             this.page += 1;
             try {
 
-                const response = await axios.get(`${window.SITE_URL}api/cdn/mediamanagerv2/objects`, {
+                const response = await axios.get(`${this.siteUrl}api/cdn/mediamanagerv2/objects`, {
                     params: this.getFilterValues()
                 });
                 this.objects = [...this.objects, ...response.data.data];
@@ -642,7 +710,10 @@ export default {
         },
 
         deleteItem(item) {
-            console.log('Delete item:', item);
+            this.deletingObject = item;
+            this.showDeleteModal = true;
+            this.deleteError = null;
+            this.deleteSuccess = false;
         },
 
         downloadItem(item) {
@@ -746,7 +817,7 @@ export default {
 
                     // Send the upload request with proper headers and progress tracking
                     const response = await axios.post(
-                        `${window.SITE_URL}api/cdn/object/create`,
+                        `${this.siteUrl}api/cdn/object/create`,
                         formData,
                         {
                             headers: {
@@ -847,7 +918,7 @@ export default {
 
             try {
                 const response = await axios.post(
-                    `${window.SITE_URL}api/cdn/object/edit`,
+                    `${this.siteUrl}api/cdn/object/edit`,
                     formData,
                     {
                         headers: {
@@ -936,7 +1007,52 @@ export default {
             }
 
             return scope[scopeSplit[scopeSplit.length - 1]];
-        }
+        },
+
+        async confirmDelete() {
+            this.isDeleting = true;
+            this.deleteError = null;
+            this.deleteSuccess = false;
+
+            try {
+                const formData = new FormData();
+                formData.append('object_id', this.deletingObject.id);
+
+                await axios.post(
+                    `${this.siteUrl}api/cdn/object/delete`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                );
+
+                // Remove the object from the UI
+                const index = this.objects.findIndex(obj => obj.id === this.deletingObject.id);
+                if (index !== -1) {
+                    this.objects.splice(index, 1);
+                }
+
+                this.deleteSuccess = true;
+                // Keep isDeleting true to keep the button disabled
+                setTimeout(() => {
+                    this.closeDeleteModal();
+                }, 1500);
+            } catch (error) {
+                console.error('Delete failed:', error);
+                this.deleteError = error.response?.data?.error || 'Failed to delete object';
+                this.isDeleting = false; // Only reset isDeleting on error
+            }
+        },
+
+        closeDeleteModal() {
+            this.showDeleteModal = false;
+            this.deletingObject = null;
+            this.deleteError = null;
+            this.deleteSuccess = false;
+            this.isDeleting = false;
+        },
     }
 }
 </script>
@@ -2188,6 +2304,28 @@ export default {
     background-color: rgba(254, 226, 226, 0.6);
     color: #b91c1c;
     border-color: #ef4444;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .check-usages-button {
+        margin-left: auto;
+        padding: 4px 12px;
+        background-color: white;
+        border: 1px solid #ef4444;
+        border-radius: 6px;
+        color: #b91c1c;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background-color: #fee2e2;
+            border-color: #dc2626;
+            color: #991b1b;
+        }
+    }
 }
 
 .error-message svg {
@@ -2405,5 +2543,261 @@ export default {
     margin-top: 6px;
     line-height: 1.4;
     font-style: italic;
+}
+
+.delete-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: modalFadeIn 0.3s ease forwards;
+
+    &__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(4px);
+        animation: overlayFadeIn 0.3s ease forwards;
+    }
+
+    @keyframes overlayFadeIn {
+        from {
+            backdrop-filter: blur(0);
+        }
+        to {
+            backdrop-filter: blur(4px);
+        }
+    }
+
+    &__container {
+        position: relative;
+        width: 90%;
+        max-width: 500px;
+        background-color: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: containerSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        transform: translateY(20px);
+    }
+
+    @keyframes containerSlideUp {
+        from {
+            transform: translateY(40px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    &__header {
+        padding: 20px 24px;
+        border-bottom: 1px solid rgba(224, 224, 224, 0.6);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+        text-align: center;
+        position: relative;
+
+        h3 {
+            margin: 0 auto;
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            padding: 0 !important;
+            border: none !important;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+
+            &:hover {
+                background-color: rgba(243, 244, 246, 0.8);
+                color: #4f46e5;
+                transform: translateY(-50%) rotate(90deg);
+            }
+        }
+    }
+
+    &__body {
+        padding: 24px;
+        background: linear-gradient(to bottom, #ffffff, #f9fafb);
+
+        .warning-message {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            background-color: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            margin-bottom: 24px;
+
+            svg {
+                color: #ea580c;
+                width: 24px;
+                height: 24px;
+                flex-shrink: 0;
+            }
+
+            .warning-content {
+                h4 {
+                    margin: 0 0 8px;
+                    color: #c2410c;
+                    font-size: 16px;
+                    font-weight: 600;
+                }
+
+                p {
+                    margin: 0 0 12px;
+                    color: #431407;
+                    font-size: 14px;
+                    line-height: 1.5;
+                }
+
+                .object-details {
+                    background-color: white;
+                    padding: 12px;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    color: #431407;
+
+                    strong {
+                        color: #c2410c;
+                    }
+                }
+            }
+        }
+
+        .troubleshooting-actions {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+
+            h4 {
+                margin: 0 0 16px;
+                color: #111827;
+                font-size: 16px;
+                font-weight: 600;
+            }
+
+            .action-buttons {
+                display: flex;
+                gap: 12px;
+
+                .action-button {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 16px;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 8px;
+                    background-color: white;
+                    color: #4b5563;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+
+                    svg {
+                        width: 16px;
+                        height: 16px;
+                    }
+
+                    &:hover {
+                        background-color: #f3f4f6;
+                        border-color: #d1d5db;
+                        color: #111827;
+                    }
+                }
+            }
+        }
+    }
+
+    &__footer {
+        padding: 20px 24px;
+        border-top: 1px solid rgba(224, 224, 224, 0.6);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: linear-gradient(to right, #f9fafb, #f3f4f6);
+
+        button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &.cancel-button {
+                background-color: white;
+                border: 1px solid #d1d5db;
+                color: #4b5563;
+
+                &:hover:not(:disabled) {
+                    background-color: #f3f4f6;
+                    border-color: #9ca3af;
+                }
+
+                &:disabled {
+                    opacity: 0.7;
+                    cursor: not-allowed;
+                }
+            }
+
+            &.delete-button {
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                border: none;
+                color: white;
+                box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2), 0 2px 4px -1px rgba(239, 68, 68, 0.1);
+
+                &:hover:not(:disabled) {
+                    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                    transform: translateY(-1px);
+                    box-shadow: 0 6px 10px -1px rgba(239, 68, 68, 0.3), 0 2px 4px -1px rgba(239, 68, 68, 0.2);
+                }
+
+                &:active:not(:disabled) {
+                    transform: translateY(1px);
+                }
+
+                &:disabled {
+                    background: linear-gradient(135deg, #fecaca 0%, #fee2e2 100%);
+                    cursor: not-allowed;
+                    box-shadow: none;
+                }
+            }
+        }
+    }
 }
 </style>
