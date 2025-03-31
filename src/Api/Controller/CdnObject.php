@@ -22,7 +22,6 @@ use Nails\Common\Exception\ModelException;
 use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
-use Nails\Config;
 use Nails\Factory;
 
 /**
@@ -214,7 +213,7 @@ class CdnObject extends Api\Controller\Base
         if (empty($oObject)) {
             throw new Api\Exception\ApiException('Object not found', $oHttpCodes::STATUS_NOT_FOUND);
 
-        }elseif (empty($sFileName)) {
+        } elseif (empty($sFileName)) {
             throw new Api\Exception\ApiException('`filename_display` is required', $oHttpCodes::STATUS_BAD_REQUEST);
         }
 
@@ -233,7 +232,7 @@ class CdnObject extends Api\Controller\Base
         if (!$bResult) {
             throw new Api\Exception\ApiException('Failed to update object. ' . $oModel->lastError(), $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR);
         }
-    
+
         //  @todo (Pablo - 2018-06-25) - Reduce the namespace here (i.e remove `object`)
         return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
             ->setData([
