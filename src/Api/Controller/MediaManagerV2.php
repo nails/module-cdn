@@ -262,7 +262,9 @@ class MediaManagerV2 extends Api\Controller\Base
                 !empty($aFilters['bucket_ids'])
                     ? new WhereIn('bucket_id', $aFilters['bucket_ids'])
                     : null,
-                //  @todo (Pablo 2025-03-06) - mime groups
+                !empty($aFilters['mime_groups'])
+                    ? new WhereIn('mime', $oMime->getMimesForGroups($aFilters['mime_groups']))
+                    : null,
                 !empty($aFilters['user_ids'])
                     ? new WhereIn('created_by', $aFilters['user_ids'])
                     : null,
