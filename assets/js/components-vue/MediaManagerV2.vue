@@ -63,14 +63,14 @@
                         Upload Files
                     </button>
                     <div class="view-toggle">
-                        <button 
-                            :class="{ active: viewMode === 'list' }" 
+                        <button
+                            :class="{ active: viewMode === 'list' }"
                             @click="viewMode = 'list'"
                         >
                             List
                         </button>
-                        <button 
-                            :class="{ active: viewMode === 'grid' }" 
+                        <button
+                            :class="{ active: viewMode === 'grid' }"
                             @click="viewMode = 'grid'"
                         >
                             Grid
@@ -106,9 +106,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <object-list-item 
-                                    v-for="item in objects" 
-                                    :key="item.id" 
+                                <object-list-item
+                                    v-for="item in objects"
+                                    :key="item.id"
                                     :item="item"
                                     :has-callback="callbackFunction.length > 0"
                                     @action="handleObjectAction"
@@ -149,18 +149,18 @@
                                 @action="handleObjectAction"
                             />
                             <div class="grid-load-more" v-if="meta?.pagination?.next && !loadingMoreObjects">
-                            <button
-                                class="btn btn-secondary"
-                                @click="loadMoreObjects"
-                            >
-                                Load More
-                            </button>
-                        </div>
+                                <button
+                                    class="btn btn-secondary"
+                                    @click="loadMoreObjects"
+                                >
+                                    Load More
+                                </button>
+                            </div>
                             <div class="grid-loading-more" v-if="loadingMoreObjects">
                                 <div class="loading-spinner"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
                 </div>
             </div>
         </div>
@@ -174,8 +174,8 @@
                     <button class="close-button" @click="showUploadModal = false">&times;</button>
                 </div>
                 <div class="upload-modal__body">
-                    <div 
-                        class="upload-area" 
+                    <div
+                        class="upload-area"
                         @click="$refs.fileInput.click()"
                         @dragover.prevent="dragOver = true"
                         @dragleave.prevent="dragOver = false"
@@ -188,17 +188,17 @@
                                 <polyline points="17 8 12 3 7 8"></polyline>
                                 <line x1="12" y1="3" x2="12" y2="15"></line>
                             </svg>
-                    </div>
+                        </div>
                         <h4>Drag and drop files here or click to browse</h4>
                         <p>Max file size: 10MB</p>
-                        <input 
-                            type="file" 
-                            multiple 
-                            class="file-input" 
+                        <input
+                            type="file"
+                            multiple
+                            class="file-input"
                             @change="handleFileSelect"
                             ref="fileInput"
                         >
-                                    </div>
+                    </div>
                     <div class="bucket-selector">
                         <label>Select Bucket:</label>
                         <select v-model="selectedUploadBucket">
@@ -207,21 +207,21 @@
                                 {{ bucket.label }}
                             </option>
                         </select>
-                                </div>
+                    </div>
 
                     <div v-if="uploadError" class="modal-message error-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                         </svg>
                         <span>{{ uploadError }}</span>
-                                        </div>
-                    
+                    </div>
+
                     <div v-if="uploadSuccess" class="modal-message success-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
                         <span>Files uploaded successfully!</span>
-                                    </div>
+                    </div>
 
                     <div class="file-list" v-if="filesToUpload.length > 0">
                         <h4>Files to Upload ({{ filesToUpload.length }})</h4>
@@ -247,18 +247,18 @@
                     </div>
                     <div class="footer-buttons">
                         <button class="cancel-button" @click="showUploadModal = false" :disabled="isUploading">Cancel</button>
-                            <button
-                            class="upload-button" 
-                            @click="uploadFiles" 
+                        <button
+                            class="upload-button"
+                            @click="uploadFiles"
                             :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
-                            >
+                        >
                             <span v-if="isUploading">Uploading...</span>
                             <span v-else>Upload</span>
-                            </button>
-                        </div>
-                </div>
-                        </div>
+                        </button>
                     </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Edit Modal -->
         <div class="edit-modal" v-if="showEditModal">
@@ -271,14 +271,14 @@
                 <div class="edit-modal__body">
                     <div class="form-group">
                         <label for="filename_display">Filename</label>
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             id="filename_display"
                             v-model="editingObject.filename_display"
                             placeholder="Enter display name"
                             :disabled="isEditing"
                         />
-            </div>
+                    </div>
                     <div v-if="editError" class="modal-message error-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
@@ -294,9 +294,9 @@
                 </div>
                 <div class="edit-modal__footer">
                     <button class="cancel-button" @click="closeEditModal" :disabled="isEditing">Cancel</button>
-                    <button 
-                        class="save-button" 
-                        @click="saveObjectEdit" 
+                    <button
+                        class="save-button"
+                        @click="saveObjectEdit"
                         :disabled="!editingObject?.filename_display || isEditing"
                     >
                         <span v-if="isEditing">Saving...</span>
@@ -486,7 +486,6 @@ export default {
             return collection;
         },
 
-
         switchView() {
             console.log(`Switched to ${this.viewMode} view`);
         },
@@ -594,7 +593,7 @@ export default {
         handleDropdownToggle(currentFilterRef) {
             // Get all filter refs
             const filterRefs = ['bucketFilter', 'fileTypeFilter', 'uploaderFilter'];
-            
+
             // Close all other filters
             filterRefs.forEach(ref => {
                 if (ref !== currentFilterRef && this.$refs[ref]) {
@@ -619,11 +618,11 @@ export default {
 
         formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
-            
+
             const k = 1024;
             const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
-            
+
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         },
 
@@ -638,20 +637,20 @@ export default {
                 this.uploadSuccess = false;
                 this.uploadProgress = {};
                 this.overallProgress = 0;
-                
+
                 // Upload each file individually
                 const uploadPromises = this.filesToUpload.map(async (file, index) => {
                     // Initialize progress for this file
                     this.$set(this.uploadProgress, index, 0);
-                    
+
                     // Create FormData for the upload
                     const formData = new FormData();
                     formData.append('upload', file);
-                    
+
                     // Send the upload request with proper headers and progress tracking
                     const response = await axios.post(
-                        `${window.SITE_URL}api/cdn/object/create`, 
-                        formData, 
+                        `${window.SITE_URL}api/cdn/object/create`,
+                        formData,
                         {
                             headers: {
                                 'Content-Type': 'multipart/form-data',
@@ -661,29 +660,29 @@ export default {
                                 // Update progress for this file
                                 const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                                 this.$set(this.uploadProgress, index, percentCompleted);
-                                
+
                                 // Calculate overall progress
                                 const totalProgress = Object.values(this.uploadProgress).reduce((sum, value) => sum + value, 0);
                                 this.overallProgress = totalProgress / this.filesToUpload.length;
                             }
                         }
                     );
-                    
+
                     return response.data.object;
                 });
-                
+
                 // Wait for all uploads to complete
                 const uploadedObjects = await Promise.all(uploadPromises);
-                
+
                 // Handle successful upload
                 console.log('Upload successful:', uploadedObjects);
-                
+
                 // Show success message
                 this.uploadSuccess = true;
-                
+
                 // Clear the file list
                 this.filesToUpload = [];
-                
+
                 // Reset all filters
                 this.keywords = null;
                 this.selectedBuckets = [];
@@ -692,10 +691,10 @@ export default {
                 this.dateLower = null;
                 this.dateUpper = null;
                 this.page = 1;
-                
+
                 // Refresh the object list
                 this.doSearch();
-                
+
                 // Close the modal after a delay
                 setTimeout(() => {
                     this.showUploadModal = false;
@@ -703,7 +702,7 @@ export default {
                     this.uploadProgress = {};
                     this.overallProgress = 0;
                 }, 2000);
-                
+
             } catch (error) {
                 console.error('Upload failed:', error);
                 // Handle upload error
@@ -928,7 +927,7 @@ export default {
                 color: #111827;
                 display: flex;
                 align-items: center;
-                
+
                 &::after {
                     content: '';
                     flex: 1;
@@ -951,13 +950,13 @@ export default {
                 color: #374151;
                 transition: all 0.2s ease;
                 box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-                
+
                 &:focus {
                     outline: none;
                     border-color: #4f46e5;
                     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
                 }
-                
+
                 &::placeholder {
                     color: #9ca3af;
                 }
@@ -1059,7 +1058,7 @@ export default {
                     transform: translateY(-1px);
                     box-shadow: 0 3px 10px rgba(124, 58, 237, 0.25);
                     background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
-                    
+
                     &::before {
                         left: 100%;
                     }
@@ -1090,8 +1089,8 @@ export default {
                 padding: 4px;
                 border-radius: 20px;
                 border: 1px solid rgba(222, 225, 230, 0.6);
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03), 
-                            inset 0 1px 1px rgba(255, 255, 255, 0.7);
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03),
+                inset 0 1px 1px rgba(255, 255, 255, 0.7);
                 backdrop-filter: blur(4px);
 
                 button {
@@ -1249,7 +1248,7 @@ export default {
                             text-align: center;
 
                             .loading-spinner {
-                    display: inline-block;
+                                display: inline-block;
                                 width: 30px;
                                 height: 30px;
                                 border-radius: 50%;
@@ -1293,16 +1292,16 @@ export default {
 
                 .grid-load-more {
                     cursor: pointer;
-                    
+
                     &:hover {
                         border-color: #4f46e5;
                         transform: translateY(-1px);
                         box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
                     }
-                    
+
                     button {
                         min-width: 120px;
-                            height: 40px;
+                        height: 40px;
                         background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
                         color: white;
                         border: none;
@@ -1345,9 +1344,9 @@ export default {
 
                 // Responsive adjustments
                 @media (max-width: 768px) {
-                .grid-container {
+                    .grid-container {
                         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-                    gap: 20px;
+                        gap: 20px;
                         padding: 0 1rem;
                     }
                 }
@@ -1370,13 +1369,13 @@ export default {
                 color: #6b7280;
                 margin: 0 1rem;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-                    position: relative;
+                position: relative;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
             }
-            
+
             .empty-state {
                 p {
                     margin: 0;
@@ -1410,11 +1409,11 @@ export default {
     position: fixed;
     top: 0;
     left: 0;
-                    width: 100%;
-                    height: 100%;
+    width: 100%;
+    height: 100%;
     z-index: 1000;
-                    display: flex;
-                    justify-content: center;
+    display: flex;
+    justify-content: center;
     align-items: center;
     animation: modalFadeIn 0.3s ease forwards;
 
@@ -1431,8 +1430,8 @@ export default {
         position: absolute;
         top: 0;
         left: 0;
-                    width: 100%;
-                    height: 100%;
+        width: 100%;
+        height: 100%;
         background-color: rgba(15, 23, 42, 0.7);
         backdrop-filter: blur(4px);
         animation: overlayFadeIn 0.3s ease forwards;
@@ -1499,9 +1498,9 @@ export default {
             color: #6b7280;
             cursor: pointer;
             padding: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 36px;
             height: 36px;
             border-radius: 50%;
@@ -1539,13 +1538,13 @@ export default {
 
             &::before {
                 content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
                 background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
-                    opacity: 0;
+                opacity: 0;
                 transition: opacity 0.3s ease;
             }
 
@@ -1553,7 +1552,7 @@ export default {
                 border-color: #4f46e5;
                 transform: translateY(-2px);
                 box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-                
+
                 &::before {
                     opacity: 1;
                 }
@@ -1588,7 +1587,7 @@ export default {
             p {
                 margin: 0;
                 color: #6b7280;
-                        font-size: 14px;
+                font-size: 14px;
             }
 
             .file-input {
@@ -1640,7 +1639,7 @@ export default {
                 font-size: 16px;
                 display: flex;
                 align-items: center;
-                
+
                 &::after {
                     content: '';
                     flex: 1;
@@ -1661,7 +1660,7 @@ export default {
                 background-color: white;
                 transition: all 0.2s ease;
                 animation: fileItemAppear 0.3s ease forwards;
-                
+
                 &:hover {
                     border-color: #4f46e5;
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -1750,7 +1749,7 @@ export default {
             &.upload-button {
                 background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
                 border: none;
-                    color: white;
+                color: white;
                 box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
 
                 &:hover {
@@ -1781,7 +1780,7 @@ export default {
     padding: 4px;
     background: white;
     min-width: 160px;
-    
+
     .dropdown-item {
         padding: 8px 12px;
         border-radius: 6px;
@@ -1789,16 +1788,16 @@ export default {
         transition: all 0.2s ease;
         color: #4b5563;
         font-size: 14px;
-        
+
         &:hover {
             background-color: rgba(79, 70, 229, 0.05);
             color: #4f46e5;
         }
-        
+
         &:active {
             background-color: rgba(79, 70, 229, 0.1);
         }
-        
+
         &:last-child {
             margin-bottom: 0;
         }
@@ -1814,15 +1813,15 @@ export default {
     color: #4b5563;
     transition: all 0.2s ease;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    
+
     &:hover {
         border-color: #d1d5db;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         color: #111827;
-                    }
+    }
 
-                    &:focus {
-                        outline: none;
+    &:focus {
+        outline: none;
         border-color: #4f46e5;
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
     }
@@ -1835,19 +1834,19 @@ export default {
     overflow: hidden;
     margin-top: 6px;
     position: relative;
-    
+
     &__fill {
         height: 100%;
         background: linear-gradient(90deg, #4f46e5, #7c3aed);
         border-radius: 3px;
         transition: width 0.2s ease;
     }
-    
+
     &__text {
         position: absolute;
         right: 0;
         top: -18px;
-                            font-size: 11px;
+        font-size: 11px;
         color: #6b7280;
     }
 }
@@ -1855,7 +1854,7 @@ export default {
 .overall-progress {
     flex: 1;
     margin-right: 16px;
-    
+
     &__bar {
         height: 8px;
         background-color: #e5e7eb;
@@ -1863,14 +1862,14 @@ export default {
         overflow: hidden;
         margin-bottom: 6px;
     }
-    
+
     &__fill {
         height: 100%;
         background: linear-gradient(90deg, #4f46e5, #7c3aed);
         border-radius: 4px;
         transition: width 0.3s ease;
     }
-    
+
     &__text {
         font-size: 12px;
         color: #6b7280;
@@ -1926,7 +1925,7 @@ export default {
         justify-content: space-between;
         align-items: center;
         background: #ffffff;
-                text-align: center;
+        text-align: center;
         position: relative;
 
         h3 {
@@ -2064,41 +2063,41 @@ export default {
 
 /* Global Modal Message Styles */
 .modal-message {
-  margin-top: 16px;
-  margin-bottom: 1rem;
-  padding: 12px 16px;
-  border-radius: 0.375rem;
-                display: flex;
-                align-items: center;
-  border-left: 4px solid;
-  animation: messageSlideIn 0.3s ease forwards;
-  font-size: 14px;
+    margin-top: 16px;
+    margin-bottom: 1rem;
+    padding: 12px 16px;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    border-left: 4px solid;
+    animation: messageSlideIn 0.3s ease forwards;
+    font-size: 14px;
 }
 
 .success-message {
-  background-color: rgba(220, 252, 231, 0.6);
-  color: #15803d;
-  border-color: #22c55e;
+    background-color: rgba(220, 252, 231, 0.6);
+    color: #15803d;
+    border-color: #22c55e;
 }
 
 .success-message svg {
-  color: #22c55e;
-  height: 1.25rem;
-  width: 1.25rem;
-  margin-right: 0.5rem;
+    color: #22c55e;
+    height: 1.25rem;
+    width: 1.25rem;
+    margin-right: 0.5rem;
 }
 
 .error-message {
-  background-color: rgba(254, 226, 226, 0.6);
-  color: #b91c1c;
-  border-color: #ef4444;
+    background-color: rgba(254, 226, 226, 0.6);
+    color: #b91c1c;
+    border-color: #ef4444;
 }
 
 .error-message svg {
-  color: #ef4444;
-  height: 1.25rem;
-  width: 1.25rem;
-  margin-right: 0.5rem;
+    color: #ef4444;
+    height: 1.25rem;
+    width: 1.25rem;
+    margin-right: 0.5rem;
 }
 
 @keyframes messageSlideIn {
