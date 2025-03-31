@@ -41,8 +41,7 @@ class MediaManagerV2 extends Api\Controller\Base
 
     public static function isAuthenticated($sHttpMethod = '', $sMethod = '')
     {
-        return parent::isAuthenticated($sHttpMethod, $sMethod);
-        //  @todo (Pablo 2025-03-07) - and has permissions
+        return parent::isAuthenticated($sHttpMethod, $sMethod) && userHasPermission('admin:cdn:manager:object:browse');
     }
 
     public function getFileTypes(): ApiResponse
