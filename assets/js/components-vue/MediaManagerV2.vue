@@ -646,7 +646,13 @@ export default {
         },
 
         downloadItem(item) {
-            window.open(item.url.download, '_blank');
+            // Create a temporary anchor element
+            const link = document.createElement('a');
+            link.href = item.url.download;
+            link.download = item.file.name.human; // Set the download filename
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         },
 
         copyUrl(item) {
