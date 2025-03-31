@@ -305,6 +305,52 @@
                 </div>
             </div>
         </div>
+
+        <!-- URL Copy Modal -->
+        <div class="url-copy-modal" v-if="showUrlCopyModal">
+            <div class="url-copy-modal__overlay" @click="closeUrlCopyModal"></div>
+            <div class="url-copy-modal__container">
+                <div class="url-copy-modal__header">
+                    <h3>Copy URL</h3>
+                    <button class="close-button" @click="closeUrlCopyModal">&times;</button>
+                </div>
+                <div class="url-copy-modal__body">
+                    <div class="form-group">
+                        <label for="url_to_copy">URL</label>
+                        <div class="url-input-group">
+                            <textarea
+                                id="url_to_copy"
+                                v-model="urlToCopy"
+                                readonly
+                                rows="3"
+                                ref="urlTextarea"
+                            ></textarea>
+                            <button class="copy-button" @click="copyUrlFromTextarea">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div v-if="urlCopyError" class="modal-message error-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        <span>{{ urlCopyError }}</span>
+                    </div>
+                    <div v-if="urlCopySuccess" class="modal-message success-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span>URL copied to clipboard!</span>
+                    </div>
+                </div>
+                <div class="url-copy-modal__footer">
+                    <button class="close-button" @click="closeUrlCopyModal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -358,7 +404,11 @@ export default {
             isEditing: false,
             isModal: false,
             callbackFunction: [],
-            callbackHandler: null
+            callbackHandler: null,
+            showUrlCopyModal: false,
+            urlToCopy: '',
+            urlCopyError: null,
+            urlCopySuccess: false,
         }
     },
 
@@ -586,8 +636,33 @@ export default {
                 await navigator.clipboard.writeText(item.url.src);
                 // You might want to add a toast notification here
             } catch (err) {
-                console.error('Failed to copy URL:', err);
+                // If clipboard API fails, show the modal
+                this.urlToCopy = item.url.src;
+                this.showUrlCopyModal = true;
+                this.urlCopyError = null;
+                this.urlCopySuccess = false;
             }
+        },
+
+        async copyUrlFromTextarea() {
+            try {
+                await navigator.clipboard.writeText(this.urlToCopy);
+                this.urlCopySuccess = true;
+                this.urlCopyError = null;
+                setTimeout(() => {
+                    this.urlCopySuccess = false;
+                }, 2000);
+            } catch (err) {
+                this.urlCopyError = 'Failed to copy URL. Please try selecting and copying manually.';
+                this.urlCopySuccess = false;
+            }
+        },
+
+        closeUrlCopyModal() {
+            this.showUrlCopyModal = false;
+            this.urlToCopy = '';
+            this.urlCopyError = null;
+            this.urlCopySuccess = false;
         },
 
         handleDropdownToggle(currentFilterRef) {
@@ -2108,6 +2183,182 @@ export default {
     to {
         transform: translateX(0);
         opacity: 1;
+    }
+}
+
+.url-copy-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: modalFadeIn 0.3s ease forwards;
+
+    &__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(4px);
+        animation: overlayFadeIn 0.3s ease forwards;
+    }
+
+    &__container {
+        position: relative;
+        width: 90%;
+        max-width: 500px;
+        background-color: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: containerSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        transform: translateY(20px);
+    }
+
+    &__header {
+        padding: 20px 24px;
+        border-bottom: 1px solid rgba(224, 224, 224, 0.6);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+        text-align: center;
+        position: relative;
+
+        h3 {
+            margin: 0 auto;
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            padding: 0 !important;
+            border: none !important;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+
+            &:hover {
+                background-color: rgba(243, 244, 246, 0.8);
+                color: #4f46e5;
+                transform: translateY(-50%) rotate(90deg);
+            }
+        }
+    }
+
+    &__body {
+        padding: 24px;
+        background: linear-gradient(to bottom, #ffffff, #f9fafb);
+
+        .form-group {
+            margin-bottom: 24px;
+
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #111827;
+                font-size: 15px;
+            }
+
+            .url-input-group {
+                position: relative;
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+
+                textarea {
+                    flex: 1;
+                    padding: 12px 16px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    background-color: white;
+                    transition: all 0.2s ease;
+                    color: #374151;
+                    resize: vertical;
+                    min-height: 80px;
+
+                    &:focus {
+                        outline: none;
+                        border-color: #4f46e5;
+                        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+                    }
+                }
+
+                .copy-button {
+                    background: none;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    padding: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #6b7280;
+
+                    &:hover {
+                        background-color: #f3f4f6;
+                        border-color: #9ca3af;
+                        color: #4f46e5;
+                    }
+
+                    &:active {
+                        background-color: #e5e7eb;
+                    }
+                }
+            }
+        }
+    }
+
+    &__footer {
+        padding: 20px 24px;
+        border-top: 1px solid rgba(224, 224, 224, 0.6);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: linear-gradient(to right, #f9fafb, #f3f4f6);
+
+        button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: white;
+            border: 1px solid #d1d5db;
+            color: #4b5563;
+
+            &:hover {
+                background-color: #f3f4f6;
+                border-color: #9ca3af;
+            }
+        }
     }
 }
 </style>
