@@ -358,6 +358,7 @@ export default {
     },
 
     created() {
+        this.parseUrlParams();
         this.fetchAllBuckets();
         this.fetchAllFileTypes();
         this.fetchAllUploaders();
@@ -393,6 +394,16 @@ export default {
     },
 
     methods: {
+
+        parseUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            //  Default Bucket
+            const bucketId = urlParams.get('bucket_id');
+            if (bucketId) {
+                this.selectedBuckets = [parseInt(bucketId)];
+            }
+        },
 
         async fetchAllBuckets(url = `${window.SITE_URL}api/cdn/bucket`) {
             try {
