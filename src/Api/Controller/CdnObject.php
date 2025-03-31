@@ -16,13 +16,14 @@ use Nails\Api;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject\Trash;
 use Nails\Cdn\Service\Cdn;
+use Nails\Cdn\Service\Monitor;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
+use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
 use Nails\Config;
 use Nails\Factory;
-use Nails\Common\Helper\Model\Expand;
 
 /**
  * Class CdnObject
@@ -290,6 +291,21 @@ class CdnObject extends Api\Controller\Base
                 'Invalid object ID',
                 $oHttpCodes::STATUS_NOT_FOUND
             );
+        }
+
+        if (!$bIsTrash) {
+            /** @var Monitor $oMonitor */
+            $oMonitor = Factory::service('Monitor', Constants::MODULE_SLUG);
+            /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
+            $oObjectModel = Factory::model('Object', constants::MODULE_SLUG);
+
+            $aLocations = $oMonitor->locate($oObjectModel->getById($iObjectId, [new Expand('bucket')]));
+            if (!empty($aLocations)) {
+                throw new Api\Exception\ApiException(
+                    'Object is in use',
+                    $oHttpCodes::STATUS_BAD_REQUEST
+                );
+            }
         }
 
         $bDelete = $bIsTrash
