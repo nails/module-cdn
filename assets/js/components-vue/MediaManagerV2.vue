@@ -929,7 +929,8 @@ export default {
         openUploadModal() {
             this.showUploadModal = true;
             this.filesToUpload = [];
-            this.selectedUploadBucket = null;
+            // If exactly one bucket is selected in the filter, use that as the default
+            this.selectedUploadBucket = this.selectedBuckets.length === 1 ? this.selectedBuckets[0] : null;
             this.uploadError = null;
             this.uploadSuccess = false;
         },
