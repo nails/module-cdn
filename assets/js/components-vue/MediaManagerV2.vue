@@ -44,9 +44,42 @@
             </div>
             <div class="sidebar__filter sidebar__filter--date">
                 <p class="sidebar__filter__title">Upload date</p>
-                <input type="date" v-model="dateLower" />
-                <span>to</span>
-                <input type="date" v-model="dateUpper" />
+                <div class="date-range-picker">
+                    <div class="date-range-input" :class="{ 'has-value': dateLower || dateUpper }">
+                        <div class="date-input-wrapper" :class="{ 'has-value': !!dateLower }">
+                            <input 
+                                type="date" 
+                                v-model="dateLower" 
+                                class="date-input"
+                                :max="dateUpper"
+                            />
+                            <span class="date-placeholder">Start date</span>
+                        </div>
+                        <span class="date-separator">to</span>
+                        <div class="date-input-wrapper" :class="{ 'has-value': !!dateUpper }">
+                            <input 
+                                type="date" 
+                                v-model="dateUpper" 
+                                class="date-input"
+                                :min="dateLower"
+                            />
+                            <span class="date-placeholder">End date</span>
+                        </div>
+                        <button 
+                            class="clear-date" 
+                            @click="clearDateRange" 
+                            v-if="dateLower || dateUpper"
+                            title="Clear date range"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="calendar-icon">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="body">
@@ -1053,6 +1086,11 @@ export default {
             this.deleteSuccess = false;
             this.isDeleting = false;
         },
+
+        clearDateRange() {
+            this.dateLower = null;
+            this.dateUpper = null;
+        },
     }
 }
 </script>
@@ -1182,27 +1220,121 @@ export default {
             }
 
             &--date {
-                display: grid;
-                grid-template-columns: 1fr auto 1fr;
-                gap: 10px;
-                align-items: center;
-
-                input {
+                .date-range-picker {
                     width: 100%;
-                    margin: 0;
-                    padding: 10px 14px;
                 }
 
-                span {
-                    text-align: center;
-                    font-size: 14px;
-                    color: #6b7280;
-                    font-weight: 500;
-                }
+                .date-range-input {
+                    position: relative;
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    background: white;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    padding: 0 12px;
+                    transition: all 0.2s ease;
 
-                .sidebar__filter__title {
-                    grid-column: 1 / -1;
-                    margin-bottom: 1rem;
+                    &:hover {
+                        border-color: #9ca3af;
+                    }
+
+                    &:focus-within {
+                        border-color: #4f46e5;
+                        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+                    }
+
+                    &.has-value {
+                        border-color: #4f46e5;
+                        background: linear-gradient(to right, rgba(79, 70, 229, 0.05), transparent);
+                    }
+
+                    .date-input-wrapper {
+                        position: relative;
+                        flex: 1;
+
+                        &.has-value {
+                            .date-input {
+                                opacity: 1;
+                            }
+
+                            .date-placeholder {
+                                display: none;
+                            }
+                        }
+                    }
+
+                    .date-input {
+                        width: 100%;
+                        border: none;
+                        padding: 10px 4px;
+                        font-size: 14px;
+                        color: #374151;
+                        background: transparent;
+                        outline: none;
+                        box-shadow: none;
+                        position: relative;
+                        z-index: 2;
+                        opacity: 0;
+
+                        &::-webkit-calendar-picker-indicator {
+                            opacity: 0;
+                            cursor: pointer;
+                            position: absolute;
+                            right: 0;
+                            top: 0;
+                            width: 100%;
+                            height: 100%;
+                            z-index: 3;
+                        }
+                    }
+
+                    .date-placeholder {
+                        position: absolute;
+                        left: 4px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        color: #9ca3af;
+                        font-size: 14px;
+                        pointer-events: none;
+                        z-index: 1;
+                    }
+
+                    .date-separator {
+                        color: #6b7280;
+                        font-size: 14px;
+                        padding: 0 4px;
+                    }
+
+                    .calendar-icon {
+                        width: 16px;
+                        height: 16px;
+                        color: #6b7280;
+                        flex-shrink: 0;
+                    }
+
+                    .clear-date {
+                        background: none;
+                        border: none;
+                        padding: 4px;
+                        color: #6b7280;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 4px;
+                        transition: all 0.2s ease;
+
+                        svg {
+                            width: 14px;
+                            height: 14px;
+                        }
+
+                        &:hover {
+                            background-color: #f3f4f6;
+                            color: #4b5563;
+                        }
+                    }
                 }
             }
 
