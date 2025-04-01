@@ -104,8 +104,12 @@ export default {
         // Close dropdown when clicking outside
         document.addEventListener('click', this.closeDropdown);
     },
+    mounted() {
+        document.addEventListener('keydown', this.handleKeydown);
+    },
     beforeDestroy() {
         document.removeEventListener('click', this.closeDropdown);
+        document.removeEventListener('keydown', this.handleKeydown);
     },
     watch: {
         value: {
@@ -169,6 +173,11 @@ export default {
             this.selectedItems = [];
             this.$emit('input', []);
             this.closeDropdown();
+        },
+        handleKeydown(event) {
+            if (event.key === 'Escape' && this.isOpen) {
+                this.isOpen = false;
+            }
         }
     }
 }
