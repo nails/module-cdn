@@ -1439,7 +1439,7 @@ export default {
             }
 
             &--reset {
-                padding: 0.75rem 1.25rem;
+                padding: 1.25rem;
                 border-top: 1px solid #e5e7eb;
                 background: linear-gradient(to bottom, rgba(249, 250, 251, 0.8), rgba(243, 244, 246, 0.8));
 
