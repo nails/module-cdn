@@ -25,9 +25,9 @@
                 <button class="close-button" @click="isOpen = false">&times;</button>
             </div>
             <div class="actions-menu__items">
-                <button 
-                    v-if="hasCallback" 
-                    class="action-item" 
+                <button
+                    v-if="hasCallback"
+                    class="action-item"
                     @click="handleAction('insert')"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -128,10 +128,12 @@ export default {
 
             &__main {
                 color: #4b5563;
+
                 &:hover {
                     background: #e5e7eb;
                     color: #374151;
                 }
+
                 &:active {
                     background: #d1d5db;
                 }
@@ -143,10 +145,12 @@ export default {
 
             &__trigger {
                 color: #6b7280;
+
                 &:hover {
                     background: #e5e7eb;
                     color: #374151;
                 }
+
                 &:active {
                     background: #d1d5db;
                 }
@@ -167,6 +171,7 @@ export default {
 
                 .close-button {
                     color: #6b7280;
+
                     &:hover {
                         background-color: #e5e7eb;
                         color: #4b5563;
@@ -176,24 +181,31 @@ export default {
 
             .action-item {
                 color: #4b5563;
+
                 svg {
                     color: #6b7280;
                 }
+
                 &:hover {
                     background-color: #f3f4f6;
                     color: #4f46e5;
+
                     svg {
                         color: #4f46e5;
                     }
                 }
+
                 &--danger {
                     color: #dc2626;
+
                     svg {
                         color: #dc2626;
                     }
+
                     &:hover {
                         background-color: #fee2e2;
                         color: #b91c1c;
+
                         svg {
                             color: #b91c1c;
                         }
@@ -210,10 +222,12 @@ export default {
 
             &__main {
                 color: white;
+
                 &:hover {
                     background: rgba(255, 255, 255, 0.1);
                     color: white;
                 }
+
                 &:active {
                     background: rgba(255, 255, 255, 0.2);
                 }
@@ -225,10 +239,12 @@ export default {
 
             &__trigger {
                 color: rgba(255, 255, 255, 0.8);
+
                 &:hover {
                     background: rgba(255, 255, 255, 0.1);
                     color: white;
                 }
+
                 &:active {
                     background: rgba(255, 255, 255, 0.2);
                 }
@@ -249,6 +265,7 @@ export default {
 
                 .close-button {
                     color: rgba(255, 255, 255, 0.6);
+
                     &:hover {
                         background: rgba(255, 255, 255, 0.1);
                         color: white;
@@ -258,24 +275,31 @@ export default {
 
             .action-item {
                 color: rgba(255, 255, 255, 0.8);
+
                 svg {
                     color: rgba(255, 255, 255, 0.6);
                 }
+
                 &:hover {
                     background: rgba(255, 255, 255, 0.1);
                     color: white;
+
                     svg {
                         color: white;
                     }
                 }
+
                 &--danger {
                     color: #ef4444;
+
                     svg {
                         color: #ef4444;
                     }
+
                     &:hover {
                         background: rgba(239, 68, 68, 0.1);
                         color: #f87171;
+
                         svg {
                             color: #f87171;
                         }

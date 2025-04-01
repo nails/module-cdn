@@ -22,7 +22,7 @@
                         <span class="date">{{ item.created.formatted }}</span>
                     </div>
                     <div class="bucket-tag">{{ item.bucket.label }}</div>
-                    <object-actions 
+                    <object-actions
                         :has-callback="hasCallback"
                         theme="dark"
                         @action="handleAction"

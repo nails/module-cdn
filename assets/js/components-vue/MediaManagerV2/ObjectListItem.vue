@@ -23,7 +23,7 @@
         <td class="created-cell">{{ item.created_by?.name || 'Unknown' }}</td>
         <td class="uploader-cell">{{ item.created.formatted }}</td>
         <td class="actions-cell">
-            <object-actions 
+            <object-actions
                 :has-callback="hasCallback"
                 theme="light"
                 @action="handleAction"
@@ -142,4 +142,3 @@ export default {
     text-align: right;
 }
 </style> 
-

@@ -5,9 +5,9 @@
                 <p class="sidebar__filter__title">Search &amp; Filter</p>
                 <div class="keyword-input-wrapper">
                     <input type="text" v-model="keywords" placeholder="Keywords" />
-                    <button 
-                        v-if="keywords" 
-                        class="clear-keyword" 
+                    <button
+                        v-if="keywords"
+                        class="clear-keyword"
                         @click="keywords = null"
                         title="Clear search"
                     >
@@ -59,9 +59,9 @@
                 <div class="date-range-picker">
                     <div class="date-range-input" :class="{ 'has-value': dateLower || dateUpper }">
                         <div class="date-input-wrapper" :class="{ 'has-value': !!dateLower }">
-                            <input 
-                                type="date" 
-                                v-model="dateLower" 
+                            <input
+                                type="date"
+                                v-model="dateLower"
                                 class="date-input"
                                 :max="dateUpper"
                             />
@@ -69,17 +69,17 @@
                         </div>
                         <span class="date-separator">to</span>
                         <div class="date-input-wrapper" :class="{ 'has-value': !!dateUpper }">
-                            <input 
-                                type="date" 
-                                v-model="dateUpper" 
+                            <input
+                                type="date"
+                                v-model="dateUpper"
                                 class="date-input"
                                 :min="dateLower"
                             />
                             <span class="date-placeholder">End date</span>
                         </div>
-                        <button 
-                            class="clear-date" 
-                            @click="clearDateRange" 
+                        <button
+                            class="clear-date"
+                            @click="clearDateRange"
                             v-if="dateLower || dateUpper"
                             title="Clear date range"
                         >
@@ -455,8 +455,8 @@
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                         </svg>
                         <span>{{ deleteError }}</span>
-                        <a 
-                            v-if="deleteError.includes('Object is in use')" 
+                        <a
+                            v-if="deleteError.includes('Object is in use')"
                             :href="`${siteUrl}/admin/cdn/utilities/usages?object=${deletingObject.id}`"
                             target="_blank"
                             class="check-usages-button"
