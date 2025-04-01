@@ -1,7 +1,10 @@
 <template>
-    <div class="multi-select">
+    <div class="multi-select" :class="{ 'open-upwards': openUpwards }">
         <div class="multi-select__selected" @click="toggleDropdown">
             <span v-if="selectedItems.length === 0" class="placeholder">Select {{ title }}</span>
+            <span v-else-if="singleSelect" class="selected-label">
+                {{ options.find(opt => opt.id === selectedItems[0])?.label }}
+            </span>
             <span v-else class="selected-count">{{ selectedItems.length }} selected</span>
             <span class="dropdown-arrow">▼</span>
         </div>
@@ -12,6 +15,7 @@
                     v-model="searchQuery"
                     placeholder="Search..."
                     @click.stop
+                    ref="searchInput"
                 />
             </div>
             <div class="options-list">
@@ -34,8 +38,8 @@
                 </label>
             </div>
             <div class="actions">
-                <button @click.stop="selectAll" class="btn-select-all">Select All</button>
-                <button @click.stop="deselectAll" class="btn-clear">Clear</button>
+                <button v-if="!singleSelect" @click.stop="selectAll" class="btn-select-all">Select All</button>
+                <button @click.stop="deselectAll" class="btn-clear" :class="{ 'btn-clear--single': singleSelect }">Clear</button>
             </div>
         </div>
     </div>
@@ -60,6 +64,14 @@ export default {
         subLabelKey: {
             type: String,
             default: null
+        },
+        singleSelect: {
+            type: Boolean,
+            default: false
+        },
+        openUpwards: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
@@ -110,6 +122,13 @@ export default {
             }
             this.isOpen = !this.isOpen;
             this.$emit('dropdown-toggled', this.isOpen);
+
+            // Focus search input when opening dropdown
+            if (this.isOpen && this.options.length > 10) {
+                this.$nextTick(() => {
+                    this.$refs.searchInput?.focus();
+                });
+            }
         },
         closeDropdown() {
             if (this.isOpen) {
@@ -124,19 +143,26 @@ export default {
             return this.selectedItems.includes(id);
         },
         toggleOption(id) {
-            const index = this.selectedItems.indexOf(id);
-            if (index === -1) {
-                // Add to selection
-                this.selectedItems.push(id);
+            if (this.singleSelect) {
+                this.selectedItems = [id];
+                this.closeDropdown();
             } else {
-                // Remove from selection
-                this.selectedItems.splice(index, 1);
+                const index = this.selectedItems.indexOf(id);
+                if (index === -1) {
+                    // Add to selection
+                    this.selectedItems.push(id);
+                } else {
+                    // Remove from selection
+                    this.selectedItems.splice(index, 1);
+                }
             }
             this.$emit('input', [...this.selectedItems]);
         },
         selectAll() {
-            this.selectedItems = this.filteredOptions.map(option => option.id);
-            this.$emit('input', [...this.selectedItems]);
+            if (!this.singleSelect) {
+                this.selectedItems = this.filteredOptions.map(option => option.id);
+                this.$emit('input', [...this.selectedItems]);
+            }
             this.closeDropdown();
         },
         deselectAll() {
@@ -152,6 +178,34 @@ export default {
 .multi-select {
     position: relative;
     width: 100%;
+
+    &.open-upwards {
+        .multi-select__dropdown {
+            top: auto;
+            bottom: 100%;
+            margin-top: 0;
+            margin-bottom: 4px;
+            flex-direction: column-reverse;
+            transform-origin: bottom center;
+            animation: dropdownSlideUp 0.2s ease-out;
+            max-height: 250px;
+
+            .options-list {
+                max-height: 150px;
+            }
+        }
+
+        @keyframes dropdownSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    }
 
     &__selected {
         display: flex;
@@ -189,6 +243,18 @@ export default {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;
+        animation: dropdownSlideDown 0.2s ease-out;
+
+        @keyframes dropdownSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         .search-box {
             padding: 8px;
@@ -270,6 +336,10 @@ export default {
                 margin: 0;
                 width: calc(50% - 4px);
                 box-sizing: border-box;
+
+                &.btn-clear--single {
+                    width: 100%;
+                }
 
                 &:hover {
                     background: #e5e5e5;

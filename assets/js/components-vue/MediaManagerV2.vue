@@ -234,12 +234,13 @@
                     </div>
                     <div class="bucket-selector">
                         <label>Select Bucket:</label>
-                        <select v-model="selectedUploadBucket">
-                            <option value="">-- Select a bucket --</option>
-                            <option v-for="bucket in buckets" :key="bucket.id" :value="bucket.id">
-                                {{ bucket.label }}
-                            </option>
-                        </select>
+                        <multi-select
+                            v-model="selectedUploadBucket"
+                            :options="buckets"
+                            title="Bucket"
+                            :single-select="true"
+                            :open-upwards="true"
+                        />
                     </div>
 
                     <div v-if="uploadError" class="modal-message error-message">
@@ -283,7 +284,7 @@
                         <button
                             class="upload-button"
                             @click="uploadFiles"
-                            :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
+                            :disabled="filesToUpload.length === 0 || !selectedUploadBucket.length || isUploading"
                         >
                             <span v-if="isUploading">Uploading...</span>
                             <span v-else>Upload</span>
@@ -489,6 +490,7 @@ export default {
             loadingMoreObjects: false,
             buckets: [],
             selectedBuckets: [],
+            selectedUploadBucket: [],  // Changed to array for MultiSelect compatibility
             loadingBuckets: false,
             fileTypes: [],
             selectedFileTypes: [],
@@ -503,7 +505,6 @@ export default {
             meta: null,
             showUploadModal: false,
             filesToUpload: [],
-            selectedUploadBucket: null,
             dragOver: false,
             isUploading: false,
             uploadError: null,
@@ -828,7 +829,7 @@ export default {
         },
 
         async uploadFiles() {
-            if (this.filesToUpload.length === 0 || !this.selectedUploadBucket || this.isUploading) {
+            if (this.filesToUpload.length === 0 || !this.selectedUploadBucket.length || this.isUploading) {
                 return;
             }
 
@@ -855,7 +856,7 @@ export default {
                         {
                             headers: {
                                 'Content-Type': 'multipart/form-data',
-                                'X-Cdn-Bucket': this.selectedUploadBucket
+                                'X-Cdn-Bucket': this.selectedUploadBucket[0] // Use first item from array
                             },
                             onUploadProgress: (progressEvent) => {
                                 // Update progress for this file
@@ -930,7 +931,7 @@ export default {
             this.showUploadModal = true;
             this.filesToUpload = [];
             // If exactly one bucket is selected in the filter, use that as the default
-            this.selectedUploadBucket = this.selectedBuckets.length === 1 ? this.selectedBuckets[0] : null;
+            this.selectedUploadBucket = this.selectedBuckets.length === 1 ? [this.selectedBuckets[0]] : [];
             this.uploadError = null;
             this.uploadSuccess = false;
         },
