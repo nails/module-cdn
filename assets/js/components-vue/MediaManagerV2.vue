@@ -3,7 +3,19 @@
         <div class="sidebar">
             <div class="sidebar__filter sidebar__filter--keyword">
                 <p class="sidebar__filter__title">Search &amp; Filter</p>
-                <input type="text" v-model="keywords" placeholder="Keywords" />
+                <div class="keyword-input-wrapper">
+                    <input type="text" v-model="keywords" placeholder="Keywords" />
+                    <button 
+                        v-if="keywords" 
+                        class="clear-keyword" 
+                        @click="keywords = null"
+                        title="Clear search"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="sidebar__filter sidebar__filter--bucket">
                 <p class="sidebar__filter__title">Bucket</p>
@@ -80,6 +92,14 @@
                         </svg>
                     </div>
                 </div>
+            </div>
+            <div class="sidebar__filter sidebar__filter--reset" v-if="hasActiveFilters">
+                <button class="reset-filters-button" @click="resetAllFilters">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="reset-icon">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                    </svg>
+                    Reset Filters
+                </button>
             </div>
         </div>
         <div class="body">
@@ -565,6 +585,19 @@ export default {
         },
         dateUpper() {
             this.debouncedSearch();
+        }
+    },
+
+    computed: {
+        hasActiveFilters() {
+            return !!(
+                this.keywords ||
+                this.selectedBuckets.length > 0 ||
+                this.selectedFileTypes.length > 0 ||
+                this.selectedUploaders.length > 0 ||
+                this.dateLower ||
+                this.dateUpper
+            );
         }
     },
 
@@ -1093,6 +1126,17 @@ export default {
             this.dateLower = null;
             this.dateUpper = null;
         },
+
+        resetAllFilters() {
+            this.keywords = null;
+            this.selectedBuckets = [];
+            this.selectedFileTypes = [];
+            this.selectedUploaders = [];
+            this.dateLower = null;
+            this.dateUpper = null;
+            this.page = 1;
+            this.doSearch();
+        },
     }
 }
 </script>
@@ -1341,12 +1385,45 @@ export default {
             }
 
             &--keyword {
-                input {
-                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E");
-                    background-repeat: no-repeat;
-                    background-position: 10px center;
-                    background-size: 20px;
-                    padding-left: 40px;
+                .keyword-input-wrapper {
+                    position: relative;
+                    width: 100%;
+
+                    input {
+                        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E");
+                        background-repeat: no-repeat;
+                        background-position: 10px center;
+                        background-size: 20px;
+                        padding-left: 40px;
+                        padding-right: 40px; // Make room for the clear button
+                    }
+
+                    .clear-keyword {
+                        position: absolute;
+                        right: 8px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        background: none;
+                        border: none;
+                        padding: 4px;
+                        color: #6b7280;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 4px;
+                        transition: all 0.2s ease;
+
+                        svg {
+                            width: 14px;
+                            height: 14px;
+                        }
+
+                        &:hover {
+                            background-color: #f3f4f6;
+                            color: #4b5563;
+                        }
+                    }
                 }
             }
 
@@ -1358,6 +1435,47 @@ export default {
                     overflow-x: auto;
                     white-space: pre-wrap;
                     word-wrap: break-word;
+                }
+            }
+
+            &--reset {
+                padding: 0.75rem 1.25rem;
+                border-top: 1px solid #e5e7eb;
+                background: linear-gradient(to bottom, rgba(249, 250, 251, 0.8), rgba(243, 244, 246, 0.8));
+
+                .reset-filters-button {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem;
+                    background: white;
+                    border: 1px dashed #d1d5db;
+                    border-radius: 8px;
+                    color: #6b7280;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+                    .reset-icon {
+                        width: 1rem;
+                        height: 1rem;
+                    }
+
+                    &:hover {
+                        background: #f9fafb;
+                        border-style: solid;
+                        border-color: #9ca3af;
+                        color: #4b5563;
+                    }
+
+                    &:active {
+                        background: #f3f4f6;
+                        transform: translateY(1px);
+                    }
                 }
             }
         }
@@ -2938,6 +3056,32 @@ export default {
                 }
             }
         }
+    }
+}
+
+.reset-filters-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: white;
+    color: #4b5563;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    svg {
+        width: 16px;
+        height: 16px;
+        color: #6b7280;
+    }
+
+    &:hover {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
     }
 }
 </style>
