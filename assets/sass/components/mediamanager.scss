@@ -1,9 +1,34 @@
+.try-new-manager {
+    background-color: rgba(0, 0, 0, .75);
+    bottom: 0;
+    color: #ffffff;
+    padding: .5rem .85rem .5rem .5rem;
+    position: fixed;
+    z-index: 10;
+    margin: 0.25rem 0.4rem;
+    border-radius: 8px;
+
+    .btn {
+        margin-right: 0.75rem;
+    }
+
+    span {
+        position: relative;
+        top: 3px;
+    }
+}
 .manager {
     position: relative;
     border: 1px solid #cacaca;
     border-radius: 2px;
     background-color: rgba(0, 0, 0, 0.05);
     max-width: 100%;
+
+    &.is-modal {
+        .manager__browse__buckets__list {
+            padding-bottom: 60px;
+        }
+    }
 
     &-loading {
         height: 100%;
@@ -105,6 +130,7 @@
             flex: 0 0 250px;
 
             &__list {
+
                 &__search,
                 &__item,
                 &__action,

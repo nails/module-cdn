@@ -129,6 +129,30 @@ class Manager extends BaseAdmin
 
     // --------------------------------------------------------------------------
 
+    public function choose()
+    {
+        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+            unauthorised();
+        }
+
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Session $oSession */
+        $oSession = Factory::service('Session');
+
+        $sBaseUrl = $oSession->getUserData('MEDIA_MANAGER_DEFAULT') === 2
+            ? 'admin/cdn/mediaManagerV2'
+            : 'admin/cdn/manager';
+
+        if ($oInput::get()) {
+            $sBaseUrl .= '?' . http_build_query($oInput::get());
+        }
+
+        redirect($sBaseUrl);
+    }
+
+    // --------------------------------------------------------------------------
+
     /**
      * Routes import requests
      *

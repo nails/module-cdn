@@ -14,7 +14,6 @@ namespace Nails\Cdn\Model;
 
 use Nails\Cdn\Constants;
 use Nails\Common\Model\Base;
-use Nails\Config;
 
 /**
  * Class CdnObject
@@ -47,14 +46,8 @@ class CdnObject extends Base
     {
         parent::__construct();
         $this
-            ->addExpandableField([
-                'trigger'   => 'bucket',
-                'type'      => self::EXPANDABLE_TYPE_SINGLE,
-                'property'  => 'bucket',
-                'model'     => 'Bucket',
-                'provider'  => Constants::MODULE_SLUG,
-                'id_column' => 'bucket_id',
-            ]);
+            ->hasOne(sTrigger: 'bucket', sProvider: Constants::MODULE_SLUG)
+            ->hasOne(sTrigger: 'created_by', sModel: 'User', sProvider: \Nails\Auth\Constants::MODULE_SLUG, sLocalColumn: 'created_by');
     }
 
     // --------------------------------------------------------------------------
@@ -69,7 +62,7 @@ class CdnObject extends Base
         return [
             'id',
             'filename',
-            'filename_display'
+            'filename_display',
         ];
     }
 

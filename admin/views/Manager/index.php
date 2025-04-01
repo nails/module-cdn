@@ -1,3 +1,26 @@
+<?php
+
+/** @var \Nails\Common\Service\Input $oInput */
+$oInput = \Nails\Factory::service('Input');
+
+if ($oInput::get('isModal')) {
+
+    $switchUrl = siteUrl('admin/cdn/mediaManagerV2/set_default');
+
+    if ($oInput::get()) {
+        $switchUrl .= '?' . http_build_query($oInput::get());
+    }
+
+    ?>
+    <p class="try-new-manager">
+        <a href="<?=$switchUrl?>" class="btn btn-primary">Switch</a>
+        <span><strong>New!</strong> ✨ Try the new Media Manager</span>
+    </p>
+    <?php
+}
+
+?>
+
 <!-- ko if: !ready() -->
 <div class="module-cdn manager-loading">
     <svg width="30" height="30" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="lds-ring" style="background: none;">
@@ -11,7 +34,7 @@
 <!-- /ko -->
 <div class="manager-feedback__error"></div>
 <div class="manager-feedback__success"></div>
-<div class="module-cdn manager hidden" data-bind="css: {hidden: !ready()}">
+<div class="module-cdn manager <?=$oInput::get('isModal') ? 'is-modal' : ''?> hidden" data-bind="css: {hidden: !ready()}">
     <div class="manager__browse">
         <div class="manager__browse__buckets">
             <ul class="manager__browse__buckets__list">

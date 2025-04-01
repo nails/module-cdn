@@ -16,11 +16,12 @@ use Nails\Api;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Model\CdnObject\Trash;
 use Nails\Cdn\Service\Cdn;
+use Nails\Cdn\Service\Monitor;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
+use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
-use Nails\Config;
 use Nails\Factory;
 
 /**
@@ -191,6 +192,60 @@ class CdnObject extends Api\Controller\Base
     // --------------------------------------------------------------------------
 
     /**
+     * Edit an object from the CDN
+     *
+     * @return Api\Factory\ApiResponse
+     */
+    public function postEdit()
+    {
+        /** @var HttpCodes $oHttpCodes */
+        $oHttpCodes = Factory::service('HttpCodes');
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+        /** @var \Nails\Cdn\Model\CdnObject $oModel */
+        $oModel = Factory::model('Object', constants::MODULE_SLUG);
+
+        $oObject   = $oModel->getById($oInput->post('object_id'));
+        $sFileName = trim((string) $oInput->post('filename_display'));
+
+        if (empty($oObject)) {
+            throw new Api\Exception\ApiException('Object not found', $oHttpCodes::STATUS_NOT_FOUND);
+
+        } elseif (empty($sFileName)) {
+            throw new Api\Exception\ApiException('`filename_display` is required', $oHttpCodes::STATUS_BAD_REQUEST);
+        }
+
+        $sExpectedExtension = $oObject->file->ext;
+
+        //  Ensure filename has correct extension
+        $sFileExtension = strtolower(pathinfo($sFileName, PATHINFO_EXTENSION));
+        if (empty($sFileExtension) || $sFileExtension !== $sExpectedExtension) {
+            $sFileName .= '.' . $sExpectedExtension;
+        }
+
+        $bResult = $oModel->update($oObject->id, [
+            'filename_display' => $sFileName,
+        ]);
+
+        if (!$bResult) {
+            throw new Api\Exception\ApiException('Failed to update object. ' . $oModel->lastError(), $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        //  @todo (Pablo - 2018-06-25) - Reduce the namespace here (i.e remove `object`)
+        return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
+            ->setData([
+                'object' => $this->formatObject(
+                    $oCdn->getObject($oObject->id),
+                    $this->getRequestedUrls()
+                ),
+            ]);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Delete an object from the CDN
      *
      * @return Api\Factory\ApiResponse
@@ -235,6 +290,21 @@ class CdnObject extends Api\Controller\Base
                 'Invalid object ID',
                 $oHttpCodes::STATUS_NOT_FOUND
             );
+        }
+
+        if (!$bIsTrash) {
+            /** @var Monitor $oMonitor */
+            $oMonitor = Factory::service('Monitor', Constants::MODULE_SLUG);
+            /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
+            $oObjectModel = Factory::model('Object', constants::MODULE_SLUG);
+
+            $aLocations = $oMonitor->locate($oObjectModel->getById($iObjectId, [new Expand('bucket')]));
+            if (!empty($aLocations)) {
+                throw new Api\Exception\ApiException(
+                    'Object is in use',
+                    $oHttpCodes::STATUS_BAD_REQUEST
+                );
+            }
         }
 
         $bDelete = $bIsTrash
