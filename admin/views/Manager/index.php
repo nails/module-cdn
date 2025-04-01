@@ -34,7 +34,7 @@ if ($oInput::get('isModal')) {
 <!-- /ko -->
 <div class="manager-feedback__error"></div>
 <div class="manager-feedback__success"></div>
-<div class="module-cdn manager hidden" data-bind="css: {hidden: !ready()}">
+<div class="module-cdn manager <?=$oInput::get('isModal') ? 'is-modal' : ''?> hidden" data-bind="css: {hidden: !ready()}">
     <div class="manager__browse">
         <div class="manager__browse__buckets">
             <ul class="manager__browse__buckets__list">

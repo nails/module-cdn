@@ -1,5 +1,5 @@
 <template>
-    <div class="nails-module-cdn-media-manager-v2">
+    <div class="nails-module-cdn-media-manager-v2" :class="{ 'is-modal': isModal }">
         <div class="sidebar">
             <div class="sidebar__filter sidebar__filter--keyword">
                 <p class="sidebar__filter__title">Search &amp; Filter</p>
@@ -1068,6 +1068,12 @@ export default {
     border-radius: 0.5rem;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    &.is-modal {
+        .sidebar {
+            padding-bottom: 60px;
+        }
+    }
 
     @media (min-width: 768px) {
         flex-direction: row;
