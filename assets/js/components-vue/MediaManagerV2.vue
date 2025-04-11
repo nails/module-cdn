@@ -115,6 +115,13 @@
                         </span>
                         Upload Files
                     </button>
+                    <div v-if="selectedObject" class="selected-object-info">
+                        <span class="selected-object-info__label">Currently Selected:</span>
+                        <span class="selected-object-info__name">{{ selectedObject.object.name }}</span>
+                        <span class="selected-object-info__details">
+                            ({{ selectedObject.object.mime.split('/')[1].toUpperCase() }}, {{ selectedObject.object.size.human }})
+                        </span>
+                    </div>
                     <div class="view-toggle">
                         <button
                             :class="{ active: viewMode === 'list' }"
@@ -549,6 +556,7 @@ export default {
             deleteSuccess: false,
             isDeleting: false,
             siteUrl: window.SITE_URL || '',
+            selectedObject: null,
         }
     },
 
@@ -613,6 +621,12 @@ export default {
             const bucketId = urlParams.get('bucket_id');
             if (bucketId) {
                 this.selectedBuckets = [parseInt(bucketId)];
+            }
+
+            //  Selected Object
+            const objectId = urlParams.get('object_id');
+            if (objectId) {
+                this.fetchSelectedObject(objectId);
             }
 
             //  Callback
@@ -1136,6 +1150,20 @@ export default {
             this.dateUpper = null;
             this.page = 1;
             this.doSearch();
+        },
+
+        async fetchSelectedObject(objectId) {
+            try {
+                const response = await fetch(`${this.siteUrl}/api/cdn/object?id=${objectId}`);
+                const data = await response.json();
+
+                if (data.status === 200) {
+                    this.selectedObject = data.data;
+                }
+            } catch (error) {
+                // Silently fail as requested
+                console.error('Failed to fetch selected object:', error);
+            }
         },
     }
 }
@@ -3082,6 +3110,32 @@ export default {
     &:hover {
         background-color: #f3f4f6;
         border-color: #9ca3af;
+    }
+}
+
+.selected-object-info {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #f3f4f6;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    color: #4b5563;
+
+    &__label {
+        font-weight: 500;
+        margin-right: 0.5rem;
+    }
+
+    &__name {
+        font-weight: 600;
+        color: #1f2937;
+        margin-right: 0.5rem;
+    }
+
+    &__details {
+        color: #6b7280;
     }
 }
 </style>

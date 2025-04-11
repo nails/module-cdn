@@ -227,6 +227,7 @@ class ObjectPicker {
             'url': window.SITE_URL + 'api/cdn/manager/url',
             'data': {
                 'bucket': picker.data('bucket'),
+                'object': picker.find('.cdn-object-picker__input').val(),
                 'callback': ['NAILS.ADMIN.instances["nails/module-cdn"].ObjectPicker', 'receiveFromManager']
             }
         })

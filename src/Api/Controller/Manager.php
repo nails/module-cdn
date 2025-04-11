@@ -55,10 +55,17 @@ class Manager extends Api\Controller\Base
         $oSession = Factory::service('Session');
         /** @var \Nails\Cdn\Model\Bucket $oBucketModel */
         $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
+        /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
+        $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
 
         if ($oInput->get('bucket')) {
             /** @var \Nails\Cdn\Resource\Bucket|null $oBucket */
             $oBucket = $oBucketModel->getByIdOrSlug($oInput->get('bucket'));
+        }
+
+        if ($oInput->get('object')) {
+            /** @var \Nails\Cdn\Resource\CdnObject|null $oObject */
+            $oObject = $oObjectModel->getById($oInput->get('object'));
         }
 
         $sBaseUrl = $oSession->getUserData('MEDIA_MANAGER_DEFAULT') === 2
@@ -72,6 +79,7 @@ class Manager extends Api\Controller\Base
                     'bucket'      => $oInput->get('bucket'),
                     'bucket_id'   => $oBucket->id ?? null,
                     'bucket_slug' => $oBucket->slug ?? null,
+                    'object_id'   => $oObject->id ?? null,
                     'callback'    => $oInput->get('callback'),
                 ])
             ));
