@@ -15,7 +15,7 @@
                     <p>{{ object.file.name.human }}</p>
                     <p class="file-meta">{{ object.group }} · {{ object.file.ext.toUpperCase() }} · {{ object.file.size.human }}</p>
                 </div>
-
+                <p>Replace the file identified above with a file of the same type. This process will ensure that all references to the old file are maintained. <strong>Be aware that intermediate systems may cache the old file for a period of time.</strong></p>
                 <div 
                     class="upload-zone"
                     :class="{ 
@@ -191,7 +191,7 @@ export default {
             formData.append('file', this.selectedFile);
 
             try {
-                const response = await fetch(`${this.siteUrl}api/cdn/object/replace`, {
+                const response = await fetch(`${this.siteUrl}api/cdn/mediaManagerV2/replace`, {
                     method: 'POST',
                     body: formData
                 });
@@ -203,7 +203,7 @@ export default {
                 }
 
                 this.success = true;
-                this.$emit('file-replaced', data.data.object);
+                this.$emit('file-replaced', data.data);
 
                 // Close modal after showing success message
                 setTimeout(() => {
@@ -284,6 +284,12 @@ export default {
     padding: 1rem;
     max-height: calc(100vh - 200px);
     overflow-y: auto;
+
+    > p {
+        color: #6b7280;
+        font-size: 13px;
+        margin-bottom: 14px;
+    }
 }
 
 .current-file-info {

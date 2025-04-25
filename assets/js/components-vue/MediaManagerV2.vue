@@ -1315,10 +1315,7 @@ export default {
             // Update the local object instance with the new data
             const index = this.objects.findIndex(obj => obj.id === updatedObject.id);
             if (index !== -1) {
-                this.objects[index] = {
-                    ...this.objects[index],
-                    file: updatedObject.file
-                };
+                this.objects[index] = updatedObject;
             }
             this.showReplaceModal = false;
             this.replacingObject = null;

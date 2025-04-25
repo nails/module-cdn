@@ -284,31 +284,7 @@ class MediaManagerV2 extends Api\Controller\Base
 
             $oResponse
                 ->setData(array_map(
-                    fn(\Nails\Cdn\Resource\CdnObject $oObject) => [
-                        'id'         => $oObject->id,
-                        'file'       => $oObject->file,
-                        'group'      => $oMime->getGroupForMime($oObject->file->mime),
-                        'bucket'     => [
-                            'id'    => $oObject->bucket->id,
-                            'label' => $oObject->bucket->label,
-                        ],
-                        'is_img'     => $oObject->is_img,
-                        'url'        => [
-                            'src'      => $oObject->url->src,
-                            'download' => $oObject->url->download,
-                            'thumb'    => $oObject->is_img ? [
-                                'list' => cdnCrop($oObject->id, 120, 120),
-                                'grid' => cdnCrop($oObject->id, 400, 400),
-                            ] : null,
-                        ],
-                        'metadata'   => $oObject->metadata,
-                        'created'    => $oObject->created,
-                        'created_by' => $oObject->created_by ? [
-                            'id'    => $oObject->created_by->id,
-                            'name'  => $oObject->created_by->name,
-                            'email' => $oObject->created_by->email,
-                        ] : null,
-                    ],
+                    fn(\Nails\Cdn\Resource\CdnObject $oObject) => $this->formatObject($oObject),
                     $aObjects
                 ))
                 ->setMeta([
@@ -326,6 +302,38 @@ class MediaManagerV2 extends Api\Controller\Base
         }
 
         return $oResponse;
+    }
+
+    protected function formatObject(\Nails\Cdn\Resource\CdnObject $oObject): array
+    {
+        /** @var Mime $oMime */
+        $oMime = Factory::service('Mime');
+
+        return [
+            'id'         => $oObject->id,
+            'file'       => $oObject->file,
+            'group'      => $oMime->getGroupForMime($oObject->file->mime),
+            'bucket'     => [
+                'id'    => $oObject->bucket->id,
+                'label' => $oObject->bucket->label,
+            ],
+            'is_img'     => $oObject->is_img,
+            'url'        => [
+                'src'      => $oObject->url->src,
+                'download' => $oObject->url->download,
+                'thumb'    => $oObject->is_img ? [
+                    'list' => cdnCrop($oObject->id, 120, 120),
+                    'grid' => cdnCrop($oObject->id, 400, 400),
+                ] : null,
+            ],
+            'metadata'   => $oObject->metadata,
+            'created'    => $oObject->created,
+            'created_by' => $oObject->created_by ? [
+                'id'    => $oObject->created_by->id,
+                'name'  => $oObject->created_by->name,
+                'email' => $oObject->created_by->email,
+            ] : null,
+        ];
     }
 
     protected function buildUrl($iTotal, $iPerPage, $iPage, $iPageOffset)
@@ -358,5 +366,28 @@ class MediaManagerV2 extends Api\Controller\Base
         }
 
         return $sUrl;
+    }
+
+    public function postReplace(): ApiResponse
+    {
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
+        $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
+
+        $oObject = $oObjectModel->getById($oInput->post('object_id'), [
+            new Expand('bucket'),
+            new Expand('created_by'),
+        ]);
+
+        if (empty($oObject)) {
+            throw new Api\Exception\ApiException('Object not found', $oHttpCodes::STATUS_NOT_FOUND);
+        }
+
+        /** @var ApiResponse $oResponse */
+        $oResponse = Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
+        $oResponse->setData($this->formatObject($oObject));
+        
+        return $oResponse;
     }
 }
