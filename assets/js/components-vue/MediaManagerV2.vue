@@ -226,39 +226,43 @@
         </div>
 
         <!-- Upload Modal -->
-        <div class="upload-modal" v-if="showUploadModal">
-            <div class="upload-modal__overlay" @click="showUploadModal = false"></div>
-            <div class="upload-modal__container">
-                <div class="upload-modal__header">
+        <div class="modal-overlay" v-if="showUploadModal" @click.self="showUploadModal = false">
+            <div class="modal-container">
+                <div class="modal-header">
                     <h3>Upload Files</h3>
-                    <button class="close-button" @click="showUploadModal = false">&times;</button>
+                    <button class="close-button" @click="showUploadModal = false">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="upload-modal__body">
-                    <div
-                        class="upload-area"
+                <div class="modal-body">
+                    <div 
+                        class="upload-zone"
+                        :class="{ 'drag-over': dragOver }"
                         @click="$refs.fileInput.click()"
                         @dragover.prevent="dragOver = true"
                         @dragleave.prevent="dragOver = false"
                         @drop.prevent="handleFileDrop"
-                        :class="{ 'drag-over': dragOver }"
                     >
                         <div class="upload-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                         </div>
-                        <h4>Drag and drop files here or click to browse</h4>
-                        <p>Max file size: 10MB</p>
+                        <div class="upload-text">
+                            <p class="primary-text">Drag and drop files here or click to browse</p>
+                            <p class="secondary-text">Max file size: 10MB</p>
+                        </div>
                         <input
                             type="file"
                             multiple
-                            class="file-input"
+                            class="hidden"
                             @change="handleFileSelect"
                             ref="fileInput"
                         >
                     </div>
+
                     <div class="bucket-selector">
                         <label>Select Bucket:</label>
                         <multi-select
@@ -270,18 +274,18 @@
                         />
                     </div>
 
-                    <div v-if="uploadError" class="modal-message error-message">
+                    <div v-if="uploadError" class="error-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                         </svg>
-                        <span>{{ uploadError }}</span>
+                        {{ uploadError }}
                     </div>
 
-                    <div v-if="uploadSuccess" class="modal-message success-message">
+                    <div v-if="uploadSuccess" class="success-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
-                        <span>Files uploaded successfully!</span>
+                        Files uploaded successfully!
                     </div>
 
                     <div class="file-list" v-if="filesToUpload.length > 0">
@@ -295,11 +299,15 @@
                                     <span class="progress-bar__text">{{ Math.round(uploadProgress[index]) }}%</span>
                                 </div>
                             </div>
-                            <button class="remove-button" @click="removeFile(index)" v-if="!isUploading">&times;</button>
+                            <button class="remove-button" @click="removeFile(index)" v-if="!isUploading">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
-                <div class="upload-modal__footer">
+                <div class="modal-footer">
                     <div class="overall-progress" v-if="isUploading">
                         <div class="overall-progress__bar">
                             <div class="overall-progress__fill" :style="{ width: overallProgress + '%' }"></div>
@@ -307,14 +315,21 @@
                         <span class="overall-progress__text">{{ Math.round(overallProgress) }}% Complete</span>
                     </div>
                     <div class="footer-buttons">
-                        <button class="cancel-button" @click="showUploadModal = false" :disabled="isUploading">Cancel</button>
+                        <button class="cancel-button" @click="showUploadModal = false" :disabled="isUploading">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Cancel
+                        </button>
                         <button
                             class="upload-button"
                             @click="uploadFiles"
                             :disabled="filesToUpload.length === 0 || !selectedUploadBucket.length || isUploading"
                         >
-                            <span v-if="isUploading">Uploading...</span>
-                            <span v-else>Upload</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                            </svg>
+                            {{ isUploading ? 'Uploading...' : 'Upload' }}
                         </button>
                     </div>
                 </div>
@@ -322,14 +337,17 @@
         </div>
 
         <!-- Edit Modal -->
-        <div class="edit-modal" v-if="showEditModal">
-            <div class="edit-modal__overlay" @click="closeEditModal"></div>
-            <div class="edit-modal__container">
-                <div class="edit-modal__header">
+        <div class="modal-overlay" v-if="showEditModal" @click.self="closeEditModal">
+            <div class="modal-container">
+                <div class="modal-header">
                     <h3>Edit Object</h3>
-                    <button class="close-button" @click="closeEditModal">&times;</button>
+                    <button class="close-button" @click="closeEditModal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="edit-modal__body">
+                <div class="modal-body">
                     <div class="form-group">
                         <label for="filename_display">Filename</label>
                         <input
@@ -383,42 +401,54 @@
                             </button>
                         </div>
                     </div>
-                    <div v-if="editError" class="modal-message error-message">
+
+                    <div v-if="editError" class="error-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                         </svg>
-                        <span>{{ editError }}</span>
+                        {{ editError }}
                     </div>
-                    <div v-if="editSuccess" class="modal-message success-message">
+
+                    <div v-if="editSuccess" class="success-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
-                        <span>Object updated successfully!</span>
+                        Object updated successfully!
                     </div>
                 </div>
-                <div class="edit-modal__footer">
-                    <button class="cancel-button" @click="closeEditModal" :disabled="isEditing">Cancel</button>
+                <div class="modal-footer">
+                    <button class="cancel-button" @click="closeEditModal" :disabled="isEditing">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Cancel
+                    </button>
                     <button
                         class="save-button"
                         @click="saveObjectEdit"
                         :disabled="!editingObject?.filename_display || isEditing"
                     >
-                        <span v-if="isEditing">Saving...</span>
-                        <span v-else>Save Changes</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        {{ isEditing ? 'Saving...' : 'Save Changes' }}
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- URL Copy Modal -->
-        <div class="url-copy-modal" v-if="showUrlCopyModal">
-            <div class="url-copy-modal__overlay" @click="closeUrlCopyModal"></div>
-            <div class="url-copy-modal__container">
-                <div class="url-copy-modal__header">
+        <div class="modal-overlay" v-if="showUrlCopyModal" @click.self="closeUrlCopyModal">
+            <div class="modal-container">
+                <div class="modal-header">
                     <h3>Copy URL</h3>
-                    <button class="close-button" @click="closeUrlCopyModal">&times;</button>
+                    <button class="close-button" @click="closeUrlCopyModal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="url-copy-modal__body">
+                <div class="modal-body">
                     <div class="form-group">
                         <label>Source URL</label>
                         <div class="url-input-group">
@@ -429,13 +459,13 @@
                                 ref="srcTextarea"
                             ></textarea>
                             <button class="copy-button" @click="copyUrlFromTextarea('src')" title="Copy source URL">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                 </svg>
                             </button>
                         </div>
-                        <div class="url-description">Use this URL to display the file in a webpage or embed it in content. If accessed dirctly the browder will attempt to render it in-window (works well for images and PDFs)</div>
+                        <div class="url-description">Use this URL to display the file in a webpage or embed it in content. If accessed directly the browser will attempt to render it in-window (works well for images and PDFs)</div>
                     </div>
                     <div class="form-group">
                         <label>Download URL</label>
@@ -447,7 +477,7 @@
                                 ref="downloadTextarea"
                             ></textarea>
                             <button class="copy-button" @click="copyUrlFromTextarea('download')" title="Copy download URL">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                 </svg>
@@ -455,34 +485,44 @@
                         </div>
                         <div class="url-description">Use this URL to force the browser to download the file instead of displaying it. The file will download to the user's device as "{{ urlToCopy.humanName || 'human-name.ext' }}"</div>
                     </div>
-                    <div v-if="urlCopyError" class="modal-message error-message">
+
+                    <div v-if="urlCopyError" class="error-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                         </svg>
-                        <span>{{ urlCopyError }}</span>
+                        {{ urlCopyError }}
                     </div>
-                    <div v-if="urlCopySuccess" class="modal-message success-message">
+
+                    <div v-if="urlCopySuccess" class="success-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
-                        <span>URL copied to clipboard!</span>
+                        URL copied to clipboard!
                     </div>
                 </div>
-                <div class="url-copy-modal__footer">
-                    <button class="close-button" @click="closeUrlCopyModal">Close</button>
+                <div class="modal-footer">
+                    <button class="cancel-button" @click="closeUrlCopyModal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Delete Confirmation Modal -->
-        <div class="delete-modal" v-if="showDeleteModal">
-            <div class="delete-modal__overlay" @click="closeDeleteModal"></div>
-            <div class="delete-modal__container">
-                <div class="delete-modal__header">
+        <div class="modal-overlay" v-if="showDeleteModal" @click.self="closeDeleteModal">
+            <div class="modal-container">
+                <div class="modal-header">
                     <h3>Delete Object</h3>
-                    <button class="close-button" @click="closeDeleteModal">&times;</button>
+                    <button class="close-button" @click="closeDeleteModal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="delete-modal__body">
+                <div class="modal-body">
                     <div class="warning-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -500,11 +540,11 @@
                         </div>
                     </div>
 
-                    <div v-if="deleteError" class="modal-message error-message">
+                    <div v-if="deleteError" class="error-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                         </svg>
-                        <span>{{ deleteError }}</span>
+                        {{ deleteError }}
                         <a
                             v-if="deleteError.includes('Object is in use')"
                             :href="`${siteUrl}/admin/cdn/utilities/usages?object=${deletingObject.id}`"
@@ -515,26 +555,41 @@
                         </a>
                     </div>
 
-                    <div v-if="deleteSuccess" class="modal-message success-message">
+                    <div v-if="deleteSuccess" class="success-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
-                        <span>Object deleted successfully!</span>
+                        Object deleted successfully!
                     </div>
                 </div>
-                <div class="delete-modal__footer">
-                    <button class="cancel-button" @click="closeDeleteModal" :disabled="isDeleting">Cancel</button>
+                <div class="modal-footer">
+                    <button class="cancel-button" @click="closeDeleteModal" :disabled="isDeleting">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Cancel
+                    </button>
                     <button
                         class="delete-button"
                         @click="confirmDelete"
                         :disabled="isDeleting"
                     >
-                        <span v-if="isDeleting">Deleting...</span>
-                        <span v-else>Delete Object</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        {{ isDeleting ? 'Deleting...' : 'Delete Object' }}
                     </button>
                 </div>
             </div>
         </div>
+
+        <replace-file-modal
+            v-if="showReplaceModal"
+            :object="replacingObject"
+            :site-url="siteUrl"
+            @close="showReplaceModal = false"
+            @file-replaced="handleFileReplaced"
+        />
     </div>
 </template>
 
@@ -544,13 +599,15 @@ import { debounce } from 'lodash'
 import MultiSelect from './MultiSelect.vue'
 import ObjectListItem from './MediaManagerV2/ObjectListItem.vue'
 import ObjectGridItem from './MediaManagerV2/ObjectGridItem.vue'
+import ReplaceFileModal from './MediaManagerV2/ReplaceFileModal.vue'
 
 export default {
     name: 'MediaManagerV2',
     components: {
         MultiSelect,
         ObjectListItem,
-        ObjectGridItem
+        ObjectGridItem,
+        ReplaceFileModal
     },
     data() {
         return {
@@ -600,6 +657,8 @@ export default {
             isDeleting: false,
             siteUrl: window.SITE_URL || '',
             selectedObject: null,
+            showReplaceModal: false,
+            replacingObject: null
         }
     },
 
@@ -819,6 +878,10 @@ export default {
                     break;
                 case 'copy-url':
                     this.copyUrl(item);
+                    break;
+                case 'replace':
+                    this.replacingObject = item;
+                    this.showReplaceModal = true;
                     break;
             }
         },
@@ -1231,6 +1294,19 @@ export default {
         removeMetadata(index) {
             this.editingObject.metadata.splice(index, 1);
         },
+
+        handleFileReplaced(updatedObject) {
+            // Update the local object instance with the new data
+            const index = this.objects.findIndex(obj => obj.id === updatedObject.id);
+            if (index !== -1) {
+                this.objects[index] = {
+                    ...this.objects[index],
+                    file: updatedObject.file
+                };
+            }
+            this.showReplaceModal = false;
+            this.replacingObject = null;
+        }
     }
 }
 </script>
@@ -3308,5 +3384,494 @@ export default {
             cursor: not-allowed;
         }
     }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-container {
+    background: white;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+
+    h3 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4b5563;
+    }
+
+    .close-button {
+        background: none;
+        border: none;
+        padding: 0.25rem;
+        cursor: pointer;
+        color: #6b7280;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        svg {
+            width: 1rem;
+            height: 1rem;
+        }
+    }
+}
+
+.modal-body {
+    padding: 1rem;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 1rem;
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .form-sub-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+
+    input[type="text"] {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #111827;
+
+        &:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+
+        &:disabled {
+            background: #f3f4f6;
+            cursor: not-allowed;
+        }
+    }
+}
+
+/* Upload Zone */
+.upload-zone {
+    border: 2px dashed #e5e7eb;
+    border-radius: 6px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f9fafb;
+    margin-bottom: 1rem;
+
+    &:hover {
+        border-color: #6b7280;
+        background: #f3f4f6;
+    }
+
+    &.drag-over {
+        border-color: #4f46e5;
+        background: #eef2ff;
+    }
+
+    .upload-icon {
+        margin-bottom: 1rem;
+        
+        svg {
+            width: 3rem;
+            height: 3rem;
+            color: #6b7280;
+            margin: 0 auto;
+        }
+    }
+
+    .upload-text {
+        .primary-text {
+            margin: 0;
+            color: #374151;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .secondary-text {
+            margin: 0.5rem 0 0;
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+    }
+}
+
+/* File List */
+.file-list {
+    margin-top: 1rem;
+
+    h4 {
+        margin: 0 0 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4b5563;
+    }
+
+    .file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+
+        .file-info {
+            flex: 1;
+
+            .file-name {
+                display: block;
+                font-size: 0.875rem;
+                color: #111827;
+                margin-bottom: 0.25rem;
+            }
+
+            .file-size {
+                font-size: 0.75rem;
+                color: #6b7280;
+            }
+
+            .progress-bar {
+                margin-top: 0.5rem;
+                height: 0.5rem;
+                background: #e5e7eb;
+                border-radius: 0.25rem;
+                overflow: hidden;
+                position: relative;
+
+                &__fill {
+                    height: 100%;
+                    background: #4f46e5;
+                    transition: width 0.3s ease;
+                }
+
+                &__text {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 0.75rem;
+                    color: white;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                }
+            }
+        }
+
+        .remove-button {
+            background: none;
+            border: none;
+            padding: 0.25rem;
+            cursor: pointer;
+            color: #6b7280;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &:hover {
+                background: #e5e7eb;
+                color: #4b5563;
+            }
+
+            svg {
+                width: 1rem;
+                height: 1rem;
+            }
+        }
+    }
+}
+
+/* Overall Progress */
+.overall-progress {
+    width: 100%;
+    margin-bottom: 1rem;
+
+    &__bar {
+        height: 0.5rem;
+        background: #e5e7eb;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+
+    &__fill {
+        height: 100%;
+        background: #4f46e5;
+        transition: width 0.3s ease;
+    }
+
+    &__text {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-align: center;
+    }
+}
+
+/* Buttons */
+.cancel-button,
+.upload-button,
+.save-button,
+.delete-button,
+.close-button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+}
+
+.cancel-button {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #4b5563;
+
+    &:hover:not(:disabled) {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    &:active:not(:disabled) {
+        background: #d1d5db;
+    }
+}
+
+.upload-button,
+.save-button {
+    background: #4f46e5;
+    border: 1px solid transparent;
+    color: white;
+
+    &:hover:not(:disabled) {
+        background: #4338ca;
+    }
+
+    &:active:not(:disabled) {
+        background: #3730a3;
+    }
+}
+
+.delete-button {
+    background: #ef4444;
+    border: 1px solid transparent;
+    color: white;
+
+    &:hover:not(:disabled) {
+        background: #dc2626;
+    }
+
+    &:active:not(:disabled) {
+        background: #b91c1c;
+    }
+}
+
+/* Messages */
+.error-message,
+.success-message {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
+    }
+}
+
+.error-message {
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    color: #b91c1c;
+}
+
+.success-message {
+    background: #ecfdf5;
+    border: 1px solid #d1fae5;
+    color: #047857;
+}
+
+/* Warning Message */
+.warning-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+
+    svg {
+        width: 1.5rem;
+        height: 1.5rem;
+        color: #d97706;
+        flex-shrink: 0;
+    }
+
+    .warning-content {
+        h4 {
+            margin: 0 0 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        p {
+            margin: 0 0 0.5rem;
+            font-size: 0.875rem;
+            color: #78350f;
+        }
+
+        .object-details {
+            font-size: 0.75rem;
+            color: #78350f;
+            line-height: 1.5;
+        }
+    }
+}
+
+/* URL Copy */
+.url-input-group {
+    position: relative;
+    margin-bottom: 0.5rem;
+
+    textarea {
+        width: 100%;
+        padding: 0.5rem;
+        padding-right: 2.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #111827;
+        resize: none;
+        background: #f9fafb;
+
+        &:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+    }
+
+    .copy-button {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: none;
+        border: none;
+        padding: 0.25rem;
+        cursor: pointer;
+        color: #6b7280;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        svg {
+            width: 1rem;
+            height: 1rem;
+        }
+    }
+}
+
+.url-description {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+.check-usages-button {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.hidden {
+    display: none;
 }
 </style>
