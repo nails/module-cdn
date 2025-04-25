@@ -20,6 +20,6 @@ if ($oInput::get('isModal')) {
 }
 
 ?>
-<div id="nails-module-cdn-media-manager-v2">
+<div id="nails-module-cdn-media-manager-v2" data-max-upload-size="<?=maxUploadSize(false)?>">
     Loading Media Manager...
 </div>

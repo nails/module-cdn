@@ -43,7 +43,7 @@
                         </div>
                         <div class="upload-text">
                             <p class="primary-text">Drag and drop files here or click to browse</p>
-                            <p class="secondary-text">Max file size: 10MB · Only {{ object.file.ext.toUpperCase() }} files are allowed</p>
+                            <p class="secondary-text">Max file size: {{ formatFileSize(maxUploadSize) }} · Only {{ object.file.ext.toUpperCase() }} files are allowed</p>
                         </div>
                     </div>
                     <div v-else class="selected-file">
@@ -111,6 +111,10 @@ export default {
         siteUrl: {
             type: String,
             required: true
+        },
+        maxUploadSize: {
+            type: Number,
+            required: true
         }
     },
 
@@ -154,6 +158,12 @@ export default {
 
             if (fileExtension !== allowedExtension) {
                 this.error = `Only ${allowedExtension} files are allowed. Selected file is ${fileExtension}`;
+                this.selectedFile = null;
+                return;
+            }
+
+            if (file.size > this.maxUploadSize) {
+                this.error = `File size exceeds the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
                 this.selectedFile = null;
                 return;
             }

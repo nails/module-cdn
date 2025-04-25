@@ -30,6 +30,9 @@ class MediaManagerV2 {
                 const Vue = await this.waitForVue();
                 this.adminController.log('Mounting MediaManagerV2');
 
+                // Get max upload size from mount point
+                const maxUploadSize = mountPoint ? parseInt(mountPoint.dataset.maxUploadSize) : 10485760; // Default to 10MB if not set
+
                 // Create a new Vue instance with all components
                 new Vue({
                     el: '#nails-module-cdn-media-manager-v2',
@@ -39,7 +42,11 @@ class MediaManagerV2 {
                         ObjectGridItem,
                         MultiSelect
                     },
-                    render: h => h(MediaManagerV2Vue)
+                    render: h => h(MediaManagerV2Vue, {
+                        props: {
+                            maxUploadSize
+                        }
+                    })
                 });
             } catch (error) {
                 this.adminController.log('Error initializing Vue:', error);

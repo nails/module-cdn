@@ -252,7 +252,7 @@
                         </div>
                         <div class="upload-text">
                             <p class="primary-text">Drag and drop files here or click to browse</p>
-                            <p class="secondary-text">Max file size: 10MB</p>
+                            <p class="secondary-text">Max file size: {{ formatFileSize(maxUploadSize) }}</p>
                         </div>
                         <input
                             type="file"
@@ -587,6 +587,7 @@
             v-if="showReplaceModal"
             :object="replacingObject"
             :site-url="siteUrl"
+            :max-upload-size="maxUploadSize"
             @close="showReplaceModal = false"
             @file-replaced="handleFileReplaced"
         />
@@ -608,6 +609,12 @@ export default {
         ObjectListItem,
         ObjectGridItem,
         ReplaceFileModal
+    },
+    props: {
+        maxUploadSize: {
+            type: Number,
+            default: 10485760 // 10MB in bytes
+        }
     },
     data() {
         return {
@@ -959,13 +966,17 @@ export default {
         },
 
         handleFileSelect(event) {
-            const files = event.target.files;
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                this.filesToUpload.push(file);
+            const files = Array.from(event.target.files);
+            
+            // Validate file sizes
+            const invalidFiles = files.filter(file => file.size > this.maxUploadSize);
+            if (invalidFiles.length > 0) {
+                this.error = `Some files exceed the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
+                return;
             }
-            // Reset the input to allow selecting the same file again
-            this.$refs.fileInput.value = '';
+            
+            this.filesToUpload = [...this.filesToUpload, ...files];
+            event.target.value = ''; // Reset file input
         },
 
         removeFile(index) {
@@ -1074,11 +1085,16 @@ export default {
 
         handleFileDrop(event) {
             this.dragOver = false;
-            const files = event.dataTransfer.files;
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                this.filesToUpload.push(file);
+            const files = Array.from(event.dataTransfer.files);
+            
+            // Validate file sizes
+            const invalidFiles = files.filter(file => file.size > this.maxUploadSize);
+            if (invalidFiles.length > 0) {
+                this.error = `Some files exceed the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
+                return;
             }
+            
+            this.filesToUpload = [...this.filesToUpload, ...files];
         },
 
         openUploadModal() {
@@ -1306,6 +1322,21 @@ export default {
             }
             this.showReplaceModal = false;
             this.replacingObject = null;
+        },
+
+        validateFile(file) {
+            if (file.size > this.maxUploadSize) {
+                return `File size exceeds the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
+            }
+            return null;
+        },
+
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
         }
     }
 }
