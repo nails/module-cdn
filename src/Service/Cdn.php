@@ -424,7 +424,7 @@ class Cdn
         $oDb = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.serves, o.downloads, o.thumbs, o.scales, o.driver, o.md5_hash');
         $oDb->Select('o.created, o.created_by, o.modified, o.modified_by');
-        $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
+        $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated, o.metadata');
         $oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
         $oDb->join(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
@@ -1769,6 +1769,7 @@ class Cdn
         $oObj->thumbs      = (int) $oObj->thumbs;
         $oObj->scales      = (int) $oObj->scales;
         $oObj->modified_by = (int) $oObj->modified_by ?: null;
+        $oObj->metadata     = $oObj->metadata ? (json_decode($oObj->metadata) ?? []) : [];
 
         // --------------------------------------------------------------------------
 

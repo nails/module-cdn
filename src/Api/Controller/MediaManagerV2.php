@@ -257,6 +257,9 @@ class MediaManagerV2 extends Api\Controller\Base
                     is_numeric($aFilters['keywords']) ? 'id = ' . $aFilters['keywords'] : null,
                     'filename_display LIKE "%' . $oDb->escape_like_str($aFilters['keywords']) . '%"',
                     'filename LIKE "%' . $oDb->escape_like_str($aFilters['keywords']) . '%"',
+                    'metadata LIKE "%' . $oDb->escape_like_str($aFilters['keywords']) . '%"',
+                    'JSON_SEARCH(JSON_EXTRACT(metadata, \'$[*].key\'), \'one\', \'%key%\') IS NOT NULL',
+                    'JSON_SEARCH(JSON_EXTRACT(metadata, \'$[*].value\'), \'one\', \'%key%\') IS NOT NULL',
                 ])))
                     : null,
                 !empty($aFilters['bucket_ids'])
@@ -298,6 +301,7 @@ class MediaManagerV2 extends Api\Controller\Base
                                 'grid' => cdnCrop($oObject->id, 400, 400),
                             ] : null,
                         ],
+                        'metadata'   => $oObject->metadata,
                         'created'    => $oObject->created,
                         'created_by' => $oObject->created_by ? [
                             'id'    => $oObject->created_by->id,

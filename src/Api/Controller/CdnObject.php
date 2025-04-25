@@ -209,6 +209,7 @@ class CdnObject extends Api\Controller\Base
 
         $oObject   = $oModel->getById($oInput->post('object_id'));
         $sFileName = trim((string) $oInput->post('filename_display'));
+        $sMetaData = json_encode($oInput->post('metadata') ?: []);
 
         if (empty($oObject)) {
             throw new Api\Exception\ApiException('Object not found', $oHttpCodes::STATUS_NOT_FOUND);
@@ -227,6 +228,7 @@ class CdnObject extends Api\Controller\Base
 
         $bResult = $oModel->update($oObject->id, [
             'filename_display' => $sFileName,
+            'metadata'         => $sMetaData,
         ]);
 
         if (!$bResult) {
@@ -527,6 +529,7 @@ class CdnObject extends Api\Controller\Base
                 'orientation' => $oObject->img_orientation,
                 'is_animated' => $oObject->is_animated,
             ],
+            'metadata' => $oObject->metadata,
             'created'  => $oObject->created,
             'modified' => $oObject->modified,
             'url'      => (object) $this->generateUrls($oObject, $aUrls),

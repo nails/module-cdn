@@ -340,6 +340,49 @@
                             :disabled="isEditing"
                         />
                     </div>
+                    <div class="form-group">
+                        <label>Metadata</label>
+                        <div class="form-sub-label">Add any custom information about this file, this will be searchable</div>
+                        <div class="metadata-editor">
+                            <div class="metadata-list">
+                                <div v-for="(item, index) in editingObject.metadata" :key="index" class="metadata-item">
+                                    <input
+                                        type="text"
+                                        v-model="item.key"
+                                        placeholder="Key"
+                                        :disabled="isEditing"
+                                        class="metadata-key"
+                                    />
+                                    <input
+                                        type="text"
+                                        v-model="item.value"
+                                        placeholder="Value"
+                                        :disabled="isEditing"
+                                        class="metadata-value"
+                                    />
+                                    <button
+                                        class="remove-button"
+                                        @click="removeMetadata(index)"
+                                        :disabled="isEditing"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <button
+                                class="add-button"
+                                @click="addMetadata"
+                                :disabled="isEditing"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                </svg>
+                                Add Metadata
+                            </button>
+                        </div>
+                    </div>
                     <div v-if="editError" class="modal-message error-message">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
@@ -783,7 +826,8 @@ export default {
         editItem(item) {
             this.editingObject = {
                 id: item.id,
-                filename_display: item.filename_display || item.file.name.human
+                filename_display: item.filename_display || item.file.name.human,
+                metadata: item.metadata || []
             };
             this.showEditModal = true;
             this.editError = null;
@@ -997,6 +1041,16 @@ export default {
             const formData = new FormData();
             formData.append('object_id', this.editingObject.id);
             formData.append('filename_display', this.editingObject.filename_display);
+            
+            // Add metadata to form data
+            if (this.editingObject.metadata) {
+                this.editingObject.metadata.forEach((item, index) => {
+                    if (item.key && item.value) {
+                        formData.append(`metadata[${index}][key]`, item.key);
+                        formData.append(`metadata[${index}][value]`, item.value);
+                    }
+                });
+            }
 
             try {
                 const response = await axios.post(
@@ -1013,6 +1067,7 @@ export default {
                 const index = this.objects.findIndex(obj => obj.id === this.editingObject.id);
                 if (index !== -1) {
                     this.objects[index].file.name.human = response.data.data.object.object.name;
+                    this.objects[index].metadata = response.data.data.object.metadata;
                 }
 
                 this.editSuccess = true;
@@ -1164,6 +1219,17 @@ export default {
                 // Silently fail as requested
                 console.error('Failed to fetch selected object:', error);
             }
+        },
+
+        addMetadata() {
+            if (!this.editingObject.metadata) {
+                this.editingObject.metadata = [];
+            }
+            this.editingObject.metadata.push({ key: '', value: '' });
+        },
+
+        removeMetadata(index) {
+            this.editingObject.metadata.splice(index, 1);
         },
     }
 }
@@ -3136,6 +3202,111 @@ export default {
 
     &__details {
         color: #6b7280;
+    }
+}
+
+.form-sub-label {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.metadata-editor {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 4px;
+
+    .metadata-item {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+
+        .metadata-key,
+        .metadata-value {
+            flex: 1;
+            padding: 4px 8px;
+            margin-bottom: 4px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 13px;
+            background: white;
+            transition: all 0.2s ease;
+            height: 28px;
+
+            &:focus {
+                outline: none;
+                border-color: #4f46e5;
+                box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+            }
+
+            &:disabled {
+                background: #f3f4f6;
+                cursor: not-allowed;
+            }
+        }
+
+        .remove-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            margin-bottom: 4px;
+            border: none;
+            background: none;
+            color: #6b7280;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+
+            svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            &:hover {
+                background: #fee2e2;
+                color: #b91c1c;
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    .add-button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 4px;
+        background: white;
+        color: #4b5563;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        &:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     }
 }
 </style>
