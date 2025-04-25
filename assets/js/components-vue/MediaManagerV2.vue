@@ -1124,10 +1124,8 @@ export default {
             // Add metadata to form data
             if (this.editingObject.metadata) {
                 this.editingObject.metadata.forEach((item, index) => {
-                    if (item.key && item.value) {
-                        formData.append(`metadata[${index}][key]`, item.key);
-                        formData.append(`metadata[${index}][value]`, item.value);
-                    }
+                    formData.append(`metadata[${index}][key]`, item.key);
+                    formData.append(`metadata[${index}][value]`, item.value);
                 });
             }
 
