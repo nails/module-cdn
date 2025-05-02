@@ -16,6 +16,9 @@ use Nails\Api;
 use Nails\Api\Factory\ApiResponse;
 use Nails\Auth\Model\User;
 use Nails\Cdn\Constants;
+use Nails\Cdn\Service\Cdn;
+use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Helper\ArrayHelper;
 use Nails\Common\Helper\Model\Condition;
@@ -26,6 +29,7 @@ use Nails\Common\Helper\Model\Where;
 use Nails\Common\Helper\Model\WhereIn;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\FormValidation;
+use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Mime;
 use Nails\Factory;
@@ -368,13 +372,26 @@ class MediaManagerV2 extends Api\Controller\Base
         return $sUrl;
     }
 
+    // --------------------------------------------------------------------------
+
+    /**
+     * @throws Api\Exception\ApiException
+     * @throws FactoryException
+     * @throws ModelException
+     * @throws ValidationException
+     */
     public function postReplace(): ApiResponse
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
+        /** @var HttpCodes $oHttpCodes */
+        $oHttpCodes = Factory::service('HttpCodes');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
 
+        /** @var \Nails\Cdn\Resource\CdnObject $oObject */
         $oObject = $oObjectModel->getById($oInput->post('object_id'), [
             new Expand('bucket'),
             new Expand('created_by'),
@@ -384,10 +401,20 @@ class MediaManagerV2 extends Api\Controller\Base
             throw new Api\Exception\ApiException('Object not found', $oHttpCodes::STATUS_NOT_FOUND);
         }
 
+        if (!$oCdn->objectReplace($oObject->id, 'file')) {
+            throw new Api\Exception\ApiException($oCdn->lastError(), $oHttpCodes::STATUS_BAD_REQUEST);
+        }
+
+        /** @var \Nails\Cdn\Resource\CdnObject $oObject */
+        $oObject = $oObjectModel->skipCache()->getById($oInput->post('object_id'), [
+            new Expand('bucket'),
+            new Expand('created_by'),
+        ]);
+
         /** @var ApiResponse $oResponse */
         $oResponse = Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
         $oResponse->setData($this->formatObject($oObject));
-        
+
         return $oResponse;
     }
 }

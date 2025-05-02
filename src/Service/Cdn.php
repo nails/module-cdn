@@ -17,17 +17,16 @@ use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
+use Nails\Cdn\Exception\ObjectReplaceException;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
-use Nails\Common\Exception\Database\QueryException;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Factory\HttpResponse;
 use Nails\Common\Helper\ArrayHelper;
-use Nails\Common\Helper\Directory;
 use Nails\Common\Interfaces\Service\FileCache\Driver;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\FileCache;
@@ -814,11 +813,7 @@ class Cdn
                  * Upload is a data stream, i.e the raw data to upload (might be binary, might be plain text)
                  */
 
-                if (!isset($aOptions['Content-Type'])) {
-                    throw new ObjectCreateException('A Content-Type must be defined for data stream uploads');
-                }
-
-                $sCacheFile  = $this->saveDataToCacheFile($object);
+                $sCacheFile  = $this->saveStreamToCacheFile($object, $aOptions['Content-Type'] ?? null);
                 $oData->file = $sCacheFile;
 
                 //  Specify the file specifics
@@ -892,7 +887,20 @@ class Cdn
                 /**
                  * Object is an uploaded file
                  */
+                //  It's in $_FILES, check the upload was successful
+                if ($_FILES[$object]['error'] !== UPLOAD_ERR_OK) {
+                    throw new ObjectCreateException(
+                        static::getUploadError($_FILES[$object]['error'])
+                    );
+                }
 
+                //  Move the file to a tmp directory and call it the original name
+                $sCacheFile = $this->getTempFile();
+                if (!move_uploaded_file($_FILES[$object]['tmp_name'], $sCacheFile)) {
+                    throw new ObjectCreateException(
+                        'Failed to move uploaded file to temporary directory'
+                    );
+                }
                 //  It's in $_FILES, check the upload was successful
                 if ($_FILES[$object]['error'] !== UPLOAD_ERR_OK) {
                     throw new ObjectCreateException(
@@ -1170,6 +1178,21 @@ class Cdn
     // --------------------------------------------------------------------------
 
     /**
+     * @throws CdnException
+     * @throws ObjectCreateException
+     */
+    private function saveStreamToCacheFile($stream, ?string $contentType): string
+    {
+        if (!isset($contentType)) {
+            throw new ObjectCreateException('A Content-Type must be defined for data stream uploads');
+        }
+
+        return $this->saveDataToCacheFile($stream);
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * Make an HTTP request for a URL
      *
      * @param string $sUrl
@@ -1242,7 +1265,7 @@ class Cdn
      * @return string
      * @throws CdnException
      */
-    protected function saveDataToCacheFile($data)
+    protected function saveDataToCacheFile($data): string
     {
         $sPath = $this->getTempFile();
         $fh    = fopen($sPath, 'w+');
@@ -1578,29 +1601,188 @@ class Cdn
      * Uploads an object and, if successful, removes the old object. Note that a new Object ID is created.
      *
      * @param mixed $object      The existing object's ID or filename
-     * @param mixed $bucket      The bucket's ID or slug
      * @param mixed $replaceWith The replacement: $_FILE key, path or data stream
-     * @param array $options     An array of options to apply to the upload
      * @param bool  $bIsStream   Whether the replacement object is a data stream or not
      *
      * @return mixed                stdClass on success, false on failure
      */
-    public function objectReplace($object, $bucket, $replaceWith, $options = [], $bIsStream = false)
+    public function objectReplace($object, mixed $replaceWith, bool $bIsStream = false)
     {
-        //  Firstly, attempt the upload
-        $upload = $this->objectCreate($replaceWith, $bucket, $options, $bIsStream);
+        try {
 
-        if ($upload) {
-
-            $oObj = $this->getObject($object);
-
-            if ($oObj) {
-                $this->objectDelete($oObj->id);
+            $oExistingObject = $this->getObject($object);
+            if (empty($oExistingObject)) {
+                throw new CdnException('Not a valid object');
             }
 
-            return $upload;
+            $oExistingBucket = $this->getBucket($oExistingObject->bucket->id);
 
-        } else {
+            if ($bIsStream) {
+
+                /**
+                 * Upload is a data stream, i.e the raw data to upload (might be binary, might be plain text)
+                 */
+                $sCacheFile = $this->saveStreamToCacheFile($replaceWith, $aOptions['Content-Type'] ?? null);
+
+            } elseif (is_string($replaceWith) && preg_match('/^https?:\/\//', $replaceWith)) {
+
+                /**
+                 * Upload is a URL, import it
+                 */
+                try {
+
+                    $oResponse  = $this->makeHttpRequest($replaceWith);
+                    $sCacheFile = $this->saveHttpResponseToFile($oResponse);
+                    //  In case of large download, clear out memory
+                    $oResponse = null;
+
+                } catch (\Exception $e) {
+                    throw new UrlException($e->getMessage(), $e->getCode(), $e);
+                }
+
+            } elseif (is_string($replaceWith) && preg_match('/^data:(.*?)(;(base64))?,(.+)/', $replaceWith, $aMatches)) {
+
+                /**
+                 * Object is a data-uri
+                 */
+                $bEncoded   = ArrayHelper::get(3, $aMatches) === 'base64';
+                $sData      = ArrayHelper::get(4, $aMatches);
+                $sCacheFile = $this->saveDataToCacheFile($bEncoded ? base64_decode($sData) : $sData);
+
+            } elseif (is_file($replaceWith)) {
+
+                /**
+                 * Object is a file path
+                 */
+                $sCacheFile = $this->saveDataToCacheFile(file_get_contents($replaceWith));
+
+            } elseif (isset($_FILES[$replaceWith])) {
+
+                /**
+                 * Object is an uploaded file
+                 */
+                //  It's in $_FILES, check the upload was successful
+                if ($_FILES[$replaceWith]['error'] !== UPLOAD_ERR_OK) {
+                    throw new ObjectCreateException(
+                        static::getUploadError($_FILES[$replaceWith]['error'])
+                    );
+                }
+
+                //  Move the file to a tmp directory and call it the original name
+                $sCacheFile = $this->getTempFile();
+                if (!move_uploaded_file($_FILES[$replaceWith]['tmp_name'], $sCacheFile)) {
+                    throw new ObjectReplaceException(
+                        'Failed to move uploaded file to temporary directory'
+                    );
+                }
+
+            } else {
+                throw new ObjectReplaceException(sprintf(
+                    'You did not select a file to upload [%s]',
+                    $replaceWith
+                ));
+            }
+
+            $sUploadedMime = $this->getMimeFromFile($sCacheFile);
+            $sUploadedExt  = $this->getExtFromMime($sUploadedMime);
+
+            if ($sUploadedExt !== $oExistingObject->file->ext) {
+                throw new ObjectReplaceException(
+                    'Replacement file must be the same type of file as the file being replaced.'
+                );
+            }
+
+            //  Is the file within the file size limit?
+            $iFileSize = filesize($sCacheFile);
+
+            if ($oExistingBucket->max_size) {
+                if ($iFileSize > $oExistingBucket->max_size) {
+                    throw new ObjectReplaceException(
+                        sprintf(
+                            'The file is too large, maximum file size is %s',
+                            static::formatBytes($oExistingBucket->max_size)
+                        )
+                    );
+                }
+            }
+
+            // --------------------------------------------------------------------------
+
+            $aData = [
+                'filesize' => $iFileSize,
+                'md5_hash' => md5_file($sCacheFile),
+            ];
+
+            $aImageMimeTypes = [
+                'image/jpg',
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+            ];
+
+            if (in_array($sUploadedMime, $aImageMimeTypes)) {
+
+                [$iWidth, $iHeight] = getimagesize($sCacheFile);
+                $aData['img_width']  = $iWidth;
+                $aData['img_height'] = $iHeight;
+
+                $aData['img_orientation'] = match (true) {
+                    $iWidth > $iHeight => static::ORIENTATION_LANDSCAPE,
+                    $iWidth < $iHeight => static::ORIENTATION_PORTRAIT,
+                    $iWidth === $iHeight => static::ORIENTATION_SQUARE,
+                };
+
+                $aData['is_animated'] = $sUploadedMime === 'image/gif' && $this->detectAnimatedGif($sCacheFile);
+
+            }
+
+            // --------------------------------------------------------------------------
+
+            if (!$this->callDriver('objectDestroy', [
+                $oExistingObject->file->name->disk,
+                $oExistingObject->bucket->slug,
+            ])) {
+                throw new ObjectReplaceException(
+                    'Failed to delete existing object. ' . $this->setError($this->callDriver('lastError'))
+                );
+            }
+
+            if (!$this->callDriver('objectCreate', [
+                (object) [
+                    'bucket'   => (object) [
+                        'slug' => $oExistingObject->bucket->slug,
+                    ],
+                    'filename' => $oExistingObject->file->name->disk,
+                    'file'     => $sCacheFile,
+                ],
+            ])) {
+                throw new ObjectReplaceException(
+                    'Failed to upload replacement object. ' . $this->setError($this->callDriver('lastError'))
+                );
+            }
+
+            // --------------------------------------------------------------------------
+
+            /** @var Database $oDb */
+            $oDb = Factory::service('Database');
+            $oDb->where('id', $oExistingObject->id);
+            foreach ($aData as $sCol => $sVal) {
+                $oDb->set($sCol, $sVal);
+            }
+            $oDb->update(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
+
+            // --------------------------------------------------------------------------
+
+            return true;
+
+        } catch (\Exception $e) {
+
+            if (isset($sCacheFile) && is_file($sCacheFile)) {
+                @unlink($sCacheFile);
+            }
+
+            $this->setError($e->getMessage());
+
             return false;
         }
     }
