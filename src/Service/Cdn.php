@@ -14,6 +14,7 @@ namespace Nails\Cdn\Service;
 
 use Nails\Auth;
 use Nails\Cdn\Constants;
+use Nails\Cdn\Events;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
@@ -29,6 +30,7 @@ use Nails\Common\Factory\HttpResponse;
 use Nails\Common\Helper\ArrayHelper;
 use Nails\Common\Interfaces\Service\FileCache\Driver;
 use Nails\Common\Service\Database;
+use Nails\Common\Service\Event;
 use Nails\Common\Service\FileCache;
 use Nails\Common\Service\Mime;
 use Nails\Common\Traits\Caching;
@@ -132,6 +134,11 @@ class Cdn
      */
     protected $oMimeService;
 
+    /**
+     * @var Event
+     */
+    protected $oEventService;
+
     /** @var \Nails\Common\Service\FileCache */
     protected $oCache;
 
@@ -149,9 +156,11 @@ class Cdn
      * @throws FactoryException
      */
     public function __construct(
-        Mime $oMimeService
+        Mime $oMimeService,
+        Event $oEventService
     ) {
-        $this->oMimeService = $oMimeService;
+        $this->oMimeService  = $oMimeService;
+        $this->oEventService = $oEventService;
 
         // --------------------------------------------------------------------------
 
@@ -785,6 +794,18 @@ class Cdn
     {
         try {
 
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_CREATE,
+                    Events::getEventNamespace(),
+                    [
+                        $object,
+                        $mBucket,
+                        $aOptions,
+                        $bIsStream,
+                    ]
+                );
+
             //  Define variables we'll need
             $oData = new \stdClass();
 
@@ -1153,6 +1174,16 @@ class Cdn
                 $object = $this->createObject($oData, true);
                 if ($object) {
                     //  @todo (Pablo - 2019-03-27) - Remove temporary file, if created
+
+                    $this->oEventService
+                        ->trigger(
+                            Events::OBJECT_CREATED,
+                            Events::getEventNamespace(),
+                            [
+                                $object,
+                            ]
+                        );
+
                     return $object;
                 } else {
                     $this->callDriver('destroy', [$oData->filename, $oData->bucket_slug]);
@@ -1359,6 +1390,17 @@ class Cdn
 
             // --------------------------------------------------------------------------
 
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_DELETE,
+                    Events::getEventNamespace(),
+                    [
+                        $object,
+                    ]
+                );
+
+            // --------------------------------------------------------------------------
+
             $aObjectData = [
                 'id'               => $object->id,
                 'bucket_id'        => $object->bucket->id,
@@ -1408,6 +1450,15 @@ class Cdn
             //  Clear caches
             $this->unsetCacheObject($object);
 
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_DELETED,
+                    Events::getEventNamespace(),
+                    [
+                        $object,
+                    ]
+                );
+
             return true;
 
         } catch (\Exception $e) {
@@ -1438,6 +1489,17 @@ class Cdn
             if (empty($oObject)) {
                 throw new CdnException('Not a valid object');
             }
+
+            // --------------------------------------------------------------------------
+
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_RESTORE,
+                    Events::getEventNamespace(),
+                    [
+                        $oObject,
+                    ]
+                );
 
             // --------------------------------------------------------------------------
 
@@ -1485,6 +1547,15 @@ class Cdn
 
             $oDb->transaction()->commit();
 
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_RESTORED,
+                    Events::getEventNamespace(),
+                    [
+                        $oObject,
+                    ]
+                );
+
             return true;
 
         } catch (\Exception $e) {
@@ -1514,19 +1585,26 @@ class Cdn
 
         $oObject = $this->getObject($iObjectId);
 
-        if ($oObject) {
-            if (!$this->objectDelete($oObject->id)) {
-                return false;
-            }
+        if (!$oObject) {
+            //  Object doesn't exist but may exist in the trash
+            $oObject = $this->getObjectFromTrash(is_object($oObject) ? $oObject->id : $iObjectId);
         }
-
-        //  Object doesn't exist but may exist in the trash
-        $oObject = $this->getObjectFromTrash(is_object($oObject) ? $oObject->id : $iObjectId);
 
         if (!$oObject) {
             $this->setError('Nothing to destroy.');
             return false;
         }
+
+        // --------------------------------------------------------------------------
+
+        $this->oEventService
+            ->trigger(
+                Events::OBJECT_DESTROY,
+                Events::getEventNamespace(),
+                [
+                    $oObject,
+                ]
+            );
 
         // --------------------------------------------------------------------------
 
@@ -1553,6 +1631,16 @@ class Cdn
 
                 $oDb->transaction()->commit();
                 $this->unsetCacheObject($oObject);
+
+                $this->oEventService
+                    ->trigger(
+                        Events::OBJECT_DESTROYED,
+                        Events::getEventNamespace(),
+                        [
+                            $oObject,
+                        ]
+                    );
+
                 return true;
             }
         } else {
@@ -1614,6 +1702,15 @@ class Cdn
             if (empty($oExistingObject)) {
                 throw new CdnException('Not a valid object');
             }
+
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_REPLACE,
+                    Events::getEventNamespace(),
+                    [
+                        $oExistingObject,
+                    ]
+                );
 
             $oExistingBucket = $this->getBucket($oExistingObject->bucket->id);
 
@@ -1770,6 +1867,19 @@ class Cdn
                 $oDb->set($sCol, $sVal);
             }
             $oDb->update(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
+
+            $this->unsetCacheObject($oExistingObject);
+
+            // --------------------------------------------------------------------------
+
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_REPLACED,
+                    Events::getEventNamespace(),
+                    [
+                        $this->getObject($oExistingObject->id),
+                    ]
+                );
 
             // --------------------------------------------------------------------------
 
@@ -2186,6 +2296,13 @@ class Cdn
             ];
         }
 
+        $this->oEventService
+            ->trigger(
+                Events::BUCKET_CREATE,
+                Events::getEventNamespace(),
+                $aBucketData
+            );
+
         $sSlug = ArrayHelper::get('slug', $aBucketData);
 
         //  Test if bucket exists, if it does stop, job done.
@@ -2220,6 +2337,16 @@ class Cdn
             $iBucketId = $oBucketModel->create($aBucketData);
 
             if ($iBucketId) {
+
+                $this->oEventService
+                    ->trigger(
+                        Events::BUCKET_CREATED,
+                        Events::getEventNamespace(),
+                        [
+                            $this->getBucket($iBucketId),
+                        ]
+                    );
+
                 return $iBucketId;
             } else {
                 $this->callDriver('destroy', [$sSlug]);
@@ -2308,6 +2435,17 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
+        $this->oEventService
+            ->trigger(
+                Events::BUCKET_DESTROY,
+                Events::getEventNamespace(),
+                [
+                    $oBucket,
+                ]
+            );
+
+        // --------------------------------------------------------------------------
+
         //  Destroy any containing objects
         $errors = 0;
         foreach ($oBucket->objects as $obj) {
@@ -2329,6 +2467,16 @@ class Cdn
                 $oDb = Factory::service('Database');
                 $oDb->where('id', $oBucket->id);
                 $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket');
+
+                $this->oEventService
+                    ->trigger(
+                        Events::BUCKET_DESTROYED,
+                        Events::getEventNamespace(),
+                        [
+                            $oBucket,
+                        ]
+                    );
+
                 return true;
 
             } else {
