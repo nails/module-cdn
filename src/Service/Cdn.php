@@ -1352,6 +1352,7 @@ class Cdn
                 'thumbs'           => $object->thumbs,
                 'scales'           => $object->scales,
                 'driver'           => $object->driver,
+                'metadata'         => $object->metadata,
                 'created'          => $object->created,
                 'created_by'       => $object->created_by,
                 'modified'         => $object->modified,
@@ -1433,6 +1434,7 @@ class Cdn
                 'thumbs'           => $oObject->thumbs,
                 'scales'           => $oObject->scales,
                 'driver'           => $oObject->driver,
+                'metadata'         => $oObject->metadata,
                 'created'          => $oObject->created,
                 'created_by'       => $oObject->created_by,
             ];
@@ -1769,7 +1771,7 @@ class Cdn
         $oObj->thumbs      = (int) $oObj->thumbs;
         $oObj->scales      = (int) $oObj->scales;
         $oObj->modified_by = (int) $oObj->modified_by ?: null;
-        $oObj->metadata     = $oObj->metadata ? (json_decode($oObj->metadata) ?? []) : [];
+        $oObj->metadata    = $oObj->metadata ? (json_decode($oObj->metadata) ?? []) : [];
 
         // --------------------------------------------------------------------------
 

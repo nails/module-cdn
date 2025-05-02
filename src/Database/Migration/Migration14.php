@@ -23,5 +23,6 @@ class Migration14 extends Base
     public function execute()
     {
         $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}cdn_object` ADD `metadata` JSON NULL AFTER `driver`;');
+        $this->query('ALTER TABLE `{{NAILS_DB_PREFIX}}cdn_object_trash` ADD `metadata` JSON NULL AFTER `driver`;');
     }
 }
