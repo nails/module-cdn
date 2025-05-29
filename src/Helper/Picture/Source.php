@@ -47,8 +47,8 @@ class Source
         int $iCdnObjectId,
         int $iWidth,
         int $iHeight,
-        int $iBreakpoint = null,
-        float $fDensity = null
+        ?int $iBreakpoint = null,
+        ?float $fDensity = null
     ) {
         $this->oCdn         = $oCdn;
         $this->iCdnObjectId = $iCdnObjectId;

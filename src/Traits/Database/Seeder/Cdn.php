@@ -31,7 +31,7 @@ trait Cdn
      *
      * @return int|null
      */
-    protected function randomCdnObject(string $sMime = null): ?int
+    protected function randomCdnObject(?string $sMime = null): ?int
     {
         return $this->randomId(
             'Object',

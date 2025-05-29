@@ -76,7 +76,7 @@ class Monitor
     /**
      * @return Detail[]
      */
-    public function locate(CdnObject $oObject, ProgressIndicator $oProgressIndicator = null): array
+    public function locate(CdnObject $oObject, ?ProgressIndicator $oProgressIndicator = null): array
     {
         $aLocations = [];
         foreach ($this->aMappers as $oMapper) {

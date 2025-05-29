@@ -22,7 +22,7 @@ class Detail
 
     // --------------------------------------------------------------------------
 
-    public function __construct(Monitor $oMonitor, object $oData = null, array $aActions = [])
+    public function __construct(Monitor $oMonitor, ?object $oData = null, array $aActions = [])
     {
         $this->oMonitor = $oMonitor;
 

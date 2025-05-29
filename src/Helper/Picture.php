@@ -52,7 +52,7 @@ class Picture
      *
      * @throws FactoryException
      */
-    public function __construct($mCdnObject, int $iFallbackWidth, int $iFallbackHeight, string $sAlt, Cdn $oCdn = null, array $aAttributes = [])
+    public function __construct($mCdnObject, int $iFallbackWidth, int $iFallbackHeight, string $sAlt, ?Cdn $oCdn = null, array $aAttributes = [])
     {
         $this->iFallbackWidth  = $iFallbackWidth;
         $this->iFallbackHeight = $iFallbackHeight;
@@ -89,7 +89,7 @@ class Picture
      *
      * @return $this
      */
-    public function source(int $iWidth, int $iHeight, ?int $iBreakpoint, float $iDensity = null): self
+    public function source(int $iWidth, int $iHeight, ?int $iBreakpoint, ?float $iDensity = null): self
     {
         $this->aSources[] = new Source(
             $this->oCdn,
