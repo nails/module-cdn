@@ -919,21 +919,7 @@ class Cdn
                 $sCacheFile = $this->getTempFile();
                 if (!move_uploaded_file($_FILES[$object]['tmp_name'], $sCacheFile)) {
                     throw new ObjectCreateException(
-                        'Failed to move uploaded file to temporary directory'
-                    );
-                }
-                //  It's in $_FILES, check the upload was successful
-                if ($_FILES[$object]['error'] !== UPLOAD_ERR_OK) {
-                    throw new ObjectCreateException(
-                        static::getUploadError($_FILES[$object]['error'])
-                    );
-                }
-
-                //  Move the file to a tmp directory and call it the original name
-                $sCacheFile = $this->getTempFile();
-                if (!move_uploaded_file($_FILES[$object]['tmp_name'], $sCacheFile)) {
-                    throw new ObjectCreateException(
-                        'Failed to move uploaded file to temporary directory'
+                        'Failed to move uploaded file to temporary directory.'
                     );
                 }
 
@@ -2967,7 +2953,7 @@ class Cdn
      */
     public function getCacheDir(): string
     {
-        return $this->oCachePublic->getDir();
+        return $this->oCache->getDir();
     }
 
     // --------------------------------------------------------------------------
