@@ -78,6 +78,13 @@ return [
         },
     ],
     'factories' => [
+        'ModelFieldObject'    => function (): Factory\Model\Field\CdnObject {
+            if (class_exists('\App\Cdn\Factory\Model\Field\CdnObject')) {
+                return new \App\Cdn\Factory\Model\Field\CdnObject();
+            } else {
+                return new Factory\Model\Field\CdnObject();
+            }
+        },
         'MonitorDetail'       => function (\Nails\Cdn\Interfaces\Monitor $oMonitor): Factory\Monitor\Detail {
             if (class_exists('\App\Cdn\Factory\Monitor\Detail')) {
                 return new \App\Cdn\Factory\Monitor\Detail($oMonitor);
