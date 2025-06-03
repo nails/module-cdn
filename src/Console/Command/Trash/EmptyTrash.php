@@ -40,7 +40,7 @@ class EmptyTrash extends Base
      *
      * @param string|null $name
      */
-    public function __construct(string $name = null)
+    public function __construct(?string $name = null)
     {
         $this->iTrashRetention = (int) Config::get('CDN_TRASH_RETENTION', 180);
         parent::__construct($name);

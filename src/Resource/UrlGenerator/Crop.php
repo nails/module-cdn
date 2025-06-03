@@ -45,8 +45,8 @@ class Crop extends Resource\UrlGenerator
         Service\Cdn $oCdn,
         Service\UrlGenerator $oService,
         int $iObjectId,
-        int $iWidth = null,
-        int $iHeight = null
+        ?int $iWidth = null,
+        ?int $iHeight = null
     ) {
         parent::__construct($oCdn, $oService, $iObjectId);
         $this->iWidth  = $iWidth ?? 100;

@@ -9,8 +9,8 @@ use Nails\Common;
 return [
     'services'  => [
         'Cdn'           => function (
-            Common\Service\Mime $oMimeService = null,
-            Common\Service\Event $oEventService = null
+            ?Common\Service\Mime $oMimeService = null,
+            ?Common\Service\Event $oEventService = null
         ): Service\Cdn {
 
             $oMimeService  = $oMimeService ?? \Nails\Factory::service('Mime');
@@ -82,6 +82,13 @@ return [
         },
     ],
     'factories' => [
+        'ModelFieldObject'    => function (): Factory\Model\Field\CdnObject {
+            if (class_exists('\App\Cdn\Factory\Model\Field\CdnObject')) {
+                return new \App\Cdn\Factory\Model\Field\CdnObject();
+            } else {
+                return new Factory\Model\Field\CdnObject();
+            }
+        },
         'MonitorDetail'       => function (\Nails\Cdn\Interfaces\Monitor $oMonitor): Factory\Monitor\Detail {
             if (class_exists('\App\Cdn\Factory\Monitor\Detail')) {
                 return new \App\Cdn\Factory\Monitor\Detail($oMonitor);
