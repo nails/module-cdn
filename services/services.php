@@ -8,7 +8,7 @@ use Nails\Common;
 
 return [
     'services'  => [
-        'Cdn'           => function (Common\Service\Mime $oMimeService = null): Service\Cdn {
+        'Cdn'           => function (?Common\Service\Mime $oMimeService = null): Service\Cdn {
 
             $oMimeService = $oMimeService ?? \Nails\Factory::service('Mime');
 

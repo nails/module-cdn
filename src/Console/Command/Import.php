@@ -149,7 +149,7 @@ class Import extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    private function setStatus(Resource\CdnObject\Import $oItem, string $sStatus, string $sError = null): void
+    private function setStatus(Resource\CdnObject\Import $oItem, string $sStatus, ?string $sError = null): void
     {
         /** @var Model\CdnObject\Import $oModel */
         $oModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
