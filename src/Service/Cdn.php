@@ -2953,7 +2953,7 @@ class Cdn
      */
     public function getCacheDir(): string
     {
-        return $this->oCache->getDir();
+        return $this->oCachePublic->getDir();
     }
 
     // --------------------------------------------------------------------------
