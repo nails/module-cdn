@@ -21,13 +21,11 @@ use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
-use Nails\Common\Exception\Database\QueryException;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Factory\HttpResponse;
 use Nails\Common\Helper\ArrayHelper;
-use Nails\Common\Helper\Directory;
 use Nails\Common\Helper\File;
 use Nails\Common\Interfaces\Service\FileCache\Driver;
 use Nails\Common\Service\Database;
@@ -202,6 +200,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Load the storage driver
+        /** @var StorageDriver $oStorageDriver */
         $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
         $aDrivers       = $oStorageDriver->getAll();
         $oDriver        = $oStorageDriver->getEnabled();
@@ -306,6 +305,7 @@ class Cdn
             throw new DriverException('"' . $sDriver . '" is not a valid CDN driver.');
         }
 
+        /** @var StorageDriver $oStorageDriver */
         $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
         $oInstance      = $oStorageDriver->getInstance($oDriver->slug);
 
