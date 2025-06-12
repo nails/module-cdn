@@ -40,12 +40,7 @@ class Utilities extends Base
 
     // --------------------------------------------------------------------------
 
-    /**
-     * Announces this controller's navGroups
-     *
-     * @return \stdClass
-     */
-    public static function announce()
+    public static function announce(): Nav|array|null
     {
         $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
         $oNavGroup->setLabel('Utilities');
