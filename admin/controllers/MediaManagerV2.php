@@ -30,10 +30,8 @@ class MediaManagerV2 extends BaseAdmin
 {
     /**
      * Announces this controller's navGroups
-     *
-     * @return \stdClass
      */
-    public static function announce()
+    public static function announce(): Nav|array|null
     {
         if (userHasPermission('admin:cdn:manager:object:browse')) {
             /** @var Nav $oNavGroup */
@@ -42,11 +40,9 @@ class MediaManagerV2 extends BaseAdmin
                 ->setLabel('Media')
                 ->setIcon('fa-images')
                 ->addAction('Media Manager V2');
-
-            return $oNavGroup;
         }
 
-        return null;
+        return $oNavGroup ?? null;
     }
 
     public function index()
