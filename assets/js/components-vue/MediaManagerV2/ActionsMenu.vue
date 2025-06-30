@@ -3,6 +3,25 @@
 </template>
 
 <script>
+// Global event bus for menu coordination
+const menuEventBus = {
+    events: {},
+    $on(eventName, fn) {
+        this.events[eventName] = this.events[eventName] || [];
+        this.events[eventName].push(fn);
+    },
+    $off(eventName) {
+        if (this.events[eventName]) {
+            delete this.events[eventName];
+        }
+    },
+    $emit(eventName, data) {
+        if (this.events[eventName]) {
+            this.events[eventName].forEach(fn => fn(data));
+        }
+    }
+};
+
 export default {
     name: 'ActionsMenu',
     props: {
@@ -31,9 +50,20 @@ export default {
             menuElement: null
         }
     },
+    created() {
+        // Listen for other menus being opened
+        menuEventBus.$on('menu-opened', (menuId) => {
+            // If this isn't the menu that was just opened and our menu is open, close it
+            if (menuId !== this._uid && this.isOpen) {
+                this.$emit('close');
+            }
+        });
+    },
     watch: {
         isOpen(newValue) {
             if (newValue) {
+                // Notify other menus that this one is opening
+                menuEventBus.$emit('menu-opened', this._uid);
                 this.createMenu();
             } else {
                 this.removeMenu();
@@ -47,6 +77,8 @@ export default {
         window.addEventListener('scroll', this.handleScroll, true);
     },
     beforeDestroy() {
+        // Clean up event listeners
+        menuEventBus.$off('menu-opened');
         document.removeEventListener('click', this.handleClickOutside);
         document.removeEventListener('keydown', this.handleKeydown);
         window.removeEventListener('resize', this.handleResize);
