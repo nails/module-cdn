@@ -33,6 +33,9 @@ class MediaManagerV2 {
                 // Get max upload size from mount point
                 const maxUploadSize = mountPoint ? parseInt(mountPoint.dataset.maxUploadSize) : 10485760; // Default to 10MB if not set
 
+                // Get user can create bucket permission
+                const userCanCreateBucket = mountPoint ? mountPoint.dataset.userCanCreateBucket === 'true' : false;
+
                 // Create a new Vue instance with all components
                 new Vue({
                     el: '#nails-module-cdn-media-manager-v2',
@@ -44,7 +47,8 @@ class MediaManagerV2 {
                     },
                     render: h => h(MediaManagerV2Vue, {
                         props: {
-                            maxUploadSize
+                            maxUploadSize,
+                            userCanCreateBucket
                         }
                     })
                 });

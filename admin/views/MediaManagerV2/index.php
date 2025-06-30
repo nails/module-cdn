@@ -20,6 +20,9 @@ if ($oInput::get('isModal')) {
 }
 
 ?>
-<div id="nails-module-cdn-media-manager-v2" data-max-upload-size="<?=maxUploadSize(false)?>">
+<div id="nails-module-cdn-media-manager-v2"
+     data-max-upload-size="<?=maxUploadSize(false)?>"
+     data-user-can-create-bucket="<?=json_encode(userHasPermission('admin:cdn:manager:bucket:create'))?>"
+>
     Loading Media Manager...
 </div>

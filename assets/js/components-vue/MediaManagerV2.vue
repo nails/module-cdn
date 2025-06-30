@@ -31,6 +31,7 @@
                         class="bucket-filter"
                     />
                     <button 
+                        v-if="userCanCreateBucket"
                         class="create-bucket-button" 
                         @click="openCreateBucketModal"
                         title="Create New Bucket"
@@ -685,6 +686,10 @@ export default {
         maxUploadSize: {
             type: Number,
             default: 10485760 // 10MB in bytes
+        },
+        userCanCreateBucket: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
