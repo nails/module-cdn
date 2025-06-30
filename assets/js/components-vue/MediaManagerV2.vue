@@ -29,6 +29,8 @@
                         sub-label-key="object_count"
                         ref="bucketFilter"
                         @dropdown-toggled="handleDropdownToggle('bucketFilter')"
+                        @option-action="handleBucketAction"
+                        :option-actions="bucketActions"
                         class="bucket-filter"
                     />
                     <button 
@@ -664,6 +666,68 @@
                 </div>
             </div>
         </div>
+
+        <!-- Delete Bucket Confirmation Modal -->
+        <div class="modal-overlay" v-if="showDeleteBucketModal" @click.self="closeDeleteBucketModal">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>Delete Bucket</h3>
+                    <button class="close-button" @click="closeDeleteBucketModal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="warning-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <div class="warning-content">
+                            <h4>Are you sure you want to delete this bucket?</h4>
+                            <p>This action cannot be undone. The following bucket will be deleted:</p>
+                            <div class="object-details">
+                                <strong>Name:</strong> {{ bucketToDelete?.label }}
+                                <br>
+                                <strong>ID:</strong> {{ bucketToDelete?.id }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="deleteBucketError" class="error-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        {{ deleteBucketError }}
+                    </div>
+
+                    <div v-if="deleteBucketSuccess" class="success-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        Bucket deleted successfully!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-button" @click="closeDeleteBucketModal" :disabled="isDeletingBucket">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Cancel
+                    </button>
+                    <button
+                        class="delete-button"
+                        @click="confirmDeleteBucket"
+                        :disabled="isDeletingBucket"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        {{ isDeletingBucket ? 'Deleting...' : 'Delete Bucket' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -747,7 +811,12 @@ export default {
             newBucketName: '',
             isCreatingBucket: false,
             createBucketError: null,
-            createBucketSuccess: false
+            createBucketSuccess: false,
+            showDeleteBucketModal: false,
+            bucketToDelete: null,
+            isDeletingBucket: false,
+            deleteBucketError: null,
+            deleteBucketSuccess: false
         }
     },
 
@@ -797,6 +866,31 @@ export default {
                 this.dateLower ||
                 this.dateUpper
             );
+        },
+
+        bucketActions() {
+            return [
+                {
+                    id: 'delete',
+                    title: 'Delete Bucket',
+                    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>',
+                    class: 'delete-action',
+                    // Only show delete button for buckets with 0 objects
+                    condition: (bucket) => {
+                        // Parse the object_count string to get the number
+                        // The format is "X objects" or "1 object"
+                        const countStr = bucket.object_count;
+                        if (!countStr) return false;
+
+                        // Extract the number from the string
+                        const match = countStr.match(/^(\d+)/);
+                        if (!match) return false;
+
+                        const count = parseInt(match[1]);
+                        return count === 0;
+                    }
+                }
+            ];
         }
     },
 
@@ -1058,6 +1152,58 @@ export default {
                     this.$refs[ref].close();
                 }
             });
+        },
+
+        async handleBucketAction({ action, option }) {
+            if (action.id === 'delete') {
+                // Show delete confirmation modal
+                this.bucketToDelete = option;
+                this.showDeleteBucketModal = true;
+                this.deleteBucketError = null;
+                this.deleteBucketSuccess = false;
+            }
+        },
+
+        closeDeleteBucketModal() {
+            this.showDeleteBucketModal = false;
+            this.bucketToDelete = null;
+            this.isDeletingBucket = false;
+            this.deleteBucketError = null;
+            this.deleteBucketSuccess = false;
+        },
+
+        async confirmDeleteBucket() {
+            if (!this.bucketToDelete) return;
+
+            this.isDeletingBucket = true;
+            this.deleteBucketError = null;
+            this.deleteBucketSuccess = false;
+
+            try {
+                // Make DELETE request to the API
+                await axios.delete(`${this.siteUrl}api/cdn/bucket/${this.bucketToDelete.id}`);
+
+                // Show success message
+                this.deleteBucketSuccess = true;
+                console.log(`Bucket "${this.bucketToDelete.label}" deleted successfully`);
+
+                // Refresh the bucket list
+                await this.fetchAllBuckets();
+
+                // If the deleted bucket was selected, reset the selection
+                if (this.selectedBuckets.includes(this.bucketToDelete.id)) {
+                    this.selectedBuckets = this.selectedBuckets.filter(id => id !== this.bucketToDelete.id);
+                }
+
+                // Close modal after a delay
+                setTimeout(() => {
+                    this.closeDeleteBucketModal();
+                }, 1500);
+            } catch (error) {
+                console.error('Failed to delete bucket:', error);
+                this.deleteBucketError = error.response?.data?.error || error.message;
+                this.isDeletingBucket = false;
+            }
         },
 
         handleFileSelect(event) {

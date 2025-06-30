@@ -19,25 +19,43 @@
                 />
             </div>
             <div class="options-list">
-                <label
+                <div
                     v-for="option in filteredOptions"
                     :key="option.id"
-                    class="option"
-                    @click.stop
+                    class="option-wrapper"
                 >
-                    <input
-                        type="checkbox"
-                        :value="option.id"
-                        :checked="isSelected(option.id)"
-                        @change="toggleOption(option.id)"
-                    />
-                    <div class="option-content">
-                        <span class="option-label">{{ option.label }}</span>
-                        <span v-if="subLabelKey && option[subLabelKey]" class="option-sublabel">
-                            {{ option[subLabelKey] }}
-                        </span>
+                    <label
+                        class="option"
+                        @click.stop
+                    >
+                        <input
+                            type="checkbox"
+                            :value="option.id"
+                            :checked="isSelected(option.id)"
+                            @change="toggleOption(option.id)"
+                        />
+                        <div class="option-content">
+                            <span class="option-label">{{ option.label }}</span>
+                            <span v-if="subLabelKey && option[subLabelKey]" class="option-sublabel">
+                                {{ option[subLabelKey] }}
+                            </span>
+                        </div>
+                    </label>
+                    <div class="option-actions" v-if="optionActions.length > 0">
+                        <button 
+                            v-for="(action, actionIndex) in optionActions" 
+                            :key="actionIndex"
+                            v-if="action.condition ? action.condition(option) : true"
+                            class="option-action-button"
+                            :class="action.class"
+                            @click.stop="handleOptionAction(action, option)"
+                            :title="action.title"
+                        >
+                            <span v-if="action.icon" v-html="action.icon"></span>
+                            <span v-else>{{ action.label }}</span>
+                        </button>
                     </div>
-                </label>
+                </div>
             </div>
             <div class="actions">
                 <button v-if="!singleSelect" @click.stop="selectAll" class="btn-select-all">Select All</button>
@@ -74,6 +92,10 @@ export default {
         openUpwards: {
             type: Boolean,
             default: false
+        },
+        optionActions: {
+            type: Array,
+            default: () => []
         }
     },
     data() {
@@ -180,6 +202,10 @@ export default {
             if (event.key === 'Escape' && this.isOpen) {
                 this.isOpen = false;
             }
+        },
+
+        handleOptionAction(action, option) {
+            this.$emit('option-action', { action, option });
         }
     }
 }
@@ -293,9 +319,10 @@ export default {
             margin: 0;
             flex-grow: 1;
 
-            .option {
+            .option-wrapper {
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
+                justify-content: space-between;
                 padding: 6px 12px;
                 cursor: pointer;
                 margin: 0;
@@ -306,36 +333,112 @@ export default {
                     background: #f5f5f5;
                 }
 
-                input {
-                    margin-right: 8px;
-                    margin-top: 4px;
-                    margin-bottom: 0;
-                    flex-shrink: 0;
-                }
-
-                .option-content {
+                .option {
                     display: flex;
-                    flex-direction: column;
+                    align-items: flex-start;
                     flex-grow: 1;
-                    min-width: 0; /* Needed for text-overflow to work */
+                    margin: 0;
+                    padding: 0;
+
+                    input {
+                        margin-right: 8px;
+                        margin-top: 4px;
+                        margin-bottom: 0;
+                        flex-shrink: 0;
+                    }
+
+                    .option-content {
+                        display: flex;
+                        flex-direction: column;
+                        flex-grow: 1;
+                        min-width: 0; /* Needed for text-overflow to work */
+                    }
+
+                    .option-label {
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        width: 100%;
+                    }
+
+                    .option-sublabel {
+                        font-size: 12px;
+                        color: #666666;
+                        font-style: italic;
+                        margin-top: 2px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        width: 100%;
+                    }
                 }
 
-                .option-label {
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    width: 100%;
+                .option-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    margin-left: 8px;
+                    transition: opacity 0.2s ease;
                 }
 
-                .option-sublabel {
-                    font-size: 12px;
+                /* Only non-delete actions are hidden by default */
+                .option-action-button:not(.delete-action) {
+                    opacity: 0;
+                    transition: opacity 0.2s ease;
+                }
+
+                &:hover .option-action-button:not(.delete-action) {
+                    opacity: 1;
+                }
+
+                .option-action-button {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 28px;
+                    height: 28px;
+                    border: none;
+                    background: none;
+                    border-radius: 4px;
+                    padding: 0;
+                    cursor: pointer;
                     color: #666666;
-                    font-style: italic;
-                    margin-top: 2px;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    width: 100%;
+                    transition: all 0.2s ease;
+
+                    span {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1;
+                    }
+
+                    &:hover {
+                        background-color: #e5e7eb;
+                        color: #4b5563;
+                    }
+
+                    &.delete-action {
+                        color: white;
+                        background-color: #ef4444;
+                        border: 1px solid #dc2626;
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+                        &:hover {
+                            background-color: #dc2626;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            transform: translateY(-1px);
+                        }
+
+                        &:active {
+                            transform: translateY(1px);
+                            box-shadow: none;
+                        }
+                    }
+
+                    svg {
+                        width: 16px;
+                        height: 16px;
+                    }
                 }
             }
         }
