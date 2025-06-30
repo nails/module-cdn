@@ -141,6 +141,5 @@ export default {
     padding: 0 16px;
     text-align: right;
     position: relative;
-    z-index: 1001; /* Higher than the actions-menu z-index */
 }
 </style> 
