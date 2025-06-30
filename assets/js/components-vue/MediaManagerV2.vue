@@ -26,6 +26,7 @@
                         v-model="selectedBuckets"
                         :options="buckets"
                         title="Buckets"
+                        sub-label-key="object_count"
                         ref="bucketFilter"
                         @dropdown-toggled="handleDropdownToggle('bucketFilter')"
                         class="bucket-filter"
@@ -844,7 +845,20 @@ export default {
         async fetchAllBuckets(url = `${this.siteUrl}api/cdn/bucket`) {
             try {
                 this.loadingBuckets = true;
-                this.buckets = await this.iterateOverApiPages(url);
+                let buckets = await this.iterateOverApiPages(url);
+
+                // Format the object_count property to display as "X objects"
+                this.buckets = buckets.map(bucket => {
+                    // Create a new object to avoid modifying the original
+                    const formattedBucket = { ...bucket };
+
+                    // Format the object_count property
+                    if (formattedBucket.object_count !== undefined) {
+                        formattedBucket.object_count = `${formattedBucket.object_count} ${formattedBucket.object_count === 1 ? 'object' : 'objects'}`;
+                    }
+
+                    return formattedBucket;
+                });
             } catch (error) {
                 this.error('Failed to load buckets: ' + error.message);
             } finally {

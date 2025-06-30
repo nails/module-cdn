@@ -31,10 +31,12 @@
                         :checked="isSelected(option.id)"
                         @change="toggleOption(option.id)"
                     />
-                    <span class="option-label">{{ option.label }}</span>
-                    <span v-if="subLabelKey && option[subLabelKey]" class="option-sublabel">
-            {{ option[subLabelKey] }}
-          </span>
+                    <div class="option-content">
+                        <span class="option-label">{{ option.label }}</span>
+                        <span v-if="subLabelKey && option[subLabelKey]" class="option-sublabel">
+                            {{ option[subLabelKey] }}
+                        </span>
+                    </div>
                 </label>
             </div>
             <div class="actions">
@@ -293,7 +295,7 @@ export default {
 
             .option {
                 display: flex;
-                align-items: center;
+                align-items: flex-start;
                 padding: 6px 12px;
                 cursor: pointer;
                 margin: 0;
@@ -306,24 +308,34 @@ export default {
 
                 input {
                     margin-right: 8px;
-                    margin-top: 0;
+                    margin-top: 4px;
                     margin-bottom: 0;
+                    flex-shrink: 0;
+                }
+
+                .option-content {
+                    display: flex;
+                    flex-direction: column;
+                    flex-grow: 1;
+                    min-width: 0; /* Needed for text-overflow to work */
                 }
 
                 .option-label {
-                    flex-grow: 1;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
+                    width: 100%;
                 }
 
                 .option-sublabel {
                     font-size: 12px;
                     color: #666666;
-                    margin-left: 8px;
+                    font-style: italic;
+                    margin-top: 2px;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
+                    width: 100%;
                 }
             }
         }
