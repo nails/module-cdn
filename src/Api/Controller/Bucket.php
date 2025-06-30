@@ -110,8 +110,10 @@ class Bucket extends Api\Controller\CrudController
             );
         }
 
+        $data = $this->getRequestData();
+
         //  @todo (Pablo - 2018-08-16) - Remove once CrudController validates properly itself
-        if (!$oInput->post('label')) {
+        if (!$data['label']) {
             throw new Api\Exception\ApiException(
                 '`label` is a required field',
                 $oHttpCodes::STATUS_UNAUTHORIZED

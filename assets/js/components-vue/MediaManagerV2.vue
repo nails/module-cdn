@@ -20,14 +20,26 @@
             <div class="sidebar__filter sidebar__filter--bucket">
                 <p class="sidebar__filter__title">Bucket</p>
                 <div class="loading" v-if="loadingBuckets"></div>
-                <multi-select
-                    v-if="!loadingBuckets && buckets.length > 0"
-                    v-model="selectedBuckets"
-                    :options="buckets"
-                    title="Buckets"
-                    ref="bucketFilter"
-                    @dropdown-toggled="handleDropdownToggle('bucketFilter')"
-                />
+                <div class="bucket-filter-container">
+                    <multi-select
+                        v-if="!loadingBuckets && buckets.length > 0"
+                        v-model="selectedBuckets"
+                        :options="buckets"
+                        title="Buckets"
+                        ref="bucketFilter"
+                        @dropdown-toggled="handleDropdownToggle('bucketFilter')"
+                        class="bucket-filter"
+                    />
+                    <button 
+                        class="create-bucket-button" 
+                        @click="openCreateBucketModal"
+                        title="Create New Bucket"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="sidebar__filter sidebar__filter--file-type">
                 <p class="sidebar__filter__title">File type</p>
@@ -591,6 +603,65 @@
             @close="showReplaceModal = false"
             @file-replaced="handleFileReplaced"
         />
+
+        <!-- Create Bucket Modal -->
+        <div class="modal-overlay" v-if="showCreateBucketModal" @click.self="closeCreateBucketModal">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>Create New Bucket</h3>
+                    <button class="close-button" @click="closeCreateBucketModal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="bucket-name">Bucket Name</label>
+                        <input
+                            type="text"
+                            id="bucket-name"
+                            v-model="newBucketName"
+                            placeholder="Enter bucket name"
+                            :disabled="isCreatingBucket"
+                            @keyup.enter="createBucket"
+                        />
+                    </div>
+
+                    <div v-if="createBucketError" class="error-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        {{ createBucketError }}
+                    </div>
+
+                    <div v-if="createBucketSuccess" class="success-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        Bucket created successfully!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-button" @click="closeCreateBucketModal" :disabled="isCreatingBucket">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Cancel
+                    </button>
+                    <button
+                        class="save-button"
+                        @click="createBucket"
+                        :disabled="!newBucketName || isCreatingBucket"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        {{ isCreatingBucket ? 'Creating...' : 'Create Bucket' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -665,7 +736,12 @@ export default {
             siteUrl: window.SITE_URL || '',
             selectedObject: null,
             showReplaceModal: false,
-            replacingObject: null
+            replacingObject: null,
+            showCreateBucketModal: false,
+            newBucketName: '',
+            isCreatingBucket: false,
+            createBucketError: null,
+            createBucketSuccess: false
         }
     },
 
@@ -967,30 +1043,20 @@ export default {
 
         handleFileSelect(event) {
             const files = Array.from(event.target.files);
-            
+
             // Validate file sizes
             const invalidFiles = files.filter(file => file.size > this.maxUploadSize);
             if (invalidFiles.length > 0) {
                 this.error = `Some files exceed the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
                 return;
             }
-            
+
             this.filesToUpload = [...this.filesToUpload, ...files];
             event.target.value = ''; // Reset file input
         },
 
         removeFile(index) {
             this.filesToUpload.splice(index, 1);
-        },
-
-        formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         },
 
         async uploadFiles() {
@@ -1086,14 +1152,14 @@ export default {
         handleFileDrop(event) {
             this.dragOver = false;
             const files = Array.from(event.dataTransfer.files);
-            
+
             // Validate file sizes
             const invalidFiles = files.filter(file => file.size > this.maxUploadSize);
             if (invalidFiles.length > 0) {
                 this.error = `Some files exceed the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
                 return;
             }
-            
+
             this.filesToUpload = [...this.filesToUpload, ...files];
         },
 
@@ -1120,7 +1186,7 @@ export default {
             const formData = new FormData();
             formData.append('object_id', this.editingObject.id);
             formData.append('filename_display', this.editingObject.filename_display);
-            
+
             // Add metadata to form data
             if (this.editingObject.metadata) {
                 this.editingObject.metadata.forEach((item, index) => {
@@ -1319,6 +1385,59 @@ export default {
             this.replacingObject = null;
         },
 
+        openCreateBucketModal() {
+            this.showCreateBucketModal = true;
+            this.newBucketName = '';
+            this.createBucketError = null;
+            this.createBucketSuccess = false;
+        },
+
+        closeCreateBucketModal() {
+            this.showCreateBucketModal = false;
+            this.newBucketName = '';
+            this.createBucketError = null;
+            this.createBucketSuccess = false;
+        },
+
+        async createBucket() {
+            if (!this.newBucketName || this.isCreatingBucket) {
+                return;
+            }
+
+            this.isCreatingBucket = true;
+            this.createBucketError = null;
+            this.createBucketSuccess = false;
+
+            try {
+                const response = await axios.post(
+                    `${this.siteUrl}api/cdn/bucket`,
+                    {
+                        label: this.newBucketName
+                    }
+                );
+
+                // Show success message
+                this.createBucketSuccess = true;
+
+                // Refresh the bucket list
+                await this.fetchAllBuckets();
+
+                // Close the modal after a delay
+                setTimeout(() => {
+                    this.closeCreateBucketModal();
+                }, 1500);
+            } catch (error) {
+                console.error('Create bucket failed:', error);
+                if (error.response && error.response.data && error.response.data.error) {
+                    this.createBucketError = error.response.data.error;
+                } else {
+                    this.createBucketError = 'An error occurred while creating the bucket. Please try again.';
+                }
+            } finally {
+                this.isCreatingBucket = false;
+            }
+        },
+
         validateFile(file) {
             if (file.size > this.maxUploadSize) {
                 return `File size exceeds the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
@@ -1416,6 +1535,41 @@ export default {
 
             &:last-child {
                 margin-bottom: 0;
+            }
+
+            .bucket-filter-container {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+
+                .bucket-filter {
+                    flex: 1;
+                }
+
+                .create-bucket-button {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 2rem;
+                    height: 2rem;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 0.375rem;
+                    background-color: #f9fafb;
+                    color: #4f46e5;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+
+                    &:hover {
+                        background-color: #4f46e5;
+                        color: white;
+                        border-color: #4f46e5;
+                    }
+
+                    svg {
+                        width: 1rem;
+                        height: 1rem;
+                    }
+                }
             }
 
             &__title {
@@ -3551,7 +3705,7 @@ export default {
 
     .upload-icon {
         margin-bottom: 1rem;
-        
+
         svg {
             width: 3rem;
             height: 3rem;
