@@ -199,7 +199,7 @@ class MediaManagerV2 extends Api\Controller\Base
         return $oResponse;
     }
 
-    public function getObjects(): ApiResponse
+    public function getObjects(bool $trashed = false): ApiResponse
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
@@ -209,8 +209,10 @@ class MediaManagerV2 extends Api\Controller\Base
         $oDb = Factory::service('Database');
         /** @var FormValidation $oFormValidation */
         $oFormValidation = Factory::service('FormValidation');
-        /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
-        $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
+        /** @var \Nails\Cdn\Model\CdnObject|\Nails\Cdn\Model\CdnObject\Trash $oObjectModel */
+        $oObjectModel = $trashed
+            ? Factory::model('ObjectTrash', Constants::MODULE_SLUG)
+            : Factory::model('Object', Constants::MODULE_SLUG);
         /** @var \Nails\Cdn\Model\Bucket $oBucketModel */
         $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
 
@@ -306,6 +308,11 @@ class MediaManagerV2 extends Api\Controller\Base
         }
 
         return $oResponse;
+    }
+
+    public function getTrash(): ApiResponse
+    {
+        return $this->getObjects(trashed: true);
     }
 
     protected function formatObject(\Nails\Cdn\Resource\CdnObject $oObject): array
