@@ -247,7 +247,7 @@ class MediaManagerV2 extends Api\Controller\Base
 
             $aConditions = array_filter([
                 new Limit($iPerPage, $iPage),
-                new Sort('created', Sort::DESC),
+                new Sort($trashed ? 'trashed' : 'created', Sort::DESC),
                 new Expand('bucket'),
                 new Expand('created_by'),
                 new Where(
@@ -313,6 +313,52 @@ class MediaManagerV2 extends Api\Controller\Base
     public function getTrash(): ApiResponse
     {
         return $this->getObjects(trashed: true);
+    }
+
+    public function postRestore(): ApiResponse
+    {
+        /** @var HttpCodes $oHttpCodes */
+        $oHttpCodes = Factory::service('HttpCodes');
+
+        if (!userHasPermission('admin:cdn:manager:object:restore')) {
+            throw new Api\Exception\ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
+
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+
+        $aData      = $this->getRequestData();
+        $aObjectIds = $aData['object_ids'] ?? [];
+        $aSuccess   = [];
+        $aError     = [];
+
+        foreach ($aObjectIds as $iObjectId) {
+            try {
+
+                if (!$oCdn->objectRestore($iObjectId)) {
+                    throw new Api\Exception\ApiException(
+                        $oCdn->lastError(),
+                        $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR
+                    );
+                }
+
+                $aSuccess[] = $iObjectId;
+
+            } catch (\Exception $e) {
+                $aError[] = ['id' => $iObjectId, 'error' => $e->getMessage()];
+            }
+        }
+
+        /** @var ApiResponse $oApiResponse */
+        $oApiResponse = Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
+        return $oApiResponse
+            ->setData([
+                'success' => $aSuccess,
+                'error'   => $aError,
+            ]);
     }
 
     protected function formatObject(\Nails\Cdn\Resource\CdnObject $oObject): array

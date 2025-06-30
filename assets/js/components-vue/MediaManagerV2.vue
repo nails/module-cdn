@@ -117,6 +117,14 @@
                     Reset Filters
                 </button>
             </div>
+            <div class="sidebar__filter sidebar__filter--trash">
+                <button class="trash-button" @click="openTrashModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="trash-icon">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    View Trash
+                </button>
+            </div>
         </div>
         <div class="body">
             <div class="body__switcher">
@@ -545,7 +553,7 @@
                         </svg>
                         <div class="warning-content">
                             <h4>Are you sure you want to delete this object?</h4>
-                            <p>This action cannot be undone. The following object will be deleted:</p>
+                            <p>The following object will be deleted:</p>
                             <div class="object-details">
                                 <strong>Name:</strong> {{ deletingObject?.file?.name?.human }}
                                 <br>
@@ -728,6 +736,124 @@
                 </div>
             </div>
         </div>
+
+        <!-- Trash Modal -->
+        <div class="modal-overlay" v-if="showTrashModal" @click.self="closeTrashModal">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>Trash</h3>
+                    <button class="close-button" @click="closeTrashModal">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div v-if="loadingTrashedItems" class="loading-container">
+                        <div class="loading-spinner"></div>
+                        <p>Loading trashed items...</p>
+                    </div>
+
+                    <div v-else-if="trashedItems.length === 0" class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="empty-icon">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <p>No items in trash</p>
+                    </div>
+
+                    <div v-else class="trashed-items-list">
+                        <div class="trashed-items-header">
+                            <div class="select-all-container">
+                                <label class="select-all-label">
+                                    <input 
+                                        type="checkbox" 
+                                        :checked="selectedTrashedItems.length === trashedItems.length" 
+                                        @change="selectedTrashedItems = selectedTrashedItems.length === trashedItems.length ? [] : trashedItems.map(item => item.id)"
+                                    />
+                                    <span>Select All</span>
+                                </label>
+                            </div>
+                            <div class="selection-info" v-if="selectedTrashedItems.length > 0">
+                                {{ selectedTrashedItems.length }} item{{ selectedTrashedItems.length > 1 ? 's' : '' }} selected
+                            </div>
+                        </div>
+
+                        <div class="trashed-items-container">
+                            <div 
+                                v-for="item in trashedItems" 
+                                :key="item.id" 
+                                class="trashed-item"
+                                :class="{ 'selected': selectedTrashedItems.includes(item.id) }"
+                                @click="toggleTrashedItem(item.id)"
+                                style="cursor: pointer;"
+                            >
+                                <div class="trashed-item-checkbox" @click.stop>
+                                    <input 
+                                        type="checkbox" 
+                                        :checked="selectedTrashedItems.includes(item.id)" 
+                                        @change="toggleTrashedItem(item.id)"
+                                    />
+                                </div>
+                                <div class="trashed-item-thumbnail">
+                                    <img 
+                                        v-if="item.is_img" 
+                                        :src="item.url.thumb?.list" 
+                                        :alt="item.file.name.human" 
+                                        class="thumbnail"
+                                    />
+                                    <div v-else class="file-icon">
+                                        <span>{{ item.file.ext.toUpperCase() }}</span>
+                                    </div>
+                                </div>
+                                <div class="trashed-item-details">
+                                    <div class="trashed-item-name">{{ item.file.name.human }}</div>
+                                    <div class="trashed-item-meta">
+                                        <span class="trashed-item-type">{{ item.group }}</span>
+                                        <span class="trashed-item-separator">•</span>
+                                        <span class="trashed-item-size">{{ item.file.size.human }}</span>
+                                        <span class="trashed-item-separator">•</span>
+                                        <span class="trashed-item-date">{{ item.created.formatted }}</span>
+                                    </div>
+                                    <div class="trashed-item-bucket">{{ item.bucket.label }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="restoreError" class="error-message modal-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        {{ restoreError }}
+                    </div>
+
+                    <div v-if="restoreSuccess" class="success-message modal-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        Items restored successfully!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-button" @click="closeTrashModal" :disabled="isRestoring">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Close
+                    </button>
+                    <button
+                        class="restore-button upload-button"
+                        @click="restoreTrashedItems"
+                        :disabled="selectedTrashedItems.length === 0 || isRestoring"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                        </svg>
+                        {{ isRestoring ? 'Restoring...' : 'Restore Selected' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -816,7 +942,15 @@ export default {
             bucketToDelete: null,
             isDeletingBucket: false,
             deleteBucketError: null,
-            deleteBucketSuccess: false
+            deleteBucketSuccess: false,
+            // Trash modal properties
+            showTrashModal: false,
+            trashedItems: [],
+            selectedTrashedItems: [],
+            loadingTrashedItems: false,
+            isRestoring: false,
+            restoreError: null,
+            restoreSuccess: false
         }
     },
 
@@ -1616,6 +1750,113 @@ export default {
             const sizes = ['B', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+        },
+
+        openTrashModal() {
+            this.showTrashModal = true;
+            this.trashedItems = [];
+            this.selectedTrashedItems = [];
+            this.restoreError = null;
+            this.restoreSuccess = false;
+            this.fetchTrashedItems();
+        },
+
+        closeTrashModal() {
+            this.showTrashModal = false;
+            this.trashedItems = [];
+            this.selectedTrashedItems = [];
+            this.restoreError = null;
+            this.restoreSuccess = false;
+            this.isRestoring = false;
+        },
+
+        async fetchTrashedItems(url = null, allItems = []) {
+            this.loadingTrashedItems = true;
+            try {
+                const response = await axios.get(url || `${this.siteUrl}api/cdn/mediamanagerv2/trash`);
+                const items = [...allItems, ...response.data.data];
+
+                // Check if there's a next page
+                if (response.data.meta?.pagination?.next) {
+                    // Recursively fetch the next page
+                    return this.fetchTrashedItems(response.data.meta.pagination.next, items);
+                } else {
+                    // No more pages, update the trashedItems with all fetched items
+                    this.trashedItems = items;
+                    this.loadingTrashedItems = false;
+                }
+            } catch (error) {
+                console.error('Failed to fetch trashed items:', error);
+                this.restoreError = 'Failed to load trashed items. Please try again.';
+                this.loadingTrashedItems = false;
+            }
+        },
+
+        toggleTrashedItem(itemId) {
+            const index = this.selectedTrashedItems.indexOf(itemId);
+            if (index === -1) {
+                // Add to selection
+                this.selectedTrashedItems.push(itemId);
+            } else {
+                // Remove from selection
+                this.selectedTrashedItems.splice(index, 1);
+            }
+        },
+
+        async restoreTrashedItems() {
+            if (this.selectedTrashedItems.length === 0) {
+                this.restoreError = 'Please select at least one item to restore.';
+                return;
+            }
+
+            this.isRestoring = true;
+            this.restoreError = null;
+            this.restoreSuccess = false;
+
+            try {
+                const response = await axios.post(
+                    `${this.siteUrl}api/cdn/mediamanagerv2/restore`,
+                    {
+                        object_ids: this.selectedTrashedItems
+                    }
+                );
+
+                const { success, error } = response.data.data;
+
+                // Remove successfully restored items from the list
+                if (success && success.length > 0) {
+                    this.trashedItems = this.trashedItems.filter(
+                        item => !success.includes(item.id)
+                    );
+
+                    // Clear these items from selection
+                    this.selectedTrashedItems = this.selectedTrashedItems.filter(
+                        id => !success.includes(id)
+                    );
+
+                    // Reload the main list of objects to show the restored items
+                    this.doSearch();
+                }
+
+                // Handle errors if any
+                if (error && error.length > 0) {
+                    const successCount = success ? success.length : 0;
+                    this.restoreError = `${successCount} item(s) were successfully restored, but ${error.length} item(s) could not be restored.`;
+                } else {
+                    // No errors, show success message
+                    this.restoreSuccess = true;
+
+                    // Close modal automatically after a delay if no errors
+                    setTimeout(() => {
+                        this.closeTrashModal();
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error('Failed to restore items:', error);
+                this.restoreError = error.response?.data?.error || 'Failed to restore items. Please try again.';
+            } finally {
+                this.isRestoring = false;
+            }
         }
     }
 }
@@ -2722,13 +2963,22 @@ export default {
             transition: all 0.2s ease;
 
             &.cancel-button {
-                background-color: white;
-                border: 1px solid #d1d5db;
+                background: #f3f4f6;
+                border: 1px solid #e5e7eb;
                 color: #4b5563;
 
-                &:hover {
-                    background-color: #f3f4f6;
-                    border-color: #9ca3af;
+                &:hover:not(:disabled) {
+                    background: #e5e7eb;
+                    color: #374151;
+                }
+
+                &:active:not(:disabled) {
+                    background: #d1d5db;
+                }
+
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
                 }
             }
 
@@ -3600,6 +3850,33 @@ export default {
     }
 }
 
+.trash-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: white;
+    color: #4b5563;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+
+    svg {
+        width: 16px;
+        height: 16px;
+        color: #6b7280;
+    }
+
+    &:hover {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
+    }
+}
+
 .selected-object-info {
     display: inline-flex;
     align-items: center;
@@ -4219,4 +4496,189 @@ export default {
 .hidden {
     display: none;
 }
+
+/* Trash Modal Styles */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+
+    .loading-spinner {
+        margin-bottom: 1rem;
+    }
+
+    p {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+
+    .empty-icon {
+        width: 3rem;
+        height: 3rem;
+        color: #9ca3af;
+        margin-bottom: 1rem;
+    }
+
+    p {
+        font-size: 0.875rem;
+    }
+}
+
+.trashed-items-list {
+    display: flex;
+    flex-direction: column;
+
+    .trashed-items-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+
+        .select-all-container {
+            display: flex;
+            align-items: center;
+
+            .select-all-label {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.875rem;
+                color: #4b5563;
+                cursor: pointer;
+
+                input[type="checkbox"] {
+                    width: 1rem;
+                    height: 1rem;
+                }
+            }
+        }
+
+        .selection-info {
+            font-size: 0.75rem;
+            color: #6b7280;
+            background: #e5e7eb;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+        }
+    }
+
+    .trashed-items-container {
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        border-bottom-left-radius: 6px;
+        border-bottom-right-radius: 6px;
+        max-height: 400px;
+        overflow-y: auto;
+
+        .trashed-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s ease;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            &:hover {
+                background-color: #f9fafb;
+            }
+
+            &.selected {
+                background-color: #eff6ff;
+            }
+
+            .trashed-item-checkbox {
+                margin-right: 1rem;
+
+                input[type="checkbox"] {
+                    width: 1rem;
+                    height: 1rem;
+                }
+            }
+
+            .trashed-item-thumbnail {
+                width: 3rem;
+                height: 3rem;
+                margin-right: 1rem;
+                flex-shrink: 0;
+
+                .thumbnail {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: 4px;
+                }
+
+                .file-icon {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #f3f4f6;
+                    border-radius: 4px;
+                    color: #6b7280;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                }
+            }
+
+            .trashed-item-details {
+                flex: 1;
+                min-width: 0;
+
+                .trashed-item-name {
+                    font-weight: 500;
+                    color: #111827;
+                    margin-bottom: 0.25rem;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .trashed-item-meta {
+                    display: flex;
+                    align-items: center;
+                    font-size: 0.75rem;
+                    color: #6b7280;
+                    margin-bottom: 0.25rem;
+
+                    .trashed-item-separator {
+                        margin: 0 0.25rem;
+                    }
+                }
+
+                .trashed-item-bucket {
+                    font-size: 0.75rem;
+                    color: #4b5563;
+                    background: #e5e7eb;
+                    padding: 0.125rem 0.375rem;
+                    border-radius: 9999px;
+                    display: inline-block;
+                }
+            }
+        }
+    }
+}
+
+/* This style is now handled by the upload-button class */
 </style>

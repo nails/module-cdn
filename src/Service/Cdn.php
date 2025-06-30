@@ -530,7 +530,7 @@ class Cdn
 
         $oDb = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.serves, o.downloads, ');
-        $oDb->select('o.thumbs, o.scales, o.driver, o.md5_hash, o.created, o.created_by, o.modified, o.modified_by');
+        $oDb->select('o.thumbs, o.scales, o.driver, o.metadata, o.md5_hash, o.created, o.created_by, o.modified, o.modified_by');
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
         $oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
@@ -1403,7 +1403,7 @@ class Cdn
                 'thumbs'           => $object->thumbs,
                 'scales'           => $object->scales,
                 'driver'           => $object->driver,
-                'metadata'         => $object->metadata,
+                'metadata'         => json_encode($object->metadata),
                 'created'          => $object->created,
                 'created_by'       => $object->created_by,
                 'modified'         => $object->modified,
@@ -1505,7 +1505,7 @@ class Cdn
                 'thumbs'           => $oObject->thumbs,
                 'scales'           => $oObject->scales,
                 'driver'           => $oObject->driver,
-                'metadata'         => $oObject->metadata,
+                'metadata'         => json_encode($oObject->metadata),
                 'created'          => $oObject->created,
                 'created_by'       => $oObject->created_by,
             ];
