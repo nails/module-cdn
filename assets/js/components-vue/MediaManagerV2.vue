@@ -1867,7 +1867,7 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 0;
-    min-height: 100vh;
+    height: 100vh; /* Full viewport height */
     background: #f8f9fa;
     border: 1px solid #e5e7eb;
     border-radius: 0.5rem;
@@ -1876,7 +1876,7 @@ export default {
 
     &.is-modal {
         .sidebar {
-            padding-bottom: 60px;
+            /* No special styling needed for modal mode */
         }
     }
 
@@ -1924,9 +1924,14 @@ export default {
         border-bottom-left-radius: 0.5rem;
         background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
         box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.5);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        height: 100vh; /* Full viewport height */
+        overflow-y: auto;
 
         @media (min-width: 768px) {
-            width: 320px;
+            width: 350px;
             flex-shrink: 0;
         }
 
@@ -1941,6 +1946,17 @@ export default {
 
             &:last-child {
                 margin-bottom: 0;
+            }
+
+            &--trash {
+                position: sticky;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background-color: #f9fafb;
+                border-top: 1px solid #e5e7eb;
+                z-index: 10;
+                margin-top: auto; /* Push to the bottom of the flex container */
             }
 
             .bucket-filter-container {
@@ -2243,6 +2259,10 @@ export default {
         padding: 1rem 0;
         border-top-right-radius: 0.5rem;
         border-bottom-right-radius: 0.5rem;
+        overflow-y: auto; /* Make the body section scrollable */
+        display: flex;
+        flex-direction: column;
+        max-height: 100vh; /* Ensure it doesn't exceed viewport height */
 
         &__switcher {
             padding: 0 1rem 1rem 1rem;
@@ -2371,6 +2391,9 @@ export default {
         }
 
         &__objects {
+            flex-grow: 1;
+            overflow-y: auto;
+
             &__list {
                 .table-responsive {
                     overflow-x: auto;
@@ -3853,6 +3876,7 @@ export default {
 .trash-button {
     display: flex;
     align-items: center;
+    justify-content: center; /* Center align the text */
     gap: 8px;
     padding: 8px 16px;
     border: 1px solid #e5e7eb;

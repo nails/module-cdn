@@ -16,6 +16,10 @@
         position: relative;
         top: 3px;
     }
+
+    &--revert {
+        bottom: 80px;
+    }
 }
 .manager {
     position: relative;
