@@ -1678,11 +1678,12 @@ class Cdn
      *
      * @param mixed $object      The existing object's ID or filename
      * @param mixed $replaceWith The replacement: $_FILE key, path or data stream
+     * @param array $aOptions    Upload options
      * @param bool  $bIsStream   Whether the replacement object is a data stream or not
      *
      * @return mixed                stdClass on success, false on failure
      */
-    public function objectReplace($object, mixed $replaceWith, bool $bIsStream = false)
+    public function objectReplace($object, mixed $replaceWith, array $aOptions = [], bool $bIsStream = false)
     {
         try {
 

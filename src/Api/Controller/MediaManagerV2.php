@@ -444,7 +444,7 @@ class MediaManagerV2 extends Api\Controller\Base
         /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
 
-        /** @var \Nails\Cdn\Resource\CdnObject $oObject */
+        /** @var \Nails\Cdn\Resource\CdnObject|null $oObject */
         $oObject = $oObjectModel->getById($oInput->post('object_id'), [
             new Expand('bucket'),
             new Expand('created_by'),
