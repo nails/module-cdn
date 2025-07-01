@@ -23,6 +23,7 @@ use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
+use Nails\Cdn\Resource\CdnObject;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
@@ -1643,16 +1644,17 @@ class Cdn
     /**
      * Copies an object
      *
-     * @param int   $sourceObjectId The ID of the object to copy
-     * @param mixed $newBucket      The ID or slug of the destination bucket, leave as null to copy to same bucket
-     * @param array $options        An array of options to apply to the new object
-     *
-     * @return bool
+     * @param int|Resource\CdnObject     $sourceObjectId The object to copy
+     * @param int|string|Resource\Bucket $newBucket      The destination bucket
+     * @param array                      $options        An array of options to apply to the new object
      */
-    public function objectCopy($sourceObjectId, $newBucket = null, $options = [])
-    {
+    public function objectCopy(
+        int|Resource\CdnObject $sourceObjectId,
+        int|string|Resource\Bucket $newBucket,
+        array $options = []
+    ): Resource\CdnObject {
         //  @todo - Copy object between buckets
-        return false;
+        throw new \Exception('Method not implemented');
     }
 
     // --------------------------------------------------------------------------
@@ -1660,15 +1662,15 @@ class Cdn
     /**
      * Moves an object to a new bucket
      *
-     * @param int   $sourceObjectId The ID of the object to move
-     * @param mixed $newBucket      The ID or slug of the destination bucket
-     *
-     * @return bool
+     * @param int|CdnObject              $sourceObjectId The object to move
+     * @param int|string|Resource\Bucket $newBucket      The destination bucket
      */
-    public function objectMove($sourceObjectId, $newBucket)
-    {
+    public function objectMove(
+        int|Resource\CdnObject $sourceObjectId,
+        int|string|Resource\Bucket $newBucket
+    ): Resource\CdnObject {
         //  @todo - Move object between buckets
-        return false;
+        throw new \Exception('Method not implemented');
     }
 
     // --------------------------------------------------------------------------

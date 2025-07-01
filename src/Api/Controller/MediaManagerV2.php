@@ -470,4 +470,136 @@ class MediaManagerV2 extends Api\Controller\Base
 
         return $oResponse;
     }
+
+    /**
+     * Move an object to a different bucket
+     *
+     * @throws Api\Exception\ApiException
+     * @throws FactoryException
+     * @throws ModelException
+     * @throws ValidationException
+     */
+    public function postMove(): ApiResponse
+    {
+        /** @var HttpCodes $oHttpCodes */
+        $oHttpCodes = Factory::service('HttpCodes');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+        /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
+        $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
+        /** @var \Nails\Cdn\Model\Bucket $oBucketModel */
+        $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
+
+        // Validate input
+        $data            = $this->getRequestData();
+        $iObjectId       = (int) ($data['object_id'] ?? null);
+        $iTargetBucketId = (int) ($data['bucket_id'] ?? null);
+
+        if (empty($iObjectId)) {
+            throw new Api\Exception\ApiException('Object ID is required', $oHttpCodes::STATUS_BAD_REQUEST);
+        }
+
+        if (empty($iTargetBucketId)) {
+            throw new Api\Exception\ApiException('Bucket ID is required', $oHttpCodes::STATUS_BAD_REQUEST);
+        }
+
+        // Get the object
+        /** @var \Nails\Cdn\Resource\CdnObject|null $oObject */
+        $oObject = $oObjectModel->getById($iObjectId, [
+            new Expand('bucket'),
+            new Expand('created_by'),
+        ]);
+
+        if (empty($oObject)) {
+            throw new Api\Exception\ApiException('Object not found', $oHttpCodes::STATUS_NOT_FOUND);
+        }
+
+        // Get the destination bucket
+        /** @var \Nails\Cdn\Resource\Bucket|null $oTargetBucket */
+        $oTargetBucket = $oBucketModel->getById($iTargetBucketId);
+        if (empty($oTargetBucket)) {
+            throw new Api\Exception\ApiException('Destination bucket not found', $oHttpCodes::STATUS_NOT_FOUND);
+        }
+
+        // Check if the object is already in the destination bucket
+        if ($oObject->bucket->id === $oTargetBucket->id) {
+            throw new Api\Exception\ApiException('Object is already in the destination bucket', $oHttpCodes::STATUS_BAD_REQUEST);
+        }
+
+        // Move the object to the new bucket
+        $oUpdatedObject = $oCdn->objectMove($oObject, $oTargetBucket);
+        if (!$oUpdatedObject) {
+            throw new Api\Exception\ApiException('Failed to copy object: ' . $oCdn->lastError(), $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        /** @var ApiResponse $oResponse */
+        $oResponse = Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
+        $oResponse->setData($this->formatObject($oUpdatedObject));
+
+        return $oResponse;
+    }
+
+    /**
+     * Copy an object to a different bucket
+     *
+     * @throws Api\Exception\ApiException
+     * @throws FactoryException
+     * @throws ModelException
+     * @throws ValidationException
+     */
+    public function postCopy(): ApiResponse
+    {
+        /** @var HttpCodes $oHttpCodes */
+        $oHttpCodes = Factory::service('HttpCodes');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+        /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
+        $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
+        /** @var \Nails\Cdn\Model\Bucket $oBucketModel */
+        $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
+
+        // Validate input
+        $data            = $this->getRequestData();
+        $iObjectId       = (int) ($data['object_id'] ?? null);
+        $iTargetBucketId = (int) ($data['bucket_id'] ?? null);
+
+        if (empty($iObjectId)) {
+            throw new Api\Exception\ApiException('Object ID is required', $oHttpCodes::STATUS_BAD_REQUEST);
+        }
+
+        if (empty($iTargetBucketId)) {
+            throw new Api\Exception\ApiException('Bucket ID is required', $oHttpCodes::STATUS_BAD_REQUEST);
+        }
+
+        // Get the object
+        /** @var \Nails\Cdn\Resource\CdnObject|null $oObject */
+        $oObject = $oObjectModel->getById($iObjectId, [
+            new Expand('bucket'),
+            new Expand('created_by'),
+        ]);
+
+        if (empty($oObject)) {
+            throw new Api\Exception\ApiException('Object not found', $oHttpCodes::STATUS_NOT_FOUND);
+        }
+
+        // Get the destination bucket
+        /** @var \Nails\Cdn\Resource\Bucket|null $oTargetBucket */
+        $oTargetBucket = $oBucketModel->getById($iTargetBucketId);
+
+        if (empty($oTargetBucket)) {
+            throw new Api\Exception\ApiException('Destination bucket not found', $oHttpCodes::STATUS_NOT_FOUND);
+        }
+
+        // Copy the object to the new bucket
+        $oNewObject = $oCdn->objectCopy($oObject, $oTargetBucket);
+        if (!$oNewObject) {
+            throw new Api\Exception\ApiException('Failed to copy object: ' . $oCdn->lastError(), $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        /** @var ApiResponse $oResponse */
+        $oResponse = Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
+        $oResponse->setData($this->formatObject($oNewObject));
+
+        return $oResponse;
+    }
 }
