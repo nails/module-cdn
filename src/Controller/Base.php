@@ -12,6 +12,7 @@
 
 namespace Nails\Cdn\Controller;
 
+use JetBrains\PhpStorm\NoReturn;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Events;
 use Nails\Cdn\Exception\PermittedDimensionException;
@@ -198,7 +199,7 @@ abstract class Base extends \Nails\Common\Controller\Base
      * @return void
      * @throws FactoryException
      */
-    protected function serveBadSrc(array $params): void
+    #[NoReturn] protected function serveBadSrc(array $params): void
     {
         $width  = $params['width'] ?? 100;
         $height = $params['height'] ?? 100;

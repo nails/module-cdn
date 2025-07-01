@@ -10,6 +10,7 @@
  * @link
  */
 
+use JetBrains\PhpStorm\NoReturn;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\Base;
 use Nails\Config;
@@ -261,7 +262,7 @@ class Serve extends Base
      * @internal param string $error The error which occurred
      *
      */
-    protected function serveBadSrc(array $params)
+    #[NoReturn] protected function serveBadSrc(array $params): void
     {
         $sError = $params['error'];
 
