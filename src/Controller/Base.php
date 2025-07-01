@@ -13,11 +13,17 @@
 namespace Nails\Cdn\Controller;
 
 use Nails\Cdn\Constants;
+use Nails\Cdn\Events;
 use Nails\Cdn\Exception\PermittedDimensionException;
+use Nails\Cdn\Service\Cdn;
+use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\NailsException;
+use Nails\Common\Service\Event;
+use Nails\Common\Service\Input;
 use Nails\Config;
 use Nails\Environment;
 use Nails\Factory;
+use ReflectionException;
 
 // --------------------------------------------------------------------------
 
@@ -56,6 +62,10 @@ abstract class Base extends \Nails\Common\Controller\Base
 
     /**
      * Construct the controllers
+     *
+     * @throws FactoryException
+     * @throws NailsException
+     * @throws ReflectionException
      */
     public function __construct()
     {
@@ -63,7 +73,7 @@ abstract class Base extends \Nails\Common\Controller\Base
 
         // --------------------------------------------------------------------------
 
-        /** @var \Nails\Cdn\Service\Cdn $oCdn */
+        /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         /** @var Event $oEvent */
         $oEvent = Factory::service('Event');
@@ -123,29 +133,29 @@ abstract class Base extends \Nails\Common\Controller\Base
      *
      * @param string $file The file we're sending the headers for
      *
-     * @return boolean
+     * @return bool
+     * @throws FactoryException
      */
-    protected function serveNotModified($file)
+    protected function serveNotModified(string $file): bool
     {
-        $oInput = Factory::service('Input');
-        if (function_exists('apache_request_headers')) {
+        /** @var Input $oInput */
+        $oInput  = Factory::service('Input');
+        $headers = [];
 
+        if (function_exists('apache_request_headers')) {
             $headers = apache_request_headers();
 
         } elseif ($oInput->server('HTTP_IF_NONE_MATCH')) {
-
-            $headers                  = [];
             $headers['If-None-Match'] = $oInput->server('HTTP_IF_NONE_MATCH');
 
         } elseif (isset($_SERVER)) {
 
             /**
-             * Can we work the headers out for ourself?
+             * Can we work the headers out for ourselves?
              * Credit: http://www.php.net/manual/en/function.apache-request-headers.php#70810
              **/
 
-            $headers = [];
-            $rxHttp  = '/\AHTTP_/';
+            $rxHttp = '/\AHTTP_/';
             foreach ($_SERVER as $key => $val) {
 
                 if (preg_match($rxHttp, $key)) {
@@ -168,19 +178,12 @@ abstract class Base extends \Nails\Common\Controller\Base
                     $headers[$arhKey] = $val;
                 }
             }
-
-        } else {
-
-            //  Give up.
-            return false;
         }
 
-        if (isset($headers['If-None-Match']) && $headers['If-None-Match'] == '"' . md5($file) . '"') {
+        if (isset($headers['If-None-Match']) && $headers['If-None-Match'] === '"' . md5($file) . '"') {
             header($oInput->server('SERVER_PROTOCOL') . ' 304 Not Modified', true, 304);
             return true;
         }
-
-        // --------------------------------------------------------------------------
 
         return false;
     }
@@ -190,13 +193,16 @@ abstract class Base extends \Nails\Common\Controller\Base
     /**
      * Serve up the "fail whale" graphic
      *
+     * @param array $params
+     *
      * @return void
+     * @throws FactoryException
      */
-    protected function serveBadSrc(array $params)
+    protected function serveBadSrc(array $params): void
     {
-        $width  = isset($params['width']) ? $params['width'] : 100;
-        $height = isset($params['height']) ? $params['height'] : 100;
-        $sError = isset($params['error']) ? $params['error'] : '';
+        $width  = $params['width'] ?? 100;
+        $height = $params['height'] ?? 100;
+        $sError = $params['error'] ?? '';
 
         // --------------------------------------------------------------------------
 
@@ -226,13 +232,14 @@ abstract class Base extends \Nails\Common\Controller\Base
 
         //  Write the error on the bottom
         if (!empty($sError)) {
-            $textcolor = imagecolorallocate($bg, 0, 0, 0);
-            imagestring($bg, 1, 5, $height - 15, 'ERROR: ' . $sError, $textcolor);
+            $textColor = imagecolorallocate($bg, 0, 0, 0);
+            imagestring($bg, 1, 5, $height - 15, 'ERROR: ' . $sError, $textColor);
         }
 
         // --------------------------------------------------------------------------
 
         //  Output to browser
+        /** @var Input $oInput */
         $oInput = Factory::service('Input');
         header('Content-Type: image/png', true);
         header($oInput->server('SERVER_PROTOCOL') . ' 400 Bad Request', true, 400);
@@ -265,8 +272,9 @@ abstract class Base extends \Nails\Common\Controller\Base
      * @param $iHeight
      *
      * @throws PermittedDimensionException
+     * @throws FactoryException
      */
-    protected function checkDimensions($iWidth, $iHeight)
+    protected function checkDimensions($iWidth, $iHeight): void
     {
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         if (!$oCdn->isPermittedDimension($iWidth, $iHeight)) {
