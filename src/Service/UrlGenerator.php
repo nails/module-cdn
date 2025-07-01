@@ -9,7 +9,6 @@ use Nails\Cdn\Resource;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Helper\Model\Expand;
-use Nails\Common\Traits\Caching;
 use Nails\Factory;
 
 /**
@@ -213,7 +212,7 @@ class UrlGenerator
         foreach ($this->aGenerators as $oUrlObject) {
             if (in_array($oUrlObject->getObjectId(), $aObjectIds)) {
 
-                $oObject = $this->aCachedObjects[$oUrlObject->getObjectId()];
+                $oObject = $this->aCachedObjects[$oUrlObject->getObjectId()] ?? null;
                 if (!empty($oObject)) {
                     $oUrlObject->generate(
                         $this->aCachedObjects[$oUrlObject->getObjectId()]

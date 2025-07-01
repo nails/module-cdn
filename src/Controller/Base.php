@@ -148,7 +148,7 @@ abstract class Base extends \Nails\Common\Controller\Base
         } elseif ($oInput->server('HTTP_IF_NONE_MATCH')) {
             $headers['If-None-Match'] = $oInput->server('HTTP_IF_NONE_MATCH');
 
-        } elseif (isset($_SERVER)) {
+        } else {
 
             /**
              * Can we work the headers out for ourselves?

@@ -86,12 +86,11 @@ class Migrate extends Base
         $bOverwrite     = $oInput->getOption('overwrite');
         $bRemove        = $oInput->getOption('remove-src');
 
-        /** @var Component[] $aAllDrivers */
         $aAllDrivers = $oStorageDriver->getAll();
 
         //  Auto-detect the driver if not specified
         if (empty($sDriver)) {
-            /** @var Component $oEnabledDriver */
+            /** @var Component|null $oEnabledDriver */
             $oEnabledDriver = $oStorageDriver->getEnabled();
             if (empty($oEnabledDriver)) {
                 throw new NailsException('No CDN drivers are enabled');
