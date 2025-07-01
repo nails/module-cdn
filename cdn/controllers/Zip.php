@@ -10,6 +10,7 @@
  * @link
  */
 
+use JetBrains\PhpStorm\NoReturn;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\Base;
 use Nails\Factory;
@@ -130,7 +131,7 @@ class Zip extends Base
      *
      * @param array $params
      */
-    protected function serveBadSrc(array $params)
+    #[NoReturn] protected function serveBadSrc(array $params): void
     {
         $error = $params['error'];
 
