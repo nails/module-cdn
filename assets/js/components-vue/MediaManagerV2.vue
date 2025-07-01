@@ -616,6 +616,15 @@
             @file-replaced="handleFileReplaced"
         />
 
+        <move-copy-modal
+            v-if="showMoveCopyModal"
+            :object="moveCopyObject"
+            :buckets="buckets"
+            :site-url="siteUrl"
+            @close="closeMoveCopyModal"
+            @success="handleMoveCopySuccess"
+        />
+
         <!-- Create Bucket Modal -->
         <div class="modal-overlay" v-if="showCreateBucketModal" @click.self="closeCreateBucketModal">
             <div class="modal-container">
@@ -864,6 +873,7 @@ import MultiSelect from './MultiSelect.vue'
 import ObjectListItem from './MediaManagerV2/ObjectListItem.vue'
 import ObjectGridItem from './MediaManagerV2/ObjectGridItem.vue'
 import ReplaceFileModal from './MediaManagerV2/ReplaceFileModal.vue'
+import MoveCopyModal from './MediaManagerV2/MoveCopyModal.vue'
 
 export default {
     name: 'MediaManagerV2',
@@ -871,7 +881,8 @@ export default {
         MultiSelect,
         ObjectListItem,
         ObjectGridItem,
-        ReplaceFileModal
+        ReplaceFileModal,
+        MoveCopyModal
     },
     props: {
         maxUploadSize: {
@@ -950,7 +961,10 @@ export default {
             loadingTrashedItems: false,
             isRestoring: false,
             restoreError: null,
-            restoreSuccess: false
+            restoreSuccess: false,
+            // Move/Copy modal properties
+            showMoveCopyModal: false,
+            moveCopyObject: null
         }
     },
 
@@ -1212,6 +1226,10 @@ export default {
                 case 'replace':
                     this.replacingObject = item;
                     this.showReplaceModal = true;
+                    break;
+                case 'move-copy':
+                    this.moveCopyObject = item;
+                    this.showMoveCopyModal = true;
                     break;
             }
         },
@@ -1682,6 +1700,29 @@ export default {
             }
             this.showReplaceModal = false;
             this.replacingObject = null;
+        },
+
+        handleMoveCopySuccess({ action, object }) {
+            if (action === 'move') {
+                // For move: remove the original object from the list
+                const index = this.objects.findIndex(obj => obj.id === this.moveCopyObject.id);
+                if (index !== -1) {
+                    this.objects.splice(index, 1);
+                }
+            } else if (action === 'copy') {
+                // For copy: add the new object to the list if it matches current filters
+                // Only add if the new object's bucket is in the selected buckets (or no buckets are selected)
+                if (this.selectedBuckets.length === 0 || this.selectedBuckets.includes(object.bucket.id)) {
+                    this.objects.unshift(object);
+                }
+            }
+
+            this.closeMoveCopyModal();
+        },
+
+        closeMoveCopyModal() {
+            this.showMoveCopyModal = false;
+            this.moveCopyObject = null;
         },
 
         openCreateBucketModal() {

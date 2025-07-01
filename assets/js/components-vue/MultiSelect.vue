@@ -124,14 +124,14 @@ export default {
     },
     created() {
         this.selectedItems = [...this.value];
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', this.closeDropdown);
     },
     mounted() {
+        // Add global event listeners
         document.addEventListener('keydown', this.handleKeydown);
+        // We'll add the click listener in toggleDropdown instead
     },
     beforeDestroy() {
+        // Remove global event listeners
         document.removeEventListener('click', this.closeDropdown);
         document.removeEventListener('keydown', this.handleKeydown);
     },
@@ -148,24 +148,52 @@ export default {
             if (event) {
                 event.stopPropagation();
             }
-            this.isOpen = !this.isOpen;
+
+            const wasOpen = this.isOpen;
+            this.isOpen = !wasOpen;
             this.$emit('dropdown-toggled', this.isOpen);
 
-            // Focus search input when opening dropdown
-            if (this.isOpen && this.options.length > 10) {
-                this.$nextTick(() => {
-                    this.$refs.searchInput?.focus();
-                });
+            if (this.isOpen) {
+                // Add click listener with a slight delay to avoid the current click closing the dropdown
+                setTimeout(() => {
+                    document.addEventListener('click', this.closeDropdown);
+                }, 0);
+
+                // Focus search input when opening dropdown
+                if (this.options.length > 10) {
+                    this.$nextTick(() => {
+                        this.$refs.searchInput?.focus();
+                    });
+                }
+            } else {
+                // Remove click listener when closing
+                document.removeEventListener('click', this.closeDropdown);
             }
         },
-        closeDropdown() {
-            if (this.isOpen) {
+        closeDropdown(event) {
+            // Only close if we have a click event and it's outside the dropdown
+            if (this.isOpen && event) {
+                // Check if the click is outside the multi-select component
+                const isOutside = !this.$el.contains(event.target);
+                if (isOutside) {
+                    this.isOpen = false;
+                    this.$emit('dropdown-toggled', false);
+                    document.removeEventListener('click', this.closeDropdown);
+                }
+            } else if (this.isOpen) {
+                // If no event is provided, just close the dropdown (for programmatic calls)
                 this.isOpen = false;
+                this.$emit('dropdown-toggled', false);
+                document.removeEventListener('click', this.closeDropdown);
             }
         },
         // Method to be called externally to close the dropdown
         close() {
-            this.isOpen = false;
+            if (this.isOpen) {
+                this.isOpen = false;
+                this.$emit('dropdown-toggled', false);
+                document.removeEventListener('click', this.closeDropdown);
+            }
         },
         isSelected(id) {
             return this.selectedItems.includes(id);
@@ -173,7 +201,7 @@ export default {
         toggleOption(id) {
             if (this.singleSelect) {
                 this.selectedItems = [id];
-                this.closeDropdown();
+                this.close(); // Use close() instead of closeDropdown() to ensure event listener is removed
             } else {
                 const index = this.selectedItems.indexOf(id);
                 if (index === -1) {
@@ -191,16 +219,16 @@ export default {
                 this.selectedItems = this.filteredOptions.map(option => option.id);
                 this.$emit('input', [...this.selectedItems]);
             }
-            this.closeDropdown();
+            this.close(); // Use close() instead of closeDropdown() to ensure event listener is removed
         },
         deselectAll() {
             this.selectedItems = [];
             this.$emit('input', []);
-            this.closeDropdown();
+            this.close(); // Use close() instead of closeDropdown() to ensure event listener is removed
         },
         handleKeydown(event) {
             if (event.key === 'Escape' && this.isOpen) {
-                this.isOpen = false;
+                this.close(); // Use close() instead of directly setting isOpen to ensure event listener is removed
             }
         },
 
@@ -276,7 +304,7 @@ export default {
         border: 1px solid #cccccc;
         border-radius: 4px;
         margin-top: 4px;
-        z-index: 100;
+        z-index: 1050; /* Increased z-index to appear above modal */
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;

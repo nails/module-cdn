@@ -10,10 +10,28 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="current-file-info">
-                    <h4>Current File</h4>
-                    <p>{{ object.file.name.human }}</p>
-                    <p class="file-meta">{{ object.group }} · {{ object.file.ext.toUpperCase() }} · {{ object.file.size.human }}</p>
+                <div class="file-details">
+                    <div class="file-preview">
+                        <img
+                            v-if="object.is_img"
+                            :src="object.url.thumb.grid"
+                            :alt="object.file.name.human"
+                            class="preview-image"
+                        />
+                        <div v-else class="file-icon">
+                            <span>{{ object.file.ext.toUpperCase() }}</span>
+                        </div>
+                    </div>
+                    <div class="file-info">
+                        <p class="filename">{{ object.file.name.human }}</p>
+                        <div class="file-details-meta">
+                            <span class="file-type">{{ object.group }}</span>
+                            <span class="file-size">{{ object.file.size.human }}</span>
+                        </div>
+                        <div class="bucket-container">
+                            <span class="bucket">{{ object.bucket.label }}</span>
+                        </div>
+                    </div>
                 </div>
                 <p>Replace the file identified above with a file of the same type. This process will ensure that all references to the old file are maintained. <strong>Be aware that intermediate systems may cache the old file for a period of time.</strong></p>
                 <div 
@@ -102,7 +120,7 @@
 <script>
 export default {
     name: 'ReplaceFileModal',
-    
+
     props: {
         object: {
             type: Object,
@@ -150,7 +168,7 @@ export default {
 
         validateAndSetFile(file) {
             this.error = null;
-            
+
             if (!file) return;
 
             const fileExtension = file.name.split('.').pop().toLowerCase();
@@ -284,6 +302,8 @@ export default {
     padding: 1rem;
     max-height: calc(100vh - 200px);
     overflow-y: auto;
+    overflow-x: visible; /* Allow dropdowns to extend beyond the modal body */
+    position: relative; /* Create a new stacking context */
 
     > p {
         color: #6b7280;
@@ -292,31 +312,76 @@ export default {
     }
 }
 
-.current-file-info {
-    margin-bottom: 1rem;
+.file-details {
+    display: flex;
+    margin-bottom: 1.5rem;
     padding: 1rem;
     background: #f9fafb;
+    border-radius: 8px;
     border: 1px solid #e5e7eb;
-    border-radius: 6px;
+}
 
-    h4 {
-        margin: 0 0 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #4b5563;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+.file-preview {
+    width: 80px;
+    height: 80px;
+    margin-right: 1rem;
+    flex-shrink: 0;
+
+    .preview-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 4px;
     }
 
-    p {
-        margin: 0;
+    .file-icon {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f3f4f6;
+        border-radius: 4px;
+        color: #6b7280;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+}
+
+.file-info {
+    flex: 1;
+    min-width: 0;
+
+    .filename {
+        margin: 0 0 0.5rem;
         font-size: 0.875rem;
         color: #111827;
+        word-break: break-word;
+        font-weight: 500;
+    }
 
-        &.file-meta {
+    .file-details-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 0 0 0.5rem 0;
+        font-size: 0.75rem;
+
+        .file-type, .file-size {
             color: #6b7280;
+        }
+    }
+
+    .bucket-container {
+        margin-top: 0.25rem;
+
+        .bucket {
+            background: #f0f1f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #4b5563;
+            display: inline-block;
             font-size: 0.75rem;
-            margin-top: 0.25rem;
         }
     }
 }
@@ -355,7 +420,7 @@ export default {
 .upload-prompt {
     .upload-icon {
         margin-bottom: 1rem;
-        
+
         svg {
             width: 3rem;
             height: 3rem;
