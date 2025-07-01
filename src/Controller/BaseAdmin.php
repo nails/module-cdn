@@ -17,7 +17,7 @@ use Nails\Common\Service\Asset;
 use Nails\Factory;
 use Nails\Admin\Controller\Base;
 
-class BaseAdmin extends Base
+abstract class BaseAdmin extends Base
 {
     public function __construct()
     {
