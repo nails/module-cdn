@@ -34,7 +34,7 @@
                         class="bucket-filter"
                     />
                     <button 
-                        v-if="userCanCreateBucket"
+                        v-if="userCanCreateBucket && !loadingBuckets"
                         class="create-bucket-button" 
                         @click="openCreateBucketModal"
                         title="Create New Bucket"
@@ -1960,26 +1960,37 @@ export default {
             }
 
             .bucket-filter-container {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
+                position: relative;
+                width: 100%;
 
                 .bucket-filter {
-                    flex: 1;
+                    width: 100%;
+
+                    :deep(.multi-select__selected) {
+                        padding-right: 2.5rem; /* Make room for the create button */
+                    }
+
+                    :deep(.multi-select__dropdown) {
+                        width: 100%; /* Ensure dropdown is full width */
+                    }
                 }
 
                 .create-bucket-button {
+                    position: absolute;
+                    right: 0.4rem;
+                    top: 0.4rem;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    width: 2rem;
-                    height: 2rem;
+                    width: 1.75rem;
+                    height: 1.75rem;
                     border: 1px solid #e5e7eb;
                     border-radius: 0.375rem;
                     background-color: #f9fafb;
                     color: #4f46e5;
                     cursor: pointer;
                     transition: all 0.2s ease;
+                    z-index: 10;
 
                     &:hover {
                         background-color: #4f46e5;
