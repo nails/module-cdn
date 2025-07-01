@@ -15,6 +15,7 @@ namespace Nails\Cdn\Controller;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Common\Exception\NailsException;
+use Nails\Config;
 use Nails\Environment;
 use Nails\Factory;
 
@@ -84,7 +85,7 @@ abstract class Base extends \Nails\Common\Controller\Base
          * more than 1 year.
          */
 
-        $this->cdnCacheHeadersMaxAge       = defined('APP_CDN_CACHE_MAX_AGE') ? APP_CDN_CACHE_MAX_AGE : 31536000;
+        $this->cdnCacheHeadersMaxAge       = Config::get('APP_CDN_CACHE_MAX_AGE', 31536000);
         $this->cdnCacheHeadersLastModified = '';
         $this->cdnCacheHeadersExpires      = '';
         $this->cdnCacheHeadersFile         = '';
