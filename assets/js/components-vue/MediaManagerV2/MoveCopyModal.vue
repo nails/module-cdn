@@ -287,7 +287,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 9999;
 }
 
 .modal-container {
