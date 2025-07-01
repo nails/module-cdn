@@ -110,7 +110,10 @@ abstract class Base extends \Nails\Common\Controller\Base
      */
     protected function serveFromCache(string $sFile): void
     {
-        redirect($this->cdnCache->getUrl($sFile));
+        redirect(
+            sUrl: $this->cdnCache->getUrl($sFile),
+            bAllowExternal: true
+        );
     }
 
     // --------------------------------------------------------------------------
