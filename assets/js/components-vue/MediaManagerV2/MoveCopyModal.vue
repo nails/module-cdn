@@ -246,7 +246,7 @@ export default {
 
                 const response = await axios.post(endpoint, {
                     object_id: this.object.id,
-                    bucket_id: this.selectedBucketId,
+                    bucket_id: Array.isArray(this.selectedBucketId) ? this.selectedBucketId[0] : this.selectedBucketId,
                     action: this.isCopyMode ? 'copy' : 'move'
                 });
 
