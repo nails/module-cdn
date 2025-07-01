@@ -271,12 +271,12 @@ class Manager extends Base
      */
     private function importCancel(int $iImportId)
     {
-        /** @var Import $oImportModel */
+        /** @var \Nails\Cdn\Model\CdnObject\Import $oImportModel */
         $oImportModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
 
         try {
 
-            /** @var \Nails\Cdn\Resource\CdnObject\Import $oImport */
+            /** @var \Nails\Cdn\Resource\CdnObject\Import|null $oImport */
             $oImport = $oImportModel->getById($iImportId);
 
             if (empty($oImport)) {

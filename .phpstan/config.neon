@@ -9,6 +9,7 @@ parameters:
     scanDirectories:
         - ../vendor/pocketarc/codeigniter
         - ../vendor/nails/common
+        - ../vendor/nails/module-admin
         - ../vendor/nails/module-auth
     scanFiles:
         - ../vendor/nails/common/helpers/url.php

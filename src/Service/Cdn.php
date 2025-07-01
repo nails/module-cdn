@@ -1581,7 +1581,7 @@ class Cdn
     public function objectReplace($object, mixed $replaceWith, array $aOptions = [], bool $bIsStream = false)
     {
         //  Firstly, attempt the upload
-        $upload = $this->objectCreate($replaceWith, $bucket, $options, $bIsStream);
+        $upload = $this->objectCreate($replaceWith, $replaceWith, $aOptions, $bIsStream);
 
         if ($upload) {
 

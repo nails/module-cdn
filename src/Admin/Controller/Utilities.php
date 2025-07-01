@@ -14,7 +14,6 @@ namespace Nails\Cdn\Admin\Controller;
 
 use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
-use Nails\Admin\Helper;
 use Nails\Cdn\Admin\Permission;
 use Nails\Cdn\Console\Command\Monitor\Unused;
 use Nails\Cdn\Constants;
@@ -102,17 +101,20 @@ class Utilities extends Base
 
         switch ($oInput::get('action')) {
             case 'delete':
-                return $this->usagesDelete($oObject, $aLocations);
+                $this->usagesDelete($oObject, $aLocations);
+                return;
 
             case 'delete-object':
-                return $this->usagesDeleteObject($oObject);
+                $this->usagesDeleteObject($oObject);
+                return;
 
             case 'replace':
-                return $this->usagesReplace($oObject, $aLocations);
+                $this->usagesReplace($oObject, $aLocations);
+                return;
         }
 
-        $this->data['oObject']     = $oObject;
-        $this->data['aLocations']  = $aLocations;
+        $this->data['oObject']    = $oObject;
+        $this->data['aLocations'] = $aLocations;
 
         $this
             ->setTitles([
@@ -121,7 +123,7 @@ class Utilities extends Base
                     'Find Usages: #%s (%s)',
                     $oObject->id,
                     $oObject->file->name->human
-                )
+                ),
             ])
             ->loadView('usages/preview');
     }
@@ -221,7 +223,7 @@ class Utilities extends Base
             /** @var Model\CdnObject $oModel */
             $oModel = Factory::model('Object', Constants::MODULE_SLUG);
 
-            /** @var Resource\CdnObject $oReplacement */
+            /** @var Resource\CdnObject|null $oReplacement */
             $oReplacement = $oModel->getById($oInput::get('replacement'));
             if (empty($oReplacement)) {
                 throw new CdnException('Invalid replacement object.');
@@ -328,7 +330,7 @@ class Utilities extends Base
 
         if ($iId) {
 
-            if (!in_array($iId, $aIds)) {
+            if (!in_array($iId, $aIds ?? [])) {
                 show404();
             }
 
@@ -354,7 +356,7 @@ class Utilities extends Base
                 sprintf(
                     'Unused Objects%s',
                     !empty($aIds) ? ' (' . number_format(count($aIds)) . ')' : ''
-                )
+                ),
             ])
             ->loadView('unused');
     }
@@ -369,7 +371,7 @@ class Utilities extends Base
             $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
             /** @var Model\CdnObject $oModel */
             $oModel = Factory::model('Object', Constants::MODULE_SLUG);
-            /** @var Resource\CdnObject $oObject */
+            /** @var Resource\CdnObject|null $oObject */
             $oObject = $oModel->getById($iId);
 
             $oCdn->objectDelete($oObject->id);
@@ -387,8 +389,8 @@ class Utilities extends Base
                 ->oUserFeedback
                 ->error(sprintf(
                     'Failed to delete object #%s (%s): %s',
-                    $oObject->id,
-                    $oObject->file->name->human,
+                    $oObject->id ?? '',
+                    $oObject->file->name->human ?? '',
                     $e->getMessage()
                 ));
         }

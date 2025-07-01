@@ -25,7 +25,7 @@ class Migration14 implements Interfaces\Database\Migration
         'admin:cdn:manager:object:restore' => Permission\Object\Restore::class,
         'admin:cdn:manager:object:purge'   => Permission\Object\Trash\Purge::class,
         'admin:cdn:manager:bucket:create'  => Permission\Bucket\Create::class,
-        'admin:cdn:utilities:findorphan'   => Permission\Object\FindOrphan::class,
+        'admin:cdn:utilities:findorphan'   => null,
     ];
 
     // --------------------------------------------------------------------------
