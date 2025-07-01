@@ -43,7 +43,8 @@
         "nails/module-cron": "dev-develop",
         "sybio/gif-creator": "~1.0.0",
         "sybio/gif-frame-extractor": "~1.0.0",
-        "masterexploder/phpthumb": "dev-master"
+        "masterexploder/phpthumb": "dev-master",
+        "ext-gd": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "9.*",
