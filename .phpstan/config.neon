@@ -4,7 +4,7 @@ parameters:
         - ../helpers
         - ../src
         - ../tests
-    scanFiles:
-        - ../vendor/pocketarc/codeigniter/system/helpers/form_helper.php
-        - ../vendor/nails/common/helpers/url.php
-        - ../vendor/nails/module-auth/helpers/user.php
+    scanDirectories:
+        - ../vendor/pocketarc/codeigniter
+        - ../vendor/nails/common
+        - ../vendor/nails/module-auth
