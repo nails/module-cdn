@@ -21,6 +21,9 @@ use Nails\Common\Events\Base;
  */
 class Events extends Base
 {
+    const CONTROLLER_PRE  = 'CONTROLLER:PRE';
+    const CONTROLLER_POST = 'CONTROLLER:POST';
+
     const OBJECT_CREATE  = 'OBJECT:CREATE';
     const OBJECT_CREATED = 'OBJECT:CREATED';
 
