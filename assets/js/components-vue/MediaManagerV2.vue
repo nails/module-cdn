@@ -339,22 +339,21 @@
                         <span class="overall-progress__text">{{ Math.round(overallProgress) }}% Complete</span>
                     </div>
                     <div class="footer-buttons">
-                        <button class="cancel-button" @click="showUploadModal = false" :disabled="isUploading">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            </svg>
-                            Cancel
-                        </button>
-                        <button
-                            class="upload-button"
-                            @click="uploadFiles"
+                        <Button 
+                            variant="secondary" 
+                            text="Cancel" 
+                            icon="cancel" 
+                            @click="showUploadModal = false" 
+                            :disabled="isUploading"
+                        />
+                        <Button 
+                            variant="primary" 
+                            :text="isUploading ? 'Uploading...' : 'Upload'" 
+                            icon="upload" 
+                            @click="uploadFiles" 
                             :disabled="filesToUpload.length === 0 || !selectedUploadBucket.length || isUploading"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                            </svg>
-                            {{ isUploading ? 'Uploading...' : 'Upload' }}
-                        </button>
+                            :loading="isUploading"
+                        />
                     </div>
                 </div>
             </div>
@@ -441,22 +440,21 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="cancel-button" @click="closeEditModal" :disabled="isEditing">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                        Cancel
-                    </button>
-                    <button
-                        class="save-button"
-                        @click="saveObjectEdit"
+                    <Button 
+                        variant="secondary" 
+                        text="Cancel" 
+                        icon="cancel" 
+                        @click="closeEditModal" 
+                        :disabled="isEditing"
+                    />
+                    <Button 
+                        variant="primary" 
+                        :text="isEditing ? 'Saving...' : 'Save Changes'" 
+                        icon="save" 
+                        @click="saveObjectEdit" 
                         :disabled="!editingObject?.filename_display || isEditing"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                        {{ isEditing ? 'Saving...' : 'Save Changes' }}
-                    </button>
+                        :loading="isEditing"
+                    />
                 </div>
             </div>
         </div>
@@ -525,12 +523,12 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="cancel-button" @click="closeUrlCopyModal">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                        Close
-                    </button>
+                    <Button 
+                        variant="secondary" 
+                        text="Cancel" 
+                        icon="cancel" 
+                        @click="closeUrlCopyModal" 
+                    />
                 </div>
             </div>
         </div>
@@ -587,22 +585,21 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="cancel-button" @click="closeDeleteModal" :disabled="isDeleting">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                        Cancel
-                    </button>
-                    <button
-                        class="delete-button"
-                        @click="confirmDelete"
+                    <Button 
+                        variant="secondary" 
+                        text="Cancel" 
+                        icon="cancel" 
+                        @click="closeDeleteModal" 
                         :disabled="isDeleting"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        {{ isDeleting ? 'Deleting...' : 'Delete Object' }}
-                    </button>
+                    />
+                    <Button 
+                        variant="danger" 
+                        :text="isDeleting ? 'Deleting...' : 'Delete Object'" 
+                        icon="delete" 
+                        @click="confirmDelete" 
+                        :disabled="isDeleting"
+                        :loading="isDeleting"
+                    />
                 </div>
             </div>
         </div>
@@ -664,22 +661,21 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="cancel-button" @click="closeCreateBucketModal" :disabled="isCreatingBucket">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                        Cancel
-                    </button>
-                    <button
-                        class="save-button"
-                        @click="createBucket"
+                    <Button 
+                        variant="secondary" 
+                        text="Cancel" 
+                        icon="cancel" 
+                        @click="closeCreateBucketModal" 
+                        :disabled="isCreatingBucket"
+                    />
+                    <Button 
+                        variant="primary" 
+                        :text="isCreatingBucket ? 'Creating...' : 'Create Bucket'" 
+                        icon="add" 
+                        @click="createBucket" 
                         :disabled="!newBucketName || isCreatingBucket"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
-                        {{ isCreatingBucket ? 'Creating...' : 'Create Bucket' }}
-                    </button>
+                        :loading="isCreatingBucket"
+                    />
                 </div>
             </div>
         </div>
@@ -726,22 +722,21 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="cancel-button" @click="closeDeleteBucketModal" :disabled="isDeletingBucket">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                        Cancel
-                    </button>
-                    <button
-                        class="delete-button"
-                        @click="confirmDeleteBucket"
+                    <Button 
+                        variant="secondary" 
+                        text="Cancel" 
+                        icon="cancel" 
+                        @click="closeDeleteBucketModal" 
                         :disabled="isDeletingBucket"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        {{ isDeletingBucket ? 'Deleting...' : 'Delete Bucket' }}
-                    </button>
+                    />
+                    <Button 
+                        variant="danger" 
+                        :text="isDeletingBucket ? 'Deleting...' : 'Delete Bucket'" 
+                        icon="delete" 
+                        @click="confirmDeleteBucket" 
+                        :disabled="isDeletingBucket"
+                        :loading="isDeletingBucket"
+                    />
                 </div>
             </div>
         </div>
@@ -844,22 +839,21 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="cancel-button" @click="closeTrashModal" :disabled="isRestoring">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                        Close
-                    </button>
-                    <button
-                        class="restore-button upload-button"
-                        @click="restoreTrashedItems"
+                    <Button 
+                        variant="secondary" 
+                        text="Cancel" 
+                        icon="cancel" 
+                        @click="closeTrashModal" 
+                        :disabled="isRestoring"
+                    />
+                    <Button 
+                        variant="primary" 
+                        :text="isRestoring ? 'Restoring...' : 'Restore Selected'" 
+                        icon="restore" 
+                        @click="restoreTrashedItems" 
                         :disabled="selectedTrashedItems.length === 0 || isRestoring"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                        </svg>
-                        {{ isRestoring ? 'Restoring...' : 'Restore Selected' }}
-                    </button>
+                        :loading="isRestoring"
+                    />
                 </div>
             </div>
         </div>
@@ -874,6 +868,7 @@ import ObjectListItem from './MediaManagerV2/ObjectListItem.vue'
 import ObjectGridItem from './MediaManagerV2/ObjectGridItem.vue'
 import ReplaceFileModal from './MediaManagerV2/ReplaceFileModal.vue'
 import MoveCopyModal from './MediaManagerV2/MoveCopyModal.vue'
+import Button from './MediaManagerV2/Button.vue'
 
 export default {
     name: 'MediaManagerV2',
@@ -882,7 +877,8 @@ export default {
         ObjectListItem,
         ObjectGridItem,
         ReplaceFileModal,
-        MoveCopyModal
+        MoveCopyModal,
+        Button
     },
     props: {
         maxUploadSize: {
@@ -4365,6 +4361,7 @@ export default {
 .cancel-button,
 .upload-button,
 .save-button,
+.restore-button,
 .delete-button,
 .close-button {
     padding: 0.5rem 1rem;
@@ -4385,6 +4382,7 @@ export default {
     svg {
         width: 1rem;
         height: 1rem;
+        flex-shrink: 0;
     }
 }
 
@@ -4404,7 +4402,8 @@ export default {
 }
 
 .upload-button,
-.save-button {
+.save-button,
+.restore-button {
     background: #4f46e5;
     border: 1px solid transparent;
     color: white;

@@ -90,11 +90,21 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="cancel-button" @click="close" :disabled="isProcessing">Cancel</button>
-                <button class="submit-button" @click="submitForm" :disabled="!isValid || isProcessing">
-                    <span v-if="isProcessing" class="loading-spinner"></span>
-                    <span v-else>{{ isCopyMode ? 'Copy' : 'Move' }}</span>
-                </button>
+                <Button 
+                    variant="secondary" 
+                    text="Cancel" 
+                    icon="cancel" 
+                    @click="close" 
+                    :disabled="isProcessing"
+                />
+                <Button 
+                    variant="primary" 
+                    :text="isCopyMode ? 'Copy' : 'Move'" 
+                    icon="move" 
+                    @click="submitForm" 
+                    :disabled="!isValid || isProcessing"
+                    :loading="isProcessing"
+                />
             </div>
         </div>
     </div>
@@ -102,12 +112,14 @@
 
 <script>
 import MultiSelect from '../MultiSelect.vue'
+import Button from './Button.vue'
 import axios from 'axios'
 
 export default {
     name: 'MoveCopyModal',
     components: {
-        MultiSelect
+        MultiSelect,
+        Button
     },
     props: {
         object: {
@@ -413,6 +425,12 @@ export default {
     &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+    }
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
     }
 }
 
