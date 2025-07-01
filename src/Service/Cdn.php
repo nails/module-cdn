@@ -1273,6 +1273,7 @@ class Cdn
      * @param int $iErrorNumber The error number
      *
      * @return string
+     * @throws FactoryException
      */
     static function getUploadError(int $iErrorNumber): string
     {
