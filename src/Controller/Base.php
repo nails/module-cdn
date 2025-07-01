@@ -21,38 +21,11 @@ use Nails\Factory;
 // --------------------------------------------------------------------------
 
 /**
- * Allow the app to add functionality, if needed
- * Negative conditional helps with static analysis
- */
-if (!class_exists('\App\Cdn\Controller\Base')) {
-    abstract class BaseMiddle extends \Nails\Common\Controller\Base
-    {
-    }
-} else {
-    abstract class BaseMiddle extends \App\Cdn\Controller\Base
-    {
-        public function __construct()
-        {
-            if (!classExtends(parent::class, \Nails\Common\Controller\Base::class)) {
-                throw new NailsException(sprintf(
-                    'Class %s must extend %s',
-                    parent::class,
-                    \Nails\Common\Controller\Base::class
-                ));
-            }
-            parent::__construct();
-        }
-    }
-}
-
-// --------------------------------------------------------------------------
-
-/**
  * Class Base
  *
  * @package Nails\Cdn\Controller
  */
-abstract class Base extends BaseMiddle
+abstract class Base extends \Nails\Common\Controller\Base
 {
     /**
      * Supported pixel densities for automatic scaling
@@ -91,6 +64,14 @@ abstract class Base extends BaseMiddle
 
         /** @var \Nails\Cdn\Service\Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+        /** @var Event $oEvent */
+        $oEvent = Factory::service('Event');
+
+        // --------------------------------------------------------------------------
+
+        $oEvent->trigger(Events::CONTROLLER_PRE, Events::getEventNamespace());
+
+        // --------------------------------------------------------------------------
 
         $this->cdnRoot            = NAILS_PATH . 'module-cdn/cdn/';
         $this->cdnCache           = $oCdn->getCdnCachePublic();
@@ -111,6 +92,10 @@ abstract class Base extends BaseMiddle
 
         $this->isRetina         = false;
         $this->retinaMultiplier = 1;
+
+        // --------------------------------------------------------------------------
+
+        $oEvent->trigger(Events::CONTROLLER_POST, Events::getEventNamespace());
     }
 
     // --------------------------------------------------------------------------
