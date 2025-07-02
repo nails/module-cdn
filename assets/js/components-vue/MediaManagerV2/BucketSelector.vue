@@ -1,7 +1,9 @@
 <template>
     <div class="bucket-selector">
         <div class="bucket-selector__selected" @click="toggleDropdown">
-            <span v-if="selectedBuckets.length === 0" class="placeholder">{{ placeholder }}</span>
+            <span v-if="selectedBuckets.length === 0 || (singleSelect && !getSelectedBucketLabel())" class="placeholder">
+                {{ placeholder }}
+            </span>
             <span v-else-if="singleSelect" class="selected-label">
                 {{ getSelectedBucketLabel() }}
             </span>
@@ -65,8 +67,11 @@
 </template>
 
 <script>
+import Button from "./Button.vue";
+
 export default {
     name: 'BucketSelector',
+    components: {Button},
     props: {
         value: {
             type: [Array, Number, String],
