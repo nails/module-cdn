@@ -28,8 +28,7 @@
                         placeholder="Select buckets"
                         :single-select="false"
                         :show-actions="true"
-                        :bucket-actions="bucketActions"
-                        @bucket-action="handleBucketAction"
+                        @delete-bucket="handleDeleteBucket"
                         class="bucket-filter"
                     />
                     <button
@@ -551,31 +550,6 @@ export default {
                 this.dateLower ||
                 this.dateUpper
             );
-        },
-
-        bucketActions() {
-            return [
-                {
-                    id: 'delete',
-                    title: 'Delete Bucket',
-                    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>',
-                    class: 'delete-action',
-                    // Only show delete button for buckets with 0 objects
-                    condition: (bucket) => {
-                        // Parse the object_count string to get the number
-                        // The format is "X objects" or "1 object"
-                        const countStr = bucket.object_count;
-                        if (!countStr) return false;
-
-                        // Extract the number from the string
-                        const match = countStr.match(/^(\d+)/);
-                        if (!match) return false;
-
-                        const count = parseInt(match[1]);
-                        return count === 0;
-                    }
-                }
-            ];
         }
     },
 
@@ -626,14 +600,13 @@ export default {
                 this.loadingBuckets = true;
                 let buckets = await this.iterateOverApiPages(url);
 
-                // Format the object_count property to display as "X objects"
                 this.buckets = buckets.map(bucket => {
                     // Create a new object to avoid modifying the original
                     const formattedBucket = { ...bucket };
 
                     // Format the object_count property
                     if (formattedBucket.object_count !== undefined) {
-                        formattedBucket.object_count = `${formattedBucket.object_count} ${formattedBucket.object_count === 1 ? 'object' : 'objects'}`;
+                        formattedBucket.object_count_human = `${formattedBucket.object_count} ${formattedBucket.object_count === 1 ? 'object' : 'objects'}`;
                     }
 
                     return formattedBucket;
@@ -1469,6 +1442,13 @@ export default {
             } else {
                 this.selectedTrashedItems = this.trashedItems.map(item => item.id);
             }
+        },
+
+        handleDeleteBucket(bucket) {
+            this.bucketToDelete = bucket;
+            this.showDeleteBucketModal = true;
+            this.deleteBucketError = null;
+            this.deleteBucketSuccess = false;
         }
     }
 }

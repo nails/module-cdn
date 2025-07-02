@@ -36,23 +36,22 @@
                         />
                         <div class="option-content">
                             <span class="option-label">{{ bucket.label }}</span>
-                            <span v-if="bucket.object_count" class="option-sublabel">
-                                {{ bucket.object_count }}
+                            <span class="option-sublabel">
+                                {{ bucket.object_count_human }}
                             </span>
                         </div>
                     </label>
-                    <div class="option-actions" v-if="showActions && bucketActions.length > 0">
+                    <div class="option-actions" v-if="showActions && bucket.object_count === 0">
                         <button 
-                            v-for="(action, actionIndex) in bucketActions" 
-                            :key="actionIndex"
-                            v-if="action.condition ? action.condition(bucket) : true"
-                            class="option-action-button"
-                            :class="action.class"
-                            @click.stop="handleBucketAction(action, bucket)"
-                            :title="action.title"
+                            class="option-action-button delete-action"
+                            @click.stop="handleDeleteBucket(bucket)"
+                            title="Delete Bucket"
                         >
-                            <span v-if="action.icon" v-html="action.icon"></span>
-                            <span v-else>{{ action.label }}</span>
+                            <span class="icon-wrapper" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="display: block; margin: auto;">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -88,10 +87,6 @@ export default {
         showActions: {
             type: Boolean,
             default: false
-        },
-        bucketActions: {
-            type: Array,
-            default: () => []
         }
     },
     data() {
@@ -218,8 +213,8 @@ export default {
             const selectedBucket = this.buckets.find(bucket => bucket.id === this.selectedBuckets[0]);
             return selectedBucket ? selectedBucket.label : '';
         },
-        handleBucketAction(action, bucket) {
-            this.$emit('bucket-action', { action, bucket });
+        handleDeleteBucket(bucket) {
+            this.$emit('delete-bucket', bucket);
         },
         handleKeydown(event) {
             if (event.key === 'Escape' && this.isOpen) {
@@ -379,6 +374,8 @@ export default {
                         display: flex;
                         flex-direction: column;
                         flex-grow: 1;
+                        flex-shrink: 1;
+                        flex-basis: 0%;
                         min-width: 0;
                     }
 
@@ -388,6 +385,7 @@ export default {
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
+                        max-width: 100%;
                     }
 
                     .option-sublabel {
@@ -437,13 +435,16 @@ export default {
                         svg {
                             width: 14px;
                             height: 14px;
+                            display: block;
+                            vertical-align: middle;
+                            margin: auto;
                         }
                     }
                 }
             }
         }
 
-                .actions {
+        .actions {
             display: flex;
             justify-content: space-between;
             gap: 8px;
