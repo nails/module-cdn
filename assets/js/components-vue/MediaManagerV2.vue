@@ -280,67 +280,16 @@
         />
 
         <!-- Delete Confirmation Modal -->
-        <BaseModal
-            v-if="showDeleteModal"
-            :visible="true"
-            title="Delete File"
+        <DeleteModal
+            :visible="showDeleteModal"
+            :deletingObject="deletingObject"
+            :isDeleting="isDeleting"
+            :deleteError="deleteError"
+            :deleteSuccess="deleteSuccess"
+            :siteUrl="siteUrl"
             @close="closeDeleteModal"
-        >
-            <FilePreview
-                v-if="deletingObject"
-                :file="deletingObject"
-                :show-border="true"
-                :margin-bottom="true"
-            />
-            <div class="warning-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-                <div class="warning-content">
-                    <h4>Are you sure you want to delete this file?</h4>
-                </div>
-            </div>
-
-            <div v-if="deleteError" class="error-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                </svg>
-                {{ deleteError }}
-                <a
-                    v-if="deleteError.includes('Object is in use')"
-                    :href="`${siteUrl}/admin/cdn/utilities/usages?object=${deletingObject.id}`"
-                    target="_blank"
-                    class="check-usages-button"
-                >
-                    Check for usages
-                </a>
-            </div>
-
-            <div v-if="deleteSuccess" class="success-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-                Object deleted successfully!
-            </div>
-
-            <template #footer>
-                <Button 
-                    variant="secondary" 
-                    text="Cancel" 
-                    icon="cancel" 
-                    @click="closeDeleteModal" 
-                    :disabled="isDeleting"
-                />
-                <Button 
-                    variant="danger" 
-                    :text="isDeleting ? 'Deleting...' : 'Delete File'" 
-                    icon="delete" 
-                    @click="confirmDelete" 
-                    :disabled="isDeleting"
-                    :loading="isDeleting"
-                />
-            </template>
-        </BaseModal>
+            @confirm="confirmDelete"
+        />
 
         <replace-file-modal
             :visible="showReplaceModal"
@@ -568,6 +517,7 @@ import FilePreview from './MediaManagerV2/FilePreview.vue'
 import UploadModal from './MediaManagerV2/UploadModal.vue'
 import EditModal from './MediaManagerV2/EditModal.vue'
 import UrlCopyModal from './MediaManagerV2/UrlCopyModal.vue'
+import DeleteModal from './MediaManagerV2/DeleteModal.vue'
 
 export default {
     name: 'MediaManagerV2',
@@ -583,7 +533,8 @@ export default {
         FilePreview,
         UploadModal,
         EditModal,
-        UrlCopyModal
+        UrlCopyModal,
+        DeleteModal
     },
     props: {
         maxUploadSize: {
