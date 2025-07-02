@@ -258,98 +258,15 @@
         />
 
         <!-- Edit Modal -->
-        <BaseModal
-            v-if="showEditModal"
-            :visible="true"
-            title="Edit File"
+        <EditModal
+            :visible="showEditModal"
+            :editingObject="editingObject"
+            :isEditing="isEditing"
+            :editError="editError"
+            :editSuccess="editSuccess"
             @close="closeEditModal"
-        >
-            <div class="form-group">
-                <label for="filename_display">Filename</label>
-                <input
-                    type="text"
-                    id="filename_display"
-                    v-model="editingObject.filename_display"
-                    placeholder="Enter display name"
-                    :disabled="isEditing"
-                />
-            </div>
-            <div class="form-group">
-                <label>Metadata</label>
-                <div class="form-sub-label">Add any custom information about this file, this will be searchable</div>
-                <div class="metadata-editor">
-                    <div class="metadata-list">
-                        <div v-for="(item, index) in editingObject.metadata" :key="index" class="metadata-item">
-                            <input
-                                type="text"
-                                v-model="item.key"
-                                placeholder="Key"
-                                :disabled="isEditing"
-                                class="metadata-key"
-                            />
-                            <input
-                                type="text"
-                                v-model="item.value"
-                                placeholder="Value"
-                                :disabled="isEditing"
-                                class="metadata-value"
-                            />
-                            <button
-                                class="remove-button"
-                                @click="removeMetadata(index)"
-                                :disabled="isEditing"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <button
-                        class="add-button"
-                        @click="addMetadata"
-                        :disabled="isEditing"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
-                        Add Metadata
-                    </button>
-                </div>
-            </div>
-
-            <div v-if="editError" class="error-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                </svg>
-                {{ editError }}
-            </div>
-
-            <div v-if="editSuccess" class="success-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-                Object updated successfully!
-            </div>
-
-            <template #footer>
-                <Button 
-                    variant="secondary" 
-                    text="Cancel" 
-                    icon="cancel" 
-                    @click="closeEditModal" 
-                    :disabled="isEditing"
-                />
-                <Button 
-                    variant="primary" 
-                    :text="isEditing ? 'Saving...' : 'Save Changes'" 
-                    icon="save" 
-                    @click="saveObjectEdit" 
-                    :disabled="!editingObject?.filename_display || isEditing"
-                    :loading="isEditing"
-                />
-            </template>
-        </BaseModal>
+            @save="saveObjectEditFromModal"
+        />
 
         <!-- URL Copy Modal -->
         <BaseModal
@@ -706,6 +623,7 @@ import Button from './MediaManagerV2/Button.vue'
 import BaseModal from './MediaManagerV2/BaseModal.vue'
 import FilePreview from './MediaManagerV2/FilePreview.vue'
 import UploadModal from './MediaManagerV2/UploadModal.vue'
+import EditModal from './MediaManagerV2/EditModal.vue'
 
 export default {
     name: 'MediaManagerV2',
@@ -719,7 +637,8 @@ export default {
         Button,
         BaseModal,
         FilePreview,
-        UploadModal
+        UploadModal,
+        EditModal
     },
     props: {
         maxUploadSize: {
@@ -1752,6 +1671,11 @@ export default {
             this.dateUpper = null;
             this.page = 1;
             this.doSearch();
+        },
+
+        saveObjectEditFromModal(editedObject) {
+            this.editingObject = editedObject;
+            this.saveObjectEdit();
         }
     }
 }
