@@ -133,6 +133,8 @@ export default {
     border-bottom: 1px solid #e5e7eb;
     background: #f9fafb;
     min-height: 48px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
 }
 
 .base-modal-header h3 {
@@ -180,6 +182,8 @@ export default {
     padding: 12px 16px;
     background: #f9fafb;
     border-top: 1px solid #e5e7eb;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
 }
 
 /* Ensure the modal doesn't clip the dropdown when it's open */
