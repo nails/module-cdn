@@ -47,19 +47,18 @@
       <span class="overall-progress__text">{{ Math.round(overallProgress) }}% Complete</span>
     </div>
 
-    <div v-if="uploadError" class="error-message">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-      </svg>
-      {{ uploadError }}
-    </div>
-
-    <div v-if="uploadSuccess" class="success-message">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-      </svg>
-      Files uploaded successfully!
-    </div>
+    <Status
+      v-if="uploadError"
+      type="error"
+      :message="uploadError"
+      class="mb-2"
+    />
+    <Status
+      v-if="uploadSuccess"
+      type="success"
+      message="Files uploaded successfully!"
+      class="mb-2"
+    />
 
     <div class="file-list" v-if="filesToUpload.length > 0">
       <h4>Files to Upload ({{ filesToUpload.length }})</h4>
@@ -104,13 +103,15 @@
 import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 import BucketSelector from '../BucketSelector.vue';
+import Status from '../Status.vue';
 
 export default {
   name: 'ModalUpload',
   components: {
     ModalBase,
     Button,
-    BucketSelector
+    BucketSelector,
+    Status
   },
   props: {
     visible: {
@@ -303,29 +304,5 @@ export default {
 }
 .remove-button:hover {
   background: #fee2e2;
-}
-.error-message {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  border-radius: 6px;
-  color: #b91c1c;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.success-message {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: #ecfdf5;
-  border: 1px solid #d1fae5;
-  border-radius: 6px;
-  color: #047857;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 </style> 

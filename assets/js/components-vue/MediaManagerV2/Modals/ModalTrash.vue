@@ -44,18 +44,18 @@
         />
       </div>
     </div>
-    <div v-if="restoreError" class="error-message modal-message">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-      </svg>
-      {{ restoreError }}
-    </div>
-    <div v-if="restoreSuccess" class="success-message modal-message">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-      </svg>
-      Items restored successfully!
-    </div>
+    <Status
+      v-if="restoreError"
+      type="error"
+      :message="restoreError"
+      class="mb-2"
+    />
+    <Status
+      v-if="restoreSuccess"
+      type="success"
+      message="Items restored successfully!"
+      class="mb-2"
+    />
     <template #footer>
       <Button 
         variant="secondary" 
@@ -80,10 +80,11 @@
 import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 import FilePreview from '../FilePreview.vue';
+import Status from '../Status.vue';
 
 export default {
   name: 'ModalTrash',
-  components: { ModalBase, Button, FilePreview },
+  components: { ModalBase, Button, FilePreview, Status },
   props: {
     visible: { type: Boolean, default: false },
     trashedItems: { type: Array, default: () => [] },
@@ -223,39 +224,5 @@ export default {
 }
 .trashed-items-container :deep(.file-preview.selected:nth-child(even)) {
   background-color: #eef2ff !important;
-}
-.error-message.modal-message,
-.success-message.modal-message {
-  margin-top: 16px;
-  margin-bottom: 1rem;
-  padding: 12px 16px;
-  border-radius: 0.375rem;
-  display: flex;
-  align-items: center;
-  border-left: 4px solid;
-  animation: messageSlideIn 0.3s ease forwards;
-  font-size: 14px;
-}
-.success-message {
-  background-color: rgba(220, 252, 231, 0.6);
-  color: #15803d;
-  border-color: #22c55e;
-}
-.success-message svg {
-  color: #22c55e;
-  height: 1.25rem;
-  width: 1.25rem;
-  margin-right: 0.5rem;
-}
-.error-message {
-  background-color: rgba(254, 226, 226, 0.6);
-  color: #b91c1c;
-  border-color: #ef4444;
-}
-.error-message svg {
-  color: #ef4444;
-  height: 1.25rem;
-  width: 1.25rem;
-  margin-right: 0.5rem;
 }
 </style> 
