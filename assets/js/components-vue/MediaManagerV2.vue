@@ -21,16 +21,15 @@
                 <p class="sidebar__filter__title">Bucket</p>
                 <div class="loading" v-if="loadingBuckets"></div>
                 <div class="bucket-filter-container">
-                    <multi-select
+                    <bucket-selector
                         v-if="!loadingBuckets && buckets.length > 0"
                         v-model="selectedBuckets"
-                        :options="buckets"
-                        title="Buckets"
-                        sub-label-key="object_count"
-                        ref="bucketFilter"
-                        @dropdown-toggled="handleDropdownToggle('bucketFilter')"
-                        @option-action="handleBucketAction"
-                        :option-actions="bucketActions"
+                        :buckets="buckets"
+                        placeholder="Select buckets"
+                        :single-select="false"
+                        :show-actions="true"
+                        :bucket-actions="bucketActions"
+                        @bucket-action="handleBucketAction"
                         class="bucket-filter"
                     />
                     <button 
@@ -250,17 +249,11 @@
         </div>
 
         <!-- Upload Modal -->
-        <div class="modal-overlay" v-if="showUploadModal" @click.self="showUploadModal = false">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h3>Upload Files</h3>
-                    <button class="close-button" @click="showUploadModal = false">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body">
+        <BaseModal
+            :visible="showUploadModal"
+            title="Upload Files"
+            @close="showUploadModal = false"
+        >
                     <div 
                         class="upload-zone"
                         :class="{ 'drag-over': dragOver }"
@@ -289,13 +282,19 @@
 
                     <div class="bucket-selector">
                         <label>Select Bucket:</label>
-                        <multi-select
+                        <bucket-selector
                             v-model="selectedUploadBucket"
-                            :options="buckets"
-                            title="Bucket"
+                            :buckets="buckets"
+                            placeholder="Select upload bucket"
                             :single-select="true"
-                            :open-upwards="true"
                         />
+                    </div>
+
+                    <div class="overall-progress" v-if="isUploading">
+                        <div class="overall-progress__bar">
+                            <div class="overall-progress__fill" :style="{ width: overallProgress + '%' }"></div>
+                        </div>
+                        <span class="overall-progress__text">{{ Math.round(overallProgress) }}% Complete</span>
                     </div>
 
                     <div v-if="uploadError" class="error-message">
@@ -330,282 +329,253 @@
                             </button>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="overall-progress" v-if="isUploading">
-                        <div class="overall-progress__bar">
-                            <div class="overall-progress__fill" :style="{ width: overallProgress + '%' }"></div>
-                        </div>
-                        <span class="overall-progress__text">{{ Math.round(overallProgress) }}% Complete</span>
-                    </div>
-                    <div class="footer-buttons">
-                        <Button 
-                            variant="secondary" 
-                            text="Cancel" 
-                            icon="cancel" 
-                            @click="showUploadModal = false" 
-                            :disabled="isUploading"
-                        />
-                        <Button 
-                            variant="primary" 
-                            :text="isUploading ? 'Uploading...' : 'Upload'" 
-                            icon="upload" 
-                            @click="uploadFiles" 
-                            :disabled="filesToUpload.length === 0 || !selectedUploadBucket.length || isUploading"
-                            :loading="isUploading"
-                        />
-                    </div>
-                </div>
-            </div>
-        </div>
+        
+        <template #footer>
+            <Button 
+                variant="secondary" 
+                text="Cancel" 
+                icon="cancel" 
+                @click="showUploadModal = false" 
+                :disabled="isUploading"
+            />
+            <Button 
+                variant="primary" 
+                :text="isUploading ? 'Uploading...' : 'Upload'" 
+                icon="upload" 
+                @click="uploadFiles" 
+                :disabled="filesToUpload.length === 0 || !selectedUploadBucket.length || isUploading"
+                :loading="isUploading"
+            />
+        </template>
+        </BaseModal>
 
         <!-- Edit Modal -->
-        <div class="modal-overlay" v-if="showEditModal" @click.self="closeEditModal">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h3>Edit Object</h3>
-                    <button class="close-button" @click="closeEditModal">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="filename_display">Filename</label>
-                        <input
-                            type="text"
-                            id="filename_display"
-                            v-model="editingObject.filename_display"
-                            placeholder="Enter display name"
-                            :disabled="isEditing"
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label>Metadata</label>
-                        <div class="form-sub-label">Add any custom information about this file, this will be searchable</div>
-                        <div class="metadata-editor">
-                            <div class="metadata-list">
-                                <div v-for="(item, index) in editingObject.metadata" :key="index" class="metadata-item">
-                                    <input
-                                        type="text"
-                                        v-model="item.key"
-                                        placeholder="Key"
-                                        :disabled="isEditing"
-                                        class="metadata-key"
-                                    />
-                                    <input
-                                        type="text"
-                                        v-model="item.value"
-                                        placeholder="Value"
-                                        :disabled="isEditing"
-                                        class="metadata-value"
-                                    />
-                                    <button
-                                        class="remove-button"
-                                        @click="removeMetadata(index)"
-                                        :disabled="isEditing"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
+        <BaseModal
+            v-if="showEditModal"
+            :visible="true"
+            title="Edit File"
+            @close="closeEditModal"
+        >
+            <div class="form-group">
+                <label for="filename_display">Filename</label>
+                <input
+                    type="text"
+                    id="filename_display"
+                    v-model="editingObject.filename_display"
+                    placeholder="Enter display name"
+                    :disabled="isEditing"
+                />
+            </div>
+            <div class="form-group">
+                <label>Metadata</label>
+                <div class="form-sub-label">Add any custom information about this file, this will be searchable</div>
+                <div class="metadata-editor">
+                    <div class="metadata-list">
+                        <div v-for="(item, index) in editingObject.metadata" :key="index" class="metadata-item">
+                            <input
+                                type="text"
+                                v-model="item.key"
+                                placeholder="Key"
+                                :disabled="isEditing"
+                                class="metadata-key"
+                            />
+                            <input
+                                type="text"
+                                v-model="item.value"
+                                placeholder="Value"
+                                :disabled="isEditing"
+                                class="metadata-value"
+                            />
                             <button
-                                class="add-button"
-                                @click="addMetadata"
+                                class="remove-button"
+                                @click="removeMetadata(index)"
                                 :disabled="isEditing"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
-                                Add Metadata
                             </button>
                         </div>
                     </div>
-
-                    <div v-if="editError" class="error-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        {{ editError }}
-                    </div>
-
-                    <div v-if="editSuccess" class="success-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        Object updated successfully!
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <Button 
-                        variant="secondary" 
-                        text="Cancel" 
-                        icon="cancel" 
-                        @click="closeEditModal" 
+                    <button
+                        class="add-button"
+                        @click="addMetadata"
                         :disabled="isEditing"
-                    />
-                    <Button 
-                        variant="primary" 
-                        :text="isEditing ? 'Saving...' : 'Save Changes'" 
-                        icon="save" 
-                        @click="saveObjectEdit" 
-                        :disabled="!editingObject?.filename_display || isEditing"
-                        :loading="isEditing"
-                    />
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Metadata
+                    </button>
                 </div>
             </div>
-        </div>
+
+            <div v-if="editError" class="error-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                {{ editError }}
+            </div>
+
+            <div v-if="editSuccess" class="success-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Object updated successfully!
+            </div>
+
+            <template #footer>
+                <Button 
+                    variant="secondary" 
+                    text="Cancel" 
+                    icon="cancel" 
+                    @click="closeEditModal" 
+                    :disabled="isEditing"
+                />
+                <Button 
+                    variant="primary" 
+                    :text="isEditing ? 'Saving...' : 'Save Changes'" 
+                    icon="save" 
+                    @click="saveObjectEdit" 
+                    :disabled="!editingObject?.filename_display || isEditing"
+                    :loading="isEditing"
+                />
+            </template>
+        </BaseModal>
 
         <!-- URL Copy Modal -->
-        <div class="modal-overlay" v-if="showUrlCopyModal" @click.self="closeUrlCopyModal">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h3>Copy URL</h3>
-                    <button class="close-button" @click="closeUrlCopyModal">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+        <BaseModal
+            v-if="showUrlCopyModal"
+            :visible="true"
+            title="Copy URL"
+            @close="closeUrlCopyModal"
+        >
+            <div class="form-group">
+                <label>Source URL</label>
+                <div class="url-input-group">
+                    <textarea
+                        v-model="urlToCopy.src"
+                        readonly
+                        rows="2"
+                        ref="srcTextarea"
+                    ></textarea>
+                    <button class="copy-button" @click="copyUrlFromTextarea('src')" title="Copy source URL">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Source URL</label>
-                        <div class="url-input-group">
-                            <textarea
-                                v-model="urlToCopy.src"
-                                readonly
-                                rows="2"
-                                ref="srcTextarea"
-                            ></textarea>
-                            <button class="copy-button" @click="copyUrlFromTextarea('src')" title="Copy source URL">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="url-description">Use this URL to display the file in a webpage or embed it in content. If accessed directly the browser will attempt to render it in-window (works well for images and PDFs)</div>
-                    </div>
-                    <div class="form-group">
-                        <label>Download URL</label>
-                        <div class="url-input-group">
-                            <textarea
-                                v-model="urlToCopy.download"
-                                readonly
-                                rows="2"
-                                ref="downloadTextarea"
-                            ></textarea>
-                            <button class="copy-button" @click="copyUrlFromTextarea('download')" title="Copy download URL">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="url-description">Use this URL to force the browser to download the file instead of displaying it. The file will download to the user's device as "{{ urlToCopy.humanName || 'human-name.ext' }}"</div>
-                    </div>
-
-                    <div v-if="urlCopyError" class="error-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        {{ urlCopyError }}
-                    </div>
-
-                    <div v-if="urlCopySuccess" class="success-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        URL copied to clipboard!
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <Button 
-                        variant="secondary" 
-                        text="Cancel" 
-                        icon="cancel" 
-                        @click="closeUrlCopyModal" 
-                    />
-                </div>
+                <div class="url-description">Use this URL to display the file in a webpage or embed it in content. If accessed directly the browser will attempt to render it in-window (works well for images and PDFs)</div>
             </div>
-        </div>
+            <div class="form-group">
+                <label>Download URL</label>
+                <div class="url-input-group">
+                    <textarea
+                        v-model="urlToCopy.download"
+                        readonly
+                        rows="2"
+                        ref="downloadTextarea"
+                    ></textarea>
+                    <button class="copy-button" @click="copyUrlFromTextarea('download')" title="Copy download URL">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="url-description">Use this URL to force the browser to download the file instead of displaying it. The file will download to the user's device as "{{ urlToCopy.humanName || 'human-name.ext' }}"</div>
+            </div>
+
+            <div v-if="urlCopyError" class="error-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                {{ urlCopyError }}
+            </div>
+
+            <div v-if="urlCopySuccess" class="success-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                URL copied to clipboard!
+            </div>
+
+            <template #footer>
+                <Button 
+                    variant="secondary" 
+                    text="Cancel" 
+                    icon="cancel" 
+                    @click="closeUrlCopyModal" 
+                />
+            </template>
+        </BaseModal>
 
         <!-- Delete Confirmation Modal -->
-        <div class="modal-overlay" v-if="showDeleteModal" @click.self="closeDeleteModal">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h3>Delete Object</h3>
-                    <button class="close-button" @click="closeDeleteModal">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="warning-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        <div class="warning-content">
-                            <h4>Are you sure you want to delete this object?</h4>
-                            <p>The following object will be deleted:</p>
-                            <div class="object-details">
-                                <strong>Name:</strong> {{ deletingObject?.file?.name?.human }}
-                                <br>
-                                <strong>Type:</strong> {{ deletingObject?.group }}
-                                <br>
-                                <strong>Size:</strong> {{ deletingObject?.file?.size?.human }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-if="deleteError" class="error-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        {{ deleteError }}
-                        <a
-                            v-if="deleteError.includes('Object is in use')"
-                            :href="`${siteUrl}/admin/cdn/utilities/usages?object=${deletingObject.id}`"
-                            target="_blank"
-                            class="check-usages-button"
-                        >
-                            Check for usages
-                        </a>
-                    </div>
-
-                    <div v-if="deleteSuccess" class="success-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        Object deleted successfully!
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <Button 
-                        variant="secondary" 
-                        text="Cancel" 
-                        icon="cancel" 
-                        @click="closeDeleteModal" 
-                        :disabled="isDeleting"
-                    />
-                    <Button 
-                        variant="danger" 
-                        :text="isDeleting ? 'Deleting...' : 'Delete Object'" 
-                        icon="delete" 
-                        @click="confirmDelete" 
-                        :disabled="isDeleting"
-                        :loading="isDeleting"
-                    />
+        <BaseModal
+            v-if="showDeleteModal"
+            :visible="true"
+            title="Delete File"
+            @close="closeDeleteModal"
+        >
+            <FilePreview
+                v-if="deletingObject"
+                :file="deletingObject"
+                :show-border="true"
+                :margin-bottom="true"
+            />
+            <div class="warning-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <div class="warning-content">
+                    <h4>Are you sure you want to delete this file?</h4>
                 </div>
             </div>
-        </div>
+
+            <div v-if="deleteError" class="error-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                {{ deleteError }}
+                <a
+                    v-if="deleteError.includes('Object is in use')"
+                    :href="`${siteUrl}/admin/cdn/utilities/usages?object=${deletingObject.id}`"
+                    target="_blank"
+                    class="check-usages-button"
+                >
+                    Check for usages
+                </a>
+            </div>
+
+            <div v-if="deleteSuccess" class="success-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Object deleted successfully!
+            </div>
+
+            <template #footer>
+                <Button 
+                    variant="secondary" 
+                    text="Cancel" 
+                    icon="cancel" 
+                    @click="closeDeleteModal" 
+                    :disabled="isDeleting"
+                />
+                <Button 
+                    variant="danger" 
+                    :text="isDeleting ? 'Deleting...' : 'Delete File'" 
+                    icon="delete" 
+                    @click="confirmDelete" 
+                    :disabled="isDeleting"
+                    :loading="isDeleting"
+                />
+            </template>
+        </BaseModal>
 
         <replace-file-modal
-            v-if="showReplaceModal"
+            :visible="showReplaceModal"
             :object="replacingObject"
             :site-url="siteUrl"
             :max-upload-size="maxUploadSize"
@@ -615,6 +585,7 @@
 
         <move-copy-modal
             v-if="showMoveCopyModal"
+            :visible="true"
             :object="moveCopyObject"
             :buckets="buckets"
             :site-url="siteUrl"
@@ -623,240 +594,194 @@
         />
 
         <!-- Create Bucket Modal -->
-        <div class="modal-overlay" v-if="showCreateBucketModal" @click.self="closeCreateBucketModal">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h3>Create New Bucket</h3>
-                    <button class="close-button" @click="closeCreateBucketModal">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="bucket-name">Bucket Name</label>
-                        <input
-                            type="text"
-                            id="bucket-name"
-                            v-model="newBucketName"
-                            placeholder="Enter bucket name"
-                            :disabled="isCreatingBucket"
-                            @keyup.enter="createBucket"
-                        />
-                    </div>
-
-                    <div v-if="createBucketError" class="error-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        {{ createBucketError }}
-                    </div>
-
-                    <div v-if="createBucketSuccess" class="success-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        Bucket created successfully!
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <Button 
-                        variant="secondary" 
-                        text="Cancel" 
-                        icon="cancel" 
-                        @click="closeCreateBucketModal" 
-                        :disabled="isCreatingBucket"
-                    />
-                    <Button 
-                        variant="primary" 
-                        :text="isCreatingBucket ? 'Creating...' : 'Create Bucket'" 
-                        icon="add" 
-                        @click="createBucket" 
-                        :disabled="!newBucketName || isCreatingBucket"
-                        :loading="isCreatingBucket"
-                    />
-                </div>
+        <BaseModal
+            v-if="showCreateBucketModal"
+            :visible="true"
+            title="Create New Bucket"
+            @close="closeCreateBucketModal"
+        >
+            <div class="form-group">
+                <label for="bucket-name">Bucket Name</label>
+                <input
+                    type="text"
+                    id="bucket-name"
+                    v-model="newBucketName"
+                    placeholder="Enter bucket name"
+                    :disabled="isCreatingBucket"
+                    @keyup.enter="createBucket"
+                />
             </div>
-        </div>
+
+            <div v-if="createBucketError" class="error-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                {{ createBucketError }}
+            </div>
+
+            <div v-if="createBucketSuccess" class="success-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Bucket created successfully!
+            </div>
+        
+        <template #footer>
+            <Button 
+                variant="secondary" 
+                text="Cancel" 
+                icon="cancel" 
+                @click="closeCreateBucketModal" 
+                :disabled="isCreatingBucket"
+            />
+            <Button 
+                variant="primary" 
+                :text="isCreatingBucket ? 'Creating...' : 'Create Bucket'" 
+                icon="add" 
+                @click="createBucket" 
+                :disabled="!newBucketName || isCreatingBucket"
+                :loading="isCreatingBucket"
+            />
+        </template>
+        </BaseModal>
 
         <!-- Delete Bucket Confirmation Modal -->
-        <div class="modal-overlay" v-if="showDeleteBucketModal" @click.self="closeDeleteBucketModal">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h3>Delete Bucket</h3>
-                    <button class="close-button" @click="closeDeleteBucketModal">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="warning-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        <div class="warning-content">
-                            <h4>Are you sure you want to delete this bucket?</h4>
-                            <p>This action cannot be undone. The following bucket will be deleted:</p>
-                            <div class="object-details">
-                                <strong>Name:</strong> {{ bucketToDelete?.label }}
-                                <br>
-                                <strong>ID:</strong> {{ bucketToDelete?.id }}
-                            </div>
-                        </div>
+        <BaseModal
+            v-if="showDeleteBucketModal"
+            :visible="true"
+            title="Delete Bucket"
+            @close="closeDeleteBucketModal"
+        >
+            <div class="warning-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <div class="warning-content">
+                    <h4>Are you sure you want to delete this bucket?</h4>
+                    <p>This action cannot be undone. The following bucket will be deleted:</p>
+                    <div class="object-details">
+                        <strong>Name:</strong> {{ bucketToDelete?.label }}<br>
+                        <strong>ID:</strong> {{ bucketToDelete?.id }}
                     </div>
-
-                    <div v-if="deleteBucketError" class="error-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        {{ deleteBucketError }}
-                    </div>
-
-                    <div v-if="deleteBucketSuccess" class="success-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        Bucket deleted successfully!
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <Button 
-                        variant="secondary" 
-                        text="Cancel" 
-                        icon="cancel" 
-                        @click="closeDeleteBucketModal" 
-                        :disabled="isDeletingBucket"
-                    />
-                    <Button 
-                        variant="danger" 
-                        :text="isDeletingBucket ? 'Deleting...' : 'Delete Bucket'" 
-                        icon="delete" 
-                        @click="confirmDeleteBucket" 
-                        :disabled="isDeletingBucket"
-                        :loading="isDeletingBucket"
-                    />
                 </div>
             </div>
-        </div>
+
+            <div v-if="deleteBucketError" class="error-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                {{ deleteBucketError }}
+            </div>
+
+            <div v-if="deleteBucketSuccess" class="success-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Bucket deleted successfully!
+            </div>
+
+            <template #footer>
+                <Button 
+                    variant="secondary" 
+                    text="Cancel" 
+                    icon="cancel" 
+                    @click="closeDeleteBucketModal" 
+                    :disabled="isDeletingBucket"
+                />
+                <Button 
+                    variant="danger" 
+                    :text="isDeletingBucket ? 'Deleting...' : 'Delete Bucket'" 
+                    icon="delete" 
+                    @click="confirmDeleteBucket" 
+                    :disabled="isDeletingBucket"
+                    :loading="isDeletingBucket"
+                />
+            </template>
+        </BaseModal>
 
         <!-- Trash Modal -->
-        <div class="modal-overlay" v-if="showTrashModal" @click.self="closeTrashModal">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h3>Trash</h3>
-                    <button class="close-button" @click="closeTrashModal">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div v-if="loadingTrashedItems" class="loading-container">
-                        <div class="loading-spinner"></div>
-                        <p>Loading trashed items...</p>
+        <BaseModal
+            v-if="showTrashModal"
+            :visible="true"
+            title="Trash"
+            @close="closeTrashModal"
+        >
+            <div v-if="loadingTrashedItems" class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Loading trashed items...</p>
+            </div>
+
+            <div v-else-if="trashedItems.length === 0" class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="empty-icon">
+                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <p>No items in trash</p>
+            </div>
+
+            <div v-else class="trashed-items-list">
+                <div class="trashed-items-header">
+                    <div class="select-all-container">
+                        <label class="select-all-label">
+                            <input 
+                                type="checkbox" 
+                                :checked="selectedTrashedItems.length === trashedItems.length" 
+                                @change="selectedTrashedItems = selectedTrashedItems.length === trashedItems.length ? [] : trashedItems.map(item => item.id)"
+                            />
+                            <span>Select All</span>
+                        </label>
                     </div>
-
-                    <div v-else-if="trashedItems.length === 0" class="empty-state">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="empty-icon">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        <p>No items in trash</p>
-                    </div>
-
-                    <div v-else class="trashed-items-list">
-                        <div class="trashed-items-header">
-                            <div class="select-all-container">
-                                <label class="select-all-label">
-                                    <input 
-                                        type="checkbox" 
-                                        :checked="selectedTrashedItems.length === trashedItems.length" 
-                                        @change="selectedTrashedItems = selectedTrashedItems.length === trashedItems.length ? [] : trashedItems.map(item => item.id)"
-                                    />
-                                    <span>Select All</span>
-                                </label>
-                            </div>
-                            <div class="selection-info" v-if="selectedTrashedItems.length > 0">
-                                {{ selectedTrashedItems.length }} item{{ selectedTrashedItems.length > 1 ? 's' : '' }} selected
-                            </div>
-                        </div>
-
-                        <div class="trashed-items-container">
-                            <div 
-                                v-for="item in trashedItems" 
-                                :key="item.id" 
-                                class="trashed-item"
-                                :class="{ 'selected': selectedTrashedItems.includes(item.id) }"
-                                @click="toggleTrashedItem(item.id)"
-                                style="cursor: pointer;"
-                            >
-                                <div class="trashed-item-checkbox" @click.stop>
-                                    <input 
-                                        type="checkbox" 
-                                        :checked="selectedTrashedItems.includes(item.id)" 
-                                        @change="toggleTrashedItem(item.id)"
-                                    />
-                                </div>
-                                <div class="trashed-item-thumbnail">
-                                    <img 
-                                        v-if="item.is_img" 
-                                        :src="item.url.thumb?.list" 
-                                        :alt="item.file.name.human" 
-                                        class="thumbnail"
-                                    />
-                                    <div v-else class="file-icon">
-                                        <span>{{ item.file.ext.toUpperCase() }}</span>
-                                    </div>
-                                </div>
-                                <div class="trashed-item-details">
-                                    <div class="trashed-item-name">{{ item.file.name.human }}</div>
-                                    <div class="trashed-item-meta">
-                                        <span class="trashed-item-type">{{ item.group }}</span>
-                                        <span class="trashed-item-separator">•</span>
-                                        <span class="trashed-item-size">{{ item.file.size.human }}</span>
-                                        <span class="trashed-item-separator">•</span>
-                                        <span class="trashed-item-date">{{ item.created.formatted }}</span>
-                                    </div>
-                                    <div class="trashed-item-bucket">{{ item.bucket.label }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-if="restoreError" class="error-message modal-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        {{ restoreError }}
-                    </div>
-
-                    <div v-if="restoreSuccess" class="success-message modal-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        Items restored successfully!
+                    <div class="selection-info" v-if="selectedTrashedItems.length > 0">
+                        {{ selectedTrashedItems.length }} item{{ selectedTrashedItems.length > 1 ? 's' : '' }} selected
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <Button 
-                        variant="secondary" 
-                        text="Cancel" 
-                        icon="cancel" 
-                        @click="closeTrashModal" 
-                        :disabled="isRestoring"
-                    />
-                    <Button 
-                        variant="primary" 
-                        :text="isRestoring ? 'Restoring...' : 'Restore Selected'" 
-                        icon="restore" 
-                        @click="restoreTrashedItems" 
-                        :disabled="selectedTrashedItems.length === 0 || isRestoring"
-                        :loading="isRestoring"
+
+                <div class="trashed-items-container">
+                    <FilePreview
+                        v-for="item in trashedItems" 
+                        :key="item.id" 
+                        :file="item"
+                        :show-checkbox="true"
+                        :is-selected="selectedTrashedItems.includes(item.id)"
+                        :container-class="'clickable'"
+                        :show-border="false"
+                        @click="toggleTrashedItem(item.id)"
+                        @selection-change="(selected) => toggleTrashedItem(item.id)"
                     />
                 </div>
             </div>
-        </div>
+
+            <div v-if="restoreError" class="error-message modal-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                {{ restoreError }}
+            </div>
+
+            <div v-if="restoreSuccess" class="success-message modal-message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Items restored successfully!
+            </div>
+
+            <template #footer>
+                <Button 
+                    variant="secondary" 
+                    text="Cancel" 
+                    icon="cancel" 
+                    @click="closeTrashModal" 
+                    :disabled="isRestoring"
+                />
+                <Button 
+                    variant="primary" 
+                    :text="isRestoring ? 'Restoring...' : 'Restore Selected'" 
+                    icon="restore" 
+                    @click="restoreTrashedItems" 
+                    :disabled="selectedTrashedItems.length === 0 || isRestoring"
+                    :loading="isRestoring"
+                />
+            </template>
+        </BaseModal>
     </div>
 </template>
 
@@ -864,21 +789,27 @@
 import axios from 'axios';
 import { debounce } from 'lodash'
 import MultiSelect from './MultiSelect.vue'
+import BucketSelector from './MediaManagerV2/BucketSelector.vue'
 import ObjectListItem from './MediaManagerV2/ObjectListItem.vue'
 import ObjectGridItem from './MediaManagerV2/ObjectGridItem.vue'
 import ReplaceFileModal from './MediaManagerV2/ReplaceFileModal.vue'
 import MoveCopyModal from './MediaManagerV2/MoveCopyModal.vue'
 import Button from './MediaManagerV2/Button.vue'
+import BaseModal from './MediaManagerV2/BaseModal.vue'
+import FilePreview from './MediaManagerV2/FilePreview.vue'
 
 export default {
     name: 'MediaManagerV2',
     components: {
         MultiSelect,
+        BucketSelector,
         ObjectListItem,
         ObjectGridItem,
         ReplaceFileModal,
         MoveCopyModal,
-        Button
+        Button,
+        BaseModal,
+        FilePreview
     },
     props: {
         maxUploadSize: {
@@ -1302,10 +1233,10 @@ export default {
             });
         },
 
-        async handleBucketAction({ action, option }) {
+        async handleBucketAction({ action, bucket }) {
             if (action.id === 'delete') {
                 // Show delete confirmation modal
-                this.bucketToDelete = option;
+                this.bucketToDelete = bucket;
                 this.showDeleteBucketModal = true;
                 this.deleteBucketError = null;
                 this.deleteBucketSuccess = false;
@@ -1634,7 +1565,7 @@ export default {
                 }, 1500);
             } catch (error) {
                 console.error('Delete failed:', error);
-                this.deleteError = error.response?.data?.error || 'Failed to delete object';
+                this.deleteError = error.response?.data?.error || 'Failed to delete file';
                 this.isDeleting = false; // Only reset isDeleting on error
             }
         },
@@ -4157,6 +4088,8 @@ export default {
     border-top: 1px solid #e5e7eb;
 }
 
+
+
 /* Form Elements */
 .form-group {
     margin-bottom: 1rem;
@@ -4494,7 +4427,6 @@ export default {
         }
 
         .object-details {
-            font-size: 0.75rem;
             color: #78350f;
             line-height: 1.5;
         }
@@ -4661,95 +4593,40 @@ export default {
         border-bottom-right-radius: 6px;
         max-height: 400px;
         overflow-y: auto;
+        background: #ffffff;
 
-        .trashed-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
+        /* Table-like styling for FilePreview components */
+        .file-preview {
             border-bottom: 1px solid #e5e7eb;
-            transition: background-color 0.2s ease;
+            border-radius: 0;
+            margin: 0;
+            padding: 0.75rem 1rem;
+            transition: background-color 0.15s ease;
 
             &:last-child {
                 border-bottom: none;
             }
 
-            &:hover {
+            &:nth-child(even) {
                 background-color: #f9fafb;
             }
 
+            &:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            &:hover {
+                background-color: #f3f4f6 !important;
+                border-color: #d1d5db;
+            }
+
             &.selected {
-                background-color: #eff6ff;
+                background-color: #eef2ff !important;
+                border-left: 3px solid #4f46e5;
             }
 
-            .trashed-item-checkbox {
-                margin-right: 1rem;
-
-                input[type="checkbox"] {
-                    width: 1rem;
-                    height: 1rem;
-                }
-            }
-
-            .trashed-item-thumbnail {
-                width: 3rem;
-                height: 3rem;
-                margin-right: 1rem;
-                flex-shrink: 0;
-
-                .thumbnail {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    border-radius: 4px;
-                }
-
-                .file-icon {
-                    width: 100%;
-                    height: 100%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #f3f4f6;
-                    border-radius: 4px;
-                    color: #6b7280;
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                }
-            }
-
-            .trashed-item-details {
-                flex: 1;
-                min-width: 0;
-
-                .trashed-item-name {
-                    font-weight: 500;
-                    color: #111827;
-                    margin-bottom: 0.25rem;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-
-                .trashed-item-meta {
-                    display: flex;
-                    align-items: center;
-                    font-size: 0.75rem;
-                    color: #6b7280;
-                    margin-bottom: 0.25rem;
-
-                    .trashed-item-separator {
-                        margin: 0 0.25rem;
-                    }
-                }
-
-                .trashed-item-bucket {
-                    font-size: 0.75rem;
-                    color: #4b5563;
-                    background: #e5e7eb;
-                    padding: 0.125rem 0.375rem;
-                    border-radius: 9999px;
-                    display: inline-block;
-                }
+            &.selected:nth-child(even) {
+                background-color: #eef2ff !important;
             }
         }
     }

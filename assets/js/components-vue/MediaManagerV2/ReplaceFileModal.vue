@@ -1,39 +1,20 @@
 <template>
-    <div class="modal-overlay" @click.self="close">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3>Replace File</h3>
-                <button class="close-button" @click="close">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="file-details">
-                    <div class="file-preview">
-                        <img
-                            v-if="object.is_img"
-                            :src="object.url.thumb.grid"
-                            :alt="object.file.name.human"
-                            class="preview-image"
-                        />
-                        <div v-else class="file-icon">
-                            <span>{{ object.file.ext.toUpperCase() }}</span>
-                        </div>
-                    </div>
-                    <div class="file-info">
-                        <p class="filename">{{ object.file.name.human }}</p>
-                        <div class="file-details-meta">
-                            <span class="file-type">{{ object.group }}</span>
-                            <span class="file-size">{{ object.file.size.human }}</span>
-                        </div>
-                        <div class="bucket-container">
-                            <span class="bucket">{{ object.bucket.label }}</span>
-                        </div>
-                    </div>
+    <BaseModal
+        :visible="visible"
+        title="Replace File"
+        @close="close"
+    >
+                <div v-if="!object" class="no-object-message">
+                    <p>No file selected for replacement.</p>
                 </div>
-                <p>Replace the file identified above with a file of the same type. This process will ensure that all references to the old file are maintained. <strong>Be aware that intermediate systems may cache the old file for a period of time.</strong></p>
+                <div v-else>
+                    <FilePreview 
+                        :file="object"
+                        :show-checkbox="false"
+                        :show-date="false"
+                        :margin-bottom="true"
+                    />
+                    <p>Replace the file identified above with a file of the same type. This process will ensure that all references to the old file are maintained. <strong>Be aware that intermediate systems may cache the old file for a period of time.</strong></p>
                 <div 
                     class="upload-zone"
                     :class="{ 
@@ -61,7 +42,7 @@
                         </div>
                         <div class="upload-text">
                             <p class="primary-text">Drag and drop files here or click to browse</p>
-                            <p class="secondary-text">Max file size: {{ formatFileSize(maxUploadSize) }} · Only {{ object.file.ext.toUpperCase() }} files are allowed</p>
+                            <p class="secondary-text">Max file size: {{ formatFileSize(maxUploadSize) }} · Only {{ object?.file?.ext?.toUpperCase() || 'FILE' }} files are allowed</p>
                         </div>
                     </div>
                     <div v-else class="selected-file">
@@ -90,8 +71,9 @@
                     </svg>
                     File replaced successfully!
                 </div>
-            </div>
-            <div class="modal-footer">
+                </div>
+
+            <template #footer>
                 <Button 
                     variant="secondary" 
                     text="Cancel" 
@@ -107,24 +89,32 @@
                     :disabled="!selectedFile || isUploading"
                     :loading="isUploading"
                 />
-            </div>
-        </div>
-    </div>
+            </template>
+        </BaseModal>
 </template>
 
 <script>
+import BaseModal from './BaseModal.vue'
 import Button from './Button.vue'
+import FilePreview from './FilePreview.vue'
 
 export default {
     name: 'ReplaceFileModal',
     components: {
-        Button
+        BaseModal,
+        Button,
+        FilePreview
     },
 
     props: {
+        visible: {
+            type: Boolean,
+            default: false
+        },
         object: {
             type: Object,
-            required: true
+            required: false,
+            default: null
         },
         siteUrl: {
             type: String,
@@ -172,7 +162,13 @@ export default {
             if (!file) return;
 
             const fileExtension = file.name.split('.').pop().toLowerCase();
-            const allowedExtension = this.object.file.ext.toLowerCase();
+            const allowedExtension = this.object?.file?.ext?.toLowerCase();
+            
+            if (!allowedExtension) {
+                this.error = 'Unable to determine file type. Please try again.';
+                this.selectedFile = null;
+                return;
+            }
 
             if (fileExtension !== allowedExtension) {
                 this.error = `Only ${allowedExtension} files are allowed. Selected file is ${fileExtension}`;
@@ -205,7 +201,7 @@ export default {
             this.success = false;
 
             const formData = new FormData();
-            formData.append('object_id', this.object.id);
+            formData.append('object_id', this.object?.id);
             formData.append('file', this.selectedFile);
 
             try {
@@ -238,152 +234,17 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
+
+/* Modal body content styling */
+p {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
 }
 
-.modal-container {
-    background: white;
-    border-radius: 8px;
-    width: 100%;
-    max-width: 500px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    overflow: hidden;
-}
-
-.modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
-
-    h3 {
-        margin: 0;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #4b5563;
-    }
-
-    .close-button {
-        background: none;
-        border: none;
-        padding: 0.25rem;
-        cursor: pointer;
-        color: #6b7280;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        &:hover {
-            background: #e5e7eb;
-            color: #4b5563;
-        }
-
-        svg {
-            width: 1rem;
-            height: 1rem;
-        }
-    }
-}
-
-.modal-body {
-    padding: 1rem;
-    max-height: calc(100vh - 200px);
-    overflow-y: auto;
-    overflow-x: visible; /* Allow dropdowns to extend beyond the modal body */
-    position: relative; /* Create a new stacking context */
-
-    > p {
-        color: #6b7280;
-        font-size: 13px;
-        margin-bottom: 14px;
-    }
-}
-
-.file-details {
-    display: flex;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-}
-
-.file-preview {
-    width: 80px;
-    height: 80px;
-    margin-right: 1rem;
-    flex-shrink: 0;
-
-    .preview-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 4px;
-    }
-
-    .file-icon {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f3f4f6;
-        border-radius: 4px;
-        color: #6b7280;
-        font-size: 1rem;
-        font-weight: 600;
-    }
-}
-
-.file-info {
-    flex: 1;
-    min-width: 0;
-
-    .filename {
-        margin: 0 0 0.5rem;
-        font-size: 0.875rem;
-        color: #111827;
-        word-break: break-word;
-        font-weight: 500;
-    }
-
-    .file-details-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin: 0 0 0.5rem 0;
-        font-size: 0.75rem;
-
-        .file-type, .file-size {
-            color: #6b7280;
-        }
-    }
-
-    .bucket-container {
-        margin-top: 0.25rem;
-
-        .bucket {
-            background: #f0f1f4;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #4b5563;
-            display: inline-block;
-            font-size: 0.75rem;
-        }
-    }
+.hidden {
+    display: none;
 }
 
 .upload-zone {

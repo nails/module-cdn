@@ -304,7 +304,7 @@ export default {
         border: 1px solid #cccccc;
         border-radius: 4px;
         margin-top: 4px;
-        z-index: 1050; /* Increased z-index to appear above modal */
+        z-index: 100000; /* Higher z-index to appear above modal */
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;
