@@ -55,12 +55,12 @@
 </template>
 
 <script>
-import BaseModal from './BaseModal.vue';
-import Button from './Button.vue';
+import ModalBase from './ModalBase.vue';
+import Button from '../Button.vue';
 
 export default {
   name: 'DeleteBucketModal',
-  components: { BaseModal, Button },
+  components: { ModalBase, Button },
   props: {
     visible: { type: Boolean, default: false },
     bucketToDelete: { type: Object, default: null },

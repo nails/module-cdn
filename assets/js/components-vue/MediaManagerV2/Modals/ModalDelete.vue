@@ -63,13 +63,13 @@
 </template>
 
 <script>
-import BaseModal from './BaseModal.vue';
-import Button from './Button.vue';
-import FilePreview from './FilePreview.vue';
+import ModalBase from './ModalBase.vue';
+import Button from '../Button.vue';
+import FilePreview from '../FilePreview.vue';
 
 export default {
   name: 'DeleteModal',
-  components: { BaseModal, Button, FilePreview },
+  components: { BaseModal: ModalBase, Button, FilePreview },
   props: {
     visible: { type: Boolean, default: false },
     deletingObject: { type: Object, default: null },

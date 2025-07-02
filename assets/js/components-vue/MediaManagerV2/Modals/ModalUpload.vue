@@ -101,14 +101,14 @@
 </template>
 
 <script>
-import BaseModal from './BaseModal.vue';
-import Button from './Button.vue';
-import BucketSelector from './BucketSelector.vue';
+import ModalBase from './ModalBase.vue';
+import Button from '../Button.vue';
+import BucketSelector from '../BucketSelector.vue';
 
 export default {
   name: 'UploadModal',
   components: {
-    BaseModal,
+    BaseModal: ModalBase,
     Button,
     BucketSelector
   },

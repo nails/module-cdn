@@ -249,7 +249,7 @@
         </div>
 
         <!-- Upload Modal -->
-        <UploadModal
+        <ModalUpload
             :visible="showUploadModal"
             :buckets="buckets"
             :max-upload-size="maxUploadSize"
@@ -258,7 +258,7 @@
         />
 
         <!-- Edit Modal -->
-        <EditModal
+        <ModalEdit
             :visible="showEditModal"
             :editingObject="editingObject"
             :isEditing="isEditing"
@@ -269,7 +269,7 @@
         />
 
         <!-- URL Copy Modal -->
-        <UrlCopyModal
+        <ModalUrlCopy
             :visible="showUrlCopyModal"
             :urlToCopy="urlToCopy"
             :urlCopyError="urlCopyError"
@@ -280,7 +280,7 @@
         />
 
         <!-- Delete Confirmation Modal -->
-        <DeleteModal
+        <ModalDelete
             :visible="showDeleteModal"
             :deletingObject="deletingObject"
             :isDeleting="isDeleting"
@@ -400,13 +400,6 @@ import ModalDeleteBucket from './MediaManagerV2/Modals/ModalDeleteBucket.vue'
 import ModalTrash from './MediaManagerV2/Modals/ModalTrash.vue'
 import Button from './MediaManagerV2/Button.vue'
 import FilePreview from './MediaManagerV2/FilePreview.vue'
-import UploadModal from './MediaManagerV2/UploadModal.vue'
-import EditModal from './MediaManagerV2/EditModal.vue'
-import UrlCopyModal from './MediaManagerV2/UrlCopyModal.vue'
-import DeleteModal from './MediaManagerV2/DeleteModal.vue'
-import CreateBucketModal from './MediaManagerV2/CreateBucketModal.vue'
-import DeleteBucketModal from './MediaManagerV2/DeleteBucketModal.vue'
-import TrashModal from './MediaManagerV2/TrashModal.vue'
 
 export default {
     name: 'MediaManagerV2',

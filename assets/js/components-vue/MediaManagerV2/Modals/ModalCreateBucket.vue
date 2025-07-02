@@ -48,12 +48,12 @@
 </template>
 
 <script>
-import BaseModal from './BaseModal.vue';
-import Button from './Button.vue';
+import ModalBase from './ModalBase.vue';
+import Button from '../Button.vue';
 
 export default {
   name: 'CreateBucketModal',
-  components: { BaseModal, Button },
+  components: { ModalBase, Button },
   props: {
     visible: { type: Boolean, default: false },
     newBucketName: { type: String, default: '' },

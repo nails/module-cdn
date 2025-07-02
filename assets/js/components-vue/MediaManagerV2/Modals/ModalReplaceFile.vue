@@ -94,14 +94,14 @@
 </template>
 
 <script>
-import BaseModal from './BaseModal.vue'
-import Button from './Button.vue'
-import FilePreview from './FilePreview.vue'
+import ModalBase from './ModalBase.vue'
+import Button from '../Button.vue'
+import FilePreview from '../FilePreview.vue'
 
 export default {
     name: 'ReplaceFileModal',
     components: {
-        BaseModal,
+        BaseModal: ModalBase,
         Button,
         FilePreview
     },

@@ -87,18 +87,18 @@
 </template>
 
 <script>
-import BucketSelector from './BucketSelector.vue'
-import Button from './Button.vue'
-import BaseModal from './BaseModal.vue'
-import FilePreview from './FilePreview.vue'
+import BucketSelector from '../BucketSelector.vue'
+import ModalBase from './ModalBase.vue'
+import Button from '../Button.vue'
+import FilePreview from '../FilePreview.vue'
 import axios from 'axios'
 
 export default {
     name: 'MoveCopyModal',
     components: {
         BucketSelector,
+        ModalBase,
         Button,
-        BaseModal,
         FilePreview
     },
     props: {

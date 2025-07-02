@@ -77,13 +77,13 @@
 </template>
 
 <script>
-import BaseModal from './BaseModal.vue';
-import Button from './Button.vue';
-import FilePreview from './FilePreview.vue';
+import ModalBase from './ModalBase.vue';
+import Button from '../Button.vue';
+import FilePreview from '../FilePreview.vue';
 
 export default {
   name: 'TrashModal',
-  components: { BaseModal, Button, FilePreview },
+  components: { ModalBase, Button, FilePreview },
   props: {
     visible: { type: Boolean, default: false },
     trashedItems: { type: Array, default: () => [] },
@@ -199,6 +199,8 @@ export default {
   border-radius: 0;
   margin: 0;
   padding: 0.75rem 1rem;
+  border: none !important;
+  box-shadow: none !important;
   transition: background-color 0.15s ease;
 }
 .trashed-items-container :deep(.file-preview:last-child) {
@@ -210,9 +212,10 @@ export default {
 .trashed-items-container :deep(.file-preview:nth-child(odd)) {
   background-color: #ffffff;
 }
-.trashed-items-container :deep(.file-preview:hover) {
-  background-color: #f3f4f6 !important;
-  border-color: #d1d5db;
+.trashed-items-container :deep(.file-preview:hover),
+.trashed-items-container :deep(.file-preview.selected) {
+  border: none !important;
+  box-shadow: none !important;
 }
 .trashed-items-container :deep(.file-preview.selected) {
   background-color: #eef2ff !important;
