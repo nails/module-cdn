@@ -28,6 +28,7 @@
                         placeholder="Select buckets"
                         :single-select="false"
                         :show-actions="true"
+                        :offset-dropdown-arrow="userCanCreateBucket && !loadingBuckets"
                         @delete-bucket="handleDeleteBucket"
                         class="bucket-filter"
                     />

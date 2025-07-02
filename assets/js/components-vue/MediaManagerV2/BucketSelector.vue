@@ -6,7 +6,7 @@
                 {{ getSelectedBucketLabel() }}
             </span>
             <span v-else class="selected-count">{{ selectedBuckets.length }} selected</span>
-            <span class="dropdown-arrow">▼</span>
+            <span :class="{ 'dropdown-arrow': true, 'dropdown-arrow--offset': offsetDropdownArrow }">▼</span>
         </div>
         <div class="bucket-selector__dropdown" v-if="isOpen">
             <div class="search-box" v-if="buckets.length > 5">
@@ -85,6 +85,10 @@ export default {
             default: false
         },
         showActions: {
+            type: Boolean,
+            default: false
+        },
+        offsetDropdownArrow: {
             type: Boolean,
             default: false
         }
@@ -286,8 +290,12 @@ export default {
 
         .dropdown-arrow {
             color: #6b7280;
-            font-size: 12px;
+            font-size: 10px;
             transition: transform 0.2s ease;
+
+            &--offset {
+                margin-right: 1.7rem;
+            }
         }
     }
 
