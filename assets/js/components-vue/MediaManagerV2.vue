@@ -124,6 +124,12 @@
                     View Trash
                 </button>
             </div>
+            <div v-if="switchBackUrl" class="sidebar__switch-back">
+                <a :href="switchBackUrl" class="switch-back-btn" tabindex="0">
+                    <span>Switch back to the original Media Manager</span>
+                    <span class="beta-badge">BETA</span>
+                </a>
+            </div>
         </div>
         <div class="body">
             <div class="body__switcher">
@@ -429,6 +435,10 @@ export default {
         userCanCreateBucket: {
             type: Boolean,
             default: false
+        },
+        switchBackUrl: {
+            type: String,
+            default: ''
         }
     },
     data() {
@@ -1505,6 +1515,12 @@ export default {
     }
 
     .sidebar {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        justify-content: space-between;
         width: 100%;
         border-right: 1px solid #e5e7eb;
         border-top-left-radius: 0.5rem;
@@ -1514,7 +1530,6 @@ export default {
         display: flex;
         flex-direction: column;
         position: relative;
-        height: 100vh; /* Full viewport height */
         overflow-y: auto;
 
         @media (min-width: 768px) {
@@ -2419,6 +2434,49 @@ export default {
     p {
         font-size: 0.875rem;
     }
+}
+
+.sidebar__switch-back {
+    padding: 0.75rem 0.5rem 0.75rem 0.5rem;
+    text-align: center;
+}
+
+.switch-back-btn {
+    display: inline-flex;
+    align-items: center;
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 0.35em 0.75em;
+    font-size: 0.95em;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s, border 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.switch-back-btn svg {
+    margin-right: 0.5em;
+}
+
+.switch-back-btn:hover, .switch-back-btn:focus {
+    background: #e5e7eb;
+    color: #374151;
+    border-color: #d1d5db;
+    outline: none;
+}
+
+.beta-badge {
+    background: #f59e42;
+    color: #fff;
+    font-size: 0.7em;
+    font-weight: bold;
+    border-radius: 4px;
+    padding: 0.1em 0.5em;
+    margin-left: 0.75em;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
 }
 
 </style>

@@ -30,6 +30,9 @@ class MediaManagerV2 {
                 const Vue = await this.waitForVue();
                 this.adminController.log('Mounting MediaManagerV2');
 
+                // Get switch back URL from mount point
+                const switchBackUrl = mountPoint ? mountPoint.dataset.switchBackUrl : '';
+
                 // Get max upload size from mount point
                 const maxUploadSize = mountPoint ? parseInt(mountPoint.dataset.maxUploadSize) : 10485760; // Default to 10MB if not set
 
@@ -47,6 +50,7 @@ class MediaManagerV2 {
                     },
                     render: h => h(MediaManagerV2Vue, {
                         props: {
+                            switchBackUrl,
                             maxUploadSize,
                             userCanCreateBucket
                         }

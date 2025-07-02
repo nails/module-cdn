@@ -10,17 +10,11 @@ if ($oInput::get('isModal')) {
     if ($oInput::get()) {
         $switchUrl .= '?' . http_build_query($oInput::get());
     }
-
-    ?>
-    <p class="try-new-manager try-new-manager--revert">
-        <a href="<?=$switchUrl?>" class="btn btn-primary">Switch</a>
-        <span>Go back to the original Media Manager</span>
-    </p>
-    <?php
 }
 
 ?>
 <div id="nails-module-cdn-media-manager-v2"
+     data-switch-back-url="<?=$switchUrl ?? ''?>"
      data-max-upload-size="<?=maxUploadSize(false)?>"
      data-user-can-create-bucket="<?=json_encode(userHasPermission('admin:cdn:manager:bucket:create'))?>"
 >
