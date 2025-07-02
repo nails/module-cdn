@@ -186,11 +186,6 @@ export default {
     border-bottom-right-radius: 8px;
 }
 
-/* Ensure the modal doesn't clip the dropdown when it's open */
-.base-modal-container.dropdown-open {
-    overflow: visible;
-}
-
 /* Responsive adjustments */
 @media (max-width: 640px) {
     .base-modal-overlay {

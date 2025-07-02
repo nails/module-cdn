@@ -68,10 +68,7 @@ export default {
             this.$emit('action', {action, item: this.item});
         },
         handleClickOutside(event) {
-            const dropdown = this.$el.querySelector('.actions-dropdown');
-            if (dropdown && !dropdown.contains(event.target)) {
-                this.isOpen = false;
-            }
+            this.isOpen = false;
         },
         handleKeydown(event) {
             if (event.key === 'Escape' && this.isOpen) {

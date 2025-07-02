@@ -24,7 +24,7 @@
           </g>
         </svg>
       </slot>
-      <span class="button-text">{{ text }}</span>
+      <span>{{ text }}</span>
     </template>
   </button>
 </template>
