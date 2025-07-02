@@ -3,8 +3,9 @@
         class="file-preview" 
         :class="[
             containerClass,
-            { 'no-border': !showBorder, 'with-margin': marginBottom }
+            { 'no-border': !showBorder, 'with-margin': marginBottom, 'clickable': showCheckbox }
         ]"
+        @click="handleContainerClick"
     >
         <!-- Checkbox (optional) -->
         <div v-if="showCheckbox" class="file-preview-checkbox" @click.stop>
@@ -179,6 +180,12 @@ export default {
             const sizes = ['B', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+        },
+        handleContainerClick() {
+            // Only handle clicks when checkbox is enabled
+            if (this.showCheckbox) {
+                this.$emit('selection-change', !this.isSelected);
+            }
         }
     }
 }
