@@ -71,72 +71,7 @@ export default {
 </script>
 
 <style scoped>
-.warning-message {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem;
-  background: #fffbeb;
-  border: 1px solid #fef3c7;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-}
-.warning-message svg {
-  width: 1.5rem;
-  height: 1.5rem;
-  color: #d97706;
-  flex-shrink: 0;
-}
-.warning-content h4 {
-  margin: 0 0 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #92400e;
-}
-.warning-content p {
-  margin: 0 0 0.5rem;
-  font-size: 0.875rem;
-  color: #78350f;
-}
-.object-details {
-  color: #78350f;
-  line-height: 1.5;
-}
 .form-group {
   margin-bottom: 1rem;
-}
-.error-message {
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  color: #b91c1c;
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.error-message svg {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-}
-.success-message {
-  background: #ecfdf5;
-  border: 1px solid #d1fae5;
-  color: #047857;
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.success-message svg {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
 }
 </style> 

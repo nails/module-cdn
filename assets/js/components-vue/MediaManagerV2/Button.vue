@@ -79,6 +79,10 @@ export default {
     width: 1rem;
     height: 1rem;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
   }
 
   &.variant-secondary {

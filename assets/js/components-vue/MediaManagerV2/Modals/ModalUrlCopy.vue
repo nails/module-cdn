@@ -154,38 +154,4 @@ export default {
   color: #6b7280;
   margin-bottom: 1rem;
 }
-.error-message {
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  color: #b91c1c;
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.error-message svg {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-}
-.success-message {
-  background: #ecfdf5;
-  border: 1px solid #d1fae5;
-  color: #047857;
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.success-message svg {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-}
 </style> 

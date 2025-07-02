@@ -248,42 +248,6 @@ export default {
     }
 }
 
-.error-message, .success-message {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    margin-bottom: 1rem;
-    font-size: 0.875rem;
-
-    svg {
-        width: 1.25rem;
-        height: 1.25rem;
-        flex-shrink: 0;
-    }
-}
-
-.error-message {
-    background: #fee2e2;
-    color: #b91c1c;
-    border: 1px solid #fecaca;
-
-    svg {
-        color: #ef4444;
-    }
-}
-
-.success-message {
-    background: #dcfce7;
-    color: #15803d;
-    border: 1px solid #bbf7d0;
-
-    svg {
-        color: #22c55e;
-    }
-}
-
 .loading-spinner {
     display: inline-block;
     width: 1rem;
