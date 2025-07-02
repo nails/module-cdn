@@ -14,7 +14,13 @@
                         :show-date="false"
                         :margin-bottom="true"
                     />
-                    <p>Replace the file identified above with a file of the same type. This process will ensure that all references to the old file are maintained. <strong>Be aware that intermediate systems may cache the old file for a period of time.</strong></p>
+                    <p>
+                        Replace the file identified above with a file of the same type. This process will ensure that all references to the old file are maintained.
+                    </p>
+                    <Status
+                        type="warning"
+                        :message="'Be aware that intermediate systems may cache the old file for a period of time.'"
+                    />
                 <div 
                     class="upload-zone"
                     :class="{ 
@@ -62,13 +68,11 @@
                     v-if="error"
                     type="error"
                     :message="error"
-                    class="mb-2"
                 />
                 <Status
                     v-if="success"
                     type="success"
                     message="File replaced successfully!"
-                    class="mb-2"
                 />
                 </div>
 
@@ -256,6 +260,7 @@ p {
     cursor: pointer;
     transition: all 0.2s ease;
     background: #f9fafb;
+    margin-top: 1rem;
 
     &:hover {
         border-color: #6b7280;

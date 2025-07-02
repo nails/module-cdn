@@ -9,7 +9,6 @@
         type="warning"
         :title="'Are you sure you want to delete this bucket?'"
         :message="'The following bucket will be deleted:<br><strong>' + bucketToDelete.label + ' (ID: ' + bucketToDelete.id + ')</strong><br>This action cannot be undone.'"
-        class="mb-2"
       />
     </template>
     <template v-else>
@@ -19,13 +18,11 @@
       v-if="deleteBucketError"
       type="error"
       :message="deleteBucketError"
-      class="mb-2"
     />
     <Status
       v-if="deleteBucketSuccess"
       type="success"
       message="Bucket deleted successfully!"
-      class="mb-2"
     />
     <template #footer>
       <Button 

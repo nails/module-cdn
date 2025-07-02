@@ -56,13 +56,11 @@
             v-if="error"
             type="error"
             :message="error"
-            class="mb-2"
         />
         <Status
             v-if="success"
             type="success"
             :message="success"
-            class="mb-2"
         />
         
         <template #footer>

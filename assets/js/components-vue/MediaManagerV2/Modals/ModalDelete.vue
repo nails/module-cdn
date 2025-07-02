@@ -14,7 +14,6 @@
         v-if="true"
         type="warning"
         :message="'Are you sure you want to delete this file?'"
-        class="mb-2"
       />
     </template>
     <template v-else>
@@ -24,7 +23,6 @@
       v-if="deleteError"
       type="error"
       :message="deleteError"
-      class="mb-2"
     >
       <template v-if="deleteError && deleteError.includes('Object is in use') && deletingObject">
         <a
@@ -40,7 +38,6 @@
       v-if="deleteSuccess"
       type="success"
       message="Object deleted successfully!"
-      class="mb-2"
     />
     <template #footer>
       <Button 

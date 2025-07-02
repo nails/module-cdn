@@ -64,13 +64,11 @@
         v-if="editError"
         type="error"
         :message="editError"
-        class="mb-2"
       />
       <Status
         v-if="editSuccess"
         type="success"
         message="Object updated successfully!"
-        class="mb-2"
       />
     </template>
     <template v-else>

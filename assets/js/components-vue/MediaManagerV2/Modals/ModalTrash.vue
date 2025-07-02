@@ -48,13 +48,11 @@
       v-if="restoreError"
       type="error"
       :message="restoreError"
-      class="mb-2"
     />
     <Status
       v-if="restoreSuccess"
       type="success"
       message="Items restored successfully!"
-      class="mb-2"
     />
     <template #footer>
       <Button 

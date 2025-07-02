@@ -51,13 +51,11 @@
       v-if="uploadError"
       type="error"
       :message="uploadError"
-      class="mb-2"
     />
     <Status
       v-if="uploadSuccess"
       type="success"
       message="Files uploaded successfully!"
-      class="mb-2"
     />
 
     <div class="file-list" v-if="filesToUpload.length > 0">
