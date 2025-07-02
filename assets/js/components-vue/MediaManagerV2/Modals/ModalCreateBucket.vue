@@ -1,5 +1,5 @@
 <template>
-  <BaseModal
+  <ModalBase
     :visible="visible"
     title="Create New Bucket"
     @close="handleClose"
@@ -44,7 +44,7 @@
         :loading="isCreatingBucket"
       />
     </template>
-  </BaseModal>
+  </ModalBase>
 </template>
 
 <script>
@@ -52,7 +52,7 @@ import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 
 export default {
-  name: 'CreateBucketModal',
+  name: 'ModalCreateBucket',
   components: { ModalBase, Button },
   props: {
     visible: { type: Boolean, default: false },

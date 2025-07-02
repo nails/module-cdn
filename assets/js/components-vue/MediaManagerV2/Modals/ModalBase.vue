@@ -35,7 +35,7 @@
 
 <script>
 export default {
-    name: 'BaseModal',
+    name: 'ModalBase',
     props: {
         visible: {
             type: Boolean,

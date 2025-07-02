@@ -1,5 +1,5 @@
 <template>
-    <BaseModal
+    <ModalBase
         :visible="visible"
         title="Replace File"
         @close="close"
@@ -90,7 +90,7 @@
                     :loading="isUploading"
                 />
             </template>
-        </BaseModal>
+        </ModalBase>
 </template>
 
 <script>
@@ -99,9 +99,9 @@ import Button from '../Button.vue'
 import FilePreview from '../FilePreview.vue'
 
 export default {
-    name: 'ReplaceFileModal',
+    name: 'ModalReplaceFile',
     components: {
-        BaseModal: ModalBase,
+        ModalBase,
         Button,
         FilePreview
     },

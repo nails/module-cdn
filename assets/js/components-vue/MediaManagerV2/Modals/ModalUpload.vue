@@ -1,10 +1,10 @@
 <template>
-  <BaseModal
+  <ModalBase
     :visible="visible"
     title="Upload Files"
     @close="handleClose"
   >
-    <div 
+    <div
       class="upload-zone"
       :class="{ 'drag-over': dragOver }"
       @click="$refs.fileInput.click()"
@@ -81,23 +81,23 @@
     </div>
 
     <template #footer>
-      <Button 
-        variant="secondary" 
-        text="Cancel" 
-        icon="cancel" 
-        @click="handleClose" 
+      <Button
+        variant="secondary"
+        text="Cancel"
+        icon="cancel"
+        @click="handleClose"
         :disabled="isUploading"
       />
-      <Button 
-        variant="primary" 
-        :text="isUploading ? 'Uploading...' : 'Upload'" 
-        icon="upload" 
-        @click="uploadFiles" 
+      <Button
+        variant="primary"
+        :text="isUploading ? 'Uploading...' : 'Upload'"
+        icon="upload"
+        @click="uploadFiles"
         :disabled="filesToUpload.length === 0 || !selectedUploadBucket.length || isUploading"
         :loading="isUploading"
       />
     </template>
-  </BaseModal>
+  </ModalBase>
 </template>
 
 <script>
@@ -106,9 +106,9 @@ import Button from '../Button.vue';
 import BucketSelector from '../BucketSelector.vue';
 
 export default {
-  name: 'UploadModal',
+  name: 'ModalUpload',
   components: {
-    BaseModal: ModalBase,
+    ModalBase,
     Button,
     BucketSelector
   },

@@ -1,5 +1,5 @@
 <template>
-  <BaseModal
+  <ModalBase
     :visible="visible"
     title="Edit File"
     @close="handleClose"
@@ -93,7 +93,7 @@
         :loading="isEditing"
       />
     </template>
-  </BaseModal>
+  </ModalBase>
 </template>
 
 <script>
@@ -101,7 +101,7 @@ import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 
 export default {
-  name: 'EditModal',
+  name: 'ModalEdit',
   components: { ModalBase, Button },
   props: {
     visible: { type: Boolean, default: false },

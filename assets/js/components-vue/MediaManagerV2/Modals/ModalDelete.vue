@@ -1,5 +1,5 @@
 <template>
-  <BaseModal
+  <ModalBase
     :visible="visible"
     title="Delete File"
     @close="handleClose"
@@ -59,7 +59,7 @@
         :loading="isDeleting"
       />
     </template>
-  </BaseModal>
+  </ModalBase>
 </template>
 
 <script>
@@ -68,8 +68,8 @@ import Button from '../Button.vue';
 import FilePreview from '../FilePreview.vue';
 
 export default {
-  name: 'DeleteModal',
-  components: { BaseModal: ModalBase, Button, FilePreview },
+  name: 'ModalModal',
+  components: { ModalBase: ModalBase, Button, FilePreview },
   props: {
     visible: { type: Boolean, default: false },
     deletingObject: { type: Object, default: null },

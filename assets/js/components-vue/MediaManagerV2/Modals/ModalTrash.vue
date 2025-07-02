@@ -1,5 +1,5 @@
 <template>
-  <BaseModal
+  <ModalBase
     :visible="visible"
     title="Trash"
     @close="handleClose"
@@ -73,7 +73,7 @@
         :loading="isRestoring"
       />
     </template>
-  </BaseModal>
+  </ModalBase>
 </template>
 
 <script>
@@ -82,7 +82,7 @@ import Button from '../Button.vue';
 import FilePreview from '../FilePreview.vue';
 
 export default {
-  name: 'TrashModal',
+  name: 'ModalTrash',
   components: { ModalBase, Button, FilePreview },
   props: {
     visible: { type: Boolean, default: false },

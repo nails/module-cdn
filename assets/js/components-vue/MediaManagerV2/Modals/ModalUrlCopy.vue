@@ -1,5 +1,5 @@
 <template>
-  <BaseModal
+  <ModalBase
     :visible="visible"
     title="Copy URL"
     @close="handleClose"
@@ -65,7 +65,7 @@
         @click="handleClose" 
       />
     </template>
-  </BaseModal>
+  </ModalBase>
 </template>
 
 <script>
@@ -73,7 +73,7 @@ import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 
 export default {
-  name: 'UrlCopyModal',
+  name: 'ModalUrlCopy',
   components: { ModalBase, Button },
   props: {
     visible: { type: Boolean, default: false },

@@ -1,5 +1,5 @@
 <template>
-    <BaseModal
+    <ModalBase
         :visible="visible"
         title="Move / Copy File"
         @close="close"
@@ -83,7 +83,7 @@
                 :loading="isProcessing"
             />
         </template>
-    </BaseModal>
+    </ModalBase>
 </template>
 
 <script>
@@ -94,7 +94,7 @@ import FilePreview from '../FilePreview.vue'
 import axios from 'axios'
 
 export default {
-    name: 'MoveCopyModal',
+    name: 'ModalMoveCopy',
     components: {
         BucketSelector,
         ModalBase,

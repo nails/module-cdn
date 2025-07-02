@@ -1,5 +1,5 @@
 <template>
-  <BaseModal
+  <ModalBase
     :visible="visible"
     title="Delete Bucket"
     @close="handleClose"
@@ -51,7 +51,7 @@
         :loading="isDeletingBucket"
       />
     </template>
-  </BaseModal>
+  </ModalBase>
 </template>
 
 <script>
@@ -59,7 +59,7 @@ import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 
 export default {
-  name: 'DeleteBucketModal',
+  name: 'ModalDeleteBucket',
   components: { ModalBase, Button },
   props: {
     visible: { type: Boolean, default: false },
