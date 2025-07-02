@@ -291,7 +291,7 @@
             @confirm="confirmDelete"
         />
 
-        <replace-file-modal
+        <ModalReplaceFile
             :visible="showReplaceModal"
             :object="replacingObject"
             :site-url="siteUrl"
@@ -300,7 +300,7 @@
             @file-replaced="handleFileReplaced"
         />
 
-        <move-copy-modal
+        <ModalMoveCopy
             v-if="showMoveCopyModal"
             :visible="true"
             :object="moveCopyObject"
@@ -311,7 +311,7 @@
         />
 
         <!-- Create Bucket Modal -->
-        <CreateBucketModal
+        <ModalCreateBucket
             :visible="showCreateBucketModal"
             :newBucketName="newBucketName"
             :isCreatingBucket="isCreatingBucket"
@@ -322,7 +322,7 @@
         />
 
         <!-- Delete Bucket Confirmation Modal -->
-        <DeleteBucketModal
+        <ModalDeleteBucket
             :visible="showDeleteBucketModal"
             :bucketToDelete="bucketToDelete"
             :isDeletingBucket="isDeletingBucket"
@@ -333,7 +333,7 @@
         />
 
         <!-- Trash Modal -->
-        <TrashModal
+        <ModalTrash
             :visible="showTrashModal"
             :trashedItems="trashedItems"
             :selectedTrashedItems="selectedTrashedItems"
@@ -347,7 +347,7 @@
             @toggle-select-all="toggleSelectAllTrashedItems"
         />
 
-        <move-copy-modal
+        <ModalMoveCopy
             v-if="showMoveCopyModal"
             :visible="true"
             :object="moveCopyObject"
@@ -358,7 +358,7 @@
         />
 
         <!-- Create Bucket Modal -->
-        <CreateBucketModal
+        <ModalCreateBucket
             :visible="showCreateBucketModal"
             :newBucketName="newBucketName"
             :isCreatingBucket="isCreatingBucket"
@@ -369,7 +369,7 @@
         />
 
         <!-- Delete Bucket Confirmation Modal -->
-        <DeleteBucketModal
+        <ModalDeleteBucket
             :visible="showDeleteBucketModal"
             :bucketToDelete="bucketToDelete"
             :isDeletingBucket="isDeletingBucket"
@@ -388,10 +388,17 @@ import MultiSelect from './MediaManagerV2/MultiSelect.vue'
 import BucketSelector from './MediaManagerV2/BucketSelector.vue'
 import ObjectListItem from './MediaManagerV2/ObjectListItem.vue'
 import ObjectGridItem from './MediaManagerV2/ObjectGridItem.vue'
-import ReplaceFileModal from './MediaManagerV2/ReplaceFileModal.vue'
-import MoveCopyModal from './MediaManagerV2/MoveCopyModal.vue'
+import ModalReplaceFile from './MediaManagerV2/Modals/ModalReplaceFile.vue'
+import ModalMoveCopy from './MediaManagerV2/Modals/ModalMoveCopy.vue'
+import ModalBase from './MediaManagerV2/Modals/ModalBase.vue'
+import ModalUpload from './MediaManagerV2/Modals/ModalUpload.vue'
+import ModalEdit from './MediaManagerV2/Modals/ModalEdit.vue'
+import ModalUrlCopy from './MediaManagerV2/Modals/ModalUrlCopy.vue'
+import ModalDelete from './MediaManagerV2/Modals/ModalDelete.vue'
+import ModalCreateBucket from './MediaManagerV2/Modals/ModalCreateBucket.vue'
+import ModalDeleteBucket from './MediaManagerV2/Modals/ModalDeleteBucket.vue'
+import ModalTrash from './MediaManagerV2/Modals/ModalTrash.vue'
 import Button from './MediaManagerV2/Button.vue'
-import BaseModal from './MediaManagerV2/BaseModal.vue'
 import FilePreview from './MediaManagerV2/FilePreview.vue'
 import UploadModal from './MediaManagerV2/UploadModal.vue'
 import EditModal from './MediaManagerV2/EditModal.vue'
@@ -408,18 +415,18 @@ export default {
         BucketSelector,
         ObjectListItem,
         ObjectGridItem,
-        ReplaceFileModal,
-        MoveCopyModal,
+        ModalReplaceFile,
+        ModalMoveCopy,
         Button,
-        BaseModal,
+        ModalBase,
         FilePreview,
-        UploadModal,
-        EditModal,
-        UrlCopyModal,
-        DeleteModal,
-        CreateBucketModal,
-        DeleteBucketModal,
-        TrashModal
+        ModalUpload,
+        ModalEdit,
+        ModalUrlCopy,
+        ModalDelete,
+        ModalCreateBucket,
+        ModalDeleteBucket,
+        ModalTrash
     },
     props: {
         maxUploadSize: {
