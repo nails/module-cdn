@@ -311,56 +311,15 @@
         />
 
         <!-- Create Bucket Modal -->
-        <BaseModal
-            v-if="showCreateBucketModal"
-            :visible="true"
-            title="Create New Bucket"
+        <CreateBucketModal
+            :visible="showCreateBucketModal"
+            :newBucketName="newBucketName"
+            :isCreatingBucket="isCreatingBucket"
+            :createBucketError="createBucketError"
+            :createBucketSuccess="createBucketSuccess"
             @close="closeCreateBucketModal"
-        >
-            <div class="form-group">
-                <label for="bucket-name">Bucket Name</label>
-                <input
-                    type="text"
-                    id="bucket-name"
-                    v-model="newBucketName"
-                    placeholder="Enter bucket name"
-                    :disabled="isCreatingBucket"
-                    @keyup.enter="createBucket"
-                />
-            </div>
-
-            <div v-if="createBucketError" class="error-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                </svg>
-                {{ createBucketError }}
-            </div>
-
-            <div v-if="createBucketSuccess" class="success-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-                Bucket created successfully!
-            </div>
-        
-        <template #footer>
-            <Button 
-                variant="secondary" 
-                text="Cancel" 
-                icon="cancel" 
-                @click="closeCreateBucketModal" 
-                :disabled="isCreatingBucket"
-            />
-            <Button 
-                variant="primary" 
-                :text="isCreatingBucket ? 'Creating...' : 'Create Bucket'" 
-                icon="add" 
-                @click="createBucket" 
-                :disabled="!newBucketName || isCreatingBucket"
-                :loading="isCreatingBucket"
-            />
-        </template>
-        </BaseModal>
+            @create="handleCreateBucketFromModal"
+        />
 
         <!-- Delete Bucket Confirmation Modal -->
         <BaseModal
@@ -518,6 +477,7 @@ import UploadModal from './MediaManagerV2/UploadModal.vue'
 import EditModal from './MediaManagerV2/EditModal.vue'
 import UrlCopyModal from './MediaManagerV2/UrlCopyModal.vue'
 import DeleteModal from './MediaManagerV2/DeleteModal.vue'
+import CreateBucketModal from './MediaManagerV2/CreateBucketModal.vue'
 
 export default {
     name: 'MediaManagerV2',
@@ -534,7 +494,8 @@ export default {
         UploadModal,
         EditModal,
         UrlCopyModal,
-        DeleteModal
+        DeleteModal,
+        CreateBucketModal
     },
     props: {
         maxUploadSize: {
@@ -1571,6 +1532,11 @@ export default {
         saveObjectEditFromModal(editedObject) {
             this.editingObject = editedObject;
             this.saveObjectEdit();
+        },
+
+        handleCreateBucketFromModal(bucketName) {
+            this.newBucketName = bucketName;
+            this.createBucket();
         }
     }
 }
