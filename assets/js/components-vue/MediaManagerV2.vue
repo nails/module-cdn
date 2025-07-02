@@ -384,7 +384,7 @@
 <script>
 import axios from 'axios';
 import { debounce } from 'lodash'
-import MultiSelect from './MultiSelect.vue'
+import MultiSelect from './MediaManagerV2/MultiSelect.vue'
 import BucketSelector from './MediaManagerV2/BucketSelector.vue'
 import ObjectListItem from './MediaManagerV2/ObjectListItem.vue'
 import ObjectGridItem from './MediaManagerV2/ObjectGridItem.vue'

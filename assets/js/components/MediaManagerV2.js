@@ -1,7 +1,7 @@
 import MediaManagerV2Vue from '../components-vue/MediaManagerV2.vue';
 import ObjectListItem from '../components-vue/MediaManagerV2/ObjectListItem.vue';
 import ObjectGridItem from '../components-vue/MediaManagerV2/ObjectGridItem.vue';
-import MultiSelect from '../components-vue/MultiSelect.vue';
+import MultiSelect from '../components-vue/MediaManagerV2/MultiSelect.vue';
 
 class MediaManagerV2 {
     constructor(adminController) {
