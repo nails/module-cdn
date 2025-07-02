@@ -333,88 +333,51 @@
         />
 
         <!-- Trash Modal -->
-        <BaseModal
-            v-if="showTrashModal"
-            :visible="true"
-            title="Trash"
+        <TrashModal
+            :visible="showTrashModal"
+            :trashedItems="trashedItems"
+            :selectedTrashedItems="selectedTrashedItems"
+            :loadingTrashedItems="loadingTrashedItems"
+            :isRestoring="isRestoring"
+            :restoreError="restoreError"
+            :restoreSuccess="restoreSuccess"
             @close="closeTrashModal"
-        >
-            <div v-if="loadingTrashedItems" class="loading-container">
-                <div class="loading-spinner"></div>
-                <p>Loading trashed items...</p>
-            </div>
+            @restore="restoreTrashedItems"
+            @toggle-selection="toggleTrashedItem"
+            @toggle-select-all="toggleSelectAllTrashedItems"
+        />
 
-            <div v-else-if="trashedItems.length === 0" class="empty-state">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="empty-icon">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-                <p>No items in trash</p>
-            </div>
+        <move-copy-modal
+            v-if="showMoveCopyModal"
+            :visible="true"
+            :object="moveCopyObject"
+            :buckets="buckets"
+            :site-url="siteUrl"
+            @close="closeMoveCopyModal"
+            @success="handleMoveCopySuccess"
+        />
 
-            <div v-else class="trashed-items-list">
-                <div class="trashed-items-header">
-                    <div class="select-all-container">
-                        <label class="select-all-label">
-                            <input 
-                                type="checkbox" 
-                                :checked="selectedTrashedItems.length === trashedItems.length" 
-                                @change="selectedTrashedItems = selectedTrashedItems.length === trashedItems.length ? [] : trashedItems.map(item => item.id)"
-                            />
-                            <span>Select All</span>
-                        </label>
-                    </div>
-                    <div class="selection-info" v-if="selectedTrashedItems.length > 0">
-                        {{ selectedTrashedItems.length }} item{{ selectedTrashedItems.length > 1 ? 's' : '' }} selected
-                    </div>
-                </div>
+        <!-- Create Bucket Modal -->
+        <CreateBucketModal
+            :visible="showCreateBucketModal"
+            :newBucketName="newBucketName"
+            :isCreatingBucket="isCreatingBucket"
+            :createBucketError="createBucketError"
+            :createBucketSuccess="createBucketSuccess"
+            @close="closeCreateBucketModal"
+            @create="handleCreateBucketFromModal"
+        />
 
-                <div class="trashed-items-container">
-                    <FilePreview
-                        v-for="item in trashedItems" 
-                        :key="item.id" 
-                        :file="item"
-                        :show-checkbox="true"
-                        :is-selected="selectedTrashedItems.includes(item.id)"
-                        :container-class="'clickable'"
-                        :show-border="false"
-                        @click="toggleTrashedItem(item.id)"
-                        @selection-change="(selected) => toggleTrashedItem(item.id)"
-                    />
-                </div>
-            </div>
-
-            <div v-if="restoreError" class="error-message modal-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                </svg>
-                {{ restoreError }}
-            </div>
-
-            <div v-if="restoreSuccess" class="success-message modal-message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-                Items restored successfully!
-            </div>
-
-            <template #footer>
-                <Button 
-                    variant="secondary" 
-                    text="Cancel" 
-                    icon="cancel" 
-                    @click="closeTrashModal" 
-                    :disabled="isRestoring"
-                />
-                <Button 
-                    variant="primary" 
-                    :text="isRestoring ? 'Restoring...' : 'Restore Selected'" 
-                    icon="restore" 
-                    @click="restoreTrashedItems" 
-                    :disabled="selectedTrashedItems.length === 0 || isRestoring"
-                    :loading="isRestoring"
-                />
-            </template>
-        </BaseModal>
+        <!-- Delete Bucket Confirmation Modal -->
+        <DeleteBucketModal
+            :visible="showDeleteBucketModal"
+            :bucketToDelete="bucketToDelete"
+            :isDeletingBucket="isDeletingBucket"
+            :deleteBucketError="deleteBucketError"
+            :deleteBucketSuccess="deleteBucketSuccess"
+            @close="closeDeleteBucketModal"
+            @confirm="confirmDeleteBucket"
+        />
     </div>
 </template>
 
@@ -436,6 +399,7 @@ import UrlCopyModal from './MediaManagerV2/UrlCopyModal.vue'
 import DeleteModal from './MediaManagerV2/DeleteModal.vue'
 import CreateBucketModal from './MediaManagerV2/CreateBucketModal.vue'
 import DeleteBucketModal from './MediaManagerV2/DeleteBucketModal.vue'
+import TrashModal from './MediaManagerV2/TrashModal.vue'
 
 export default {
     name: 'MediaManagerV2',
@@ -454,7 +418,8 @@ export default {
         UrlCopyModal,
         DeleteModal,
         CreateBucketModal,
-        DeleteBucketModal
+        DeleteBucketModal,
+        TrashModal
     },
     props: {
         maxUploadSize: {
@@ -1496,6 +1461,14 @@ export default {
         handleCreateBucketFromModal(bucketName) {
             this.newBucketName = bucketName;
             this.createBucket();
+        },
+
+        toggleSelectAllTrashedItems() {
+            if (this.selectedTrashedItems.length === this.trashedItems.length) {
+                this.selectedTrashedItems = [];
+            } else {
+                this.selectedTrashedItems = this.trashedItems.map(item => item.id);
+            }
         }
     }
 }
