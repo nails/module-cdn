@@ -249,105 +249,13 @@
         </div>
 
         <!-- Upload Modal -->
-        <BaseModal
+        <UploadModal
             :visible="showUploadModal"
-            title="Upload Files"
+            :buckets="buckets"
+            :max-upload-size="maxUploadSize"
             @close="showUploadModal = false"
-        >
-                    <div 
-                        class="upload-zone"
-                        :class="{ 'drag-over': dragOver }"
-                        @click="$refs.fileInput.click()"
-                        @dragover.prevent="dragOver = true"
-                        @dragleave.prevent="dragOver = false"
-                        @drop.prevent="handleFileDrop"
-                    >
-                        <div class="upload-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                        </div>
-                        <div class="upload-text">
-                            <p class="primary-text">Drag and drop files here or click to browse</p>
-                            <p class="secondary-text">Max file size: {{ formatFileSize(maxUploadSize) }}</p>
-                        </div>
-                        <input
-                            type="file"
-                            multiple
-                            class="hidden"
-                            @change="handleFileSelect"
-                            ref="fileInput"
-                        >
-                    </div>
-
-                    <div class="bucket-selector">
-                        <label>Select Bucket:</label>
-                        <bucket-selector
-                            v-model="selectedUploadBucket"
-                            :buckets="buckets"
-                            placeholder="Select upload bucket"
-                            :single-select="true"
-                        />
-                    </div>
-
-                    <div class="overall-progress" v-if="isUploading">
-                        <div class="overall-progress__bar">
-                            <div class="overall-progress__fill" :style="{ width: overallProgress + '%' }"></div>
-                        </div>
-                        <span class="overall-progress__text">{{ Math.round(overallProgress) }}% Complete</span>
-                    </div>
-
-                    <div v-if="uploadError" class="error-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                        {{ uploadError }}
-                    </div>
-
-                    <div v-if="uploadSuccess" class="success-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                        Files uploaded successfully!
-                    </div>
-
-                    <div class="file-list" v-if="filesToUpload.length > 0">
-                        <h4>Files to Upload ({{ filesToUpload.length }})</h4>
-                        <div class="file-item" v-for="(file, index) in filesToUpload" :key="index">
-                            <div class="file-info">
-                                <span class="file-name">{{ file.name }}</span>
-                                <span class="file-size">{{ formatFileSize(file.size) }}</span>
-                                <div class="progress-bar" v-if="isUploading && uploadProgress[index] !== undefined">
-                                    <div class="progress-bar__fill" :style="{ width: uploadProgress[index] + '%' }"></div>
-                                    <span class="progress-bar__text">{{ Math.round(uploadProgress[index]) }}%</span>
-                                </div>
-                            </div>
-                            <button class="remove-button" @click="removeFile(index)" v-if="!isUploading">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-        
-        <template #footer>
-            <Button 
-                variant="secondary" 
-                text="Cancel" 
-                icon="cancel" 
-                @click="showUploadModal = false" 
-                :disabled="isUploading"
-            />
-            <Button 
-                variant="primary" 
-                :text="isUploading ? 'Uploading...' : 'Upload'" 
-                icon="upload" 
-                @click="uploadFiles" 
-                :disabled="filesToUpload.length === 0 || !selectedUploadBucket.length || isUploading"
-                :loading="isUploading"
-            />
-        </template>
-        </BaseModal>
+            @upload-success="handleUploadSuccess"
+        />
 
         <!-- Edit Modal -->
         <BaseModal
@@ -797,6 +705,7 @@ import MoveCopyModal from './MediaManagerV2/MoveCopyModal.vue'
 import Button from './MediaManagerV2/Button.vue'
 import BaseModal from './MediaManagerV2/BaseModal.vue'
 import FilePreview from './MediaManagerV2/FilePreview.vue'
+import UploadModal from './MediaManagerV2/UploadModal.vue'
 
 export default {
     name: 'MediaManagerV2',
@@ -809,7 +718,8 @@ export default {
         MoveCopyModal,
         Button,
         BaseModal,
-        FilePreview
+        FilePreview,
+        UploadModal
     },
     props: {
         maxUploadSize: {
@@ -1825,6 +1735,23 @@ export default {
             } finally {
                 this.isRestoring = false;
             }
+        },
+
+        handleUploadSuccess() {
+            this.uploadSuccess = true;
+            this.uploadError = null;
+            this.uploadProgress = {};
+            this.overallProgress = 0;
+            this.filesToUpload = [];
+            this.showUploadModal = false;
+            this.keywords = null;
+            this.selectedBuckets = [];
+            this.selectedFileTypes = [];
+            this.selectedUploaders = [];
+            this.dateLower = null;
+            this.dateUpper = null;
+            this.page = 1;
+            this.doSearch();
         }
     }
 }
