@@ -110,6 +110,7 @@ export default {
         FilePreview,
         Status
     },
+    inject: ['cdnApi'],
 
     props: {
         visible: {
@@ -120,10 +121,6 @@ export default {
             type: Object,
             required: false,
             default: null
-        },
-        siteUrl: {
-            type: String,
-            required: true
         },
         maxUploadSize: {
             type: Number,
@@ -210,7 +207,7 @@ export default {
             formData.append('file', this.selectedFile);
 
             try {
-                const response = await fetch(`${this.siteUrl}api/cdn/mediaManagerV2/replace`, {
+                const response = await fetch(this.cdnApi.object.replace(), {
                     method: 'POST',
                     body: formData
                 });

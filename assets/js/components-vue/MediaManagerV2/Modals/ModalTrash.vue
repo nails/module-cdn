@@ -104,6 +104,7 @@ import axios from 'axios';
 export default {
     name: 'ModalTrash',
     components: {ModalBase, Button, FilePreview, Status},
+    inject: ['cdnApi'],
     props: {
         visible: {type: Boolean, default: false},
         trashedItems: {type: Array, default: () => []},
@@ -146,7 +147,7 @@ export default {
             for (let i = 0; i < this.selectedTrashedItems.length; i++) {
                 const objectId = this.selectedTrashedItems[i];
                 try {
-                    await axios.post(this.cdnApi.objectDelete(), { object_id: objectId });
+                    await axios.post(this.cdnApi.object.delete(), { object_id: objectId });
                     // Remove purged item from trashedItems
                     const idx = this.trashedItems.findIndex(item => item.id === objectId);
                     if (idx !== -1) this.trashedItems.splice(idx, 1);

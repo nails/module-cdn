@@ -100,6 +100,7 @@ export default {
         FilePreview,
         Status
     },
+    inject: ['cdnApi'],
     props: {
         visible: {
             type: Boolean,
@@ -111,10 +112,6 @@ export default {
         },
         buckets: {
             type: Array,
-            required: true
-        },
-        siteUrl: {
-            type: String,
             required: true
         }
     },
@@ -151,8 +148,8 @@ export default {
 
             try {
                 const endpoint = this.isCopyMode ?
-                    `${this.siteUrl}api/cdn/mediamanagerv2/copy` :
-                    `${this.siteUrl}api/cdn/mediamanagerv2/move`;
+                    this.cdnApi.object.copy() :
+                    this.cdnApi.object.move();
 
                 const response = await axios.post(endpoint, {
                     object_id: this.object.id,

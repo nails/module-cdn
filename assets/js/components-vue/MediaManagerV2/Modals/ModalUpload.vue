@@ -128,6 +128,7 @@ export default {
         BucketSelector,
         Status
     },
+    inject: ['cdnApi'],
     props: {
         visible: {
             type: Boolean,
@@ -211,7 +212,7 @@ export default {
                     formData.append('upload', file);
                     try {
                         await axios.post(
-                            `${window.SITE_URL}api/cdn/object/create`,
+                            this.cdnApi.object.create(),
                             formData,
                             {
                                 headers: {

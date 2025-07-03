@@ -300,7 +300,6 @@
         <ModalReplaceFile
             :visible="showReplaceModal"
             :object="replacingObject"
-            :site-url="siteUrl"
             :max-upload-size="maxUploadSize"
             @close="showReplaceModal = false"
             @file-replaced="handleFileReplaced"
@@ -311,7 +310,6 @@
             :visible="true"
             :object="moveCopyObject"
             :buckets="buckets"
-            :site-url="siteUrl"
             @close="closeMoveCopyModal"
             @success="handleMoveCopySuccess"
         />
@@ -351,16 +349,6 @@
             @restore="restoreTrashedItems"
             @toggle-selection="toggleTrashedItem"
             @toggle-select-all="toggleSelectAllTrashedItems"
-        />
-
-        <ModalMoveCopy
-            v-if="showMoveCopyModal"
-            :visible="true"
-            :object="moveCopyObject"
-            :buckets="buckets"
-            :site-url="siteUrl"
-            @close="closeMoveCopyModal"
-            @success="handleMoveCopySuccess"
         />
 
         <!-- Create Bucket Modal -->
@@ -443,6 +431,35 @@ export default {
     },
     data() {
         return {
+            cdnApi: {
+                objects: {
+                    fetch: () => `${this.siteUrl}api/cdn/mediamanagerv2/objects`,
+                },
+                object: {
+                    fetch: (id) => `${this.siteUrl}/api/cdn/object?id=${id}`,
+                    edit: () => `${this.siteUrl}api/cdn/object/edit`,
+                    delete: () => `${this.siteUrl}api/cdn/object/delete`,
+                    restore: () => `${this.siteUrl}api/cdn/mediamanagerv2/restore`,
+                    create: () => `${this.siteUrl}api/cdn/object/create`,
+                    replace: () => `${this.siteUrl}api/cdn/mediaManagerV2/replace`,
+                    copy: () => `${this.siteUrl}api/cdn/mediamanagerv2/copy`,
+                    move: () => `${this.siteUrl}api/cdn/mediamanagerv2/move`,
+                },
+                bucket: {
+                    fetch: () => `${this.siteUrl}api/cdn/bucket`,
+                    create: () => `${this.siteUrl}api/cdn/bucket`,
+                    delete: (id) => `${this.siteUrl}api/cdn/bucket/${id}`
+                },
+                fileTypes: {
+                    fetch: () => `${this.siteUrl}api/cdn/mediamanagerv2/filetypes`
+                },
+                uploaders: {
+                    fetch: () => `${this.siteUrl}api/cdn/mediamanagerv2/uploaders`
+                },
+                trash: {
+                    fetch: () => `${this.siteUrl}api/cdn/mediamanagerv2/trash`
+                }
+            },
             keywords: null,
             objects: [],
             loadingObjects: true,
@@ -513,6 +530,12 @@ export default {
             showMoveCopyModal: false,
             moveCopyObject: null
         }
+    },
+
+    provide() {
+        return {
+            cdnApi: this.cdnApi
+        };
     },
 
     created() {
@@ -606,7 +629,7 @@ export default {
             }
         },
 
-        async fetchAllBuckets(url = `${this.siteUrl}api/cdn/bucket`) {
+        async fetchAllBuckets(url = this.cdnApi.bucket.fetch()) {
             try {
                 this.loadingBuckets = true;
                 let buckets = await this.iterateOverApiPages(url);
@@ -629,7 +652,7 @@ export default {
             }
         },
 
-        async fetchAllFileTypes(url = `${this.siteUrl}api/cdn/mediamanagerv2/filetypes`) {
+        async fetchAllFileTypes(url = this.cdnApi.fileTypes.fetch()) {
             try {
                 this.loadingFileTypes = true;
                 this.fileTypes = await this.iterateOverApiPages(url);
@@ -641,7 +664,7 @@ export default {
 
         },
 
-        async fetchAllUploaders(url = `${this.siteUrl}api/cdn/mediamanagerv2/uploaders`) {
+        async fetchAllUploaders(url = this.cdnApi.uploaders.fetch()) {
             try {
                 this.loadingUploaders = true;
                 this.uploaders = await this.iterateOverApiPages(url);
@@ -692,7 +715,7 @@ export default {
             this.page = 1;
             try {
                 console.log('Searching with filters:', this.getFilterValues());
-                const response = await axios.get(`${this.siteUrl}api/cdn/mediamanagerv2/objects`, {
+                const response = await axios.get(this.cdnApi.objects.fetch(), {
                     params: this.getFilterValues()
                 });
                 this.objects = response.data.data;
@@ -710,7 +733,7 @@ export default {
             this.page += 1;
             try {
 
-                const response = await axios.get(`${this.siteUrl}api/cdn/mediamanagerv2/objects`, {
+                const response = await axios.get(this.cdnApi.objects.fetch(), {
                     params: this.getFilterValues()
                 });
                 this.objects = [...this.objects, ...response.data.data];
@@ -839,7 +862,7 @@ export default {
 
             try {
                 // Make DELETE request to the API
-                await axios.delete(`${this.siteUrl}api/cdn/bucket/${this.bucketToDelete.id}`);
+                await axios.delete(this.cdnApi.bucket.delete(this.bucketToDelete.id));
 
                 // Show success message
                 this.deleteBucketSuccess = true;
@@ -898,7 +921,7 @@ export default {
 
             try {
                 const response = await axios.post(
-                    `${this.siteUrl}api/cdn/object/edit`,
+                    this.cdnApi.object.edit(),
                     formData,
                     {
                         headers: {
@@ -1000,7 +1023,7 @@ export default {
                 formData.append('object_id', this.deletingObject.id);
 
                 await axios.post(
-                    `${this.siteUrl}api/cdn/object/delete`,
+                    this.cdnApi.object.delete(),
                     formData,
                     {
                         headers: {
@@ -1053,7 +1076,7 @@ export default {
 
         async fetchSelectedObject(objectId) {
             try {
-                const response = await fetch(`${this.siteUrl}/api/cdn/object?id=${objectId}`);
+                const response = await fetch(this.cdnApi.object.fetch(objectId));
                 const data = await response.json();
 
                 if (data.status === 200) {
@@ -1123,7 +1146,7 @@ export default {
 
             try {
                 const response = await axios.post(
-                    `${this.siteUrl}api/cdn/bucket`,
+                    this.cdnApi.bucket.create(),
                     {
                         label: this.newBucketName
                     }
@@ -1180,7 +1203,7 @@ export default {
         async fetchTrashedItems(url = null, allItems = []) {
             this.loadingTrashedItems = true;
             try {
-                const response = await axios.get(url || `${this.siteUrl}api/cdn/mediamanagerv2/trash`);
+                const response = await axios.get(url || this.cdnApi.trash.fetch());
                 const items = [...allItems, ...response.data.data];
 
                 // Check if there's a next page
@@ -1222,7 +1245,7 @@ export default {
 
             try {
                 const response = await axios.post(
-                    `${this.siteUrl}api/cdn/mediamanagerv2/restore`,
+                    this.cdnApi.object.restore(),
                     {
                         object_ids: this.selectedTrashedItems
                     }
@@ -1307,7 +1330,7 @@ export default {
             this.deleteBucketError = null;
             this.deleteBucketSuccess = false;
         }
-    }
+    },
 }
 </script>
 
