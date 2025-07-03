@@ -56,21 +56,39 @@
             type="success"
             message="Items restored successfully!"
         />
+        <Status
+            v-if="purgeError"
+            type="error"
+            :message="purgeError"
+        />
+        <Status
+            v-if="purgeSuccess"
+            type="success"
+            message="Items purged successfully!"
+        />
         <template #footer>
             <Button
                 variant="secondary"
                 text="Cancel"
                 icon="cancel"
                 @click="handleClose"
-                :disabled="isRestoring"
+                :disabled="isRestoring || isPurging"
             />
             <Button
                 variant="primary"
                 :text="isRestoring ? 'Restoring...' : 'Restore Selected'"
                 icon="restore"
                 @click="handleRestore"
-                :disabled="selectedTrashedItems.length === 0 || isRestoring"
+                :disabled="selectedTrashedItems.length === 0 || isRestoring || isPurging"
                 :loading="isRestoring"
+            />
+            <Button
+                variant="danger"
+                :text="isPurging ? `Purging... (${purgeProgress}%)` : 'Purge Selected'"
+                icon="delete"
+                @click="handlePurge"
+                :disabled="selectedTrashedItems.length === 0 || isRestoring || isPurging"
+                :loading="isPurging"
             />
         </template>
     </ModalBase>
@@ -81,6 +99,7 @@ import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 import FilePreview from '../FilePreview.vue';
 import Status from '../Status.vue';
+import axios from 'axios';
 
 export default {
     name: 'ModalTrash',
@@ -94,6 +113,15 @@ export default {
         restoreError: {type: String, default: null},
         restoreSuccess: {type: Boolean, default: false}
     },
+    data() {
+        return {
+            isPurging: false,
+            purgeError: null,
+            purgeSuccess: false,
+            purgeProgress: 0,
+            purgeErrorList: [],
+        };
+    },
     methods: {
         handleClose() {
             this.$emit('close');
@@ -106,6 +134,31 @@ export default {
         },
         toggleSelectAll() {
             this.$emit('toggle-select-all');
+        },
+        async handlePurge() {
+            if (this.selectedTrashedItems.length === 0) return;
+            if (!window.confirm(`Are you sure you want to permanently delete ${this.selectedTrashedItems.length} item(s)? This cannot be undone.`)) return;
+            this.isPurging = true;
+            this.purgeError = null;
+            this.purgeSuccess = false;
+            this.purgeProgress = 0;
+            this.purgeErrorList = [];
+            for (let i = 0; i < this.selectedTrashedItems.length; i++) {
+                const objectId = this.selectedTrashedItems[i];
+                try {
+                    await axios.post(`${this.siteUrl}api/cdn/object/delete`, { object_id: objectId });
+                } catch (err) {
+                    this.purgeErrorList.push(objectId);
+                }
+                this.purgeProgress = Math.round(((i + 1) / this.selectedTrashedItems.length) * 100);
+            }
+            this.isPurging = false;
+            if (this.purgeErrorList.length > 0) {
+                this.purgeError = `Failed to purge ${this.purgeErrorList.length} item(s).`;
+            } else {
+                this.purgeSuccess = true;
+            }
+            this.$emit('purge');
         }
     }
 };
