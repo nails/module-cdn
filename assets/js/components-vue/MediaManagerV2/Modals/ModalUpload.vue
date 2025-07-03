@@ -29,16 +29,16 @@
         ref="fileInput"
       >
     </div>
-
-    <div class="bucket-selector">
-      <label>Select Bucket:</label>
+    <form-group
+      label="Select Bucket"
+    >
       <bucket-selector
         v-model="selectedUploadBucket"
         :buckets="buckets"
         placeholder="Select upload bucket"
         :single-select="true"
       />
-    </div>
+    </form-group>
 
     <div class="overall-progress" v-if="isUploading">
       <div class="overall-progress__bar">
@@ -102,10 +102,12 @@ import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 import BucketSelector from '../BucketSelector.vue';
 import Status from '../Status.vue';
+import FormGroup from "../Form/Group.vue";
 
 export default {
   name: 'ModalUpload',
   components: {
+      FormGroup,
     ModalBase,
     Button,
     BucketSelector,
@@ -199,6 +201,7 @@ export default {
   cursor: pointer;
   transition: all 0.2s ease;
   background: #f9fafb;
+  margin-bottom: 1rem;
 }
 .upload-zone.drag-over {
   border-color: #4f46e5;
@@ -223,9 +226,6 @@ export default {
   margin: 0.5rem 0 0;
   color: #6b7280;
   font-size: 0.75rem;
-}
-.bucket-selector {
-  margin: 1.5rem 0 1rem 0;
 }
 .overall-progress {
   margin-bottom: 1rem;

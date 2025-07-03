@@ -5,8 +5,10 @@
     @close="handleClose"
   >
     <template v-if="urlToCopy">
-      <div class="form-group">
-        <label>Source URL</label>
+      <form-group
+        label="Source URL"
+        sub-label="Use this URL to display the file in a webpage or embed it in content. If accessed directly the browser will attempt to render it in-window (works well for images and PDFs)"
+      >
         <div class="url-input-group">
           <textarea
             v-model="urlToCopy.src"
@@ -21,10 +23,11 @@
             </svg>
           </button>
         </div>
-        <div class="url-description">Use this URL to display the file in a webpage or embed it in content. If accessed directly the browser will attempt to render it in-window (works well for images and PDFs)</div>
-      </div>
-      <div class="form-group">
-        <label>Download URL</label>
+      </form-group>
+      <form-group
+        label="Download URL"
+        :sub-label="`Use this URL to force the browser to download the file instead of displaying it. The file will download to the user's device as '${(urlToCopy.humanName || 'human-name.ext')}'`"
+      >
         <div class="url-input-group">
           <textarea
             v-model="urlToCopy.download"
@@ -39,8 +42,7 @@
             </svg>
           </button>
         </div>
-        <div class="url-description">Use this URL to force the browser to download the file instead of displaying it. The file will download to the user's device as "{{ urlToCopy.humanName || 'human-name.ext' }}"</div>
-      </div>
+      </form-group>
     </template>
     <template v-else>
       <div class="form-group">No file selected for URL copy.</div>
@@ -70,10 +72,11 @@
 import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 import Status from '../Status.vue';
+import FormGroup from "../Form/Group.vue";
 
 export default {
   name: 'ModalUrlCopy',
-  components: { ModalBase, Button, Status },
+  components: {FormGroup, ModalBase, Button, Status },
   props: {
     visible: { type: Boolean, default: false },
     urlToCopy: { type: Object, default: null },
@@ -97,24 +100,13 @@ export default {
 </script>
 
 <style scoped>
-.form-group {
-  margin-bottom: 1rem;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
 .url-input-group {
   position: relative;
   margin-bottom: 0.5rem;
 }
 .url-input-group textarea {
   width: 100%;
-  padding: 0.5rem;
-  padding-right: 2.5rem;
+  padding: 0.5rem 2.5rem 0.5rem 0.5rem;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -148,10 +140,5 @@ export default {
 .copy-button svg {
   width: 1rem;
   height: 1rem;
-}
-.url-description {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-bottom: 1rem;
 }
 </style> 

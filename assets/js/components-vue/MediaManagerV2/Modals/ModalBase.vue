@@ -138,7 +138,9 @@ export default {
 }
 
 .base-modal-header h3 {
-    margin: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
     font-size: 14px;
     font-weight: 600;
     color: #4b5563;
@@ -203,6 +205,10 @@ export default {
     
     .base-modal-body {
         padding: 20px;
+
+        > *:last-child {
+            margin-bottom: 0;
+        }
     }
     
     .base-modal-footer {

@@ -4,8 +4,10 @@
     title="Create New Bucket"
     @close="handleClose"
   >
-    <div class="form-group">
-      <label for="bucket-name">Bucket Name</label>
+    <form-group
+      label="Bucket Name"
+      for="bucket-name"
+    >
       <input
         type="text"
         id="bucket-name"
@@ -14,7 +16,7 @@
         :disabled="isCreatingBucket"
         @keyup.enter="handleCreate"
       />
-    </div>
+    </form-group>
     <Status
       v-if="createBucketError"
       type="error"
@@ -49,10 +51,11 @@
 import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 import Status from "../Status.vue";
+import FormGroup from "../Form/Group.vue";
 
 export default {
   name: 'ModalCreateBucket',
-  components: {Status, ModalBase, Button },
+  components: {FormGroup, Status, ModalBase, Button },
   props: {
     visible: { type: Boolean, default: false },
     newBucketName: { type: String, default: '' },
@@ -82,16 +85,6 @@ export default {
 </script>
 
 <style scoped>
-.form-group {
-  margin-bottom: 1rem;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
 input[type="text"] {
   width: 100%;
   padding: 0.5rem;

@@ -13,19 +13,19 @@
                 :margin-bottom="true"
             />
         </div>
-
-        <div class="form-group">
-            <label>Action:</label>
+        <form-group
+            label="Action"
+        >
             <div class="toggle-container">
-                <button 
-                    class="toggle-button" 
+                <button
+                    class="toggle-button"
                     :class="{ active: !isCopyMode }"
                     @click="isCopyMode = false"
                 >
                     Move
                 </button>
-                <button 
-                    class="toggle-button" 
+                <button
+                    class="toggle-button"
                     :class="{ active: isCopyMode }"
                     @click="isCopyMode = true"
                 >
@@ -40,18 +40,17 @@
                     Moving will create a new URL for the file. No redirects will be added from the old URL.
                 </template>
             </div>
-        </div>
-
-        <div class="form-group">
-            <label>Destination Bucket:</label>
+        </form-group>
+        <form-group
+            label="Destination Bucket"
+        >
             <bucket-selector
                 v-model="selectedBucketId"
                 :buckets="availableBuckets"
                 placeholder="Select destination bucket"
                 :single-select="true"
             />
-        </div>
-
+        </form-group>
         <Status
             v-if="error"
             type="error"
@@ -62,7 +61,6 @@
             type="success"
             :message="success"
         />
-        
         <template #footer>
             <Button 
                 variant="secondary" 
@@ -90,10 +88,12 @@ import Button from '../Button.vue'
 import FilePreview from '../FilePreview.vue'
 import Status from '../Status.vue'
 import axios from 'axios'
+import FormGroup from "../Form/Group.vue";
 
 export default {
     name: 'ModalMoveCopy',
     components: {
+        FormGroup,
         BucketSelector,
         ModalBase,
         Button,
@@ -203,17 +203,6 @@ export default {
     margin-top: 6px;
     line-height: 1.4;
     font-style: italic;
-}
-
-.form-group {
-    margin-bottom: 1.25rem;
-
-    label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        color: #374151;
-    }
 }
 
 .toggle-container {

@@ -5,8 +5,10 @@
     @close="handleClose"
   >
     <template v-if="localEditingObject">
-      <div class="form-group">
-        <label for="filename_display">Filename</label>
+      <form-group
+        label="Filename"
+        for="filename_display"
+      >
         <input
           type="text"
           id="filename_display"
@@ -14,10 +16,11 @@
           placeholder="Enter display name"
           :disabled="isEditing"
         />
-      </div>
-      <div class="form-group">
-        <label>Metadata</label>
-        <div class="form-sub-label">Add any custom information about this file, this will be searchable</div>
+      </form-group>
+      <form-group
+        label="Metadata"
+        sub-label="Add any custom information about this file, this will be searchable"
+      >
         <div class="metadata-editor">
           <div class="metadata-list">
             <div v-for="(item, index) in localEditingObject.metadata" :key="index" class="metadata-item">
@@ -59,7 +62,7 @@
             Add Metadata
           </button>
         </div>
-      </div>
+      </form-group>
       <Status
         v-if="editError"
         type="error"
@@ -99,10 +102,11 @@ import ModalBase from './ModalBase.vue';
 import Button from '../Button.vue';
 import FilePreview from '../FilePreview.vue';
 import Status from '../Status.vue';
+import FormGroup from '../Form/Group.vue';
 
 export default {
   name: 'ModalEdit',
-  components: { ModalBase, Button, FilePreview, Status },
+  components: { ModalBase, Button, FilePreview, Status, FormGroup },
   props: {
     visible: { type: Boolean, default: false },
     editingObject: { type: Object, default: null },
@@ -150,21 +154,6 @@ export default {
 </script>
 
 <style scoped>
-.form-group {
-  margin-bottom: 1rem;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
-.form-sub-label {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-}
 input[type="text"] {
   width: 100%;
   padding: 0.5rem;
