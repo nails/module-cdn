@@ -58,24 +58,38 @@
             message="Files uploaded successfully!"
         />
 
-        <div class="file-list" v-if="filesToUpload.length > 0">
-            <h4>Files to Upload ({{ filesToUpload.length }})</h4>
-            <div class="file-item" v-for="(file, index) in filesToUpload" :key="index">
-                <div class="file-info">
-                    <span class="file-name">{{ file.name }}</span>
-                    <span class="file-size">{{ formatFileSize(file.size) }}</span>
-                    <div class="progress-bar" v-if="isUploading && uploadProgress[index] !== undefined">
-                        <div class="progress-bar__fill" :style="{ width: uploadProgress[index] + '%' }"></div>
-                        <span class="progress-bar__text">{{ Math.round(uploadProgress[index]) }}%</span>
+        <form-group
+            :label="`Files to Upload (${filesToUpload.length})`"
+            v-if="filesToUpload.length > 0"
+        >
+            <div class="upload-preview-list">
+                <div class="upload-preview-item" v-for="(file, index) in filesToUpload" :key="index">
+                    <div class="upload-preview-thumbnail">
+                        <img v-if="isImage(file)" :src="getPreviewUrl(file)" :alt="file.name" class="thumbnail" />
+                        <div v-else class="file-icon">
+                            <span>{{ getFileExtension(file).toUpperCase() }}</span>
+                        </div>
                     </div>
+                    <div class="upload-preview-details">
+                        <div class="upload-preview-name">{{ file.name }}</div>
+                        <div class="upload-preview-meta">
+                            <span class="upload-preview-type">{{ file.type || 'Unknown type' }}</span>
+                            <span class="upload-preview-separator">•</span>
+                            <span class="upload-preview-size">{{ formatFileSize(file.size) }}</span>
+                        </div>
+                        <div class="progress-bar" v-if="isUploading && uploadProgress[index] !== undefined">
+                            <div class="progress-bar__fill" :style="{ width: uploadProgress[index] + '%' }"></div>
+                            <span class="progress-bar__text">{{ Math.round(uploadProgress[index]) }}%</span>
+                        </div>
+                    </div>
+                    <button class="remove-button" :disabled="isUploading" @click="!isUploading && removeFile(index)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
                 </div>
-                <button class="remove-button" @click="removeFile(index)" v-if="!isUploading">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
             </div>
-        </div>
+        </form-group>
 
         <template #footer>
             <Button
@@ -141,6 +155,12 @@ export default {
     },
     methods: {
         handleClose() {
+            this.filesToUpload = [];
+            this.uploadProgress = [];
+            this.overallProgress = 0;
+            this.uploadError = null;
+            this.uploadSuccess = false;
+            this.selectedUploadBucket = [];
             this.$emit('close');
         },
         handleFileSelect(event) {
@@ -162,6 +182,19 @@ export default {
             const sizes = ['B', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+        },
+        isImage(file) {
+            return file.type && file.type.startsWith('image/');
+        },
+        getPreviewUrl(file) {
+            if (!file._previewUrl && this.isImage(file)) {
+                file._previewUrl = URL.createObjectURL(file);
+            }
+            return file._previewUrl;
+        },
+        getFileExtension(file) {
+            const parts = file.name.split('.');
+            return parts.length > 1 ? parts.pop() : 'FILE';
         },
         async uploadFiles() {
             if (this.filesToUpload.length === 0 || !this.selectedUploadBucket.length) return;
@@ -257,56 +290,86 @@ export default {
     color: #4b5563;
 }
 
-.file-list {
-    margin-top: 1.5rem;
-}
-
-.file-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f3f4f6;
-}
-
-.file-info {
+.upload-preview-list {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
-.file-name {
-    font-size: 0.875rem;
-    color: #111827;
-}
-
-.file-size {
-    font-size: 0.75rem;
-    color: #6b7280;
-}
-
-.progress-bar {
-    width: 120px;
-    height: 8px;
-    background: #e5e7eb;
-    border-radius: 4px;
-    margin-top: 0.25rem;
+.upload-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    transition: all 0.2s ease;
     position: relative;
 }
 
-.progress-bar__fill {
-    height: 100%;
-    background: #10b981;
-    border-radius: 4px;
-    transition: width 0.2s ease;
+.upload-preview-item:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.progress-bar__text {
-    position: absolute;
-    right: 8px;
-    top: -18px;
+.upload-preview-thumbnail {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-preview-thumbnail .thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.upload-preview-thumbnail .file-icon {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    border-radius: 4px;
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.upload-preview-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.upload-preview-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 0.25rem;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+.upload-preview-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
     font-size: 0.75rem;
-    color: #4b5563;
+    color: #6b7280;
+    line-height: 1.2;
+}
+
+.upload-preview-separator {
+    color: #d1d5db;
 }
 
 .remove-button {
@@ -317,9 +380,27 @@ export default {
     padding: 4px;
     border-radius: 4px;
     transition: background 0.2s;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-button svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+    margin: 0 auto;
 }
 
 .remove-button:hover {
     background: #fee2e2;
+}
+
+.remove-button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: none;
 }
 </style> 
