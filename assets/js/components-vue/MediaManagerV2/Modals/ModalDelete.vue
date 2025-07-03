@@ -17,7 +17,10 @@
       />
     </template>
     <template v-else>
-      <div class="form-group">No file selected for deletion.</div>
+      <Status
+        type="error"
+        message="No file selected for deletion."
+      />
     </template>
     <Status
       v-if="deleteError"
@@ -97,8 +100,5 @@ export default {
 }
 .check-usages-button:hover {
   text-decoration: underline;
-}
-.form-group {
-  margin-bottom: 1rem;
 }
 </style> 

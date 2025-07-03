@@ -12,7 +12,10 @@
       />
     </template>
     <template v-else>
-      <div class="form-group">No bucket selected for deletion.</div>
+      <Status
+        type="error"
+        message="No bucket selected for deletion."
+      />
     </template>
     <Status
       v-if="deleteBucketError"
@@ -71,7 +74,5 @@ export default {
 </script>
 
 <style scoped>
-.form-group {
-  margin-bottom: 1rem;
-}
+
 </style> 
