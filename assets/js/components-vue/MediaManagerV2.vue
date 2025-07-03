@@ -613,7 +613,7 @@ export default {
 
                 this.buckets = buckets.map(bucket => {
                     // Create a new object to avoid modifying the original
-                    const formattedBucket = { ...bucket };
+                    const formattedBucket = {...bucket};
 
                     // Format the object_count property
                     if (formattedBucket.object_count !== undefined) {
@@ -826,7 +826,7 @@ export default {
             });
         },
 
-        async handleBucketAction({ action, bucket }) {
+        async handleBucketAction({action, bucket}) {
             if (action.id === 'delete') {
                 // Show delete confirmation modal
                 this.bucketToDelete = bucket;
@@ -1205,7 +1205,7 @@ export default {
             if (!this.editingObject.metadata) {
                 this.editingObject.metadata = [];
             }
-            this.editingObject.metadata.push({ key: '', value: '' });
+            this.editingObject.metadata.push({key: '', value: ''});
         },
 
         removeMetadata(index) {
@@ -1222,7 +1222,7 @@ export default {
             this.replacingObject = null;
         },
 
-        handleMoveCopySuccess({ action, object }) {
+        handleMoveCopySuccess({action, object}) {
             if (action === 'move') {
                 // For move: remove the original object from the list
                 const index = this.objects.findIndex(obj => obj.id === this.moveCopyObject.id);
@@ -1382,7 +1382,7 @@ export default {
                     }
                 );
 
-                const { success, error } = response.data.data;
+                const {success, error} = response.data.data;
 
                 // Remove successfully restored items from the list
                 if (success && success.length > 0) {
@@ -2453,7 +2453,7 @@ export default {
     font-weight: 500;
     text-decoration: none;
     transition: background 0.2s, color 0.2s, border 0.2s;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .switch-back-btn svg {
@@ -2469,7 +2469,7 @@ export default {
 
 .beta-badge {
     background: #f59e42;
-    color: #fff;
+    color: #ffffff;
     font-size: 0.7em;
     font-weight: bold;
     border-radius: 4px;

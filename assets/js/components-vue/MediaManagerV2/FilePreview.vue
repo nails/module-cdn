@@ -1,6 +1,6 @@
 <template>
-    <div 
-        class="file-preview" 
+    <div
+        class="file-preview"
         :class="[
             containerClass,
             { 'no-border': !showBorder, 'with-margin': marginBottom, 'clickable': showCheckbox }
@@ -9,19 +9,19 @@
     >
         <!-- Checkbox (optional) -->
         <div v-if="showCheckbox" class="file-preview-checkbox" @click.stop>
-            <input 
-                type="checkbox" 
-                :checked="isSelected" 
+            <input
+                type="checkbox"
+                :checked="isSelected"
                 @change="$emit('selection-change', $event.target.checked)"
             />
         </div>
 
         <!-- Thumbnail/Icon -->
         <div class="file-preview-thumbnail">
-            <img 
-                v-if="file && file.is_img" 
-                :src="file.url?.thumb?.list || file.url?.thumb?.grid" 
-                :alt="fileName" 
+            <img
+                v-if="file && file.is_img"
+                :src="file.url?.thumb?.list || file.url?.thumb?.grid"
+                :alt="fileName"
                 class="thumbnail"
             />
             <div v-else class="file-icon">
@@ -88,7 +88,7 @@ export default {
             if (!this.file) {
                 return 'No file selected';
             }
-            
+
             // Handle different object structures
             if (this.file.file?.name?.human) {
                 return this.file.file.name.human;
@@ -105,7 +105,7 @@ export default {
             if (!this.file) {
                 return 'N/A';
             }
-            
+
             if (this.file.file?.ext) {
                 return this.file.file.ext.toUpperCase();
             }
@@ -118,7 +118,7 @@ export default {
             if (!this.file) {
                 return 'Unknown type';
             }
-            
+
             if (this.file.group) {
                 return this.file.group;
             }
@@ -134,7 +134,7 @@ export default {
             if (!this.file) {
                 return 'Unknown size';
             }
-            
+
             if (this.file.file?.size?.human) {
                 return this.file.file.size.human;
             }
@@ -150,7 +150,7 @@ export default {
             if (!this.file) {
                 return '';
             }
-            
+
             if (this.file.created?.formatted) {
                 return this.file.created.formatted;
             }
@@ -163,7 +163,7 @@ export default {
             if (!this.file) {
                 return 'Unknown bucket';
             }
-            
+
             if (this.file.bucket?.label) {
                 return this.file.bucket.label;
             }
@@ -201,7 +201,7 @@ export default {
     border: 1px solid #e5e7eb;
     background: #ffffff;
     transition: all 0.2s ease;
-    
+
     &.with-margin {
         margin-bottom: 1.25rem;
     }

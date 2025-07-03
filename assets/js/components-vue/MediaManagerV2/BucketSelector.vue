@@ -44,7 +44,7 @@
                         </div>
                     </label>
                     <div class="option-actions" v-if="showActions && bucket.object_count === 0">
-                        <button 
+                        <button
                             class="option-action-button delete-action"
                             @click.stop="handleDeleteBucket(bucket)"
                             title="Delete Bucket"
@@ -233,20 +233,20 @@ export default {
         positionDropdown() {
             const trigger = this.$el.querySelector('.bucket-selector__selected');
             const dropdown = this.$el.querySelector('.bucket-selector__dropdown');
-            
+
             if (!trigger || !dropdown) return;
-            
+
             const rect = trigger.getBoundingClientRect();
             const dropdownHeight = 300; // max-height of dropdown
             const spaceBelow = window.innerHeight - rect.bottom;
             const spaceAbove = rect.top;
-            
+
             // Set width to match trigger
             dropdown.style.width = `${rect.width}px`;
-            
+
             // Position horizontally
             dropdown.style.left = `${rect.left}px`;
-            
+
             // Position vertically - prefer below, but above if not enough space
             if (spaceBelow >= dropdownHeight || spaceBelow > spaceAbove) {
                 dropdown.style.top = `${rect.bottom + 4}px`;

@@ -46,7 +46,7 @@ export default {
     data() {
         return {
             openUpwards: false,
-            menuPosition: { top: 0, left: 0 },
+            menuPosition: {top: 0, left: 0},
             menuElement: null
         }
     },
@@ -247,8 +247,8 @@ export default {
             }
 
             // Check if click is outside both the dropdown button and the menu
-            if (!this.triggerElement.contains(event.target) && 
-                this.menuElement && 
+            if (!this.triggerElement.contains(event.target) &&
+                this.menuElement &&
                 !this.menuElement.contains(event.target)) {
                 this.$emit('close');
             }

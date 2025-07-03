@@ -42,8 +42,8 @@
                         </div>
                     </label>
                     <div class="option-actions" v-if="optionActions.length > 0">
-                        <button 
-                            v-for="(action, actionIndex) in optionActions" 
+                        <button
+                            v-for="(action, actionIndex) in optionActions"
                             :key="actionIndex"
                             v-if="action.condition ? action.condition(option) : true"
                             class="option-action-button"
@@ -233,7 +233,7 @@ export default {
         },
 
         handleOptionAction(action, option) {
-            this.$emit('option-action', { action, option });
+            this.$emit('option-action', {action, option});
         }
     }
 }

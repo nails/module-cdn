@@ -4,96 +4,96 @@
         title="Replace File"
         @close="close"
     >
-                <div v-if="!object" class="no-object-message">
-                    <p>No file selected for replacement.</p>
-                </div>
-                <div v-else>
-                    <FilePreview 
-                        :file="object"
-                        :show-checkbox="false"
-                        :show-date="false"
-                        :margin-bottom="true"
-                    />
-                    <p>
-                        Replace the file identified above with a file of the same type. This process will ensure that all references to the old file are maintained.
-                    </p>
-                    <Status
-                        type="warning"
-                        :message="'Be aware that intermediate systems may cache the old file for a period of time.'"
-                    />
-                <div 
-                    class="upload-zone"
-                    :class="{ 
+        <div v-if="!object" class="no-object-message">
+            <p>No file selected for replacement.</p>
+        </div>
+        <div v-else>
+            <FilePreview
+                :file="object"
+                :show-checkbox="false"
+                :show-date="false"
+                :margin-bottom="true"
+            />
+            <p>
+                Replace the file identified above with a file of the same type. This process will ensure that all references to the old file are maintained.
+            </p>
+            <Status
+                type="warning"
+                :message="'Be aware that intermediate systems may cache the old file for a period of time.'"
+            />
+            <div
+                class="upload-zone"
+                :class="{
                         'drag-over': isDragging,
                         'has-file': selectedFile,
                         'error': error
                     }"
-                    @dragenter.prevent="isDragging = true"
-                    @dragleave.prevent="isDragging = false"
-                    @dragover.prevent
-                    @drop.prevent="handleDrop"
-                    @click="triggerFileInput"
-                >
-                    <input 
-                        type="file" 
-                        ref="fileInput" 
-                        class="hidden" 
-                        @change="handleFileSelect"
-                    />
-                    <div v-if="!selectedFile" class="upload-prompt">
-                        <div class="upload-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                        </div>
-                        <div class="upload-text">
-                            <p class="primary-text">Drag and drop files here or click to browse</p>
-                            <p class="secondary-text">Max file size: {{ formatFileSize(maxUploadSize) }} · Only {{ object?.file?.ext?.toUpperCase() || 'FILE' }} files are allowed</p>
-                        </div>
+                @dragenter.prevent="isDragging = true"
+                @dragleave.prevent="isDragging = false"
+                @dragover.prevent
+                @drop.prevent="handleDrop"
+                @click="triggerFileInput"
+            >
+                <input
+                    type="file"
+                    ref="fileInput"
+                    class="hidden"
+                    @change="handleFileSelect"
+                />
+                <div v-if="!selectedFile" class="upload-prompt">
+                    <div class="upload-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
                     </div>
-                    <div v-else class="selected-file">
-                        <div class="file-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                        </div>
-                        <div class="file-info">
-                            <p class="filename">{{ selectedFile.name }}</p>
-                            <p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
-                        </div>
+                    <div class="upload-text">
+                        <p class="primary-text">Drag and drop files here or click to browse</p>
+                        <p class="secondary-text">Max file size: {{ formatFileSize(maxUploadSize) }} · Only {{ object?.file?.ext?.toUpperCase() || 'FILE' }} files are allowed</p>
                     </div>
                 </div>
-
-                <Status
-                    v-if="error"
-                    type="error"
-                    :message="error"
-                />
-                <Status
-                    v-if="success"
-                    type="success"
-                    message="File replaced successfully!"
-                />
+                <div v-else class="selected-file">
+                    <div class="file-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div class="file-info">
+                        <p class="filename">{{ selectedFile.name }}</p>
+                        <p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+                    </div>
                 </div>
+            </div>
 
-            <template #footer>
-                <Button 
-                    variant="secondary" 
-                    text="Cancel" 
-                    icon="cancel" 
-                    @click="close" 
-                    :disabled="isUploading"
-                />
-                <Button 
-                    variant="primary" 
-                    :text="isUploading ? 'Uploading...' : 'Replace File'" 
-                    icon="restore" 
-                    @click="uploadFile" 
-                    :disabled="!selectedFile || isUploading"
-                    :loading="isUploading"
-                />
-            </template>
-        </ModalBase>
+            <Status
+                v-if="error"
+                type="error"
+                :message="error"
+            />
+            <Status
+                v-if="success"
+                type="success"
+                message="File replaced successfully!"
+            />
+        </div>
+
+        <template #footer>
+            <Button
+                variant="secondary"
+                text="Cancel"
+                icon="cancel"
+                @click="close"
+                :disabled="isUploading"
+            />
+            <Button
+                variant="primary"
+                :text="isUploading ? 'Uploading...' : 'Replace File'"
+                icon="restore"
+                @click="uploadFile"
+                :disabled="!selectedFile || isUploading"
+                :loading="isUploading"
+            />
+        </template>
+    </ModalBase>
 </template>
 
 <script>
@@ -168,7 +168,7 @@ export default {
 
             const fileExtension = file.name.split('.').pop().toLowerCase();
             const allowedExtension = this.object?.file?.ext?.toLowerCase();
-            
+
             if (!allowedExtension) {
                 this.error = 'Unable to determine file type. Please try again.';
                 this.selectedFile = null;

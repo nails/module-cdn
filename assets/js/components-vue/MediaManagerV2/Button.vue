@@ -1,16 +1,16 @@
 <template>
-  <button
-    :class="[
+    <button
+        :class="[
       'custom-button',
       `variant-${variant}`,
       { 'is-disabled': disabled }
     ]"
-    :disabled="disabled"
-    @click="$emit('click')"
-  >
-    <span v-if="loading" class="loading-spinner"></span>
-    <template v-else>
-      <slot name="icon">
+        :disabled="disabled"
+        @click="$emit('click')"
+    >
+        <span v-if="loading" class="loading-spinner"></span>
+        <template v-else>
+            <slot name="icon">
         <span v-if="icon" class="button-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path v-if="icon === 'cancel'" fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -25,128 +25,130 @@
             </g>
           </svg>
         </span>
-      </slot>
-      <span>{{ text }}</span>
-    </template>
-  </button>
+            </slot>
+            <span>{{ text }}</span>
+        </template>
+    </button>
 </template>
 
 <script>
 export default {
-  name: 'Button',
-  props: {
-    text: {
-      type: String,
-      required: true
-    },
-    variant: {
-      type: String,
-      default: 'primary',
-      validator: (value) => ['primary', 'secondary', 'danger'].includes(value)
-    },
-    icon: {
-      type: String,
-      default: null
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    loading: {
-      type: Boolean,
-      default: false
+    name: 'Button',
+    props: {
+        text: {
+            type: String,
+            required: true
+        },
+        variant: {
+            type: String,
+            default: 'primary',
+            validator: (value) => ['primary', 'secondary', 'danger'].includes(value)
+        },
+        icon: {
+            type: String,
+            default: null
+        },
+        disabled: {
+            type: Boolean,
+            default: false
+        },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     }
-  }
 }
 </script>
 
 <style lang="scss" scoped>
 .custom-button {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-
-  &.is-disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .button-icon {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    height: 1.25em;
-  }
+    gap: 0.5rem;
+    transition: all 0.2s ease;
 
-  svg {
-    width: 1em;
-    height: 1em;
-    flex-shrink: 0;
-    vertical-align: middle;
-    display: inline-block;
-  }
-
-  &.variant-secondary {
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    color: #4b5563;
-
-    &:hover:not(:disabled) {
-      background: #e5e7eb;
-      color: #374151;
+    &.is-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
-    &:active:not(:disabled) {
-      background: #d1d5db;
-    }
-  }
-
-  &.variant-primary {
-    background: #4f46e5;
-    border: 1px solid transparent;
-    color: white;
-
-    &:hover:not(:disabled) {
-      background: #4338ca;
+    .button-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 1.25em;
     }
 
-    &:active:not(:disabled) {
-      background: #3730a3;
-    }
-  }
-
-  &.variant-danger {
-    background: #ef4444;
-    border: 1px solid transparent;
-    color: white;
-
-    &:hover:not(:disabled) {
-      background: #dc2626;
+    svg {
+        width: 1em;
+        height: 1em;
+        flex-shrink: 0;
+        vertical-align: middle;
+        display: inline-block;
     }
 
-    &:active:not(:disabled) {
-      background: #b91c1c;
+    &.variant-secondary {
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        color: #4b5563;
+
+        &:hover:not(:disabled) {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        &:active:not(:disabled) {
+            background: #d1d5db;
+        }
     }
-  }
+
+    &.variant-primary {
+        background: #4f46e5;
+        border: 1px solid transparent;
+        color: white;
+
+        &:hover:not(:disabled) {
+            background: #4338ca;
+        }
+
+        &:active:not(:disabled) {
+            background: #3730a3;
+        }
+    }
+
+    &.variant-danger {
+        background: #ef4444;
+        border: 1px solid transparent;
+        color: white;
+
+        &:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        &:active:not(:disabled) {
+            background: #b91c1c;
+        }
+    }
 }
 
 .loading-spinner {
-  display: inline-block;
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 1s ease-in-out infinite;
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

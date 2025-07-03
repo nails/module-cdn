@@ -5,7 +5,7 @@
         @close="close"
     >
         <div v-if="object">
-            <FilePreview 
+            <FilePreview
                 :file="object"
                 :show-checkbox="false"
                 :show-date="false"
@@ -62,18 +62,18 @@
             :message="success"
         />
         <template #footer>
-            <Button 
-                variant="secondary" 
-                text="Cancel" 
-                icon="cancel" 
-                @click="close" 
+            <Button
+                variant="secondary"
+                text="Cancel"
+                icon="cancel"
+                @click="close"
                 :disabled="isProcessing"
             />
-            <Button 
-                variant="primary" 
-                :text="isCopyMode ? 'Copy' : 'Move'" 
-                icon="move" 
-                @click="submitForm" 
+            <Button
+                variant="primary"
+                :text="isCopyMode ? 'Copy' : 'Move'"
+                icon="move"
+                @click="submitForm"
                 :disabled="!isValid || isProcessing"
                 :loading="isProcessing"
             />
@@ -150,7 +150,7 @@ export default {
             this.success = null;
 
             try {
-                const endpoint = this.isCopyMode ? 
+                const endpoint = this.isCopyMode ?
                     `${this.siteUrl}api/cdn/mediamanagerv2/copy` :
                     `${this.siteUrl}api/cdn/mediamanagerv2/move`;
 
@@ -160,8 +160,8 @@ export default {
                     action: this.isCopyMode ? 'copy' : 'move'
                 });
 
-                this.success = this.isCopyMode ? 
-                    'File copied successfully!' : 
+                this.success = this.isCopyMode ?
+                    'File copied successfully!' :
                     'File moved successfully!';
 
                 // Emit success event to parent component
@@ -176,7 +176,7 @@ export default {
                 }, 1500);
             } catch (error) {
                 console.error('Error during move/copy operation:', error);
-                this.error = error.response?.data?.error || 
+                this.error = error.response?.data?.error ||
                     `Failed to ${this.isCopyMode ? 'copy' : 'move'} file. Please try again.`;
             } finally {
                 this.isProcessing = false;
@@ -248,7 +248,9 @@ export default {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Custom styles for the bucket selector dropdown */

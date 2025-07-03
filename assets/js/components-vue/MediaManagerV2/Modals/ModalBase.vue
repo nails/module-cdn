@@ -1,5 +1,5 @@
 <template>
-    <div 
+    <div
         v-if="visible"
         class="base-modal-overlay"
         @click.self="handleOverlayClick"
@@ -12,9 +12,9 @@
                 <slot name="header">
                     <h3 v-if="title">{{ title }}</h3>
                 </slot>
-                <button 
-                    v-if="showClose" 
-                    class="base-modal-close-button" 
+                <button
+                    v-if="showClose"
+                    class="base-modal-close-button"
                     @click="handleClose"
                     aria-label="Close modal"
                 >
@@ -114,7 +114,7 @@ export default {
 }
 
 .base-modal-container {
-    background: #fff;
+    background: #ffffff;
     border-radius: 8px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     max-width: 500px;
@@ -193,16 +193,16 @@ export default {
     .base-modal-overlay {
         padding: 10px;
     }
-    
+
     .base-modal-container {
         max-width: 95vw;
         max-height: 95vh;
     }
-    
+
     .base-modal-header {
         padding: 16px 20px 0 20px;
     }
-    
+
     .base-modal-body {
         padding: 20px;
 
@@ -210,13 +210,13 @@ export default {
             margin-bottom: 0;
         }
     }
-    
+
     .base-modal-footer {
         padding: 0 20px 20px 20px;
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .base-modal-footer > * {
         width: 100%;
     }
