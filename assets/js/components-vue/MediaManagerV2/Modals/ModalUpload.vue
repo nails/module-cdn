@@ -117,6 +117,7 @@ import Button from '../Button.vue';
 import BucketSelector from '../BucketSelector.vue';
 import Status from '../Status.vue';
 import FormGroup from "../Form/Group.vue";
+import axios from 'axios';
 
 export default {
     name: 'ModalUpload',
@@ -204,17 +205,47 @@ export default {
             this.uploadProgress = Array(this.filesToUpload.length).fill(0);
             this.overallProgress = 0;
             try {
-                // Simulate upload logic here, replace with actual API call
                 for (let i = 0; i < this.filesToUpload.length; i++) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    this.uploadProgress[i] = 100;
-                    this.overallProgress = ((i + 1) / this.filesToUpload.length) * 100;
+                    const file = this.filesToUpload[i];
+                    const formData = new FormData();
+                    formData.append('upload', file);
+                    try {
+                        await axios.post(
+                            `${window.SITE_URL}api/cdn/object/create`,
+                            formData,
+                            {
+                                headers: {
+                                    'Content-Type': 'multipart/form-data',
+                                    'X-Cdn-Bucket': this.selectedUploadBucket,
+                                    'X-Cdn-Urls': '120x120-crop,400x400-crop'
+                                },
+                                onUploadProgress: (progressEvent) => {
+                                    if (progressEvent.total) {
+                                        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                                        this.$set(this.uploadProgress, i, percent);
+                                        // Update overall progress
+                                        let total = 0;
+                                        for (let j = 0; j < this.uploadProgress.length; j++) {
+                                            total += this.uploadProgress[j] || 0;
+                                        }
+                                        this.overallProgress = total / this.uploadProgress.length;
+                                    }
+                                }
+                            }
+                        );
+                        this.$set(this.uploadProgress, i, 100);
+                    } catch (err) {
+                        this.uploadError = `Failed to upload file: ${file.name}`;
+                        break;
+                    }
                 }
-                this.uploadSuccess = true;
-                this.$emit('upload-success');
-                setTimeout(() => {
-                    this.handleClose();
-                }, 1500);
+                if (!this.uploadError) {
+                    this.uploadSuccess = true;
+                    this.$emit('upload-success');
+                    setTimeout(() => {
+                        this.handleClose();
+                    }, 1500);
+                }
             } catch (e) {
                 this.uploadError = 'Failed to upload files.';
             } finally {
