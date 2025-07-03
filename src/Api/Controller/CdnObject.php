@@ -266,12 +266,11 @@ class CdnObject extends Api\Controller\Base
             );
         }
 
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
 
-        $iObjectId = $oInput->post('object_id');
+        $aData     = $this->getRequestData();
+        $iObjectId = $aData['object_id'] ?? null;
 
         if (empty($iObjectId)) {
             throw new Api\Exception\ApiException(
