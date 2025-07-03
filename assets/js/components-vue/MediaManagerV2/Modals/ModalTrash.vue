@@ -146,7 +146,13 @@ export default {
             for (let i = 0; i < this.selectedTrashedItems.length; i++) {
                 const objectId = this.selectedTrashedItems[i];
                 try {
-                    await axios.post(`${this.siteUrl}api/cdn/object/delete`, { object_id: objectId });
+                    await axios.post(this.cdnApi.objectDelete(), { object_id: objectId });
+                    // Remove purged item from trashedItems
+                    const idx = this.trashedItems.findIndex(item => item.id === objectId);
+                    if (idx !== -1) this.trashedItems.splice(idx, 1);
+                    // Remove purged item from selectedTrashedItems
+                    const selIdx = this.selectedTrashedItems.indexOf(objectId);
+                    if (selIdx !== -1) this.selectedTrashedItems.splice(selIdx, 1);
                 } catch (err) {
                     this.purgeErrorList.push(objectId);
                 }
@@ -211,6 +217,10 @@ export default {
 .trashed-items-list {
     display: flex;
     flex-direction: column;
+
+    & + .status-message {
+        margin-top: 1rem;
+    }
 }
 
 .trashed-items-header {
