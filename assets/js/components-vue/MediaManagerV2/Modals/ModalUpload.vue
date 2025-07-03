@@ -104,7 +104,7 @@
                 :text="isUploading ? 'Uploading...' : 'Upload'"
                 icon="upload"
                 @click="uploadFiles"
-                :disabled="filesToUpload.length === 0 || !selectedUploadBucket.length || isUploading"
+                :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
                 :loading="isUploading"
             />
         </template>
@@ -145,7 +145,7 @@ export default {
         return {
             dragOver: false,
             filesToUpload: [],
-            selectedUploadBucket: [],
+            selectedUploadBucket: null,
             isUploading: false,
             uploadProgress: [],
             overallProgress: 0,
@@ -160,7 +160,7 @@ export default {
             this.overallProgress = 0;
             this.uploadError = null;
             this.uploadSuccess = false;
-            this.selectedUploadBucket = [];
+            this.selectedUploadBucket = null;
             this.$emit('close');
         },
         handleFileSelect(event) {
@@ -197,7 +197,7 @@ export default {
             return parts.length > 1 ? parts.pop() : 'FILE';
         },
         async uploadFiles() {
-            if (this.filesToUpload.length === 0 || !this.selectedUploadBucket.length) return;
+            if (this.filesToUpload.length === 0 || !this.selectedUploadBucket) return;
             this.isUploading = true;
             this.uploadError = null;
             this.uploadSuccess = false;
