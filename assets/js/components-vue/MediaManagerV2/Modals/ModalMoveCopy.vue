@@ -126,8 +126,7 @@ export default {
     },
     computed: {
         availableBuckets() {
-            // Filter out the current bucket
-            return this.buckets.filter(bucket => bucket.id !== this.object.bucket.id);
+            return this.buckets;
         },
         isValid() {
             return this.selectedBucketId !== null;
