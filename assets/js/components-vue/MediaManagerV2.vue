@@ -670,10 +670,6 @@ export default {
             return collection;
         },
 
-        switchView() {
-            console.log(`Switched to ${this.viewMode} view`);
-        },
-
         error(message) {
             //  @todo (Pablo 2025-03-05) - Handle this behaviour better, toasts?
             console.log(`Error: ${message}`);
@@ -826,16 +822,6 @@ export default {
             });
         },
 
-        async handleBucketAction({action, bucket}) {
-            if (action.id === 'delete') {
-                // Show delete confirmation modal
-                this.bucketToDelete = bucket;
-                this.showDeleteBucketModal = true;
-                this.deleteBucketError = null;
-                this.deleteBucketSuccess = false;
-            }
-        },
-
         closeDeleteBucketModal() {
             this.showDeleteBucketModal = false;
             this.bucketToDelete = null;
@@ -876,128 +862,6 @@ export default {
                 this.deleteBucketError = error.response?.data?.error || error.message;
                 this.isDeletingBucket = false;
             }
-        },
-
-        handleFileSelect(event) {
-            const files = Array.from(event.target.files);
-
-            // Validate file sizes
-            const invalidFiles = files.filter(file => file.size > this.maxUploadSize);
-            if (invalidFiles.length > 0) {
-                this.error = `Some files exceed the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
-                return;
-            }
-
-            this.filesToUpload = [...this.filesToUpload, ...files];
-            event.target.value = ''; // Reset file input
-        },
-
-        removeFile(index) {
-            this.filesToUpload.splice(index, 1);
-        },
-
-        async uploadFiles() {
-            if (this.filesToUpload.length === 0 || !this.selectedUploadBucket.length || this.isUploading) {
-                return;
-            }
-
-            try {
-                this.isUploading = true;
-                this.uploadError = null;
-                this.uploadSuccess = false;
-                this.uploadProgress = {};
-                this.overallProgress = 0;
-
-                // Upload each file individually
-                const uploadPromises = this.filesToUpload.map(async (file, index) => {
-                    // Initialize progress for this file
-                    this.$set(this.uploadProgress, index, 0);
-
-                    // Create FormData for the upload
-                    const formData = new FormData();
-                    formData.append('upload', file);
-
-                    // Send the upload request with proper headers and progress tracking
-                    const response = await axios.post(
-                        `${this.siteUrl}api/cdn/object/create`,
-                        formData,
-                        {
-                            headers: {
-                                'Content-Type': 'multipart/form-data',
-                                'X-Cdn-Bucket': this.selectedUploadBucket[0] // Use first item from array
-                            },
-                            onUploadProgress: (progressEvent) => {
-                                // Update progress for this file
-                                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                                this.$set(this.uploadProgress, index, percentCompleted);
-
-                                // Calculate overall progress
-                                const totalProgress = Object.values(this.uploadProgress).reduce((sum, value) => sum + value, 0);
-                                this.overallProgress = totalProgress / this.filesToUpload.length;
-                            }
-                        }
-                    );
-
-                    return response.data.object;
-                });
-
-                // Wait for all uploads to complete
-                const uploadedObjects = await Promise.all(uploadPromises);
-
-                // Handle successful upload
-                console.log('Upload successful:', uploadedObjects);
-
-                // Show success message
-                this.uploadSuccess = true;
-
-                // Clear the file list
-                this.filesToUpload = [];
-
-                // Reset all filters
-                this.keywords = null;
-                this.selectedBuckets = [];
-                this.selectedFileTypes = [];
-                this.selectedUploaders = [];
-                this.dateLower = null;
-                this.dateUpper = null;
-                this.page = 1;
-
-                // Refresh the object list
-                this.doSearch();
-
-                // Close the modal after a delay
-                setTimeout(() => {
-                    this.showUploadModal = false;
-                    this.uploadSuccess = false;
-                    this.uploadProgress = {};
-                    this.overallProgress = 0;
-                }, 2000);
-
-            } catch (error) {
-                console.error('Upload failed:', error);
-                // Handle upload error
-                if (error.response && error.response.data && error.response.data.error) {
-                    this.uploadError = error.response.data.error;
-                } else {
-                    this.uploadError = 'An error occurred during upload. Please try again.';
-                }
-            } finally {
-                this.isUploading = false;
-            }
-        },
-
-        handleFileDrop(event) {
-            this.dragOver = false;
-            const files = Array.from(event.dataTransfer.files);
-
-            // Validate file sizes
-            const invalidFiles = files.filter(file => file.size > this.maxUploadSize);
-            if (invalidFiles.length > 0) {
-                this.error = `Some files exceed the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
-                return;
-            }
-
-            this.filesToUpload = [...this.filesToUpload, ...files];
         },
 
         openUploadModal() {
@@ -1201,17 +1065,6 @@ export default {
             }
         },
 
-        addMetadata() {
-            if (!this.editingObject.metadata) {
-                this.editingObject.metadata = [];
-            }
-            this.editingObject.metadata.push({key: '', value: ''});
-        },
-
-        removeMetadata(index) {
-            this.editingObject.metadata.splice(index, 1);
-        },
-
         handleFileReplaced(updatedObject) {
             // Update the local object instance with the new data
             const index = this.objects.findIndex(obj => obj.id === updatedObject.id);
@@ -1296,13 +1149,6 @@ export default {
             } finally {
                 this.isCreatingBucket = false;
             }
-        },
-
-        validateFile(file) {
-            if (file.size > this.maxUploadSize) {
-                return `File size exceeds the maximum allowed size of ${this.formatFileSize(this.maxUploadSize)}`;
-            }
-            return null;
         },
 
         formatFileSize(bytes) {
