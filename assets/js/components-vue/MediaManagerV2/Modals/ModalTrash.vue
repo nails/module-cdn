@@ -26,8 +26,10 @@
                         <span>Select All</span>
                     </label>
                 </div>
-                <div class="selection-info" v-if="selectedTrashedItems.length > 0">
-                    {{ selectedTrashedItems.length }} item{{ selectedTrashedItems.length > 1 ? 's' : '' }} selected
+                <div 
+                    class="selection-info" 
+                    :style="{ visibility: selectedTrashedItems.length > 0 ? 'visible' : 'hidden' }">
+                    {{ selectedTrashedItems.length > 0 ? `${selectedTrashedItems.length} item${selectedTrashedItems.length > 1 ? 's' : ''} selected` : '0 items selected' }}
                 </div>
             </div>
             <div class="trashed-items-container">
