@@ -265,6 +265,7 @@
             :visible="showUploadModal"
             :buckets="buckets"
             :max-upload-size="maxUploadSize"
+            :selectedBuckets="selectedBuckets"
             @close="showUploadModal = false"
             @upload-success="handleUploadSuccess"
         />
@@ -540,7 +541,6 @@ export default {
             loadingMoreObjects: false,
             buckets: [],
             selectedBuckets: [],
-            selectedUploadBucket: [],  // Changed to array for MultiSelect compatibility
             loadingBuckets: false,
             fileTypes: [],
             selectedFileTypes: [],
@@ -972,8 +972,6 @@ export default {
         openUploadModal() {
             this.showUploadModal = true;
             this.filesToUpload = [];
-            // If exactly one bucket is selected in the filter, use that as the default
-            this.selectedUploadBucket = this.selectedBuckets.length === 1 ? [this.selectedBuckets[0]] : [];
             this.uploadError = null;
             this.uploadSuccess = false;
         },

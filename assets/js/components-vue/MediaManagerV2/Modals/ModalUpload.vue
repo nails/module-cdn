@@ -141,6 +141,10 @@ export default {
         maxUploadSize: {
             type: Number,
             required: true
+        },
+        selectedBuckets: {
+            type: Array,
+            default: () => []
         }
     },
     data() {
@@ -154,6 +158,13 @@ export default {
             uploadError: null,
             uploadSuccess: false
         };
+    },
+    watch: {
+        visible(newValue) {
+            if (newValue && this.selectedBuckets.length === 1) {
+                this.selectedUploadBucket = this.selectedBuckets[0];
+            }
+        }
     },
     methods: {
         handleClose() {
