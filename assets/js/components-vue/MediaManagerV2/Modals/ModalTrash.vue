@@ -146,26 +146,43 @@ export default {
             this.purgeSuccess = false;
             this.purgeProgress = 0;
             this.purgeErrorList = [];
-            for (let i = 0; i < this.selectedTrashedItems.length; i++) {
-                const objectId = this.selectedTrashedItems[i];
+
+            // Create a copy of the selected items to iterate through
+            const itemsToPurge = [...this.selectedTrashedItems];
+            const totalItems = itemsToPurge.length;
+            const successfullyPurged = [];
+
+            for (let i = 0; i < itemsToPurge.length; i++) {
+                const objectId = itemsToPurge[i];
                 try {
                     await axios.post(this.cdnApi.object.delete(), {object_id: objectId});
-                    // Remove purged item from trashedItems
-                    const idx = this.trashedItems.findIndex(item => item.id === objectId);
-                    if (idx !== -1) this.trashedItems.splice(idx, 1);
-                    // Remove purged item from selectedTrashedItems
-                    const selIdx = this.selectedTrashedItems.indexOf(objectId);
-                    if (selIdx !== -1) this.selectedTrashedItems.splice(selIdx, 1);
+                    successfullyPurged.push(objectId);
                 } catch (err) {
                     this.purgeErrorList.push(objectId);
                 }
-                this.purgeProgress = Math.round(((i + 1) / this.selectedTrashedItems.length) * 100);
+                this.purgeProgress = Math.round(((i + 1) / totalItems) * 100);
             }
+
+            // Update the arrays after all operations are complete
+            for (const objectId of successfullyPurged) {
+                // Remove purged item from trashedItems
+                const idx = this.trashedItems.findIndex(item => item.id === objectId);
+                if (idx !== -1) this.trashedItems.splice(idx, 1);
+
+                // Remove purged item from selectedTrashedItems
+                const selIdx = this.selectedTrashedItems.indexOf(objectId);
+                if (selIdx !== -1) this.selectedTrashedItems.splice(selIdx, 1);
+            }
+
             this.isPurging = false;
             if (this.purgeErrorList.length > 0) {
                 this.purgeError = `Failed to purge ${this.purgeErrorList.length} item(s).`;
             } else {
                 this.purgeSuccess = true;
+                // Automatically dismiss success message after 1.5 seconds
+                setTimeout(() => {
+                    this.purgeSuccess = false;
+                }, 1500);
             }
             this.$emit('purge');
         }
