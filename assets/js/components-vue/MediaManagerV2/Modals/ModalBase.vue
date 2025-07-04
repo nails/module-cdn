@@ -177,7 +177,7 @@ export default {
 }
 
 /* Ensure any last element in modal body has no bottom margin, including components with scoped styles */
-.base-modal-body :deep(*:last-child) {
+.base-modal-body > :deep(*:last-child) {
     margin-bottom: 0 !important;
 }
 
