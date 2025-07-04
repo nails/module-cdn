@@ -420,7 +420,47 @@ export default {
             type: Number,
             default: 10485760 // 10MB in bytes
         },
+        userCanCreateObject: {
+            type: Boolean,
+            default: false
+        },
+        userCanEditObject: {
+            type: Boolean,
+            default: false
+        },
+        userCanReplaceObject: {
+            type: Boolean,
+            default: false
+        },
+        userCanMoveObject: {
+            type: Boolean,
+            default: false
+        },
+        userCanCopyObject: {
+            type: Boolean,
+            default: false
+        },
+        userCanDeleteObject: {
+            type: Boolean,
+            default: false
+        },
+        userCanRestoreObject: {
+            type: Boolean,
+            default: false
+        },
+        userCanPurgeObject: {
+            type: Boolean,
+            default: false
+        },
         userCanCreateBucket: {
+            type: Boolean,
+            default: false
+        },
+        userCanEditBucket: {
+            type: Boolean,
+            default: false
+        },
+        userCanDeleteBucket: {
             type: Boolean,
             default: false
         },

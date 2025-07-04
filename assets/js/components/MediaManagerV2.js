@@ -36,8 +36,19 @@ class MediaManagerV2 {
                 // Get max upload size from mount point
                 const maxUploadSize = mountPoint ? parseInt(mountPoint.dataset.maxUploadSize) : 10485760; // Default to 10MB if not set
 
-                // Get user can create bucket permission
+                // User permissions
+                const userCanCreateObject = mountPoint ? mountPoint.dataset.userCanCreateObject === 'true' : false;
+                const userCanEditObject = mountPoint ? mountPoint.dataset.userCanEditObject === 'true' : false;
+                const userCanReplaceObject = mountPoint ? mountPoint.dataset.userCanReplaceObject === 'true' : false;
+                const userCanMoveObject = mountPoint ? mountPoint.dataset.userCanMoveObject === 'true' : false;
+                const userCanCopyObject = mountPoint ? mountPoint.dataset.userCanCopyObject === 'true' : false;
+                const userCanDeleteObject = mountPoint ? mountPoint.dataset.userCanDeleteObject === 'true' : false;
+                const userCanRestoreObject = mountPoint ? mountPoint.dataset.userCanRestoreObject === 'true' : false;
+                const userCanPurgeObject = mountPoint ? mountPoint.dataset.userCanPurgeObject === 'true' : false;
                 const userCanCreateBucket = mountPoint ? mountPoint.dataset.userCanCreateBucket === 'true' : false;
+                const userCanEditBucket = mountPoint ? mountPoint.dataset.userCanEditBucket === 'true' : false;
+                const userCanDeleteBucket = mountPoint ? mountPoint.dataset.userCanDeleteBucket === 'true' : false;
+
 
                 // Create a new Vue instance with all components
                 new Vue({
@@ -52,7 +63,17 @@ class MediaManagerV2 {
                         props: {
                             switchBackUrl,
                             maxUploadSize,
-                            userCanCreateBucket
+                            userCanCreateObject,
+                            userCanEditObject,
+                            userCanReplaceObject,
+                            userCanMoveObject,
+                            userCanCopyObject,
+                            userCanDeleteObject,
+                            userCanRestoreObject,
+                            userCanPurgeObject,
+                            userCanCreateBucket,
+                            userCanEditBucket,
+                            userCanDeleteBucket,
                         }
                     })
                 });

@@ -76,6 +76,8 @@ class Manager extends BaseAdmin
         $aPermissions['object:restore'] = 'Can restore deleted objects';
         $aPermissions['object:purge']   = 'Can purge deleted objects';
         $aPermissions['bucket:create']  = 'Can create new buckets';
+        $aPermissions['bucket:edit']    = 'Can edit existing buckets';
+        $aPermissions['bucket:delete']  = 'Can delete existing buckets';
 
         return $aPermissions;
     }
