@@ -207,7 +207,7 @@ class CdnObject extends Api\Controller\Base
         /** @var \Nails\Cdn\Model\CdnObject $oModel */
         $oModel = Factory::model('Object', constants::MODULE_SLUG);
 
-        if (!userHasPermission('admin:cdn:manager:object:create')) {
+        if (!userHasPermission('admin:cdn:manager:object:edit')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED

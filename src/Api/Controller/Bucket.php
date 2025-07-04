@@ -15,6 +15,9 @@ namespace Nails\Cdn\Api\Controller;
 use Nails\Api;
 use Nails\Api\Factory\ApiResponse;
 use Nails\Cdn\Constants;
+use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\ModelException;
+use Nails\Common\Exception\ValidationException;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
 use Nails\Factory;
@@ -94,12 +97,14 @@ class Bucket extends Api\Controller\CrudController
     /**
      * Overridden to check user permissions before creating buckets
      *
-     * @return array
+     * @return ApiResponse
+     * @throws Api\Exception\ApiException
+     * @throws FactoryException
+     * @throws ModelException
+     * @throws ValidationException
      */
     public function create(): ApiResponse
     {
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
@@ -113,6 +118,7 @@ class Bucket extends Api\Controller\CrudController
         $data = $this->getRequestData();
 
         //  @todo (Pablo - 2018-08-16) - Remove once CrudController validates properly itself
+
         if (!$data['label']) {
             throw new Api\Exception\ApiException(
                 '`label` is a required field',

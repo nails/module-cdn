@@ -67,6 +67,10 @@ class Manager extends BaseAdmin
 
         $aPermissions['object:browse']  = 'Can browse existing objects';
         $aPermissions['object:create']  = 'Can create new objects';
+        $aPermissions['object:edit']    = 'Can edit existing objects';
+        $aPermissions['object:replace'] = 'Can replace existing objects';
+        $aPermissions['object:move']    = 'Can move existing objects';
+        $aPermissions['object:copy']    = 'Can copy existing objects';
         $aPermissions['object:import']  = 'Can import via URL';
         $aPermissions['object:delete']  = 'Can delete existing objects';
         $aPermissions['object:restore'] = 'Can restore deleted objects';

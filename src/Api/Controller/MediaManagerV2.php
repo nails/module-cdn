@@ -444,6 +444,13 @@ class MediaManagerV2 extends Api\Controller\Base
         /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
 
+        if (!userHasPermission('admin:cdn:manager:object:replace')) {
+            throw new Api\Exception\ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
+
         /** @var \Nails\Cdn\Resource\CdnObject|null $oObject */
         $oObject = $oObjectModel->getById($oInput->post('object_id'), [
             new Expand('bucket'),
@@ -489,6 +496,13 @@ class MediaManagerV2 extends Api\Controller\Base
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
         /** @var \Nails\Cdn\Model\Bucket $oBucketModel */
         $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
+
+        if (!userHasPermission('admin:cdn:manager:object:move')) {
+            throw new Api\Exception\ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
 
         // Validate input
         $data            = $this->getRequestData();
@@ -557,6 +571,13 @@ class MediaManagerV2 extends Api\Controller\Base
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
         /** @var \Nails\Cdn\Model\Bucket $oBucketModel */
         $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
+
+        if (!userHasPermission('admin:cdn:manager:object:copy')) {
+            throw new Api\Exception\ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
 
         // Validate input
         $data            = $this->getRequestData();
