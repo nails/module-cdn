@@ -14,21 +14,27 @@ namespace Nails\Cdn\Service;
 
 use Nails\Auth;
 use Nails\Cdn\Constants;
+use Nails\Cdn\Events;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Exception\DriverException;
 use Nails\Cdn\Exception\ObjectCreateException;
+use Nails\Cdn\Exception\ObjectReplaceException;
 use Nails\Cdn\Exception\PermittedDimensionException;
 use Nails\Cdn\Exception\UrlException;
 use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
+use Nails\Cdn\Resource\CdnObject;
 use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\NailsException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Factory\HttpResponse;
 use Nails\Common\Helper\ArrayHelper;
 use Nails\Common\Helper\File;
+use Nails\Common\Helper\Model\Where;
 use Nails\Common\Interfaces\Service\FileCache\Driver;
 use Nails\Common\Service\Database;
+use Nails\Common\Service\Event;
 use Nails\Common\Service\FileCache;
 use Nails\Common\Service\Mime;
 use Nails\Common\Traits\Caching;
@@ -37,6 +43,8 @@ use Nails\Common\Traits\GetCountCommon;
 use Nails\Components;
 use Nails\Config;
 use Nails\Factory;
+use ReflectionException;
+use stdClass;
 
 /**
  * Class Cdn
@@ -57,6 +65,15 @@ class Cdn
      * @var string
      */
     const DEFAULT_DRIVER = 'nails/driver-cdn-local';
+
+    /**
+     * Byte Multipliers
+     *
+     * @var int
+     */
+    const BYTE_MULTIPLIER_KB = 1024;
+    const BYTE_MULTIPLIER_MB = self::BYTE_MULTIPLIER_KB * 1024;
+    const BYTE_MULTIPLIER_GB = self::BYTE_MULTIPLIER_MB * 1024;
 
     /**
      * How precise to make human friendly file sizes
@@ -123,6 +140,11 @@ class Cdn
      */
     protected $oMimeService;
 
+    /**
+     * @var Event
+     */
+    protected $oEventService;
+
     /** @var \Nails\Common\Service\FileCache */
     protected $oCache;
 
@@ -140,9 +162,11 @@ class Cdn
      * @throws FactoryException
      */
     public function __construct(
-        Mime $oMimeService
+        Mime $oMimeService,
+        Event $oEventService
     ) {
-        $this->oMimeService = $oMimeService;
+        $this->oMimeService  = $oMimeService;
+        $this->oEventService = $oEventService;
 
         // --------------------------------------------------------------------------
 
@@ -321,8 +345,8 @@ class Cdn
     /**
      * Unset an object from the cache in one fell swoop
      *
-     * @param \stdClass $object        The object to remove from the cache
-     * @param bool      $clearCacheDir Whether to clear the cache directory or not
+     * @param stdClass $object        The object to remove from the cache
+     * @param bool     $clearCacheDir Whether to clear the cache directory or not
      */
     protected function unsetCacheObject($object, $clearCacheDir = true)
     {
@@ -417,7 +441,7 @@ class Cdn
         $oDb = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.serves, o.downloads, o.thumbs, o.scales, o.driver, o.md5_hash');
         $oDb->Select('o.created, o.created_by, o.modified, o.modified_by');
-        $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
+        $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated, o.metadata');
         $oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
         $oDb->join(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket b', 'b.id = o.bucket_id', 'LEFT');
@@ -515,7 +539,7 @@ class Cdn
 
         $oDb = Factory::service('Database');
         $oDb->select('o.id, o.filename, o.filename_display, o.trashed, o.trashed_by, o.serves, o.downloads, ');
-        $oDb->select('o.thumbs, o.scales, o.driver, o.md5_hash, o.created, o.created_by, o.modified, o.modified_by');
+        $oDb->select('o.thumbs, o.scales, o.driver, o.metadata, o.md5_hash, o.created, o.created_by, o.modified, o.modified_by');
         $oDb->select('o.mime, o.filesize, o.img_width, o.img_height, o.img_orientation, o.is_animated');
         $oDb->select('b.id bucket_id, b.label bucket_label, b.slug bucket_slug');
 
@@ -585,56 +609,75 @@ class Cdn
     /**
      * Returns a single object
      *
-     * @param mixed  $objectIdSlug The object's ID or filename
-     * @param string $bucketIdSlug The bucket's ID or slug
-     * @param array  $data         Data to pass to getCountCommon()()
+     * @param int|string|Resource\CdnObject $object       The object's ID or filename
+     * @param int|string                    $bucketIdSlug The bucket's ID or slug
+     * @param array                         $data         Data to pass to getCountCommon()()
      *
-     * @return mixed                stdClass on success, false on failure
+     * @return bool|stdClass                stdClass on success, false on failure
+     * @throws CdnException
      */
-    public function getObject($objectIdSlug, $bucketIdSlug = '', $data = [])
-    {
-        //  Check the cache
-        $cacheKey = 'object-' . $objectIdSlug;
-        $cacheKey .= $bucketIdSlug ? '-' . $bucketIdSlug : '';
-        $cache    = $this->getCache($cacheKey);
+    public function getObject(
+        int|string|Resource\CdnObject $object,
+        int|string $bucketIdSlug = '',
+        array $data = []
+    ): bool|stdClass {
 
-        if ($cache) {
-            return $cache;
+        if ($object instanceof Resource\CdnObject || is_numeric($object)) {
+
+            $objectId = $object instanceof Resource\CdnObject
+                ? $object->id
+                : $object;
+
+            // --------------------------------------------------------------------------
+
+            $cacheKey = 'object-' . $objectId;
+            if ($cache = $this->getCache($cacheKey)) {
+                return $cache;
+            }
+
+        } elseif (is_string($object)) {
+
+            $objectFilename = $object;
+
+            //  Check the cache
+            $cacheKey = 'object-' . $objectFilename;
+            $cacheKey .= !empty($bucket) ? '-' . $bucket : '';
+            if ($cache = $this->getCache($cacheKey)) {
+                return $cache;
+            }
+
+        } else {
+            throw new CdnException('Incompatible object data type provided.');
         }
 
         // --------------------------------------------------------------------------
 
-        if (!isset($data['where'])) {
-            $data['where'] = [];
-        }
+        if (isset($objectId)) {
+            $data[] = new Where('o.id', $objectId);
 
-        if (is_numeric($objectIdSlug)) {
-            $data['where'][] = ['o.id', $objectIdSlug];
-        } else {
-            $data['where'][] = ['o.filename', $objectIdSlug];
+        } elseif (isset($objectFilename)) {
+            $data[] = new Where('o.filename', $objectFilename);
             if (!empty($bucketIdSlug)) {
                 if (is_numeric($bucketIdSlug)) {
-                    $data['where'][] = ['b.id', $bucketIdSlug];
+                    $data[] = new Where('b.id', $bucketIdSlug);
+                } elseif (is_string($bucketIdSlug)) {
+                    $data[] = new Where('b.slug', $bucketIdSlug);
                 } else {
-                    $data['where'][] = ['b.slug', $bucketIdSlug];
+                    throw new CdnException('Incompatible bucket data type provided.');
                 }
             }
         }
 
-        $objects = $this->getObjects(null, null, $data);
-
+        $objects = $this->getObjects($data);
         if (empty($objects)) {
             return false;
         }
 
         // --------------------------------------------------------------------------
 
-        //  Cache the object
-        $this->setCache($cacheKey, $objects[0]);
-
-        // --------------------------------------------------------------------------
-
-        return $objects[0];
+        $object = reset($objects);
+        $this->setCache($cacheKey, $object);
+        return $object;
     }
 
     // --------------------------------------------------------------------------
@@ -642,68 +685,79 @@ class Cdn
     /**
      * Returns a single object from the trash
      *
-     * @param mixed  $object The object's ID or filename
-     * @param string $bucket The bucket's ID or slug
-     * @param array  $data   Data to pass to getCountCommon()
+     * @param int|string|Resource\CdnObject $object The object
+     * @param int|string                    $bucket The bucket's ID or slug
+     * @param array                         $data   Data to pass to getCountCommon()
      *
-     * @return mixed          stdClass on success, false on failure
+     * @return bool|stdClass          stdClass on success, false on failure
+     * @throws CdnException
+     * @throws FactoryException
      */
-    public function getObjectFromTrash($object, $bucket = '', $data = [])
-    {
+    public function getObjectFromTrash(
+        int|string|Resource\CdnObject $object,
+        int|string $bucket = '',
+        array $data = []
+    ): bool|stdClass {
+
+        /** @var Database $oDb */
         $oDb = Factory::service('Database');
 
-        if (is_numeric($object)) {
+        if ($object instanceof Resource\CdnObject || is_numeric($object)) {
 
-            //  Check the cache
-            $cacheKey = 'object-trash-' . $object;
-            $cache    = $this->getCache($cacheKey);
+            $objectId = $object instanceof Resource\CdnObject
+                ? $object->id
+                : $object;
 
-            if ($cache) {
+            // --------------------------------------------------------------------------
+
+            $cacheKey = 'object-trash-' . $objectId;
+            if ($cache = $this->getCache($cacheKey)) {
                 return $cache;
             }
 
             // --------------------------------------------------------------------------
 
-            $oDb->where('o.id', $object);
+            $oDb->where('o.id', $objectId);
 
-        } else {
+        } elseif (is_string($object)) {
+
+            $objectFilename = $object;
 
             //  Check the cache
-            $cacheKey = 'object-trash-' . $object;
+            $cacheKey = 'object-trash-' . $objectFilename;
             $cacheKey .= !empty($bucket) ? '-' . $bucket : '';
-            $cache    = $this->getCache($cacheKey);
-
-            if ($cache) {
+            if ($cache = $this->getCache($cacheKey)) {
                 return $cache;
             }
 
             // --------------------------------------------------------------------------
 
-            $oDb->where('o.filename', $object);
+            $oDb->where('o.filename', $objectFilename);
 
             if (!empty($bucket)) {
                 if (is_numeric($bucket)) {
                     $oDb->where('b.id', $bucket);
-                } else {
+                } elseif (is_string($bucket)) {
                     $oDb->where('b.slug', $bucket);
+                } else {
+                    throw new CdnException('Incompatible bucket data type provided.');
                 }
             }
+
+        } else {
+            throw new CdnException('Incompatible object data type provided.');
         }
 
-        $objects = $this->getObjectsFromTrash(null, null, $data);
-
+        $objects = $this->getObjectsFromTrash($data);
         if (empty($objects)) {
             return false;
         }
 
         // --------------------------------------------------------------------------
 
-        //  Cache the object
-        $this->setCache($cacheKey, $objects[0]);
-
-        // --------------------------------------------------------------------------
-
-        return $objects[0];
+        $object = reset($objects);
+        $this->setCache($cacheKey, $object);
+        return $object;
     }
 
     // --------------------------------------------------------------------------
@@ -779,8 +833,20 @@ class Cdn
     {
         try {
 
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_CREATE,
+                    Events::getEventNamespace(),
+                    [
+                        $object,
+                        $mBucket,
+                        $aOptions,
+                        $bIsStream,
+                    ]
+                );
+
             //  Define variables we'll need
-            $oData = new \stdClass();
+            $oData = new stdClass();
 
             //  Support creating buckets with additional parameters
             if (is_array($mBucket)) {
@@ -807,11 +873,7 @@ class Cdn
                  * Upload is a data stream, i.e the raw data to upload (might be binary, might be plain text)
                  */
 
-                if (!isset($aOptions['Content-Type'])) {
-                    throw new ObjectCreateException('A Content-Type must be defined for data stream uploads');
-                }
-
-                $sCacheFile  = $this->saveDataToCacheFile($object);
+                $sCacheFile  = $this->saveStreamToCacheFile($object, $aOptions['Content-Type'] ?? null);
                 $oData->file = $sCacheFile;
 
                 //  Specify the file specifics
@@ -885,7 +947,6 @@ class Cdn
                 /**
                  * Object is an uploaded file
                  */
-
                 //  It's in $_FILES, check the upload was successful
                 if ($_FILES[$object]['error'] !== UPLOAD_ERR_OK) {
                     throw new ObjectCreateException(
@@ -897,7 +958,7 @@ class Cdn
                 $sCacheFile = $this->getTempFile();
                 if (!move_uploaded_file($_FILES[$object]['tmp_name'], $sCacheFile)) {
                     throw new ObjectCreateException(
-                        'Failed to move uploaded file to temporary directory'
+                        'Failed to move uploaded file to temporary directory.'
                     );
                 }
 
@@ -1138,6 +1199,16 @@ class Cdn
                 $object = $this->createObject($oData, true);
                 if ($object) {
                     //  @todo (Pablo - 2019-03-27) - Remove temporary file, if created
+
+                    $this->oEventService
+                        ->trigger(
+                            Events::OBJECT_CREATED,
+                            Events::getEventNamespace(),
+                            [
+                                $object,
+                            ]
+                        );
+
                     return $object;
                 } else {
                     $this->callDriver('destroy', [$oData->filename, $oData->bucket_slug]);
@@ -1158,6 +1229,21 @@ class Cdn
         }
 
         return false;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @throws CdnException
+     * @throws ObjectCreateException
+     */
+    private function saveStreamToCacheFile($stream, ?string $contentType): string
+    {
+        if (!isset($contentType)) {
+            throw new ObjectCreateException('A Content-Type must be defined for data stream uploads');
+        }
+
+        return $this->saveDataToCacheFile($stream);
     }
 
     // --------------------------------------------------------------------------
@@ -1235,7 +1321,7 @@ class Cdn
      * @return string
      * @throws CdnException
      */
-    protected function saveDataToCacheFile($data)
+    protected function saveDataToCacheFile($data): string
     {
         $sPath = $this->getTempFile();
         $fh    = fopen($sPath, 'w+');
@@ -1314,20 +1400,34 @@ class Cdn
     /**
      * Deletes an object
      *
-     * @param int $iObjectId The object's ID or filename
+     * @param int|string|Resource\CdnObject $object The object to delete
      *
-     * @return bool
+     * @throws FactoryException
      */
-    public function objectDelete($iObjectId)
-    {
+    public function objectDelete(
+        int|string|Resource\CdnObject $object
+    ): bool {
+
+        /** @var Database $oDb */
         $oDb = Factory::service('Database');
 
         try {
 
-            $object = $this->getObject($iObjectId);
+            $object = $this->getObject($object);
             if (empty($object)) {
                 throw new CdnException('Not a valid object');
             }
+
+            // --------------------------------------------------------------------------
+
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_DELETE,
+                    Events::getEventNamespace(),
+                    [
+                        $object,
+                    ]
+                );
 
             // --------------------------------------------------------------------------
 
@@ -1347,6 +1447,7 @@ class Cdn
                 'thumbs'           => $object->thumbs,
                 'scales'           => $object->scales,
                 'driver'           => $object->driver,
+                'metadata'         => json_encode($object->metadata),
                 'created'          => $object->created,
                 'created_by'       => $object->created_by,
                 'modified'         => $object->modified,
@@ -1379,6 +1480,15 @@ class Cdn
             //  Clear caches
             $this->unsetCacheObject($object);
 
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_DELETED,
+                    Events::getEventNamespace(),
+                    [
+                        $object,
+                    ]
+                );
+
             return true;
 
         } catch (\Exception $e) {
@@ -1395,20 +1505,34 @@ class Cdn
     /**
      * Restore an object from the trash
      *
-     * @param mixed $iObjectId The object's ID or filename
+     * @param int|string|Resource\CdnObject $object The object to restore
      *
-     * @return bool
+     * @throws FactoryException
      */
-    public function objectRestore($iObjectId)
-    {
+    public function objectRestore(
+        int|string|Resource\CdnObject $object
+    ): bool {
+
+        /** @var Database $oDb */
         $oDb = Factory::service('Database');
 
         try {
 
-            $oObject = $this->getObjectFromTrash($iObjectId);
+            $oObject = $this->getObjectFromTrash($object);
             if (empty($oObject)) {
                 throw new CdnException('Not a valid object');
             }
+
+            // --------------------------------------------------------------------------
+
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_RESTORE,
+                    Events::getEventNamespace(),
+                    [
+                        $oObject,
+                    ]
+                );
 
             // --------------------------------------------------------------------------
 
@@ -1428,6 +1552,7 @@ class Cdn
                 'thumbs'           => $oObject->thumbs,
                 'scales'           => $oObject->scales,
                 'driver'           => $oObject->driver,
+                'metadata'         => json_encode($oObject->metadata),
                 'created'          => $oObject->created,
                 'created_by'       => $oObject->created_by,
             ];
@@ -1455,6 +1580,15 @@ class Cdn
 
             $oDb->transaction()->commit();
 
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_RESTORED,
+                    Events::getEventNamespace(),
+                    [
+                        $oObject,
+                    ]
+                );
+
             return true;
 
         } catch (\Exception $e) {
@@ -1469,34 +1603,38 @@ class Cdn
     /**
      * Permanently deletes an object
      *
-     * @param int $iObjectId The object's ID
+     * @param int|string|Resource\CdnObject $object The object to destroy
      *
-     * @return bool
-     **/
-    public function objectDestroy($iObjectId)
-    {
-        if (!$iObjectId) {
-            $this->setError('Not a valid object');
-            return false;
+     * @throws DriverException
+     * @throws FactoryException
+     * @throws NailsException
+     * @throws ReflectionException
+     */
+    public function objectDestroy(
+        int|string|Resource\CdnObject $object
+    ): bool {
+
+        $oObject = $this->getObject($object);
+        if (!$oObject) {
+            //  Object doesn't exist but may exist in the trash
+            $oObject = $this->getObjectFromTrash($object);
         }
-
-        // --------------------------------------------------------------------------
-
-        $oObject = $this->getObject($iObjectId);
-
-        if ($oObject) {
-            if (!$this->objectDelete($oObject->id)) {
-                return false;
-            }
-        }
-
-        //  Object doesn't exist but may exist in the trash
-        $oObject = $this->getObjectFromTrash(is_object($oObject) ? $oObject->id : $iObjectId);
 
         if (!$oObject) {
             $this->setError('Nothing to destroy.');
             return false;
         }
+
+        // --------------------------------------------------------------------------
+
+        $this->oEventService
+            ->trigger(
+                Events::OBJECT_DESTROY,
+                Events::getEventNamespace(),
+                [
+                    $oObject,
+                ]
+            );
 
         // --------------------------------------------------------------------------
 
@@ -1523,10 +1661,19 @@ class Cdn
 
                 $oDb->transaction()->commit();
                 $this->unsetCacheObject($oObject);
+
+                $this->oEventService
+                    ->trigger(
+                        Events::OBJECT_DESTROYED,
+                        Events::getEventNamespace(),
+                        [
+                            $oObject,
+                        ]
+                    );
+
                 return true;
             }
         } else {
-
             $this->setError($this->callDriver('lastError'));
             return false;
         }
@@ -1537,16 +1684,22 @@ class Cdn
     /**
      * Copies an object
      *
-     * @param int   $sourceObjectId The ID of the object to copy
-     * @param mixed $newBucket      The ID or slug of the destination bucket, leave as null to copy to same bucket
-     * @param array $options        An array of options to apply to the new object
-     *
-     * @return bool
+     * @param int|string|Resource\CdnObject $sourceObject The object to copy
+     * @param int|string|Resource\Bucket    $newBucket    The destination bucket
+     * @param array                         $options      An array of options to apply to the new object
      */
-    public function objectCopy($sourceObjectId, $newBucket = null, $options = [])
-    {
-        //  @todo - Copy object between buckets
-        return false;
+    public function objectCopy(
+        int|string|Resource\CdnObject $sourceObject,
+        int|string|Resource\Bucket $newBucket,
+        array $options = []
+    ): Resource\CdnObject {
+
+        $oObject = $this->getObject($sourceObject);
+        if (empty($oObject)) {
+            throw new CdnException('Not a valid object');
+        }
+
+        throw new \Exception('Method not implemented');
     }
 
     // --------------------------------------------------------------------------
@@ -1554,15 +1707,20 @@ class Cdn
     /**
      * Moves an object to a new bucket
      *
-     * @param int   $sourceObjectId The ID of the object to move
-     * @param mixed $newBucket      The ID or slug of the destination bucket
-     *
-     * @return bool
+     * @param int|CdnObject              $sourceObject The object to move
+     * @param int|string|Resource\Bucket $newBucket    The destination bucket
      */
-    public function objectMove($sourceObjectId, $newBucket)
-    {
-        //  @todo - Move object between buckets
-        return false;
+    public function objectMove(
+        int|Resource\CdnObject $sourceObject,
+        int|string|Resource\Bucket $newBucket
+    ): Resource\CdnObject {
+
+        $oObject = $this->getObject($sourceObject);
+        if (empty($oObject)) {
+            throw new CdnException('Not a valid object');
+        }
+
+        throw new \Exception('Method not implemented');
     }
 
     // --------------------------------------------------------------------------
@@ -1570,30 +1728,220 @@ class Cdn
     /**
      * Uploads an object and, if successful, removes the old object. Note that a new Object ID is created.
      *
-     * @param mixed $object      The existing object's ID or filename
-     * @param mixed $bucket      The bucket's ID or slug
-     * @param mixed $replaceWith The replacement: $_FILE key, path or data stream
-     * @param array $aOptions    Upload options
-     * @param bool  $bIsStream   Whether the replacement object is a data stream or not
+     * @param int|string|Resource\CdnObject $object      The existing object
+     * @param mixed                         $replaceWith The replacement: $_FILE key, path or data stream
+     * @param array                         $aOptions    Upload options
+     * @param bool                          $bIsStream   Whether the replacement object is a data stream or not
      *
-     * @return mixed                stdClass on success, false on failure
+     * @return bool|stdClass                stdClass on success, false on failure
      */
-    public function objectReplace($object, mixed $replaceWith, array $aOptions = [], bool $bIsStream = false)
-    {
-        //  Firstly, attempt the upload
-        $upload = $this->objectCreate($replaceWith, $replaceWith, $aOptions, $bIsStream);
+    public function objectReplace(
+        int|string|Resource\CdnObject $object,
+        mixed $replaceWith,
+        array $aOptions = [],
+        bool $bIsStream = false
+    ): bool|stdClass {
+        try {
 
-        if ($upload) {
-
-            $oObj = $this->getObject($object);
-
-            if ($oObj) {
-                $this->objectDelete($oObj->id);
+            $oExistingObject = $this->getObject($object);
+            if (empty($oExistingObject)) {
+                throw new CdnException('Not a valid object');
             }
 
-            return $upload;
+            // --------------------------------------------------------------------------
 
-        } else {
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_REPLACE,
+                    Events::getEventNamespace(),
+                    [
+                        $oExistingObject,
+                    ]
+                );
+
+            // --------------------------------------------------------------------------
+
+            $oExistingBucket = $this->getBucket($oExistingObject->bucket->id);
+
+            if ($bIsStream) {
+
+                /**
+                 * Upload is a data stream, i.e the raw data to upload (might be binary, might be plain text)
+                 */
+                $sCacheFile = $this->saveStreamToCacheFile($replaceWith, $aOptions['Content-Type'] ?? null);
+
+            } elseif (is_string($replaceWith) && preg_match('/^https?:\/\//', $replaceWith)) {
+
+                /**
+                 * Upload is a URL, import it
+                 */
+                try {
+
+                    $oResponse  = $this->makeHttpRequest($replaceWith);
+                    $sCacheFile = $this->saveHttpResponseToFile($oResponse);
+                    //  In case of large download, clear out memory
+                    $oResponse = null;
+
+                } catch (\Exception $e) {
+                    throw new UrlException($e->getMessage(), $e->getCode(), $e);
+                }
+
+            } elseif (is_string($replaceWith) && preg_match('/^data:(.*?)(;(base64))?,(.+)/', $replaceWith, $aMatches)) {
+
+                /**
+                 * Object is a data-uri
+                 */
+                $bEncoded   = ArrayHelper::get(3, $aMatches) === 'base64';
+                $sData      = ArrayHelper::get(4, $aMatches);
+                $sCacheFile = $this->saveDataToCacheFile($bEncoded ? base64_decode($sData) : $sData);
+
+            } elseif (is_file($replaceWith)) {
+
+                /**
+                 * Object is a file path
+                 */
+                $sCacheFile = $this->saveDataToCacheFile(file_get_contents($replaceWith));
+
+            } elseif (isset($_FILES[$replaceWith])) {
+
+                /**
+                 * Object is an uploaded file
+                 */
+                //  It's in $_FILES, check the upload was successful
+                if ($_FILES[$replaceWith]['error'] !== UPLOAD_ERR_OK) {
+                    throw new ObjectCreateException(
+                        static::getUploadError($_FILES[$replaceWith]['error'])
+                    );
+                }
+
+                //  Move the file to a tmp directory and call it the original name
+                $sCacheFile = $this->getTempFile();
+                if (!move_uploaded_file($_FILES[$replaceWith]['tmp_name'], $sCacheFile)) {
+                    throw new ObjectReplaceException(
+                        'Failed to move uploaded file to temporary directory'
+                    );
+                }
+
+            } else {
+                throw new ObjectReplaceException(sprintf(
+                    'You did not select a file to upload [%s]',
+                    $replaceWith
+                ));
+            }
+
+            $sUploadedMime = $this->getMimeFromFile($sCacheFile);
+            $sUploadedExt  = $this->getExtFromMime($sUploadedMime);
+
+            if ($sUploadedExt !== $oExistingObject->file->ext) {
+                throw new ObjectReplaceException(
+                    'Replacement file must be the same type of file as the file being replaced.'
+                );
+            }
+
+            //  Is the file within the file size limit?
+            $iFileSize = filesize($sCacheFile);
+
+            if ($oExistingBucket->max_size) {
+                if ($iFileSize > $oExistingBucket->max_size) {
+                    throw new ObjectReplaceException(
+                        sprintf(
+                            'The file is too large, maximum file size is %s',
+                            File::formatBytes($oExistingBucket->max_size)
+                        )
+                    );
+                }
+            }
+
+            // --------------------------------------------------------------------------
+
+            $aData = [
+                'filesize' => $iFileSize,
+                'md5_hash' => md5_file($sCacheFile),
+            ];
+
+            $aImageMimeTypes = [
+                'image/jpg',
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+            ];
+
+            if (in_array($sUploadedMime, $aImageMimeTypes)) {
+
+                [$iWidth, $iHeight] = getimagesize($sCacheFile);
+                $aData['img_width']  = $iWidth;
+                $aData['img_height'] = $iHeight;
+
+                $aData['img_orientation'] = match (true) {
+                    $iWidth > $iHeight => static::ORIENTATION_LANDSCAPE,
+                    $iWidth < $iHeight => static::ORIENTATION_PORTRAIT,
+                    $iWidth === $iHeight => static::ORIENTATION_SQUARE,
+                };
+
+                $aData['is_animated'] = $sUploadedMime === 'image/gif' && $this->detectAnimatedGif($sCacheFile);
+
+            }
+
+            // --------------------------------------------------------------------------
+
+            if (!$this->callDriver('objectDestroy', [
+                $oExistingObject->file->name->disk,
+                $oExistingObject->bucket->slug,
+            ])) {
+                throw new ObjectReplaceException(
+                    'Failed to delete existing object. ' . $this->setError($this->callDriver('lastError'))
+                );
+            }
+
+            if (!$this->callDriver('objectCreate', [
+                (object) [
+                    'bucket'   => (object) [
+                        'slug' => $oExistingObject->bucket->slug,
+                    ],
+                    'filename' => $oExistingObject->file->name->disk,
+                    'file'     => $sCacheFile,
+                ],
+            ])) {
+                throw new ObjectReplaceException(
+                    'Failed to upload replacement object. ' . $this->setError($this->callDriver('lastError'))
+                );
+            }
+
+            // --------------------------------------------------------------------------
+
+            /** @var Database $oDb */
+            $oDb = Factory::service('Database');
+            $oDb->where('id', $oExistingObject->id);
+            foreach ($aData as $sCol => $sVal) {
+                $oDb->set($sCol, $sVal);
+            }
+            $oDb->update(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
+
+            $this->unsetCacheObject($oExistingObject);
+
+            // --------------------------------------------------------------------------
+
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_REPLACED,
+                    Events::getEventNamespace(),
+                    [
+                        $this->getObject($oExistingObject->id),
+                    ]
+                );
+
+            // --------------------------------------------------------------------------
+
+            return true;
+
+        } catch (\Exception $e) {
+
+            if (isset($sCacheFile) && is_file($sCacheFile)) {
+                @unlink($sCacheFile);
+            }
+
+            $this->setError($e->getMessage());
+
             return false;
         }
     }
@@ -1696,8 +2044,8 @@ class Cdn
     /**
      * Creates a new object record in the DB; called from various other methods
      *
-     * @param \stdClass $oData         The data to create the object with
-     * @param bool      $bReturnObject Whether to return the object, or just it's ID
+     * @param stdClass $oData         The data to create the object with
+     * @param bool     $bReturnObject Whether to return the object, or just it's ID
      *
      * @return mixed
      */
@@ -1764,6 +2112,7 @@ class Cdn
         $oObj->thumbs      = (int) $oObj->thumbs;
         $oObj->scales      = (int) $oObj->scales;
         $oObj->modified_by = (int) $oObj->modified_by ?: null;
+        $oObj->metadata    = $oObj->metadata ? (json_decode($oObj->metadata) ?? []) : [];
 
         // --------------------------------------------------------------------------
 
@@ -1943,7 +2292,7 @@ class Cdn
      *
      * @param string
      *
-     * @return  \stdClass|false
+     * @return  stdClass|false
      **/
     public function getBucket($bucketIdSlug)
     {
@@ -1996,6 +2345,13 @@ class Cdn
             ];
         }
 
+        $this->oEventService
+            ->trigger(
+                Events::BUCKET_CREATE,
+                Events::getEventNamespace(),
+                $aBucketData
+            );
+
         $sSlug = ArrayHelper::get('slug', $aBucketData);
 
         //  Test if bucket exists, if it does stop, job done.
@@ -2030,6 +2386,16 @@ class Cdn
             $iBucketId = $oBucketModel->create($aBucketData);
 
             if ($iBucketId) {
+
+                $this->oEventService
+                    ->trigger(
+                        Events::BUCKET_CREATED,
+                        Events::getEventNamespace(),
+                        [
+                            $this->getBucket($iBucketId),
+                        ]
+                    );
+
                 return $iBucketId;
             } else {
                 $this->callDriver('destroy', [$sSlug]);
@@ -2118,6 +2484,17 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
+        $this->oEventService
+            ->trigger(
+                Events::BUCKET_DESTROY,
+                Events::getEventNamespace(),
+                [
+                    $oBucket,
+                ]
+            );
+
+        // --------------------------------------------------------------------------
+
         //  Destroy any containing objects
         $errors = 0;
         foreach ($oBucket->objects as $obj) {
@@ -2139,6 +2516,16 @@ class Cdn
                 $oDb = Factory::service('Database');
                 $oDb->where('id', $oBucket->id);
                 $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_bucket');
+
+                $this->oEventService
+                    ->trigger(
+                        Events::BUCKET_DESTROYED,
+                        Events::getEventNamespace(),
+                        [
+                            $oBucket,
+                        ]
+                    );
+
                 return true;
 
             } else {
@@ -2726,11 +3113,11 @@ class Cdn
     {
         switch ($sOrientation) {
             case 'PORTRAIT':
-                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_PORTRAIT') ? APP_CDN_CROP_QUADRANT_PORTRAIT : 'C';
+                $sCropQuadrant = Config::get('APP_CDN_CROP_QUADRANT_PORTRAIT', 'C');
                 break;
 
             case 'LANDSCAPE':
-                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_LANDSCAPE') ? APP_CDN_CROP_QUADRANT_LANDSCAPE : 'C';
+                $sCropQuadrant = Config::get('APP_CDN_CROP_QUADRANT_LANDSCAPE', 'C');
                 break;
 
             default:
@@ -3194,7 +3581,7 @@ class Cdn
     /**
      * Return the permitted dimensions for this installation
      *
-     * @return \stdClass[]
+     * @return stdClass[]
      */
     public function getPermittedDimensions(): array
     {

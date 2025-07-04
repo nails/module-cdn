@@ -8,14 +8,18 @@ use Nails\Common;
 
 return [
     'services'  => [
-        'Cdn'           => function (?Common\Service\Mime $oMimeService = null): Service\Cdn {
+        'Cdn'           => function (
+            Common\Service\Mime $oMimeService = null,
+            Common\Service\Event $oEventService = null
+        ): Service\Cdn {
 
-            $oMimeService = $oMimeService ?? \Nails\Factory::service('Mime');
+            $oMimeService  = $oMimeService ?? \Nails\Factory::service('Mime');
+            $oEventService = $oEventService ?? \Nails\Factory::service('Event');
 
             if (class_exists('\App\Cdn\Service\Cdn')) {
-                return new \App\Cdn\Service\Cdn($oMimeService);
+                return new \App\Cdn\Service\Cdn($oMimeService, $oEventService);
             } else {
-                return new Service\Cdn($oMimeService);
+                return new Service\Cdn($oMimeService, $oEventService);
             }
         },
         'Monitor'       => function (): Service\Monitor {
