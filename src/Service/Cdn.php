@@ -1684,13 +1684,16 @@ class Cdn
      *
      * @param int|string|Resource\CdnObject $sourceObject The object to copy
      * @param int|string|Resource\Bucket    $newBucket    The destination bucket
-     * @param array                         $options      An array of options to apply to the new object
+     *
+     * @throws CdnException
+     * @throws DriverException
+     * @throws NailsException
+     * @throws ReflectionException
      */
     public function objectCopy(
         int|string|Resource\CdnObject $sourceObject,
         int|string|Resource\Bucket $newBucket,
-        array $options = []
-    ): Resource\CdnObject {
+    ): stdClass {
 
         $sourceObject = $this->getObject($sourceObject);
         if (empty($sourceObject)) {
@@ -1711,12 +1714,13 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Attempt to move the file
-        $result = $this->callDriver(
+        $targetFileName = $this->generateFileName($sourceObject->file->ext);
+        $result         = $this->callDriver(
             'objectCopy',
             [
                 $sourceObject->file->name->disk,
                 $sourceObject->bucket->slug,
-                $this->generateFileName($sourceObject->file->ext),
+                $targetFileName,
                 $newBucket->slug,
             ],
             $sourceObject->driver
@@ -1726,14 +1730,16 @@ class Cdn
 
             $newObject = $this->createObject(
                 (object) [
-                    'bucket'           => (object) ['id' => $newBucket->id],
-                    'filename'         => $sourceObject->id,
-                    'filename_display' => $sourceObject->file->name->human,
-                    'mime'             => $sourceObject->file->mime,
-                    'filesize'         => $sourceObject->file->size->bytes,
-                    'md5_hash'         => $sourceObject->file->hash->md5,
-                    'metadata'         => $sourceObject->metadata,
-                    'img'              => (object) [
+                    'bucket'   => (object) [
+                        'id' => $newBucket->id,
+                    ],
+                    'filename' => $targetFileName,
+                    'name'     => $sourceObject->file->name->human,
+                    'mime'     => $sourceObject->file->mime,
+                    'filesize' => $sourceObject->file->size->bytes,
+                    'md5_hash' => $sourceObject->file->hash->md5,
+                    'metadata' => $sourceObject->metadata,
+                    'img'      => (object) [
                         'width'       => $sourceObject->img_width,
                         'height'      => $sourceObject->img_height,
                         'orientation' => $sourceObject->img_orientation,
@@ -1802,11 +1808,12 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Attempt to move the file
-        $result = $this->callDriver(
+        $result         = $this->callDriver(
             'objectMove',
             [
                 $sourceObject->file->name->disk,
                 $sourceObject->bucket->slug,
+                $sourceObject->file->name->disk,
                 $newBucket->slug,
             ],
             $sourceObject->driver
@@ -1822,7 +1829,7 @@ class Cdn
             $oDb->update(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
 
             $this->unsetCacheObject($sourceObject);
-            $updatedObject = $this->getObject($sourceObject);
+            $updatedObject = $this->getObject($sourceObject->id);
 
         } else {
             throw new CdnException('Failed to move object. ' . $this->callDriver('lastError'));
