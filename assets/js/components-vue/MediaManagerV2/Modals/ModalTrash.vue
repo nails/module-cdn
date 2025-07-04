@@ -220,6 +220,7 @@ export default {
 .trashed-items-list {
     display: flex;
     flex-direction: column;
+    margin-bottom: 1rem;
 }
 
 .trashed-items-header {
