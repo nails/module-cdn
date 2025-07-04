@@ -15,6 +15,8 @@ interface Driver
     //  Object methods
     public function objectCreate($oData);
     public function objectExists($sFilename, $sBucket);
+    public function objectMove($sObject, $sBucket);
+    public function objectCopy($sObject, $sBucket);
     public function objectDestroy($sObject, $sBucket);
     public function objectLocalPath($sBucket, $sFilename);
 
