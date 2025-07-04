@@ -30,6 +30,7 @@ use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Factory\HttpResponse;
 use Nails\Common\Helper\ArrayHelper;
+use Nails\Common\Helper\File;
 use Nails\Common\Helper\Model\Where;
 use Nails\Common\Interfaces\Service\FileCache\Driver;
 use Nails\Common\Service\Database;
@@ -64,15 +65,6 @@ class Cdn
      * @var string
      */
     const DEFAULT_DRIVER = 'nails/driver-cdn-local';
-
-    /**
-     * Byte Multipliers
-     *
-     * @var int
-     */
-    const BYTE_MULTIPLIER_KB = 1024;
-    const BYTE_MULTIPLIER_MB = self::BYTE_MULTIPLIER_KB * 1024;
-    const BYTE_MULTIPLIER_GB = self::BYTE_MULTIPLIER_MB * 1024;
 
     /**
      * How precise to make human friendly file sizes
@@ -183,6 +175,7 @@ class Cdn
             'png',
             'jpg',
             'gif',
+            'svg',
             //  Documents & Text
             'pdf',
             'doc',
@@ -222,6 +215,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Load the storage driver
+        /** @var StorageDriver $oStorageDriver */
         $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
         $aDrivers       = $oStorageDriver->getAll();
         $oDriver        = $oStorageDriver->getEnabled();
@@ -326,6 +320,7 @@ class Cdn
             throw new DriverException('"' . $sDriver . '" is not a valid CDN driver.');
         }
 
+        /** @var StorageDriver $oStorageDriver */
         $oStorageDriver = Factory::service('StorageDriver', Constants::MODULE_SLUG);
         $oInstance      = $oStorageDriver->getInstance($oDriver->slug);
 
@@ -1103,7 +1098,7 @@ class Cdn
                     throw new ObjectCreateException(
                         sprintf(
                             'The file is too large, maximum file size is %s',
-                            static::formatBytes($oBucket->max_size)
+                            File::formatBytes($oBucket->max_size)
                         )
                     );
                 }
@@ -1842,7 +1837,7 @@ class Cdn
                     throw new ObjectReplaceException(
                         sprintf(
                             'The file is too large, maximum file size is %s',
-                            static::formatBytes($oExistingBucket->max_size)
+                            File::formatBytes($oExistingBucket->max_size)
                         )
                     );
                 }
@@ -2125,10 +2120,10 @@ class Cdn
             'ext'  => strtolower(pathinfo($sFileNameDisk, PATHINFO_EXTENSION)),
             'size' => (object) [
                 'bytes'     => $iFileSize,
-                'kilobytes' => round($iFileSize / self::BYTE_MULTIPLIER_KB, self::FILE_SIZE_PRECISION),
-                'megabytes' => round($iFileSize / self::BYTE_MULTIPLIER_MB, self::FILE_SIZE_PRECISION),
-                'gigabytes' => round($iFileSize / self::BYTE_MULTIPLIER_GB, self::FILE_SIZE_PRECISION),
-                'human'     => static::formatBytes($iFileSize),
+                'kilobytes' => round($iFileSize / File::BYTE_MULTIPLIER_KB, self::FILE_SIZE_PRECISION),
+                'megabytes' => round($iFileSize / File::BYTE_MULTIPLIER_MB, self::FILE_SIZE_PRECISION),
+                'gigabytes' => round($iFileSize / File::BYTE_MULTIPLIER_GB, self::FILE_SIZE_PRECISION),
+                'human'     => File::formatBytes($iFileSize),
             ],
             'hash' => (object) [
                 'md5' => $oObj->md5_hash,
@@ -2799,7 +2794,7 @@ class Cdn
                  * If the user is a logged in admin with can_browse_trash permission then have a look in the trash
                  */
 
-                if (userHasPermission('admin:cdn:trash:browse')) {
+                if (userHasPermission(\Nails\Cdn\Admin\Permission\Object\Trash\Browse::class)) {
                     $oObj = $this->getObjectFromTrash($iObjectId);
                     if (!$oObj) {
                         //  Cool, guess it really doesn't exist. Let the renderer show a bad_src graphic
@@ -3109,11 +3104,11 @@ class Cdn
     {
         switch ($sOrientation) {
             case 'PORTRAIT':
-                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_PORTRAIT') ? APP_CDN_CROP_QUADRANT_PORTRAIT : 'C';
+                $sCropQuadrant = Config::get('APP_CDN_CROP_QUADRANT_PORTRAIT', 'C');
                 break;
 
             case 'LANDSCAPE':
-                $sCropQuadrant = defined('APP_CDN_CROP_QUADRANT_LANDSCAPE') ? APP_CDN_CROP_QUADRANT_LANDSCAPE : 'C';
+                $sCropQuadrant = Config::get('APP_CDN_CROP_QUADRANT_LANDSCAPE', 'C');
                 break;
 
             default:
@@ -3485,27 +3480,12 @@ class Cdn
      * @param int $iPrecision The precision to use
      *
      * @return string
+     * @deprecated
      */
-    public static function formatBytes($iBytes, $iPrecision = 2): string
+    public static function formatBytes(int $iBytes, int $iPrecision = 2): string
     {
-        $units  = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $iBytes = max($iBytes, 0);
-        $pow    = floor(($iBytes ? log($iBytes) : 0) / log(1024));
-        $pow    = min($pow, count($units) - 1);
-
-        //  Uncomment one of the following alternatives
-        //$iBytes /= pow(1024, $pow);
-        $iBytes  /= (1 << (10 * $pow));
-        $var     = round($iBytes, $iPrecision) . ' ' . $units[$pow];
-        $pattern = '/(.+?)\.(.*?)/';
-
-        return preg_replace_callback(
-            $pattern,
-            function ($matches) {
-                return number_format($matches[1]) . '.' . $matches[2];
-            },
-            $var
-        );
+        trigger_error(__FUNCTION__ . ' is deprecated', E_USER_DEPRECATED);
+        return File::formatBytes($iBytes, $iPrecision);
     }
 
     // --------------------------------------------------------------------------
@@ -3517,25 +3497,12 @@ class Cdn
      * @param string $sSize The string to convert to bytes
      *
      * @return int
+     * @deprecated
      */
     public static function returnBytes($sSize): int
     {
-        switch (strtoupper(substr($sSize, -1))) {
-            case 'M':
-                $iReturn = (int) $sSize * static::BYTE_MULTIPLIER_MB;
-                break;
-            case 'K':
-                $iReturn = (int) $sSize * static::BYTE_MULTIPLIER_KB;
-                break;
-            case 'G':
-                $iReturn = (int) $sSize * static::BYTE_MULTIPLIER_GB;
-                break;
-            default:
-                $iReturn = $sSize;
-                break;
-        }
-
-        return $iReturn;
+        trigger_error(__FUNCTION__ . ' is deprecated', E_USER_DEPRECATED);
+        return File::returnBytes($sSize);
     }
 
     // --------------------------------------------------------------------------
@@ -3544,7 +3511,7 @@ class Cdn
      * Returns the configured maximum upload size for this system by inspecting
      * upload_max_filesize and post_max_size, if available.
      *
-     * @param bool            $bFormat Whether to format the string using formatBytes
+     * @param bool            $bFormat Whether to format the string using File::formatBytes
      * @param int|string|null $mBucket Whether to factor a bucket's max upload size into the equation
      *
      * @return mixed|string|null
@@ -3553,8 +3520,8 @@ class Cdn
     public static function maxUploadSize($bFormat = true, $mBucket = null)
     {
         $aMaxSizes = [
-            function_exists('ini_get') ? returnBytes(ini_get('upload_max_filesize')) : null,
-            function_exists('ini_get') ? returnBytes(ini_get('post_max_size')) : null,
+            function_exists('ini_get') ? File::returnBytes(ini_get('upload_max_filesize')) : null,
+            function_exists('ini_get') ? File::returnBytes(ini_get('post_max_size')) : null,
         ];
 
         if ($mBucket) {
@@ -3573,7 +3540,7 @@ class Cdn
 
         $iMaxSize = min($aMaxSizes);
 
-        return $bFormat ? formatBytes($iMaxSize) : $iMaxSize;
+        return $bFormat ? File::formatBytes($iMaxSize) : $iMaxSize;
     }
 
     // --------------------------------------------------------------------------
