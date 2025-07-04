@@ -988,12 +988,7 @@ class Cdn
                 $oData->filename = $aOptions['filename'];
 
             } else {
-                $oData->filename = sprintf(
-                    '%s-%s.%s',
-                    time(),
-                    md5(activeUser('id') . microtime(true) . rand(0, 999)),
-                    $oData->ext
-                );
+                $oData->filename = $this->generateFileName($oData->ext);
             }
 
             // --------------------------------------------------------------------------
@@ -1220,6 +1215,18 @@ class Cdn
         }
 
         return false;
+    }
+
+    // --------------------------------------------------------------------------
+
+    protected function generateFileName(string $ext): string
+    {
+        return sprintf(
+            '%s-%s.%s',
+            time(),
+            md5(activeUser('id') . microtime(true) . rand(0, 999)),
+            $ext
+        );
     }
 
     // --------------------------------------------------------------------------
@@ -1709,6 +1716,7 @@ class Cdn
             [
                 $sourceObject->file->name->disk,
                 $sourceObject->bucket->slug,
+                $this->generateFileName($sourceObject->file->ext),
                 $newBucket->slug,
             ],
             $sourceObject->driver
