@@ -67,15 +67,6 @@ class Cdn
     const DEFAULT_DRIVER = 'nails/driver-cdn-local';
 
     /**
-     * Byte Multipliers
-     *
-     * @var int
-     */
-    const BYTE_MULTIPLIER_KB = 1024;
-    const BYTE_MULTIPLIER_MB = self::BYTE_MULTIPLIER_KB * 1024;
-    const BYTE_MULTIPLIER_GB = self::BYTE_MULTIPLIER_MB * 1024;
-
-    /**
      * How precise to make human friendly file sizes
      *
      * @var int
