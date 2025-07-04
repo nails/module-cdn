@@ -542,9 +542,13 @@ class MediaManagerV2 extends Api\Controller\Base
 
         // Move the object to the new bucket
         $oUpdatedObject = $oCdn->objectMove($oObject, $oTargetBucket);
-        if (!$oUpdatedObject) {
-            throw new Api\Exception\ApiException('Failed to copy object: ' . $oCdn->lastError(), $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR);
-        }
+
+        //  Refresh, CDN returns an stdClass so fetch a proper object
+        /** @var \Nails\Cdn\Resource\CdnObject|null $oUpdatedObject */
+        $oUpdatedObject = $oObjectModel->skipCache()->getById($oUpdatedObject->id, [
+            new Expand('bucket'),
+            new Expand('created_by'),
+        ]);
 
         /** @var ApiResponse $oResponse */
         $oResponse = Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
@@ -613,9 +617,13 @@ class MediaManagerV2 extends Api\Controller\Base
 
         // Copy the object to the new bucket
         $oNewObject = $oCdn->objectCopy($oObject, $oTargetBucket);
-        if (!$oNewObject) {
-            throw new Api\Exception\ApiException('Failed to copy object: ' . $oCdn->lastError(), $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR);
-        }
+
+        //  Refresh, CDN returns an stdClass so fetch a proper object
+        /** @var \Nails\Cdn\Resource\CdnObject|null $oNewObject */
+        $oNewObject = $oObjectModel->skipCache()->getById($oNewObject->id, [
+            new Expand('bucket'),
+            new Expand('created_by'),
+        ]);
 
         /** @var ApiResponse $oResponse */
         $oResponse = Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG);
