@@ -25,7 +25,7 @@
         </form-group>
         <Status
             type="warning"
-            message="Copying will maintain the old file and create a duplicate in the new location."
+            message="Copying will maintain the old file (as well as its relationships) and create a duplicate in the new location."
         />
         <Status
             v-if="error"

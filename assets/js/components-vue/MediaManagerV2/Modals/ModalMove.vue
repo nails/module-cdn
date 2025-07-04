@@ -25,7 +25,7 @@
         </form-group>
         <Status
             type="warning"
-            message="Moving will create a new URL for the file. No redirects will be added from the old URL."
+            message="Moving will maintain existing relationships, but create a new URL for the file. No redirects will be added from the old URL."
         />
         <Status
             v-if="error"
