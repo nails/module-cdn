@@ -77,7 +77,7 @@ export default {
     padding: 0.75rem 1rem;
     border-radius: 6px;
     font-size: 0.875rem;
-    margin: 0;
+    margin: 0 0 1rem;
     position: relative;
     animation: messageSlideIn 0.3s ease forwards;
 }

@@ -176,6 +176,11 @@ export default {
     flex: 1;
 }
 
+/* Ensure any last element in modal body has no bottom margin, including components with scoped styles */
+.base-modal-body :deep(*:last-child) {
+    margin-bottom: 0 !important;
+}
+
 .base-modal-footer {
     display: flex;
     align-items: center;
@@ -205,10 +210,6 @@ export default {
 
     .base-modal-body {
         padding: 20px;
-
-        > *:last-child {
-            margin-bottom: 0;
-        }
     }
 
     .base-modal-footer {

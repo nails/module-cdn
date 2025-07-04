@@ -220,10 +220,6 @@ export default {
 .trashed-items-list {
     display: flex;
     flex-direction: column;
-
-    & + .status-message {
-        margin-top: 1rem;
-    }
 }
 
 .trashed-items-header {

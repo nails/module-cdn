@@ -160,10 +160,6 @@ export default {
 
 <style lang="scss" scoped>
 
-.status-message {
-    margin-bottom: 1rem;
-}
-
 /* Custom styles for the bucket selector dropdown */
 .bucket-selector {
     position: static; /* Override relative positioning */
