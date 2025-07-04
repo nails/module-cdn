@@ -25,10 +25,12 @@ use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
 use Nails\Cdn\Resource\CdnObject;
 use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\NailsException;
 use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Get;
 use Nails\Common\Factory\HttpResponse;
 use Nails\Common\Helper\ArrayHelper;
+use Nails\Common\Helper\Model\Where;
 use Nails\Common\Interfaces\Service\FileCache\Driver;
 use Nails\Common\Service\Database;
 use Nails\Common\Service\Event;
@@ -40,6 +42,8 @@ use Nails\Common\Traits\GetCountCommon;
 use Nails\Components;
 use Nails\Config;
 use Nails\Factory;
+use ReflectionException;
+use stdClass;
 
 /**
  * Class Cdn
@@ -337,8 +341,8 @@ class Cdn
     /**
      * Unset an object from the cache in one fell swoop
      *
-     * @param \stdClass $object        The object to remove from the cache
-     * @param bool      $clearCacheDir Whether to clear the cache directory or not
+     * @param stdClass $object        The object to remove from the cache
+     * @param bool     $clearCacheDir Whether to clear the cache directory or not
      */
     protected function unsetCacheObject($object, $clearCacheDir = true)
     {
@@ -601,56 +605,75 @@ class Cdn
     /**
      * Returns a single object
      *
-     * @param mixed  $objectIdSlug The object's ID or filename
-     * @param string $bucketIdSlug The bucket's ID or slug
-     * @param array  $data         Data to pass to getCountCommon()()
+     * @param int|string|Resource\CdnObject $object       The object's ID or filename
+     * @param int|string                    $bucketIdSlug The bucket's ID or slug
+     * @param array                         $data         Data to pass to getCountCommon()()
      *
-     * @return mixed                stdClass on success, false on failure
+     * @return bool|stdClass                stdClass on success, false on failure
+     * @throws CdnException
      */
-    public function getObject($objectIdSlug, $bucketIdSlug = '', $data = [])
-    {
-        //  Check the cache
-        $cacheKey = 'object-' . $objectIdSlug;
-        $cacheKey .= $bucketIdSlug ? '-' . $bucketIdSlug : '';
-        $cache    = $this->getCache($cacheKey);
+    public function getObject(
+        int|string|Resource\CdnObject $object,
+        int|string $bucketIdSlug = '',
+        array $data = []
+    ): bool|stdClass {
 
-        if ($cache) {
-            return $cache;
+        if ($object instanceof Resource\CdnObject || is_numeric($object)) {
+
+            $objectId = $object instanceof Resource\CdnObject
+                ? $object->id
+                : $object;
+
+            // --------------------------------------------------------------------------
+
+            $cacheKey = 'object-' . $objectId;
+            if ($cache = $this->getCache($cacheKey)) {
+                return $cache;
+            }
+
+        } elseif (is_string($object)) {
+
+            $objectFilename = $object;
+
+            //  Check the cache
+            $cacheKey = 'object-' . $objectFilename;
+            $cacheKey .= !empty($bucket) ? '-' . $bucket : '';
+            if ($cache = $this->getCache($cacheKey)) {
+                return $cache;
+            }
+
+        } else {
+            throw new CdnException('Incompatible object data type provided.');
         }
 
         // --------------------------------------------------------------------------
 
-        if (!isset($data['where'])) {
-            $data['where'] = [];
-        }
+        if (isset($objectId)) {
+            $data[] = new Where('o.id', $objectId);
 
-        if (is_numeric($objectIdSlug)) {
-            $data['where'][] = ['o.id', $objectIdSlug];
-        } else {
-            $data['where'][] = ['o.filename', $objectIdSlug];
+        } elseif (isset($objectFilename)) {
+            $data[] = new Where('o.filename', $objectFilename);
             if (!empty($bucketIdSlug)) {
                 if (is_numeric($bucketIdSlug)) {
-                    $data['where'][] = ['b.id', $bucketIdSlug];
+                    $data[] = new Where('b.id', $bucketIdSlug);
+                } elseif (is_string($bucketIdSlug)) {
+                    $data[] = new Where('b.slug', $bucketIdSlug);
                 } else {
-                    $data['where'][] = ['b.slug', $bucketIdSlug];
+                    throw new CdnException('Incompatible bucket data type provided.');
                 }
             }
         }
 
-        $objects = $this->getObjects(null, null, $data);
-
+        $objects = $this->getObjects($data);
         if (empty($objects)) {
             return false;
         }
 
         // --------------------------------------------------------------------------
 
-        //  Cache the object
-        $this->setCache($cacheKey, $objects[0]);
-
-        // --------------------------------------------------------------------------
-
-        return $objects[0];
+        $object = reset($objects);
+        $this->setCache($cacheKey, $object);
+        return $object;
     }
 
     // --------------------------------------------------------------------------
@@ -658,68 +681,79 @@ class Cdn
     /**
      * Returns a single object from the trash
      *
-     * @param mixed  $object The object's ID or filename
-     * @param string $bucket The bucket's ID or slug
-     * @param array  $data   Data to pass to getCountCommon()
+     * @param int|string|Resource\CdnObject $object The object
+     * @param int|string                    $bucket The bucket's ID or slug
+     * @param array                         $data   Data to pass to getCountCommon()
      *
-     * @return mixed          stdClass on success, false on failure
+     * @return bool|stdClass          stdClass on success, false on failure
+     * @throws CdnException
+     * @throws FactoryException
      */
-    public function getObjectFromTrash($object, $bucket = '', $data = [])
-    {
+    public function getObjectFromTrash(
+        int|string|Resource\CdnObject $object,
+        int|string $bucket = '',
+        array $data = []
+    ): bool|stdClass {
+
+        /** @var Database $oDb */
         $oDb = Factory::service('Database');
 
-        if (is_numeric($object)) {
+        if ($object instanceof Resource\CdnObject || is_numeric($object)) {
 
-            //  Check the cache
-            $cacheKey = 'object-trash-' . $object;
-            $cache    = $this->getCache($cacheKey);
+            $objectId = $object instanceof Resource\CdnObject
+                ? $object->id
+                : $object;
 
-            if ($cache) {
+            // --------------------------------------------------------------------------
+
+            $cacheKey = 'object-trash-' . $objectId;
+            if ($cache = $this->getCache($cacheKey)) {
                 return $cache;
             }
 
             // --------------------------------------------------------------------------
 
-            $oDb->where('o.id', $object);
+            $oDb->where('o.id', $objectId);
 
-        } else {
+        } elseif (is_string($object)) {
+
+            $objectFilename = $object;
 
             //  Check the cache
-            $cacheKey = 'object-trash-' . $object;
+            $cacheKey = 'object-trash-' . $objectFilename;
             $cacheKey .= !empty($bucket) ? '-' . $bucket : '';
-            $cache    = $this->getCache($cacheKey);
-
-            if ($cache) {
+            if ($cache = $this->getCache($cacheKey)) {
                 return $cache;
             }
 
             // --------------------------------------------------------------------------
 
-            $oDb->where('o.filename', $object);
+            $oDb->where('o.filename', $objectFilename);
 
             if (!empty($bucket)) {
                 if (is_numeric($bucket)) {
                     $oDb->where('b.id', $bucket);
-                } else {
+                } elseif (is_string($bucket)) {
                     $oDb->where('b.slug', $bucket);
+                } else {
+                    throw new CdnException('Incompatible bucket data type provided.');
                 }
             }
+
+        } else {
+            throw new CdnException('Incompatible object data type provided.');
         }
 
-        $objects = $this->getObjectsFromTrash(null, null, $data);
-
+        $objects = $this->getObjectsFromTrash($data);
         if (empty($objects)) {
             return false;
         }
 
         // --------------------------------------------------------------------------
 
-        //  Cache the object
-        $this->setCache($cacheKey, $objects[0]);
-
-        // --------------------------------------------------------------------------
-
-        return $objects[0];
+        $object = reset($objects);
+        $this->setCache($cacheKey, $object);
+        return $object;
     }
 
     // --------------------------------------------------------------------------
@@ -808,7 +842,7 @@ class Cdn
                 );
 
             //  Define variables we'll need
-            $oData = new \stdClass();
+            $oData = new stdClass();
 
             //  Support creating buckets with additional parameters
             if (is_array($mBucket)) {
@@ -1362,17 +1396,20 @@ class Cdn
     /**
      * Deletes an object
      *
-     * @param int $iObjectId The object's ID or filename
+     * @param int|string|Resource\CdnObject $object The object to delete
      *
-     * @return bool
+     * @throws FactoryException
      */
-    public function objectDelete($iObjectId)
-    {
+    public function objectDelete(
+        int|string|Resource\CdnObject $object
+    ): bool {
+
+        /** @var Database $oDb */
         $oDb = Factory::service('Database');
 
         try {
 
-            $object = $this->getObject($iObjectId);
+            $object = $this->getObject($object);
             if (empty($object)) {
                 throw new CdnException('Not a valid object');
             }
@@ -1464,17 +1501,20 @@ class Cdn
     /**
      * Restore an object from the trash
      *
-     * @param mixed $iObjectId The object's ID or filename
+     * @param int|string|Resource\CdnObject $object The object to restore
      *
-     * @return bool
+     * @throws FactoryException
      */
-    public function objectRestore($iObjectId)
-    {
+    public function objectRestore(
+        int|string|Resource\CdnObject $object
+    ): bool {
+
+        /** @var Database $oDb */
         $oDb = Factory::service('Database');
 
         try {
 
-            $oObject = $this->getObjectFromTrash($iObjectId);
+            $oObject = $this->getObjectFromTrash($object);
             if (empty($oObject)) {
                 throw new CdnException('Not a valid object');
             }
@@ -1559,24 +1599,21 @@ class Cdn
     /**
      * Permanently deletes an object
      *
-     * @param int $iObjectId The object's ID
+     * @param int|string|Resource\CdnObject $object The object to destroy
      *
-     * @return bool
-     **/
-    public function objectDestroy($iObjectId)
-    {
-        if (!$iObjectId) {
-            $this->setError('Not a valid object');
-            return false;
-        }
+     * @throws DriverException
+     * @throws FactoryException
+     * @throws NailsException
+     * @throws ReflectionException
+     */
+    public function objectDestroy(
+        int|string|Resource\CdnObject $object
+    ): bool {
 
-        // --------------------------------------------------------------------------
-
-        $oObject = $this->getObject($iObjectId);
-
+        $oObject = $this->getObject($object);
         if (!$oObject) {
             //  Object doesn't exist but may exist in the trash
-            $oObject = $this->getObjectFromTrash(is_object($oObject) ? $oObject->id : $iObjectId);
+            $oObject = $this->getObjectFromTrash($object);
         }
 
         if (!$oObject) {
@@ -1633,7 +1670,6 @@ class Cdn
                 return true;
             }
         } else {
-
             $this->setError($this->callDriver('lastError'));
             return false;
         }
@@ -1644,16 +1680,21 @@ class Cdn
     /**
      * Copies an object
      *
-     * @param int|Resource\CdnObject     $sourceObjectId The object to copy
-     * @param int|string|Resource\Bucket $newBucket      The destination bucket
-     * @param array                      $options        An array of options to apply to the new object
+     * @param int|string|Resource\CdnObject $sourceObject The object to copy
+     * @param int|string|Resource\Bucket    $newBucket    The destination bucket
+     * @param array                         $options      An array of options to apply to the new object
      */
     public function objectCopy(
-        int|Resource\CdnObject $sourceObjectId,
+        int|string|Resource\CdnObject $sourceObject,
         int|string|Resource\Bucket $newBucket,
         array $options = []
     ): Resource\CdnObject {
-        //  @todo - Copy object between buckets
+
+        $oObject = $this->getObject($sourceObject);
+        if (empty($oObject)) {
+            throw new CdnException('Not a valid object');
+        }
+
         throw new \Exception('Method not implemented');
     }
 
@@ -1662,14 +1703,19 @@ class Cdn
     /**
      * Moves an object to a new bucket
      *
-     * @param int|CdnObject              $sourceObjectId The object to move
-     * @param int|string|Resource\Bucket $newBucket      The destination bucket
+     * @param int|CdnObject              $sourceObject The object to move
+     * @param int|string|Resource\Bucket $newBucket    The destination bucket
      */
     public function objectMove(
-        int|Resource\CdnObject $sourceObjectId,
+        int|Resource\CdnObject $sourceObject,
         int|string|Resource\Bucket $newBucket
     ): Resource\CdnObject {
-        //  @todo - Move object between buckets
+
+        $oObject = $this->getObject($sourceObject);
+        if (empty($oObject)) {
+            throw new CdnException('Not a valid object');
+        }
+
         throw new \Exception('Method not implemented');
     }
 
@@ -1678,21 +1724,27 @@ class Cdn
     /**
      * Uploads an object and, if successful, removes the old object. Note that a new Object ID is created.
      *
-     * @param mixed $object      The existing object's ID or filename
-     * @param mixed $replaceWith The replacement: $_FILE key, path or data stream
-     * @param array $aOptions    Upload options
-     * @param bool  $bIsStream   Whether the replacement object is a data stream or not
+     * @param int|string|Resource\CdnObject $object      The existing object
+     * @param mixed                         $replaceWith The replacement: $_FILE key, path or data stream
+     * @param array                         $aOptions    Upload options
+     * @param bool                          $bIsStream   Whether the replacement object is a data stream or not
      *
-     * @return mixed                stdClass on success, false on failure
+     * @return bool|stdClass                stdClass on success, false on failure
      */
-    public function objectReplace($object, mixed $replaceWith, array $aOptions = [], bool $bIsStream = false)
-    {
+    public function objectReplace(
+        int|string|Resource\CdnObject $object,
+        mixed $replaceWith,
+        array $aOptions = [],
+        bool $bIsStream = false
+    ): bool|stdClass {
         try {
 
             $oExistingObject = $this->getObject($object);
             if (empty($oExistingObject)) {
                 throw new CdnException('Not a valid object');
             }
+
+            // --------------------------------------------------------------------------
 
             $this->oEventService
                 ->trigger(
@@ -1702,6 +1754,8 @@ class Cdn
                         $oExistingObject,
                     ]
                 );
+
+            // --------------------------------------------------------------------------
 
             $oExistingBucket = $this->getBucket($oExistingObject->bucket->id);
 
@@ -1986,8 +2040,8 @@ class Cdn
     /**
      * Creates a new object record in the DB; called from various other methods
      *
-     * @param \stdClass $oData         The data to create the object with
-     * @param bool      $bReturnObject Whether to return the object, or just it's ID
+     * @param stdClass $oData         The data to create the object with
+     * @param bool     $bReturnObject Whether to return the object, or just it's ID
      *
      * @return mixed
      */
@@ -2234,7 +2288,7 @@ class Cdn
      *
      * @param string
      *
-     * @return  \stdClass|false
+     * @return  stdClass|false
      **/
     public function getBucket($bucketIdSlug)
     {
@@ -3551,7 +3605,7 @@ class Cdn
     /**
      * Return the permitted dimensions for this installation
      *
-     * @return \stdClass[]
+     * @return stdClass[]
      */
     public function getPermittedDimensions(): array
     {
