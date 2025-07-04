@@ -208,6 +208,13 @@ class CdnObject extends Api\Controller\Base
         /** @var \Nails\Cdn\Model\CdnObject $oModel */
         $oModel = Factory::model('Object', constants::MODULE_SLUG);
 
+        if (!userHasPermission(Permission\Object\Edit::class)) {
+            throw new Api\Exception\ApiException(
+                'You do not have permission to access this resource',
+                $oHttpCodes::STATUS_UNAUTHORIZED
+            );
+        }
+
         $oObject   = $oModel->getById($oInput->post('object_id'));
         $sFileName = trim((string) $oInput->post('filename_display'));
         $sMetaData = json_encode($oInput->post('metadata') ?: []);
