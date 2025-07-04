@@ -1685,12 +1685,75 @@ class Cdn
         array $options = []
     ): Resource\CdnObject {
 
-        $oObject = $this->getObject($sourceObject);
-        if (empty($oObject)) {
+        $sourceObject = $this->getObject($sourceObject);
+        if (empty($sourceObject)) {
             throw new CdnException('Not a valid object');
         }
 
-        throw new \Exception('Copy method not implemented');
+        // --------------------------------------------------------------------------
+
+        $this->oEventService
+            ->trigger(
+                Events::OBJECT_COPY,
+                Events::getEventNamespace(),
+                [
+                    $sourceObject,
+                ]
+            );
+
+        // --------------------------------------------------------------------------
+
+        //  Attempt to move the file
+        $result = $this->callDriver(
+            'objectCopy',
+            [
+                $sourceObject->file->name->disk,
+                $sourceObject->bucket->slug,
+                $newBucket->slug,
+            ],
+            $sourceObject->driver
+        );
+
+        if ($result) {
+
+            $newObject = $this->createObject(
+                (object) [
+                    'bucket'           => (object) ['id' => $newBucket->id],
+                    'filename'         => $sourceObject->id,
+                    'filename_display' => $sourceObject->file->name->human,
+                    'mime'             => $sourceObject->file->mime,
+                    'filesize'         => $sourceObject->file->size->bytes,
+                    'md5_hash'         => $sourceObject->file->hash->md5,
+                    'metadata'         => $sourceObject->metadata,
+                    'img'              => (object) [
+                        'width'       => $sourceObject->img_width,
+                        'height'      => $sourceObject->img_height,
+                        'orientation' => $sourceObject->img_orientation,
+                        'is_animated' => $sourceObject->is_animated,
+                    ],
+                ],
+                true
+            );
+
+        } else {
+            throw new CdnException('Failed to copy object. ' . $this->callDriver('lastError'));
+        }
+
+        // --------------------------------------------------------------------------
+
+        $this->oEventService
+            ->trigger(
+                Events::OBJECT_COPIED,
+                Events::getEventNamespace(),
+                [
+                    $sourceObject,
+                    $newObject,
+                ]
+            );
+
+        // --------------------------------------------------------------------------
+
+        return $newObject;
     }
 
     // --------------------------------------------------------------------------
@@ -1700,18 +1763,77 @@ class Cdn
      *
      * @param int|CdnObject              $sourceObject The object to move
      * @param int|string|Resource\Bucket $newBucket    The destination bucket
+     *
+     * @throws CdnException
+     * @throws DriverException
+     * @throws FactoryException
+     * @throws NailsException
+     * @throws ReflectionException
      */
     public function objectMove(
         int|Resource\CdnObject $sourceObject,
         int|string|Resource\Bucket $newBucket
-    ): Resource\CdnObject {
+    ): stdClass {
 
-        $oObject = $this->getObject($sourceObject);
-        if (empty($oObject)) {
+        $sourceObject = $this->getObject($sourceObject);
+        if (empty($sourceObject)) {
             throw new CdnException('Not a valid object');
         }
 
-        throw new \Exception('Move method not implemented');
+        // --------------------------------------------------------------------------
+
+        $this->oEventService
+            ->trigger(
+                Events::OBJECT_MOVE,
+                Events::getEventNamespace(),
+                [
+                    $sourceObject,
+                ]
+            );
+
+        // --------------------------------------------------------------------------
+
+        //  Attempt to move the file
+        $result = $this->callDriver(
+            'objectMove',
+            [
+                $sourceObject->file->name->disk,
+                $sourceObject->bucket->slug,
+                $newBucket->slug,
+            ],
+            $sourceObject->driver
+        );
+
+        if ($result) {
+
+            //  Update the database entries
+            /** @var Database $oDb */
+            $oDb = Factory::service('Database');
+            $oDb->where('id', $sourceObject->id);
+            $oDb->set('bucket_id', $newBucket->id);
+            $oDb->update(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
+
+            $this->unsetCacheObject($sourceObject);
+            $updatedObject = $this->getObject($sourceObject);
+
+        } else {
+            throw new CdnException('Failed to move object. ' . $this->callDriver('lastError'));
+        }
+
+        // --------------------------------------------------------------------------
+
+        $this->oEventService
+            ->trigger(
+                Events::OBJECT_MOVED,
+                Events::getEventNamespace(),
+                [
+                    $updatedObject,
+                ]
+            );
+
+        // --------------------------------------------------------------------------
+
+        return $updatedObject;
     }
 
     // --------------------------------------------------------------------------
@@ -2049,6 +2171,7 @@ class Cdn
             'mime'             => $oData->mime,
             'filesize'         => $oData->filesize,
             'md5_hash'         => $oData->md5_hash,
+            'metadata'         => json_encode($oData->metadata ?? []),
             'driver'           => $this->oEnabledDriver->slug,
         ];
 
