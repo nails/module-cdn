@@ -1178,23 +1178,15 @@ export default {
             this.replacingObject = null;
         },
 
-        handleMoveSuccess(object) {
-            // For move: remove the original object from the list
-            const index = this.objects.findIndex(obj => obj.id === this.moveObject.id);
-            if (index !== -1) {
-                this.objects.splice(index, 1);
-            }
-
+        async handleMoveSuccess(object) {
+            await this.doSearch();
+            await this.fetchAllBuckets();
             this.closeMoveModal();
         },
 
-        handleCopySuccess(object) {
-            // For copy: add the new object to the list if it matches current filters
-            // Only add if the new object's bucket is in the selected buckets (or no buckets are selected)
-            if (this.selectedBuckets.length === 0 || this.selectedBuckets.includes(object.bucket.id)) {
-                this.objects.unshift(object);
-            }
-
+        async handleCopySuccess(object) {
+            await this.doSearch();
+            await this.fetchAllBuckets();
             this.closeCopyModal();
         },
 
