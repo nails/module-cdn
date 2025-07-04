@@ -26,8 +26,8 @@
                         <span>Select All</span>
                     </label>
                 </div>
-                <div 
-                    class="selection-info" 
+                <div
+                    class="selection-info"
                     :style="{ visibility: selectedTrashedItems.length > 0 ? 'visible' : 'hidden' }">
                     {{ selectedTrashedItems.length > 0 ? `${selectedTrashedItems.length} item${selectedTrashedItems.length > 1 ? 's' : ''} selected` : '0 items selected' }}
                 </div>
@@ -75,6 +75,7 @@
                 :disabled="isRestoring || isPurging"
             />
             <Button
+                v-if="userPermissions.object.restore"
                 variant="primary"
                 :text="isRestoring ? 'Restoring...' : 'Restore Selected'"
                 icon="restore"
@@ -83,6 +84,7 @@
                 :loading="isRestoring"
             />
             <Button
+                v-if="userPermissions.object.purge"
                 variant="danger"
                 :text="isPurging ? `Purging... (${purgeProgress}%)` : 'Purge Selected'"
                 icon="delete"
@@ -104,7 +106,7 @@ import axios from 'axios';
 export default {
     name: 'ModalTrash',
     components: {ModalBase, Button, FilePreview, Status},
-    inject: ['cdnApi'],
+    inject: ['cdnApi', 'userPermissions'],
     props: {
         visible: {type: Boolean, default: false},
         trashedItems: {type: Array, default: () => []},
@@ -147,7 +149,7 @@ export default {
             for (let i = 0; i < this.selectedTrashedItems.length; i++) {
                 const objectId = this.selectedTrashedItems[i];
                 try {
-                    await axios.post(this.cdnApi.object.delete(), { object_id: objectId });
+                    await axios.post(this.cdnApi.object.delete(), {object_id: objectId});
                     // Remove purged item from trashedItems
                     const idx = this.trashedItems.findIndex(item => item.id === objectId);
                     if (idx !== -1) this.trashedItems.splice(idx, 1);

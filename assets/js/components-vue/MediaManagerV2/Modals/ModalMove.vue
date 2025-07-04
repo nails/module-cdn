@@ -1,7 +1,7 @@
 <template>
     <ModalBase
         :visible="visible"
-        title="Move / Copy File"
+        title="Move File"
         @close="close"
     >
         <div v-if="object">
@@ -14,34 +14,6 @@
             />
         </div>
         <form-group
-            label="Action"
-        >
-            <div class="toggle-container">
-                <button
-                    class="toggle-button"
-                    :class="{ active: !isCopyMode }"
-                    @click="isCopyMode = false"
-                >
-                    Move
-                </button>
-                <button
-                    class="toggle-button"
-                    :class="{ active: isCopyMode }"
-                    @click="isCopyMode = true"
-                >
-                    Copy
-                </button>
-            </div>
-            <div class="action-explainer">
-                <template v-if="isCopyMode">
-                    Copying will maintain the old file and create a duplicate in the new location.
-                </template>
-                <template v-else>
-                    Moving will create a new URL for the file. No redirects will be added from the old URL.
-                </template>
-            </div>
-        </form-group>
-        <form-group
             label="Destination Bucket"
         >
             <bucket-selector
@@ -51,6 +23,10 @@
                 :single-select="true"
             />
         </form-group>
+        <Status
+            type="warning"
+            message="Moving will create a new URL for the file. No redirects will be added from the old URL."
+        />
         <Status
             v-if="error"
             type="error"
@@ -71,7 +47,7 @@
             />
             <Button
                 variant="primary"
-                :text="isCopyMode ? 'Copy' : 'Move'"
+                text="Move"
                 icon="move"
                 @click="submitForm"
                 :disabled="!isValid || isProcessing"
@@ -91,7 +67,7 @@ import axios from 'axios'
 import FormGroup from "../Form/Group.vue";
 
 export default {
-    name: 'ModalMoveCopy',
+    name: 'ModalMove',
     components: {
         FormGroup,
         BucketSelector,
@@ -117,7 +93,6 @@ export default {
     },
     data() {
         return {
-            isCopyMode: false,
             selectedBucketId: null,
             error: null,
             success: null,
@@ -146,34 +121,26 @@ export default {
             this.success = null;
 
             try {
-                const endpoint = this.isCopyMode ?
-                    this.cdnApi.object.copy() :
-                    this.cdnApi.object.move();
 
+                const endpoint = this.cdnApi.object.move();
                 const response = await axios.post(endpoint, {
                     object_id: this.object.id,
                     bucket_id: Array.isArray(this.selectedBucketId) ? this.selectedBucketId[0] : this.selectedBucketId,
-                    action: this.isCopyMode ? 'copy' : 'move'
                 });
 
-                this.success = this.isCopyMode ?
-                    'File copied successfully!' :
-                    'File moved successfully!';
+                this.success = 'File copied successfully!';
 
                 // Emit success event to parent component
-                this.$emit('success', {
-                    action: this.isCopyMode ? 'copy' : 'move',
-                    object: response.data.data
-                });
+                this.$emit('success', response.data.data);
 
                 // Close modal after a delay
                 setTimeout(() => {
                     this.close();
                 }, 1500);
             } catch (error) {
-                console.error('Error during move/copy operation:', error);
+                console.error('Error during move operation:', error);
                 this.error = error.response?.data?.error ||
-                    `Failed to ${this.isCopyMode ? 'copy' : 'move'} file. Please try again.`;
+                    `Failed to move file. Please try again.`;
             } finally {
                 this.isProcessing = false;
             }
@@ -185,7 +152,6 @@ export default {
                 this.selectedBucketId = null;
                 this.error = null;
                 this.success = null;
-                this.isCopyMode = false;
             }
         }
     }
@@ -193,60 +159,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.action-explainer {
-    font-size: 13px;
-    color: #6b7280;
-    margin-top: 6px;
-    line-height: 1.4;
-    font-style: italic;
-}
 
-.toggle-container {
-    display: flex;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.toggle-button {
-    flex: 1;
-    padding: 0.5rem 1rem;
-    border: none;
-    background: #f9fafb;
-    color: #6b7280;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:first-child {
-        border-right: 1px solid #e5e7eb;
-    }
-
-    &.active {
-        background: #4f46e5;
-        color: white;
-    }
-
-    &:hover:not(.active) {
-        background: #f3f4f6;
-        color: #4b5563;
-    }
-}
-
-.loading-spinner {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: white;
-    animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+.status-message {
+    margin-bottom: 1rem;
 }
 
 /* Custom styles for the bucket selector dropdown */

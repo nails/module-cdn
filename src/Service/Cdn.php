@@ -1690,7 +1690,7 @@ class Cdn
             throw new CdnException('Not a valid object');
         }
 
-        throw new \Exception('Method not implemented');
+        throw new \Exception('Copy method not implemented');
     }
 
     // --------------------------------------------------------------------------
@@ -1711,7 +1711,7 @@ class Cdn
             throw new CdnException('Not a valid object');
         }
 
-        throw new \Exception('Method not implemented');
+        throw new \Exception('Move method not implemented');
     }
 
     // --------------------------------------------------------------------------

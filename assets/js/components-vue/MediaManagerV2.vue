@@ -28,12 +28,12 @@
                         placeholder="Select buckets"
                         :single-select="false"
                         :show-actions="true"
-                        :offset-dropdown-arrow="userCanCreateBucket && !loadingBuckets"
+                        :offset-dropdown-arrow="this.userPermissions.bucket.create && !loadingBuckets"
                         @delete-bucket="handleDeleteBucket"
                         class="bucket-filter"
                     />
                     <button
-                        v-if="userCanCreateBucket && !loadingBuckets"
+                        v-if="this.userPermissions.bucket.create && !loadingBuckets"
                         class="create-bucket-button"
                         @click="openCreateBucketModal"
                         title="Create New Bucket"
@@ -117,7 +117,10 @@
                 </button>
             </div>
             <div class="sidebar__filter sidebar__filter--trash">
-                <button class="trash-button" @click="openTrashModal">
+                <button class="trash-button"
+                        v-if="this.userPermissions.object.restore || this.userPermissions.object.purge"
+                        @click="openTrashModal"
+                >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="trash-icon">
                         <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                     </svg>
@@ -134,7 +137,10 @@
         <div class="body">
             <div class="body__switcher">
                 <div class="body__actions">
-                    <button class="upload-button" @click="openUploadModal">
+                    <button class="upload-button"
+                            @click="openUploadModal"
+                            v-if="this.userPermissions.object.create"
+                    >
                         <span class="upload-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -305,13 +311,22 @@
             @file-replaced="handleFileReplaced"
         />
 
-        <ModalMoveCopy
-            v-if="showMoveCopyModal"
+        <ModalMove
+            v-if="showMoveModal"
             :visible="true"
-            :object="moveCopyObject"
+            :object="moveObject"
             :buckets="buckets"
-            @close="closeMoveCopyModal"
-            @success="handleMoveCopySuccess"
+            @close="closeMoveModal"
+            @success="handleMoveSuccess"
+        />
+
+        <ModalCopy
+            v-if="showCopyModal"
+            :visible="true"
+            :object="copyObject"
+            :buckets="buckets"
+            @close="closeCopyModal"
+            @success="handleCopySuccess"
         />
 
         <!-- Create Bucket Modal -->
@@ -383,7 +398,8 @@ import BucketSelector from './MediaManagerV2/BucketSelector.vue'
 import ObjectListItem from './MediaManagerV2/ObjectListItem.vue'
 import ObjectGridItem from './MediaManagerV2/ObjectGridItem.vue'
 import ModalReplaceFile from './MediaManagerV2/Modals/ModalReplaceFile.vue'
-import ModalMoveCopy from './MediaManagerV2/Modals/ModalMoveCopy.vue'
+import ModalMove from './MediaManagerV2/Modals/ModalMove.vue'
+import ModalCopy from './MediaManagerV2/Modals/ModalCopy.vue'
 import ModalBase from './MediaManagerV2/Modals/ModalBase.vue'
 import ModalUpload from './MediaManagerV2/Modals/ModalUpload.vue'
 import ModalEdit from './MediaManagerV2/Modals/ModalEdit.vue'
@@ -403,7 +419,8 @@ export default {
         ObjectListItem,
         ObjectGridItem,
         ModalReplaceFile,
-        ModalMoveCopy,
+        ModalMove,
+        ModalCopy,
         Button,
         ModalBase,
         FilePreview,
@@ -500,6 +517,23 @@ export default {
                     fetch: () => `${this.siteUrl}api/cdn/mediamanagerv2/trash`
                 }
             },
+            userPermissions: {
+                object: {
+                    create: this.userCanCreateObject,
+                    edit: this.userCanEditObject,
+                    replace: this.userCanReplaceObject,
+                    move: this.userCanMoveObject,
+                    copy: this.userCanCopyObject,
+                    delete: this.userCanDeleteObject,
+                    restore: this.userCanRestoreObject,
+                    purge: this.userCanPurgeObject,
+                },
+                bucket: {
+                    create: this.userCanCreateBucket,
+                    edit: this.userCanEditBucket,
+                    delete: this.userCanDeleteBucket,
+                },
+            },
             keywords: null,
             objects: [],
             loadingObjects: true,
@@ -566,15 +600,19 @@ export default {
             isRestoring: false,
             restoreError: null,
             restoreSuccess: false,
-            // Move/Copy modal properties
-            showMoveCopyModal: false,
-            moveCopyObject: null
+            // Move modal properties
+            showMoveModal: false,
+            moveObject: null,
+            // Copy modal properties
+            showCopyModal: false,
+            copyObject: null
         }
     },
 
     provide() {
         return {
-            cdnApi: this.cdnApi
+            cdnApi: this.cdnApi,
+            userPermissions: this.userPermissions
         };
     },
 
@@ -807,9 +845,13 @@ export default {
                     this.replacingObject = item;
                     this.showReplaceModal = true;
                     break;
-                case 'move-copy':
-                    this.moveCopyObject = item;
-                    this.showMoveCopyModal = true;
+                case 'move':
+                    this.moveObject = item;
+                    this.showMoveModal = true;
+                    break;
+                case 'copy':
+                    this.copyObject = item;
+                    this.showCopyModal = true;
                     break;
             }
         },
@@ -1138,27 +1180,34 @@ export default {
             this.replacingObject = null;
         },
 
-        handleMoveCopySuccess({action, object}) {
-            if (action === 'move') {
-                // For move: remove the original object from the list
-                const index = this.objects.findIndex(obj => obj.id === this.moveCopyObject.id);
-                if (index !== -1) {
-                    this.objects.splice(index, 1);
-                }
-            } else if (action === 'copy') {
-                // For copy: add the new object to the list if it matches current filters
-                // Only add if the new object's bucket is in the selected buckets (or no buckets are selected)
-                if (this.selectedBuckets.length === 0 || this.selectedBuckets.includes(object.bucket.id)) {
-                    this.objects.unshift(object);
-                }
+        handleMoveSuccess(object) {
+            // For move: remove the original object from the list
+            const index = this.objects.findIndex(obj => obj.id === this.moveObject.id);
+            if (index !== -1) {
+                this.objects.splice(index, 1);
             }
 
-            this.closeMoveCopyModal();
+            this.closeMoveModal();
         },
 
-        closeMoveCopyModal() {
-            this.showMoveCopyModal = false;
-            this.moveCopyObject = null;
+        handleCopySuccess(object) {
+            // For copy: add the new object to the list if it matches current filters
+            // Only add if the new object's bucket is in the selected buckets (or no buckets are selected)
+            if (this.selectedBuckets.length === 0 || this.selectedBuckets.includes(object.bucket.id)) {
+                this.objects.unshift(object);
+            }
+
+            this.closeCopyModal();
+        },
+
+        closeMoveModal() {
+            this.showMoveModal = false;
+            this.moveObject = null;
+        },
+
+        closeCopyModal() {
+            this.showCopyModal = false;
+            this.copyObject = null;
         },
 
         openCreateBucketModal() {
@@ -1792,8 +1841,6 @@ export default {
 
             .body__actions {
                 display: flex;
-                justify-content: space-between;
-                align-items: center;
             }
 
             .upload-button {
@@ -1853,7 +1900,7 @@ export default {
 
             .view-toggle {
                 display: inline-flex;
-                align-items: center;
+                margin-left: auto;
                 background: rgba(255, 255, 255, 0.8);
                 padding: 4px;
                 border-radius: 20px;

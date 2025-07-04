@@ -19,7 +19,7 @@
             </p>
             <Status
                 type="warning"
-                :message="'Be aware that intermediate systems may cache the old file for a period of time.'"
+                message="Be aware that intermediate systems may cache the old file for a period of time."
             />
             <div
                 class="upload-zone"
@@ -111,7 +111,6 @@ export default {
         Status
     },
     inject: ['cdnApi'],
-
     props: {
         visible: {
             type: Boolean,

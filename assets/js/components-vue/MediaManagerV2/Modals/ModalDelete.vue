@@ -11,9 +11,8 @@
                 :margin-bottom="true"
             />
             <Status
-                v-if="true"
                 type="warning"
-                :message="'Are you sure you want to delete this file?'"
+                message="Are you sure you want to delete this file?"
             />
         </template>
         <template v-else>

@@ -43,7 +43,7 @@
                             </span>
                         </div>
                     </label>
-                    <div class="option-actions" v-if="showActions && bucket.object_count === 0">
+                    <div class="option-actions" v-if="userPermissions.bucket.delete && showActions && bucket.object_count === 0">
                         <button
                             class="option-action-button delete-action"
                             @click.stop="handleDeleteBucket(bucket)"
@@ -72,6 +72,7 @@ import Button from "./Button.vue";
 export default {
     name: 'BucketSelector',
     components: {Button},
+    inject: ['userPermissions'],
     props: {
         value: {
             type: [Array, Number, String],
