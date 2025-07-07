@@ -43,8 +43,21 @@
                             </span>
                         </div>
                     </label>
-                    <div class="option-actions" v-if="userPermissions.bucket.delete && showActions && bucket.object_count === 0">
+                    <div class="option-actions" v-if="showActions">
                         <button
+                            v-if="userPermissions.bucket.edit"
+                            class="option-action-button edit-action"
+                            @click.stop="handleEditBucket(bucket)"
+                            title="Rename Bucket"
+                        >
+                            <span class="icon-wrapper" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            v-if="userPermissions.bucket.delete && showActions && bucket.object_count === 0"
                             class="option-action-button delete-action"
                             @click.stop="handleDeleteBucket(bucket)"
                             title="Delete Bucket"
@@ -226,6 +239,9 @@ export default {
         handleDeleteBucket(bucket) {
             this.$emit('delete-bucket', bucket);
         },
+        handleEditBucket(bucket) {
+            this.$emit('edit-bucket', bucket);
+        },
         handleKeydown(event) {
             if (event.key === 'Escape' && this.isOpen) {
                 this.closeDropdown();
@@ -364,6 +380,8 @@ export default {
                 padding: 6px 12px;
                 cursor: pointer;
                 transition: background-color 0.2s ease;
+                width: 100%; /* Ensure it takes full width */
+                overflow: hidden; /* Prevent content from overflowing */
 
                 &:hover {
                     background: #f9fafb;
@@ -375,6 +393,8 @@ export default {
                     flex-grow: 1;
                     margin: 0;
                     padding: 0;
+                    min-width: 0; /* Allow container to shrink below content size */
+                    overflow: hidden; /* Ensure content doesn't overflow */
 
                     input {
                         margin-right: 8px;
@@ -390,7 +410,8 @@ export default {
                         flex-grow: 1;
                         flex-shrink: 1;
                         flex-basis: 0%;
-                        min-width: 0;
+                        min-width: 0; /* Allow content to shrink below content size */
+                        overflow: hidden; /* Ensure content doesn't overflow */
                     }
 
                     .option-label {
@@ -417,6 +438,7 @@ export default {
                     align-items: center;
                     gap: 4px;
                     margin-left: 8px;
+                    flex-shrink: 0; /* Prevent the actions from shrinking */
 
                     .option-action-button {
                         display: flex;

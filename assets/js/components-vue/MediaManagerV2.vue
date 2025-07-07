@@ -30,6 +30,7 @@
                         :show-actions="true"
                         :offset-dropdown-arrow="this.userPermissions.bucket.create && !loadingBuckets"
                         @delete-bucket="handleDeleteBucket"
+                        @edit-bucket="handleEditBucket"
                         class="bucket-filter"
                     />
                     <button
@@ -352,6 +353,17 @@
             @confirm="confirmDeleteBucket"
         />
 
+        <!-- Edit Bucket Modal -->
+        <ModalEditBucket
+            :visible="showEditBucketModal"
+            :bucketToEdit="bucketToEdit"
+            :isEditingBucket="isEditingBucket"
+            :editBucketError="editBucketError"
+            :editBucketSuccess="editBucketSuccess"
+            @close="closeEditBucketModal"
+            @confirm="confirmEditBucket"
+        />
+
         <!-- Trash Modal -->
         <ModalTrash
             :visible="showTrashModal"
@@ -408,6 +420,7 @@ import ModalUrlCopy from './MediaManagerV2/Modals/ModalUrlCopy.vue'
 import ModalDelete from './MediaManagerV2/Modals/ModalDelete.vue'
 import ModalCreateBucket from './MediaManagerV2/Modals/ModalCreateBucket.vue'
 import ModalDeleteBucket from './MediaManagerV2/Modals/ModalDeleteBucket.vue'
+import ModalEditBucket from './MediaManagerV2/Modals/ModalEditBucket.vue'
 import ModalTrash from './MediaManagerV2/Modals/ModalTrash.vue'
 import Button from './MediaManagerV2/Button.vue'
 import FilePreview from './MediaManagerV2/FilePreview.vue'
@@ -431,6 +444,7 @@ export default {
         ModalDelete,
         ModalCreateBucket,
         ModalDeleteBucket,
+        ModalEditBucket,
         ModalTrash
     },
     props: {
@@ -506,6 +520,7 @@ export default {
                 bucket: {
                     fetch: () => `${this.siteUrl}api/cdn/bucket`,
                     create: () => `${this.siteUrl}api/cdn/bucket`,
+                    edit: (id) => `${this.siteUrl}api/cdn/bucket/${id}`,
                     delete: (id) => `${this.siteUrl}api/cdn/bucket/${id}`
                 },
                 fileTypes: {
@@ -582,16 +597,24 @@ export default {
             selectedObject: null,
             showReplaceModal: false,
             replacingObject: null,
+            //  Create bucket properties
             showCreateBucketModal: false,
             newBucketName: '',
             isCreatingBucket: false,
             createBucketError: null,
             createBucketSuccess: false,
+            //  Delete bucket properties
             showDeleteBucketModal: false,
             bucketToDelete: null,
             isDeletingBucket: false,
             deleteBucketError: null,
             deleteBucketSuccess: false,
+            //  Edit bucket properties
+            showEditBucketModal: false,
+            bucketToEdit: null,
+            isEditingBucket: false,
+            editBucketError: null,
+            editBucketSuccess: false,
             // Trash modal properties
             showTrashModal: false,
             trashedItems: [],
@@ -935,6 +958,14 @@ export default {
             this.deleteBucketSuccess = false;
         },
 
+        closeEditBucketModal() {
+            this.showEditBucketModal = false;
+            this.bucketToEdit = null;
+            this.isEditingBucket = false;
+            this.editBucketError = null;
+            this.editBucketSuccess = false;
+        },
+
         async confirmDeleteBucket() {
             if (!this.bucketToDelete) return;
 
@@ -966,6 +997,54 @@ export default {
                 console.error('Failed to delete bucket:', error);
                 this.deleteBucketError = error.response?.data?.error || error.message;
                 this.isDeletingBucket = false;
+            }
+        },
+
+        async confirmEditBucket() {
+            if (!this.bucketToEdit) return;
+
+            this.isEditingBucket = true;
+            this.editBucketError = null;
+            this.editBucketSuccess = false;
+
+            try {
+
+                // Make PUT request to the API with JSON body
+                const jsonData = {
+                    label: this.bucketToEdit.label
+                };
+
+                const response = await fetch(this.cdnApi.bucket.edit(this.bucketToEdit.id), {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update bucket');
+                }
+
+                // Show success message
+                this.editBucketSuccess = true;
+                console.log(`Bucket "${this.bucketToEdit.label}" renamed successfully`);
+
+                // Refresh the bucket and object list
+                await this.fetchAllBuckets();
+                await this.doSearch();
+
+                // Close modal after a delay
+                setTimeout(() => {
+                    this.closeEditBucketModal();
+                }, 1500);
+
+            } catch (error) {
+                console.error('Failed to edit bucket:', error);
+                this.editBucketError = error.response?.data?.error || error.message;
+                this.isEditingBucket = false;
             }
         },
 
@@ -1406,6 +1485,13 @@ export default {
         handleDeleteBucket(bucket) {
             this.bucketToDelete = bucket;
             this.showDeleteBucketModal = true;
+            this.deleteBucketError = null;
+            this.deleteBucketSuccess = false;
+        },
+
+        handleEditBucket(bucket) {
+            this.bucketToEdit = bucket;
+            this.showEditBucketModal = true;
             this.deleteBucketError = null;
             this.deleteBucketSuccess = false;
         }
