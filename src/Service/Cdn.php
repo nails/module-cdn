@@ -600,18 +600,22 @@ class Cdn
     /**
      * Returns a single object
      *
-     * @param int|string|Resource\CdnObject $object       The object's ID or filename
-     * @param int|string                    $bucketIdSlug The bucket's ID or slug
-     * @param array                         $data         Data to pass to getCountCommon()()
+     * @param int|string|Resource\CdnObject|null $object       The object's ID or filename
+     * @param int|string                         $bucketIdSlug The bucket's ID or slug
+     * @param array                              $data         Data to pass to getCountCommon()()
      *
      * @return bool|stdClass                stdClass on success, false on failure
      * @throws CdnException
      */
     public function getObject(
-        int|string|Resource\CdnObject $object,
+        int|string|Resource\CdnObject|null $object,
         int|string $bucketIdSlug = '',
         array $data = []
     ): bool|stdClass {
+
+        if (empty($object)) {
+            return false;
+        }
 
         if ($object instanceof Resource\CdnObject || is_numeric($object)) {
 
@@ -676,19 +680,23 @@ class Cdn
     /**
      * Returns a single object from the trash
      *
-     * @param int|string|Resource\CdnObject $object The object
-     * @param int|string                    $bucket The bucket's ID or slug
-     * @param array                         $data   Data to pass to getCountCommon()
+     * @param int|string|Resource\CdnObject|null $object The object
+     * @param int|string                         $bucket The bucket's ID or slug
+     * @param array                              $data   Data to pass to getCountCommon()
      *
      * @return bool|stdClass          stdClass on success, false on failure
      * @throws CdnException
      * @throws FactoryException
      */
     public function getObjectFromTrash(
-        int|string|Resource\CdnObject $object,
+        int|string|Resource\CdnObject|null $object,
         int|string $bucket = '',
         array $data = []
     ): bool|stdClass {
+
+        if (empty($object)) {
+            return false;
+        }
 
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
@@ -1398,12 +1406,12 @@ class Cdn
     /**
      * Deletes an object
      *
-     * @param int|string|Resource\CdnObject $object The object to delete
+     * @param int|string|Resource\CdnObject|null $object The object to delete
      *
      * @throws FactoryException
      */
     public function objectDelete(
-        int|string|Resource\CdnObject $object
+        int|string|Resource\CdnObject|null $object
     ): bool {
 
         /** @var Database $oDb */
@@ -1503,12 +1511,12 @@ class Cdn
     /**
      * Restore an object from the trash
      *
-     * @param int|string|Resource\CdnObject $object The object to restore
+     * @param int|string|Resource\CdnObject|null $object The object to restore
      *
      * @throws FactoryException
      */
     public function objectRestore(
-        int|string|Resource\CdnObject $object
+        int|string|Resource\CdnObject|null $object
     ): bool {
 
         /** @var Database $oDb */
@@ -1601,7 +1609,7 @@ class Cdn
     /**
      * Permanently deletes an object
      *
-     * @param int|string|Resource\CdnObject $object The object to destroy
+     * @param int|string|Resource\CdnObject|null $object The object to destroy
      *
      * @throws DriverException
      * @throws FactoryException
@@ -1609,7 +1617,7 @@ class Cdn
      * @throws ReflectionException
      */
     public function objectDestroy(
-        int|string|Resource\CdnObject $object
+        int|string|Resource\CdnObject|null $object
     ): bool {
 
         $oObject = $this->getObject($object);
@@ -1682,8 +1690,8 @@ class Cdn
     /**
      * Copies an object
      *
-     * @param int|string|Resource\CdnObject $sourceObject The object to copy
-     * @param int|string|Resource\Bucket    $newBucket    The destination bucket
+     * @param int|string|Resource\CdnObject|null $sourceObject The object to copy
+     * @param int|string|Resource\Bucket         $newBucket    The destination bucket
      *
      * @throws CdnException
      * @throws DriverException
@@ -1691,7 +1699,7 @@ class Cdn
      * @throws ReflectionException
      */
     public function objectCopy(
-        int|string|Resource\CdnObject $sourceObject,
+        int|string|Resource\CdnObject|null $sourceObject,
         int|string|Resource\Bucket $newBucket,
     ): stdClass {
 
@@ -1808,7 +1816,7 @@ class Cdn
         // --------------------------------------------------------------------------
 
         //  Attempt to move the file
-        $result         = $this->callDriver(
+        $result = $this->callDriver(
             'objectMove',
             [
                 $sourceObject->file->name->disk,
@@ -1856,15 +1864,15 @@ class Cdn
     /**
      * Uploads an object and, if successful, removes the old object. Note that a new Object ID is created.
      *
-     * @param int|string|Resource\CdnObject $object      The existing object
-     * @param mixed                         $replaceWith The replacement: $_FILE key, path or data stream
-     * @param array                         $aOptions    Upload options
-     * @param bool                          $bIsStream   Whether the replacement object is a data stream or not
+     * @param int|string|Resource\CdnObject|null $object      The existing object
+     * @param mixed                              $replaceWith The replacement: $_FILE key, path or data stream
+     * @param array                              $aOptions    Upload options
+     * @param bool                               $bIsStream   Whether the replacement object is a data stream or not
      *
      * @return bool|stdClass                stdClass on success, false on failure
      */
     public function objectReplace(
-        int|string|Resource\CdnObject $object,
+        int|string|Resource\CdnObject|null $object,
         mixed $replaceWith,
         array $aOptions = [],
         bool $bIsStream = false
