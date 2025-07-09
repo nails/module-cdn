@@ -11,6 +11,11 @@
  */
 
 use Nails\Cdn\Controller\Base;
+use Nails\Cdn\Exception\PermittedDimensionException;
+use Nails\Cdn\Service\Cdn;
+use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\NailsException;
+use Nails\Common\Service\Uri;
 use Nails\Factory;
 
 /**
@@ -18,19 +23,22 @@ use Nails\Factory;
  */
 class Blank_avatar extends Base
 {
-    protected $avatarMale;
-    protected $avatarFemale;
-    protected $width;
-    protected $height;
-    protected $sex;
+    protected string $avatarMale;
+    protected string $avatarFemale;
+    protected string $avatarNeutral;
+    protected int    $width;
+    protected int    $height;
+    protected string $sex;
 
     // --------------------------------------------------------------------------
 
     /**
      * Blank_avatar constructor.
      *
-     * @throws \Nails\Cdn\Exception\PermittedDimensionException
-     * @throws \Nails\Common\Exception\FactoryException
+     * @throws PermittedDimensionException
+     * @throws ReflectionException
+     * @throws FactoryException
+     * @throws NailsException
      */
     public function __construct()
     {
@@ -45,7 +53,7 @@ class Blank_avatar extends Base
 
         // --------------------------------------------------------------------------
 
-        /** @var \Nails\Common\Service\Uri $oUri */
+        /** @var Uri $oUri */
         $oUri = Factory::service('Uri');
 
         $this->width  = (int) $oUri->segment(3, 100);
@@ -69,7 +77,7 @@ class Blank_avatar extends Base
             $this->sex              = $aMatches[1];
         }
 
-        /** @var \Nails\Cdn\Service\Cdn $oCdn */
+        /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', \Nails\Cdn\Constants::MODULE_SLUG);
 
         $this->sex = $oCdn->blankAvatarNormaliseSex($this->sex);
@@ -94,13 +102,13 @@ class Blank_avatar extends Base
     /**
      * Generate the thumbnail
      *
-     * @return  void
+     * @throws FactoryException
      */
-    public function index()
+    public function index(): void
     {
         /**
          * Check the request headers; avoid hitting the disk at all if possible. If
-         * the Etag matches then send a Not-Modified header and terminate execution.
+         * the Etag matches, then send a Not-Modified header and terminate execution.
          */
 
         if ($this->serveNotModified($this->cdnCacheFile)) {
@@ -122,20 +130,11 @@ class Blank_avatar extends Base
              */
 
             //  Which original are we using?
-            switch ($this->sex) {
-
-                case 'female':
-                    $src = $this->avatarFemale;
-                    break;
-
-                case 'male':
-                    $src = $this->avatarMale;
-                    break;
-
-                default:
-                    $src = $this->avatarNeutral;
-                    break;
-            }
+            $src = match ($this->sex) {
+                'female' => $this->avatarFemale,
+                'male' => $this->avatarMale,
+                default => $this->avatarNeutral,
+            };
 
             $width  = $this->width * $this->retinaMultiplier;
             $height = $this->height * $this->retinaMultiplier;
@@ -156,13 +155,13 @@ class Blank_avatar extends Base
 
                 // --------------------------------------------------------------------------
 
-                //  Save local version and serve
+                //  Save a local version and serve
                 $PHPThumb->save($this->cdnCacheDir . $this->cdnCacheFile);
 
             } else {
                 //  This object does not exist.
                 Factory::service('Logger')->line('CDN: Blank Avatar: File not found; ' . $src);
-                return $this->serveBadSrc([
+                $this->serveBadSrc([
                     'width'  => $width,
                     'height' => $height,
                 ]);
@@ -178,6 +177,7 @@ class Blank_avatar extends Base
      * Map all requests to index();
      *
      * @return void
+     * @throws FactoryException
      */
     public function _remap()
     {
