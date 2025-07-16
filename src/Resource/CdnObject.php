@@ -6,6 +6,7 @@ use Nails\Cdn\Constants;
 use Nails\Cdn\Resource\CdnObject\File;
 use Nails\Cdn\Resource\CdnObject\Image;
 use Nails\Cdn\Resource\CdnObject\Url;
+use Nails\Common\Model\Base;
 use Nails\Common\Resource\Entity;
 use Nails\Factory;
 
