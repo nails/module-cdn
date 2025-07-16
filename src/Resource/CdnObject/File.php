@@ -40,22 +40,20 @@ class File extends Resource
     /**
      * File constructor.
      *
-     * @param Resource|\stdClass|array $oObj The data to format
-     *
      * @throws \Nails\Common\Exception\FactoryException
      */
-    public function __construct($oObj)
+    public function __construct(self|\stdClass|array $resource)
     {
-        parent::__construct($oObj);
+        parent::__construct($resource);
         $this->name = Factory::resource(
             'ObjectFileName',
             Constants::MODULE_SLUG,
-            $oObj->name
+            $resource->name
         );
         $this->size = Factory::resource(
             'ObjectFileSize',
             Constants::MODULE_SLUG,
-            $oObj->size
+            $resource->size
         );
     }
 }

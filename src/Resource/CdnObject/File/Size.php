@@ -45,13 +45,11 @@ class Size extends Resource
     /**
      * Size constructor.
      *
-     * @param Resource|\stdClass|array $oObj The data to format
-     *
      * @throws \Nails\Common\Exception\FactoryException
      */
-    public function __construct($oObj)
+    public function __construct(self|\stdClass|array $resource)
     {
-        parent::__construct($oObj);
+        parent::__construct($resource);
 
         /** @var Cdn $oCdnService */
         $oCdnService = Factory::service('Cdn', Constants::MODULE_SLUG);

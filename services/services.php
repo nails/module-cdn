@@ -105,74 +105,79 @@ return [
         },
     ],
     'resources' => [
-        'Bucket'            => function ($oObj): Resource\Bucket {
+        'Bucket'            => function ($resource, $model): Resource\Bucket {
             if (class_exists('\App\Cdn\Resource\Bucket')) {
-                return new \App\Cdn\Resource\Bucket($oObj);
+                return new \App\Cdn\Resource\Bucket($resource, $model);
             } else {
-                return new Resource\Bucket($oObj);
+                return new Resource\Bucket($resource, $model);
             }
         },
-        'Object'            => function ($oObj): Resource\CdnObject {
+        'Object'            => function ($resource, $model): Resource\CdnObject {
             if (class_exists('\App\Cdn\Resource\CdnObject')) {
-                return new \App\Cdn\Resource\CdnObject($oObj);
+                return new \App\Cdn\Resource\CdnObject($resource, $model);
             } else {
-                return new Resource\CdnObject($oObj);
+                return new Resource\CdnObject($resource, $model);
             }
         },
-        'ObjectFile'        => function ($oObj): Resource\CdnObject\File {
+        'ObjectFile'        => function ($resource, $model = null): Resource\CdnObject\File {
+            //  @todo (Pablo 2025-07-15) - this should be a factory
             if (class_exists('\App\Cdn\Resource\CdnObject\File')) {
-                return new \App\Cdn\Resource\CdnObject\File($oObj);
+                return new \App\Cdn\Resource\CdnObject\File($resource);
             } else {
-                return new Resource\CdnObject\File($oObj);
+                return new Resource\CdnObject\File($resource);
             }
         },
-        'ObjectFileName'    => function ($oObj): Resource\CdnObject\File\Name {
+        'ObjectFileName'    => function ($resource, $model = null): Resource\CdnObject\File\Name {
+            //  @todo (Pablo 2025-07-15) - this should be a factory
             if (class_exists('\App\Cdn\Resource\CdnObject\File\Name')) {
-                return new \App\Cdn\Resource\CdnObject\File\Name($oObj);
+                return new \App\Cdn\Resource\CdnObject\File\Name($resource);
             } else {
-                return new Resource\CdnObject\File\Name($oObj);
+                return new Resource\CdnObject\File\Name($resource);
             }
         },
-        'ObjectFileSize'    => function ($oObj): Resource\CdnObject\File\Size {
+        'ObjectFileSize'    => function ($resource, $model = null): Resource\CdnObject\File\Size {
+            //  @todo (Pablo 2025-07-15) - this should be a factory
             if (class_exists('\App\Cdn\Resource\CdnObject\File\Size')) {
-                return new \App\Cdn\Resource\CdnObject\File\Size($oObj);
+                return new \App\Cdn\Resource\CdnObject\File\Size($resource);
             } else {
-                return new Resource\CdnObject\File\Size($oObj);
+                return new Resource\CdnObject\File\Size($resource);
             }
         },
-        'ObjectImage'       => function ($oObj): Resource\CdnObject\Image {
+        'ObjectImage'       => function ($resource, $model = null): Resource\CdnObject\Image {
+            //  @todo (Pablo 2025-07-15) - this should be a factory
             if (class_exists('\App\Cdn\Resource\CdnObject\Image')) {
-                return new \App\Cdn\Resource\CdnObject\Image($oObj);
+                return new \App\Cdn\Resource\CdnObject\Image($resource);
             } else {
-                return new Resource\CdnObject\Image($oObj);
+                return new Resource\CdnObject\Image($resource);
             }
         },
-        'ObjectUrl'         => function ($oObj): Resource\CdnObject\Url {
+        'ObjectUrl'         => function ($resource, $model = null): Resource\CdnObject\Url {
+            //  @todo (Pablo 2025-07-15) - this should be a factory
             if (class_exists('\App\Cdn\Resource\CdnObject\Url')) {
-                return new \App\Cdn\Resource\CdnObject\Url($oObj);
+                return new \App\Cdn\Resource\CdnObject\Url($resource);
             } else {
-                return new Resource\CdnObject\Url($oObj);
+                return new Resource\CdnObject\Url($resource);
             }
         },
-        'ObjectImport'      => function ($oObj): Resource\CdnObject\Import {
+        'ObjectImport'      => function ($resource, $model): Resource\CdnObject\Import {
             if (class_exists('\App\Cdn\Resource\CdnObject\Import')) {
-                return new \App\Cdn\Resource\CdnObject\Import($oObj);
+                return new \App\Cdn\Resource\CdnObject\Import($resource, $model);
             } else {
-                return new Resource\CdnObject\Import($oObj);
+                return new Resource\CdnObject\Import($resource, $model);
             }
         },
-        'ObjectTrash'       => function ($oObj): Resource\CdnObject {
+        'ObjectTrash'       => function ($resource, $model): Resource\CdnObject {
             if (class_exists('\App\Cdn\Resource\CdnObject\Trash')) {
-                return new \App\Cdn\Resource\CdnObject\Trash($oObj);
+                return new \App\Cdn\Resource\CdnObject\Trash($resource, $model);
             } else {
-                return new Resource\CdnObject\Trash($oObj);
+                return new Resource\CdnObject\Trash($resource, $model);
             }
         },
-        'Token'             => function ($oObj): Resource\Token {
+        'Token'             => function ($resource, $model): Resource\Token {
             if (class_exists('\App\Cdn\Resource\Token')) {
-                return new \App\Cdn\Resource\Token($oObj);
+                return new \App\Cdn\Resource\Token($resource, $model);
             } else {
-                return new Resource\Token($oObj);
+                return new Resource\Token($resource, $model);
             }
         },
         'UrlGeneratorCrop'  => function (
@@ -182,6 +187,7 @@ return [
             int $iWidth,
             int $iHeight
         ): Resource\UrlGenerator\Crop {
+            //  @todo (Pablo 2025-07-15) - this should be a factory
             if (class_exists('\App\Cdn\Resource\UrlGenerator\Crop')) {
                 return new \App\Cdn\Resource\UrlGenerator\Crop($oCdn, $oService, $iObjectId, $iWidth, $iHeight);
             } else {
@@ -195,6 +201,7 @@ return [
             int $iWidth,
             int $iHeight
         ): Resource\UrlGenerator\Scale {
+            //  @todo (Pablo 2025-07-15) - this should be a factory
             if (class_exists('\App\Cdn\Resource\UrlGenerator\Scale')) {
                 return new \App\Cdn\Resource\UrlGenerator\Scale($oCdn, $oService, $iObjectId, $iWidth, $iHeight);
             } else {
@@ -207,6 +214,7 @@ return [
             int $iObjectId,
             bool $bForceDownload
         ): Resource\UrlGenerator\Serve {
+            //  @todo (Pablo 2025-07-15) - this should be a factory
             if (class_exists('\App\Cdn\Resource\UrlGenerator\Serve')) {
                 return new \App\Cdn\Resource\UrlGenerator\Serve($oCdn, $oService, $iObjectId, $bForceDownload);
             } else {

@@ -2,7 +2,9 @@
 
 namespace Nails\Cdn\Resource\CdnObject;
 
+use Nails\Common\Model\Base;
 use Nails\Common\Resource;
+use stdClass;
 
 /**
  * Class Url
@@ -35,12 +37,10 @@ class Url extends Resource
 
     /**
      * Url constructor.
-     *
-     * @param array $mObj
      */
-    public function __construct($mObj = [])
+    public function __construct(self|stdClass|array $resource = [], ?Base $model = null)
     {
-        parent::__construct($mObj);
+        parent::__construct($resource, $model);
         $this->src      = cdnServe($this->id);
         $this->download = cdnServe($this->id, true);
     }
