@@ -121,13 +121,11 @@ class CdnObject extends Entity
     /**
      * CdnObject constructor.
      *
-     * @param Resource|\stdClass|array $oObj The data to format
-     *
      * @throws \Nails\Common\Exception\FactoryException
      */
-    public function __construct($oObj)
+    public function __construct($resource, ?Base $model = null)
     {
-        parent::__construct($oObj);
+        parent::__construct($resource, $model);
 
         // --------------------------------------------------------------------------
 
