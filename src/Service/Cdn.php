@@ -601,7 +601,7 @@ class Cdn
      * Returns a single object
      *
      * @param int|string|Resource\CdnObject|null $object       The object's ID or filename
-     * @param int|string                         $bucketIdSlug The bucket's ID or slug
+     * @param int|string|null                    $bucketIdSlug The bucket's ID or slug
      * @param array                              $data         Data to pass to getCountCommon()()
      *
      * @return bool|stdClass                stdClass on success, false on failure
@@ -609,7 +609,7 @@ class Cdn
      */
     public function getObject(
         int|string|Resource\CdnObject|null $object,
-        int|string $bucketIdSlug = '',
+        int|string|null $bucketIdSlug = '',
         array $data = []
     ): bool|stdClass {
 
