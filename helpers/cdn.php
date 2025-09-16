@@ -11,6 +11,8 @@
  */
 
 use Nails\Cdn\Constants;
+use Nails\Cdn\Resource\Bucket;
+use Nails\Cdn\Resource\CdnObject;
 use Nails\Cdn\Resource\UrlGenerator;
 use Nails\Cdn\Service\Cdn;
 use Nails\Common\Service\View;
@@ -322,26 +324,42 @@ if (!function_exists('cdnObjectPicker')) {
     /**
      * Returns the markup required for cdn Object Pickers
      *
-     * @param string      $sKey       The name to give the input
-     * @param string|null $sBucket    The bucket we're picking from
-     * @param int|null    $iObjectId  The object which has previously been chosen
-     * @param string      $sAttr      Any attributes to add to the containing element
-     * @param string      $sInputAttr Any attributes to add to the input element
-     * @param bool        $bReadOnly  Whether picker is readonly
+     * @param string          $key             The name to give the input
+     * @param string|null     $bucket          The bucket we're picking from
+     * @param int|string|null $object          The object which has previously been chosen
+     * @param string          $attributes      Any attributes to add to the containing element
+     * @param string          $inputAttributes Any attributes to add to the input element
+     * @param bool            $isReadOnly      Whether picker is readonly
      *
      * @return string
      */
     function cdnObjectPicker(
-        string $sKey,
-        ?string $sBucket = null,
-        ?int $iObjectId = null,
-        string $sAttr = '',
-        string $sInputAttr = '',
-        bool $bReadOnly = false
+        string $key,
+        int|string|Bucket|null $bucket = null,
+        int|string|CdnObject|null $object = null,
+        string $attributes = '',
+        string $inputAttributes = '',
+        bool $isReadOnly = false
      ) {
-        if ($bReadOnly) {
-            $sAttr      .= ' data-readonly="true"';
-            $sInputAttr .= ' readonly';
+
+        $bucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
+        $objectModel = Factory::model('Object', Constants::MODULE_SLUG);
+
+        if (is_int($bucket)) {
+            $bucket = $bucketModel->getById($bucket);
+        } elseif (is_string($bucket)) {
+            $bucket = $bucketModel->getBySlug($bucket);
+        }
+
+        if (is_int($object)) {
+            $object = $objectModel->getById($object);
+        } elseif (is_string($object)) {
+            $object = $objectModel->getBySlug($object);
+        }
+
+        if ($isReadOnly) {
+            $attributes      .= ' data-readonly="true"';
+            $inputAttributes .= ' readonly';
         }
 
         /** @var View $oView */
@@ -349,12 +367,12 @@ if (!function_exists('cdnObjectPicker')) {
         return $oView->load(
             'cdn/picker',
             [
-                'sKey'       => trim($sKey),
-                'sBucket'    => trim((string) $sBucket),
-                'iObjectId'  => $iObjectId,
-                'sAttr'      => trim($sAttr),
-                'sInputAttr' => trim($sInputAttr),
-                'bReadOnly'  => $bReadOnly,
+                'key'             => trim($key),
+                'bucketSlug'      => $bucket?->slug ?? '',
+                'objectId'        => $object?->id ?? '',
+                'attributes'      => trim($attributes),
+                'inputAttributes' => trim($inputAttributes),
+                'isReadOnly'      => $isReadOnly,
             ],
             true
         );
