@@ -128,7 +128,7 @@ export default {
                     bucket_id: Array.isArray(this.selectedBucketId) ? this.selectedBucketId[0] : this.selectedBucketId,
                 });
 
-                this.success = 'File copied successfully!';
+                this.success = 'File moved successfully!';
 
                 // Emit success event to parent component
                 this.$emit('success', response.data.data);
