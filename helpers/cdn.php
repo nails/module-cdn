@@ -362,31 +362,38 @@ if (!function_exists('cdnObjectPicker')) {
     /**
      * Returns the markup required for cdn Object Pickers
      *
-     * @param string $sKey       The name to give the input
-     * @param string $sBucket    The bucket we're picking from
-     * @param int    $iObjectId  The object which has previously been chosen
-     * @param string $sAttr      Any attributes to add to the containing element
-     * @param string $sInputAttr Any attributes to add to the input element
-     * @param bool   $bReadOnly  Whether picker is readonly
+     * @param string      $sKey       The name to give the input
+     * @param string|null $sBucket    The bucket we're picking from
+     * @param int|null    $iObjectId  The object which has previously been chosen
+     * @param string      $sAttr      Any attributes to add to the containing element
+     * @param string      $sInputAttr Any attributes to add to the input element
+     * @param bool        $bReadOnly  Whether picker is readonly
      *
      * @return string
      */
-    function cdnObjectPicker($sKey, $sBucket, $iObjectId = null, $sAttr = '', $sInputAttr = '', $bReadOnly = false)
-    {
+    function cdnObjectPicker(
+        string $sKey,
+        ?string $sBucket = null,
+        ?int $iObjectId = null,
+        string $sAttr = '',
+        string $sInputAttr = '',
+        bool $bReadOnly = false
+     ) {
         if ($bReadOnly) {
             $sAttr      .= ' data-readonly="true"';
             $sInputAttr .= ' readonly';
         }
+
         /** @var View $oView */
         $oView = Factory::service('View');
         return $oView->load(
             'cdn/picker',
             [
-                'sKey'       => $sKey,
-                'sBucket'    => $sBucket,
+                'sKey'       => trim($sKey),
+                'sBucket'    => trim((string) $sBucket),
                 'iObjectId'  => $iObjectId,
-                'sAttr'      => $sAttr,
-                'sInputAttr' => $sInputAttr,
+                'sAttr'      => trim($sAttr),
+                'sInputAttr' => trim($sInputAttr),
                 'bReadOnly'  => $bReadOnly,
             ],
             true
