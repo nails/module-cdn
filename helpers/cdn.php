@@ -380,7 +380,7 @@ if (!function_exists('cdnObjectPicker')) {
         string $attributes = '',
         string $inputAttributes = '',
         bool $isReadOnly = false
-     ) {
+    ) {
 
         $bucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
         $objectModel = Factory::model('Object', Constants::MODULE_SLUG);
@@ -391,10 +391,12 @@ if (!function_exists('cdnObjectPicker')) {
             $bucket = $bucketModel->getBySlug($bucket);
         }
 
-        if (is_int($object)) {
-            $object = $objectModel->getById($object);
-        } elseif (is_string($object)) {
-            $object = $objectModel->getBySlug($object);
+        if (is_int($object) || (is_string($object) && is_numeric($object))) {
+            $object   = $objectModel->getById((int) $object);
+            $objectId = $object?->id;
+
+        } elseif (is_string($object) && !is_numeric($object)) {
+            $objectId = $object;
         }
 
         if ($isReadOnly) {
@@ -409,7 +411,7 @@ if (!function_exists('cdnObjectPicker')) {
             [
                 'key'             => trim($key),
                 'bucketSlug'      => $bucket?->slug ?? '',
-                'objectId'        => $object?->id ?? '',
+                'objectId'        => $objectId ?? '',
                 'attributes'      => trim($attributes),
                 'inputAttributes' => trim($inputAttributes),
                 'isReadOnly'      => $isReadOnly,
