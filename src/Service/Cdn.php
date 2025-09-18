@@ -1904,7 +1904,8 @@ class Cdn
                 /**
                  * Upload is a data stream, i.e the raw data to upload (might be binary, might be plain text)
                  */
-                $sCacheFile = $this->saveStreamToCacheFile($replaceWith, $aOptions['Content-Type'] ?? null);
+                $sCacheFile     = $this->saveStreamToCacheFile($replaceWith, $aOptions['Content-Type'] ?? null);
+                $sCacheFileName = null;
 
             } elseif (is_string($replaceWith) && preg_match('/^https?:\/\//', $replaceWith)) {
 
@@ -1913,8 +1914,10 @@ class Cdn
                  */
                 try {
 
-                    $oResponse  = $this->makeHttpRequest($replaceWith);
-                    $sCacheFile = $this->saveHttpResponseToFile($oResponse);
+                    $oResponse      = $this->makeHttpRequest($replaceWith);
+                    $sCacheFile     = $this->saveHttpResponseToFile($oResponse);
+                    $sCacheFileName = $this->determineFileNameFromHttpResponse($oResponse);
+
                     //  In case of large download, clear out memory
                     $oResponse = null;
 
@@ -1927,16 +1930,19 @@ class Cdn
                 /**
                  * Object is a data-uri
                  */
-                $bEncoded   = ArrayHelper::get(3, $aMatches) === 'base64';
-                $sData      = ArrayHelper::get(4, $aMatches);
-                $sCacheFile = $this->saveDataToCacheFile($bEncoded ? base64_decode($sData) : $sData);
+                $bEncoded = ArrayHelper::get(3, $aMatches) === 'base64';
+                $sData    = ArrayHelper::get(4, $aMatches);
+
+                $sCacheFile     = $this->saveDataToCacheFile($bEncoded ? base64_decode($sData) : $sData);
+                $sCacheFileName = null;
 
             } elseif (is_file($replaceWith)) {
 
                 /**
                  * Object is a file path
                  */
-                $sCacheFile = $this->saveDataToCacheFile(file_get_contents($replaceWith));
+                $sCacheFile     = $this->saveDataToCacheFile(file_get_contents($replaceWith));
+                $sCacheFileName = basename($sCacheFile);
 
             } elseif (isset($_FILES[$replaceWith])) {
 
@@ -1958,6 +1964,8 @@ class Cdn
                     );
                 }
 
+                $sCacheFileName = $_FILES[$object]['name'] ?? null;
+
             } else {
                 throw new ObjectReplaceException(sprintf(
                     'You did not select a file to upload [%s]',
@@ -1972,6 +1980,22 @@ class Cdn
                 throw new ObjectReplaceException(
                     'Replacement file must be the same type of file as the file being replaced.'
                 );
+            }
+
+            //  Determine a display name for the file
+            if (!empty($aOptions['filename_display'])) {
+                //  Filename provided explicitly
+                $sFileName = $aOptions['filename_display'];
+
+            } elseif (!empty($sCacheFileName)) {
+                //  Filename determined automatically
+                $sFileName = $sCacheFileName;
+
+            } else {
+                //  Fallback to timestamped file
+                /** @var \DateTime $oNow */
+                $oNow      = Factory::factory('DateTime');
+                $sFileName = $oNow->format('Y-m-d-H-i-s') . '.' . $sUploadedExt;
             }
 
             //  Is the file within the file size limit?
@@ -2036,6 +2060,8 @@ class Cdn
                     ],
                     'filename' => $oExistingObject->file->name->disk,
                     'file'     => $sCacheFile,
+                    'mime'     => $sUploadedMime,
+                    'name'     => $sFileName,
                 ],
             ])) {
                 throw new ObjectReplaceException(
