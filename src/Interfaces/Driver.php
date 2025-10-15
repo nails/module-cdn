@@ -21,6 +21,7 @@ interface Driver
     public function objectCopy(string $sSourceObject, string $sSourceBucket, string $sTargetObject, string $sTargetBucket);
     public function objectDestroy(string $sObject, string $sBucket): bool;
     public function objectLocalPath(string $sBucket, string $sFilename): bool|string;
+    public function getObjectMetaDataErrors(string $sFilename, string $sFilenameDisplay, string $sBucket, string $sMimeType): array;
 
     //  Bucket methods
     public function bucketCreate(string $sBucket): bool;
