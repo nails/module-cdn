@@ -9,7 +9,6 @@ use Nails\Cdn\Service\StorageDriver;
 use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Helper\Model\Select;
 use Nails\Common\Helper\Model\Sort;
-use Nails\Common\Helper\Model\WhereIn;
 use Nails\Console\Command\Base;
 use Nails\Factory;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -89,7 +88,6 @@ class Issues extends Base
         $oQuery = $oObjectModel->getAllRawQuery([
             new Select(['id']),
             new Sort('id', Sort::ASC),
-            new WhereIn('id', [1, 2, 3]),
         ]);
 
         $oProgress->start();
