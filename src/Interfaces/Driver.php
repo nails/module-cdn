@@ -22,6 +22,7 @@ interface Driver
     public function objectDestroy(string $sObject, string $sBucket): bool;
     public function objectLocalPath(string $sBucket, string $sFilename): bool|string;
     public function getObjectMetaDataErrors(string $sFilename, string $sFilenameDisplay, string $sBucket, string $sMimeType): array;
+    public function fixObjectMetaDataErrors(string $sFilename, string $sFilenameDisplay, string $sBucket, string $sMimeType): bool;
 
     //  Bucket methods
     public function bucketCreate(string $sBucket): bool;
