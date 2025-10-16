@@ -81,6 +81,7 @@ class Issues extends Base
         /** @var \DateTime $oNow */
         $oNow = Factory::factory('DateTime');
         $this->oLogger->setFile('cdn-issues-' . $oNow->format('Y-m-d-H-i-s') . '.php');
+        $this->oLogger->info('Starting check for CDN object issues');
 
         // --------------------------------------------------------------------------
 
@@ -98,6 +99,12 @@ class Issues extends Base
         $iTotalObjects = empty($aObjectIds)
             ? $oObjectModel->countAll()
             : $oObjectModel->countAll([new WhereIn('id', $aObjectIds)]);
+
+        if (empty($iTotalObjects)) {
+            $this->oLogger->info('No objects found to check for issues.');
+            $oOutput->writeln('No objects found to check for issues');
+            return self::EXIT_CODE_SUCCESS;
+        }
 
         $this->oSectionProgress = $oOutput->section();
 
