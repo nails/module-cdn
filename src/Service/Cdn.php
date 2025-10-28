@@ -355,6 +355,10 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
+        $this->callDriver('objectInvalidate', [$objectFilename, $bucketSlug]);
+
+        // --------------------------------------------------------------------------
+
         //  Clear out any cache files
         if ($clearCacheDir) {
 

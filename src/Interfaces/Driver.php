@@ -23,6 +23,7 @@ interface Driver
     public function objectLocalPath(string $sBucket, string $sFilename): bool|string;
     public function getObjectMetaDataErrors(string $sFilename, string $sFilenameDisplay, string $sBucket, string $sMimeType): array;
     public function fixObjectMetaDataErrors(string $sFilename, string $sFilenameDisplay, string $sBucket, string $sMimeType): bool;
+    public function objectInvalidate(string $sFilename, string $sBucket): bool;
 
     //  Bucket methods
     public function bucketCreate(string $sBucket): bool;
