@@ -21,6 +21,7 @@ use Nails\Cdn\Service\Monitor;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Helper\Model\Expand;
+use Nails\Common\Service\Database;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
 use Nails\Factory;
@@ -203,6 +204,8 @@ class CdnObject extends Api\Controller\Base
         $oHttpCodes = Factory::service('HttpCodes');
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
+        /** @var Database $oDb */
+        $oDb = Factory::service('Database');
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
         /** @var \Nails\Cdn\Model\CdnObject $oModel */
@@ -215,6 +218,7 @@ class CdnObject extends Api\Controller\Base
             );
         }
 
+        /** @var \Nails\Cdn\Resource\CdnObject $oObject */
         $oObject   = $oModel->getById($oInput->post('object_id'));
         $sFileName = trim((string) $oInput->post('filename_display'));
         $sMetaData = json_encode($oInput->post('metadata') ?: []);
@@ -234,23 +238,46 @@ class CdnObject extends Api\Controller\Base
             $sFileName .= '.' . $sExpectedExtension;
         }
 
-        $bResult = $oModel->update($oObject->id, [
-            'filename_display' => $sFileName,
-            'metadata'         => $sMetaData,
-        ]);
+        $oTransaction = $oDb->transaction();
 
-        if (!$bResult) {
-            throw new Api\Exception\ApiException('Failed to update object. ' . $oModel->lastError(), $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        try {
 
-        //  @todo (Pablo - 2018-06-25) - Reduce the namespace here (i.e remove `object`)
-        return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
-            ->setData([
-                'object' => $this->formatObject(
-                    $oCdn->getObject($oObject->id),
-                    $this->getRequestedUrls()
-                ),
+            $oTransaction->start();
+
+            //  Save metadata
+            $bResult = $oModel->update($oObject->id, [
+                'metadata' => $sMetaData,
             ]);
+
+            if (!$bResult) {
+                throw new Api\Exception\ApiException(
+                    'Failed to save object metadata. ' . $oModel->lastError(),
+                    $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR
+                );
+            }
+
+            //  Apply rename
+            if (!$oCdn->objectRename($oObject, $sFileName)) {
+                throw new Api\Exception\ApiException(
+                    'Failed to rename object. ' . $oCdn->lastError(),
+                    $oHttpCodes::STATUS_INTERNAL_SERVER_ERROR
+                );
+            }
+
+            $oTransaction->commit();
+
+            return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
+                ->setData([
+                    'object' => $this->formatObject(
+                        $oCdn->skipCache()->getObject($oObject->id),
+                        $this->getRequestedUrls()
+                    ),
+                ]);
+
+        } catch (\Throwable $e) {
+            $oTransaction->rollback();
+            throw $e;
+        }
     }
 
     // --------------------------------------------------------------------------

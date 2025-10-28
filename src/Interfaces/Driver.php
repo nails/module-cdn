@@ -24,6 +24,7 @@ interface Driver
     public function getObjectMetaDataErrors(string $sFilename, string $sFilenameDisplay, string $sBucket, string $sMimeType): array;
     public function fixObjectMetaDataErrors(string $sFilename, string $sFilenameDisplay, string $sBucket, string $sMimeType): bool;
     public function objectInvalidate(string $sFilename, string $sBucket): bool;
+    public function objectRename(string $sFilename, string $sBucket, string $sFilenameDisplay, string $sMimeType): bool;
 
     //  Bucket methods
     public function bucketCreate(string $sBucket): bool;
