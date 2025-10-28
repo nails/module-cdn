@@ -2114,6 +2114,65 @@ class Cdn
 
     // --------------------------------------------------------------------------
 
+    public function objectRename(int|Resource\CdnObject $object, string $sFileName): bool
+    {
+        /** @var Database $db */
+        $db = Factory::service('Database');
+        /** @var Model\CdnObject $objectModel */
+        $objectModel = Factory::model('Object', Constants::MODULE_SLUG);
+
+        $transaction = $db->transaction();
+
+        try {
+
+            $object = $this->getObject($object);
+            if (empty($object)) {
+                throw new CdnException('Not a valid object');
+            }
+
+            $transaction->start();
+
+            //  Apply the rename to the db
+            $result = $objectModel->update($object->id, [
+                'filename_display' => $sFileName,
+            ]);
+
+            if (!$result) {
+                throw new CdnException('Failed to rename object in database.');
+            }
+
+            //  Apply the rename to storage
+            $result = $this->callDriver(
+                'objectRename',
+                [
+                    $object->file->name->disk,
+                    $object->bucket->slug,
+                    $sFileName,
+                    $object->file->mime
+                ],
+                $object->driver
+            );
+
+            if (!$result) {
+                throw new CdnException('Failed to rename object in storage. ' . $this->callDriver('lastError', sDriver: $object->driver));
+            }
+
+            $transaction->commit();
+
+            //  Clear caches
+            $this->unsetCacheObject($object);
+
+            return true;
+
+        } catch (\Throwable $e) {
+            $transaction->rollback();
+            $this->setError($e->getMessage());
+            return false;
+        }
+    }
+
+    // --------------------------------------------------------------------------
+
     /**
      * Increments the stats of on object
      *
