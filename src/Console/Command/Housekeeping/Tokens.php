@@ -54,7 +54,6 @@ class Tokens extends Base
         parent::execute($oInput, $oOutput);
 
         $this->banner('CDN: Housekeeping: Tokens');
-        $oOutput->writeln('Deleting expired tokens');
         $oOutput->writeln('');
 
         /** @var Database $db */
@@ -64,18 +63,39 @@ class Tokens extends Base
         /** @var DateTime $now */
         $now = Factory::factory('DateTime');
 
-        $result = $db
-            ->query(
-                sprintf(
-                    'DELETE FROM `%s` WHERE `expires` < ?',
-                    $tokenModel->getTableName()
-                ),
-                [
-                    $now->format('Y-m-d H:i:s'),
-                ]
-            );
+        $result = $db->query(
+            sprintf(
+                'SELECT COUNT(*) as total FROM `%s` WHERE `expires` < ?',
+                $tokenModel->getTableName()
+            ),
+            [
+                $now->format('Y-m-d H:i:s'),
+            ]
+        );
 
-        $oOutput->writeln('Deleted <comment>' . number_format($result->num_rows()) . '</comment> expired tokens');
+        $oOutput->write('Deleting <comment>' . number_format($result->first_row()->total) . '</comment> expired tokens... ');
+
+        $db->query(
+            sprintf(
+                'DELETE FROM `%s` WHERE `expires` < ?',
+                $tokenModel->getTableName()
+            ),
+            [
+                $now->format('Y-m-d H:i:s'),
+            ]
+        );
+
+        $oOutput->writeln('<info>done</info>');
+        $oOutput->write('Optimising table... ');
+
+        $db->query(
+            sprintf(
+                'OPTIMIZE TABLE `%s`',
+                $tokenModel->getTableName()
+            )
+        );
+
+        $oOutput->writeln('<info>done</info>');
 
         $oOutput->writeln('');
         $oOutput->writeln('Complete');
