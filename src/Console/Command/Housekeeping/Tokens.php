@@ -67,7 +67,7 @@ class Tokens extends Base
         $result = $db
             ->query(
                 sprintf(
-                    'DELETE FROM `%s` WHERE `expires` < ?`',
+                    'DELETE FROM `%s` WHERE `expires` < ?',
                     $tokenModel->getTableName()
                 ),
                 [
