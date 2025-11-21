@@ -12,10 +12,9 @@
 
 namespace Nails\Cdn\Database\Migration;
 
-use Nails\Common\Console\Migrate\Base;
 use PDO;
 
-class Migration15 extends Base
+class Migration15 extends Migration14
 {
     /**
      * Execute the migration
@@ -25,12 +24,14 @@ class Migration15 extends Base
     public function execute()
     {
         /**
-         * Applications moving from `pre-new-admin` to `develop` will be on migration 14. This means that they
-         * will not run the permission upgrade (migration 14). They WILL have the metadata columns
-         * (develop: 15, pre-new-admin: 14).
+         * Applications moving from `pre-new-admin` to `develop`
          *
-         * This migration has been updated to be aware that the changes might already be in place, and as such
-         * will not re-apply them twice.
+         * The common migration is 13, pre-new-admin is on 15, develop is on 17.
+         *
+         * In order to ensure that all develop migrations run as expected
+         * they have been [re]written to be safe to run multiple times. Each one
+         * of these migrations extend the previous one so that the chain of
+         * migrations all happen, but run multiple times (Safely))
          */
         $tables = [
             '{{NAILS_DB_PREFIX}}cdn_object',
