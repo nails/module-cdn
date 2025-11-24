@@ -2,6 +2,7 @@
     <ModalBase
         :visible="visible"
         title="Delete Bucket"
+        :locked="isDeletingBucket"
         @close="handleClose"
     >
         <template v-if="bucketToDelete">

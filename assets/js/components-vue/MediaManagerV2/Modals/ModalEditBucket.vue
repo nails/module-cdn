@@ -2,6 +2,7 @@
     <ModalBase
         :visible="visible"
         title="Edit Bucket"
+        :locked="isEditingBucket"
         @close="handleClose"
     >
         <template v-if="bucketToEdit">

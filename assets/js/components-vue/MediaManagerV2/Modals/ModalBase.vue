@@ -13,7 +13,7 @@
                     <h3 v-if="title">{{ title }}</h3>
                 </slot>
                 <button
-                    v-if="showClose"
+                    v-if="showClose && !locked"
                     class="base-modal-close-button"
                     @click="handleClose"
                     aria-label="Close modal"
@@ -49,6 +49,11 @@ export default {
             type: Boolean,
             default: true
         },
+        // When locked, the modal cannot be closed by user interactions
+        locked: {
+            type: Boolean,
+            default: false
+        },
         containerClass: {
             type: String,
             default: ''
@@ -76,15 +81,17 @@ export default {
     },
     methods: {
         handleOverlayClick() {
-            if (this.closeOnOverlayClick) {
+            if (this.closeOnOverlayClick && !this.locked) {
                 this.handleClose();
             }
         },
         handleClose() {
-            this.$emit('close');
+            if (!this.locked) {
+                this.$emit('close');
+            }
         },
         handleEscapeKey() {
-            if (this.closeOnEscape) {
+            if (this.closeOnEscape && !this.locked) {
                 this.handleClose();
             }
         },

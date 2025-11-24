@@ -2,6 +2,7 @@
     <ModalBase
         :visible="visible"
         title="Replace File"
+        :locked="isUploading"
         @close="close"
     >
         <div v-if="!object" class="no-object-message">

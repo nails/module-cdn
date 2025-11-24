@@ -2,6 +2,7 @@
     <ModalBase
         :visible="visible"
         title="Delete File"
+        :locked="isDeleting"
         @close="handleClose"
     >
         <template v-if="deletingObject">

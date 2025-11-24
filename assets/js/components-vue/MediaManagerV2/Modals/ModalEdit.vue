@@ -2,6 +2,7 @@
     <ModalBase
         :visible="visible"
         title="Edit File"
+        :locked="isEditing"
         @close="handleClose"
     >
         <template v-if="localEditingObject">

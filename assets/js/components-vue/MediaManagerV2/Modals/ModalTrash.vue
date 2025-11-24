@@ -2,6 +2,7 @@
     <ModalBase
         :visible="visible"
         title="Trash"
+        :locked="isRestoring || isPurging"
         @close="handleClose"
     >
         <div v-if="loadingTrashedItems" class="loading-container">

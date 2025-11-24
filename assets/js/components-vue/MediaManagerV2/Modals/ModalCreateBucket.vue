@@ -2,6 +2,7 @@
     <ModalBase
         :visible="visible"
         title="Create New Bucket"
+        :locked="isCreatingBucket"
         @close="handleClose"
     >
         <form-group

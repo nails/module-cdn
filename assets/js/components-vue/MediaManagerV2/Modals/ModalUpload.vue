@@ -2,6 +2,7 @@
     <ModalBase
         :visible="visible"
         title="Upload Files"
+        :locked="isUploading"
         @close="handleClose"
     >
         <div

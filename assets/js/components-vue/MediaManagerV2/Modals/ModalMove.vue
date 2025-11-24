@@ -2,6 +2,7 @@
     <ModalBase
         :visible="visible"
         title="Move File"
+        :locked="isProcessing"
         @close="close"
     >
         <div v-if="object">
