@@ -28,21 +28,28 @@
             message="Bucket created successfully!"
         />
         <template #footer>
-            <Button
-                variant="secondary"
-                text="Cancel"
-                icon="cancel"
-                @click="handleClose"
-                :disabled="isCreatingBucket"
-            />
-            <Button
-                variant="primary"
-                :text="isCreatingBucket ? 'Creating...' : 'Create Bucket'"
-                icon="add"
-                @click="handleCreate"
-                :disabled="!localBucketName || isCreatingBucket"
-                :loading="isCreatingBucket"
-            />
+            <div
+                :class="{
+                    'safari-repaint-fix': true,
+                    'run-fix': isCreatingBucket
+                }"
+            >
+                <Button
+                    variant="secondary"
+                    text="Cancel"
+                    icon="cancel"
+                    @click="handleClose"
+                    :disabled="isCreatingBucket"
+                />
+                <Button
+                    variant="primary"
+                    :text="isCreatingBucket ? 'Creating...' : 'Create Bucket'"
+                    icon="add"
+                    @click="handleCreate"
+                    :disabled="!localBucketName || isCreatingBucket"
+                    :loading="isCreatingBucket"
+                />
+            </div>
         </template>
     </ModalBase>
 </template>

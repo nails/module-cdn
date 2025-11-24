@@ -92,21 +92,28 @@
         </form-group>
 
         <template #footer>
-            <Button
-                variant="secondary"
-                text="Cancel"
-                icon="cancel"
-                @click="handleClose"
-                :disabled="isUploading"
-            />
-            <Button
-                variant="primary"
-                :text="isUploading ? 'Uploading...' : 'Upload'"
-                icon="upload"
-                @click="uploadFiles"
-                :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
-                :loading="isUploading"
-            />
+            <div
+                :class="{
+                    'safari-repaint-fix': true,
+                    'run-fix': isUploading
+                }"
+            >
+                <Button
+                    variant="secondary"
+                    text="Cancel"
+                    icon="cancel"
+                    @click="handleClose"
+                    :disabled="isUploading"
+                />
+                <Button
+                    variant="primary"
+                    :text="isUploading ? 'Uploading...' : 'Upload'"
+                    icon="upload"
+                    @click="uploadFiles"
+                    :disabled="filesToUpload.length === 0 || !selectedUploadBucket || isUploading"
+                    :loading="isUploading"
+                />
+            </div>
         </template>
     </ModalBase>
 </template>

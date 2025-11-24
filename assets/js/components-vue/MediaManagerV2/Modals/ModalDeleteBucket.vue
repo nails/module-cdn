@@ -28,21 +28,28 @@
             message="Bucket deleted successfully!"
         />
         <template #footer>
-            <Button
-                variant="secondary"
-                text="Cancel"
-                icon="cancel"
-                @click="handleClose"
-                :disabled="isDeletingBucket"
-            />
-            <Button
-                variant="danger"
-                :text="isDeletingBucket ? 'Deleting...' : 'Delete Bucket'"
-                icon="delete"
-                @click="handleConfirm"
-                :disabled="isDeletingBucket"
-                :loading="isDeletingBucket"
-            />
+            <div
+                :class="{
+                    'safari-repaint-fix': true,
+                    'run-fix': isDeletingBucket
+                }"
+            >
+                <Button
+                    variant="secondary"
+                    text="Cancel"
+                    icon="cancel"
+                    @click="handleClose"
+                    :disabled="isDeletingBucket"
+                />
+                <Button
+                    variant="danger"
+                    :text="isDeletingBucket ? 'Deleting...' : 'Delete Bucket'"
+                    icon="delete"
+                    @click="handleConfirm"
+                    :disabled="isDeletingBucket"
+                    :loading="isDeletingBucket"
+                />
+            </div>
         </template>
     </ModalBase>
 </template>

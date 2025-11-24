@@ -42,21 +42,28 @@
             message="Object deleted successfully!"
         />
         <template #footer>
-            <Button
-                variant="secondary"
-                text="Cancel"
-                icon="cancel"
-                @click="handleClose"
-                :disabled="isDeleting"
-            />
-            <Button
-                variant="danger"
-                :text="isDeleting ? 'Deleting...' : 'Delete File'"
-                icon="delete"
-                @click="handleConfirm"
-                :disabled="isDeleting"
-                :loading="isDeleting"
-            />
+            <div
+                :class="{
+                    'safari-repaint-fix': true,
+                    'run-fix': isDeleting
+                }"
+            >
+                <Button
+                    variant="secondary"
+                    text="Cancel"
+                    icon="cancel"
+                    @click="handleClose"
+                    :disabled="isDeleting"
+                />
+                <Button
+                    variant="danger"
+                    :text="isDeleting ? 'Deleting...' : 'Delete File'"
+                    icon="delete"
+                    @click="handleConfirm"
+                    :disabled="isDeleting"
+                    :loading="isDeleting"
+                />
+            </div>
         </template>
     </ModalBase>
 </template>

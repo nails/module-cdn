@@ -77,21 +77,28 @@
         </div>
 
         <template #footer>
-            <Button
-                variant="secondary"
-                text="Cancel"
-                icon="cancel"
-                @click="close"
-                :disabled="isUploading"
-            />
-            <Button
-                variant="primary"
-                :text="isUploading ? 'Uploading...' : 'Replace File'"
-                icon="restore"
-                @click="uploadFile"
-                :disabled="!selectedFile || isUploading"
-                :loading="isUploading"
-            />
+            <div
+                :class="{
+                    'safari-repaint-fix': true,
+                    'run-fix': isUploading
+                }"
+            >
+                <Button
+                    variant="secondary"
+                    text="Cancel"
+                    icon="cancel"
+                    @click="close"
+                    :disabled="isUploading"
+                />
+                <Button
+                    variant="primary"
+                    :text="isUploading ? 'Uploading...' : 'Replace File'"
+                    icon="restore"
+                    @click="uploadFile"
+                    :disabled="!selectedFile || isUploading"
+                    :loading="isUploading"
+                />
+            </div>
         </template>
     </ModalBase>
 </template>

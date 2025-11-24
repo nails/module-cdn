@@ -191,6 +191,24 @@ export default {
     border-top: 1px solid #e5e7eb;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
+
+    /**
+     * On macOS Tahoe / Safari 26.1 there is a webkit glitch which causes
+     * the actions buttons to render in an undesirable/unpredictable way.
+     * This fix wraps the row, applying the same flex styles and triggers
+     * a repaint by toggling the `run-fix` class.
+     */
+    > .safari-repaint-fix {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        outline: none;
+
+        &.run-fix {
+            outline: 1px solid transparent;
+        }
+    }
 }
 
 /* Responsive adjustments */

@@ -39,21 +39,28 @@
             message="Bucket renamed successfully!"
         />
         <template #footer>
-            <Button
-                variant="secondary"
-                text="Cancel"
-                icon="cancel"
-                @click="handleClose"
-                :disabled="isEditingBucket"
-            />
-            <Button
-                variant="primary"
-                :text="isEditingBucket ? 'Saving...' : 'Save Changes'"
-                icon="save"
-                @click="handleConfirm"
-                :disabled="!bucketToEdit?.label || isEditingBucket"
-                :loading="isEditingBucket"
-            />
+            <div
+                :class="{
+                    'safari-repaint-fix': true,
+                    'run-fix': isEditingBucket
+                }"
+            >
+                <Button
+                    variant="secondary"
+                    text="Cancel"
+                    icon="cancel"
+                    @click="handleClose"
+                    :disabled="isEditingBucket"
+                />
+                <Button
+                    variant="primary"
+                    :text="isEditingBucket ? 'Saving...' : 'Save Changes'"
+                    icon="save"
+                    @click="handleConfirm"
+                    :disabled="!bucketToEdit?.label || isEditingBucket"
+                    :loading="isEditingBucket"
+                />
+            </div>
         </template>
     </ModalBase>
 </template>

@@ -67,31 +67,38 @@
             message="Items purged successfully!"
         />
         <template #footer>
-            <Button
-                variant="secondary"
-                text="Cancel"
-                icon="cancel"
-                @click="handleClose"
-                :disabled="isRestoring || isPurging"
-            />
-            <Button
-                v-if="userPermissions.object.restore"
-                variant="primary"
-                :text="isRestoring ? 'Restoring...' : 'Restore Selected'"
-                icon="restore"
-                @click="handleRestore"
-                :disabled="selectedTrashedItems.length === 0 || isRestoring || isPurging"
-                :loading="isRestoring"
-            />
-            <Button
-                v-if="userPermissions.object.purge"
-                variant="danger"
-                :text="isPurging ? `Purging... (${purgeProgress}%)` : 'Purge Selected'"
-                icon="delete"
-                @click="handlePurge"
-                :disabled="selectedTrashedItems.length === 0 || isRestoring || isPurging"
-                :loading="isPurging"
-            />
+            <div
+                :class="{
+                    'safari-repaint-fix': true,
+                    'run-fix': isRestoring || isPurging
+                }"
+            >
+                <Button
+                    variant="secondary"
+                    text="Cancel"
+                    icon="cancel"
+                    @click="handleClose"
+                    :disabled="isRestoring || isPurging"
+                />
+                <Button
+                    v-if="userPermissions.object.restore"
+                    variant="primary"
+                    :text="isRestoring ? 'Restoring...' : 'Restore Selected'"
+                    icon="restore"
+                    @click="handleRestore"
+                    :disabled="selectedTrashedItems.length === 0 || isRestoring || isPurging"
+                    :loading="isRestoring"
+                />
+                <Button
+                    v-if="userPermissions.object.purge"
+                    variant="danger"
+                    :text="isPurging ? `Purging... (${purgeProgress}%)` : 'Purge Selected'"
+                    icon="delete"
+                    @click="handlePurge"
+                    :disabled="selectedTrashedItems.length === 0 || isRestoring || isPurging"
+                    :loading="isPurging"
+                />
+            </div>
         </template>
     </ModalBase>
 </template>

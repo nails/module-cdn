@@ -38,21 +38,28 @@
             :message="success"
         />
         <template #footer>
-            <Button
-                variant="secondary"
-                text="Cancel"
-                icon="cancel"
-                @click="close"
-                :disabled="isProcessing"
-            />
-            <Button
-                variant="primary"
-                text="Move"
-                icon="move"
-                @click="submitForm"
-                :disabled="!isValid || isProcessing"
-                :loading="isProcessing"
-            />
+            <div
+                :class="{
+                    'safari-repaint-fix': true,
+                    'run-fix': isProcessing
+                }"
+            >
+                <Button
+                    variant="secondary"
+                    text="Cancel"
+                    icon="cancel"
+                    @click="close"
+                    :disabled="isProcessing"
+                />
+                <Button
+                    variant="primary"
+                    text="Move"
+                    icon="move"
+                    @click="submitForm"
+                    :disabled="!isValid || isProcessing"
+                    :loading="isProcessing"
+                />
+            </div>
         </template>
     </ModalBase>
 </template>

@@ -78,21 +78,28 @@
             <div class="form-group">No file selected for editing.</div>
         </template>
         <template #footer>
-            <Button
-                variant="secondary"
-                text="Cancel"
-                icon="cancel"
-                @click="handleClose"
-                :disabled="isEditing"
-            />
-            <Button
-                variant="primary"
-                :text="isEditing ? 'Saving...' : 'Save Changes'"
-                icon="save"
-                @click="handleSave"
-                :disabled="!localEditingObject?.filename_display || isEditing"
-                :loading="isEditing"
-            />
+            <div
+                :class="{
+                    'safari-repaint-fix': true,
+                    'run-fix': isEditing
+                }"
+            >
+                <Button
+                    variant="secondary"
+                    text="Cancel"
+                    icon="cancel"
+                    @click="handleClose"
+                    :disabled="isEditing"
+                />
+                <Button
+                    variant="primary"
+                    :text="isEditing ? 'Saving...' : 'Save Changes'"
+                    icon="save"
+                    @click="handleSave"
+                    :disabled="!localEditingObject?.filename_display || isEditing"
+                    :loading="isEditing"
+                />
+            </div>
         </template>
     </ModalBase>
 </template>
@@ -116,7 +123,7 @@ export default {
     },
     data() {
         return {
-            localEditingObject: this.cloneEditingObject(this.editingObject)
+            localEditingObject: this.cloneEditingObject(this.editingObject),
         };
     },
     watch: {
