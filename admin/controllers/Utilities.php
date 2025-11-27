@@ -235,7 +235,7 @@ class Utilities extends BaseAdmin
             $oModel = Factory::model('Object', Constants::MODULE_SLUG);
 
             /** @var Resource\CdnObject $oReplacement */
-            $oReplacement = $oModel->getById($oInput::get('replacement'));
+            $oReplacement = $oModel->getById($oInput::get('replacement'), [new Expand('bucket')]);
             if (empty($oReplacement)) {
                 throw new CdnException('Invalid replacement object.');
             }
