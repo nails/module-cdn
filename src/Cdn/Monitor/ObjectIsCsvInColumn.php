@@ -2,16 +2,13 @@
 
 namespace Nails\Cdn\Cdn\Monitor;
 
-use Nails\Cdn\Constants;
-use Nails\Cdn\Exception\CdnException;
+use Closure;
 use Nails\Cdn\Factory\Monitor\Detail;
 use Nails\Cdn\Resource\CdnObject;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
-use Nails\Common\Helper\Model\Like;
-use Nails\Common\Helper\Model\Where;
+use Nails\Common\Exception\NailsException;
 use Nails\Common\Resource\Entity;
-use Nails\Factory;
 
 abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
 {
@@ -20,30 +17,21 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
      * @throws FactoryException
      * @throws ModelException
      */
-    public function locate(CdnObject $oObject): array
+    public function locate(CdnObject $oObject, Closure $fnCreateDetail = null): array
     {
-        $oModel = $this->getModel();
-        if (!$oModel->isDestructiveDelete()) {
-            $oModel->includeDeleted();
-        }
-
-        /** @var Entity[] $aResults */
-        $aResults = $oModel
-            ->getAll([
-                new Like($this->getColumn(), $oObject->id),
-            ]);
-
+        $oModel   = $this->getModel();
         $aDetails = [];
-        foreach ($aResults as $oEntity) {
-
-            $aObjectIds = $this->extractIds($oEntity);
-
-            foreach ($aObjectIds as $iObjectId) {
-                if ($iObjectId === $oObject->id) {
-                    $aDetails[] = $this->createDetail($oEntity, $oModel);
+        parent::locate(
+            $oObject,
+            function (Entity $oEntity) use (&$aDetails, $oObject, $oModel): Detail {
+                $aObjectIds = $this->extractIds($oEntity);
+                foreach ($aObjectIds as $iObjectId) {
+                    if ($iObjectId === $oObject->id) {
+                        $aDetails[] = $this->createDetail($oEntity, $oModel);
+                    }
                 }
             }
-        }
+        );
 
         return $aDetails;
     }
@@ -53,20 +41,26 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
     /**
      * @throws FactoryException
      * @throws ModelException
+     * @throws NailsException
      */
     public function delete(Detail $oDetail, CdnObject $oObject): void
     {
-        $iId    = $oDetail->getData()->id;
-        $aFiles = $this->extractIdsFromEntityId($iId);
+        $oEntity  = $this->getEntityFromDetail($oDetail);
+        $aFileIds = $this->extractIds($oEntity);
 
-        $aFiles = array_values(
+        $aFileIds = array_values(
             array_filter(
-                $aFiles,
+                $aFileIds,
                 fn(int $iFileId) => $iFileId !== $oObject->id
             )
         );
 
-        $this->updateEntity($iId, $aFiles);
+        $this->updateEntity(
+            $oEntity,
+            [
+                $this->getColumn() => implode(',', $aFileIds),
+            ]
+        );
     }
 
     // --------------------------------------------------------------------------
@@ -74,24 +68,30 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
     /**
      * @throws FactoryException
      * @throws ModelException
+     * @throws NailsException
      */
     public function replace(Detail $oDetail, CdnObject $oObject, CdnObject $oReplacement): void
     {
-        $iId    = $oDetail->getData()->id;
-        $aFiles = $this->extractIdsFromEntityId($oDetail->getData()->id);
+        $oEntity  = $this->getEntityFromDetail($oDetail);
+        $aFileIds = $this->extractIds($oEntity);
 
-        $aFiles = array_values(
+        $aFileIds = array_values(
             array_map(
                 function (int $iFileId) use ($oObject, $oReplacement) {
                     return $iFileId === $oObject->id
                         ? $oReplacement->id
                         : $iFileId;
                 },
-                $aFiles
+                $aFileIds
             )
         );
 
-        $this->updateEntity($iId, $aFiles);
+        $this->updateEntity(
+            $oEntity,
+            [
+                $this->getColumn() => implode(',', $aFileIds),
+            ]
+        );
     }
 
     // --------------------------------------------------------------------------
@@ -101,38 +101,15 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
      */
     protected function extractIds(Entity $oEntity): array
     {
-        return array_map('intval', array_map('trim', explode(',', $oEntity->{$this->getColumn()})));
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * @throws ModelException
-     */
-    protected function extractIdsFromEntityId(int $iId): array
-    {
-        $oEntity = $this
-            ->getModel()
-            ->getById($iId);
-
-        return $this->extractIds($oEntity);
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * @throws FactoryException
-     * @throws ModelException
-     */
-    protected function updateEntity(int $iEntityId, array $aFileIds): void
-    {
-        $this
-            ->getModel()
-            ->update(
-                $iEntityId,
-                [
-                    $this->getColumn() => implode(',', $aFileIds),
-                ]
-            );
+        return array_map(
+            'intval',
+            array_map(
+                'trim',
+                explode(
+                    ',',
+                    $oEntity->{$this->getColumn()}
+                )
+            )
+        );
     }
 }
