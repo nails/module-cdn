@@ -57,7 +57,6 @@ abstract class ObjectIsUrlInText extends ObjectIsInColumn
     {
         $oEntity = $this->getEntityFromDetail($oDetail);
 
-        d(static::class);
         $sText = $oEntity->{$this->getColumn()};
 
         $sSubject     = $oObject->bucket->slug . '/' . $oObject->file->name->disk;
