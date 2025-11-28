@@ -23,7 +23,7 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
         $aDetails = [];
         parent::locate(
             $oObject,
-            function (Entity $oEntity) use (&$aDetails, $oObject, $oModel): Detail {
+            function (Entity $oEntity) use (&$aDetails, $oObject, $oModel) {
                 $aObjectIds = $this->extractIds($oEntity);
                 foreach ($aObjectIds as $iObjectId) {
                     if ($iObjectId === $oObject->id) {
