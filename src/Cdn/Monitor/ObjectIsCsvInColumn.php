@@ -17,7 +17,7 @@ abstract class ObjectIsCsvInColumn extends ObjectIsInColumn
      * @throws FactoryException
      * @throws ModelException
      */
-    public function locate(CdnObject $oObject, Closure $fnCreateDetail = null): array
+    public function locate(CdnObject $oObject, ?Closure $fnCreateDetail = null): array
     {
         $oModel   = $this->getModel();
         $aDetails = [];
