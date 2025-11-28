@@ -33,7 +33,7 @@ if (!empty($oBegin) || !empty($aObjects)) {
         </div>
         <?php
 
-        if (count($aIds) > count($aObjects)) {
+        if (count($aObjects) && count($aIds) > count($aObjects)) {
             ?>
             <div class="alert alert-info">
                 <p>
@@ -44,11 +44,16 @@ if (!empty($oBegin) || !empty($aObjects)) {
             <?php
         }
 
+        echo form_open();
+
         ?>
         <table class="table table-striped table-hover table-bordered table-responsive u-mb0">
             <thead class="table-dark">
                 <tr>
-                    <th class="text-center">ID</th>
+                    <th class="text-center" style="width:50px;">
+                        <input type="checkbox" id="cdn-unused-ids-select-all" />
+                    </th>
+                    <th class="text-center" style="width:75px;">ID</th>
                     <th>Preview</th>
                     <th>Filename</th>
                     <th>Type</th>
@@ -67,7 +72,12 @@ if (!empty($oBegin) || !empty($aObjects)) {
 
                         ?>
                         <tr>
-                            <td class="text-center"><?=$oObject->id?></td>
+                            <td class="text-center">
+                                <input type="checkbox" name="ids[]" value="<?=$oObject->id?>" class="cdn-unused-ids" />
+                            </td>
+                            <td class="text-center">
+                                <?=$oObject->id?>
+                            </td>
                             <td class="text-center">
                                 <?php
 
@@ -108,7 +118,7 @@ if (!empty($oBegin) || !empty($aObjects)) {
                 } else {
                     ?>
                     <tr>
-                        <td colspan="8" class="no-data">
+                        <td colspan="9" class="no-data">
                             No unused objects found
                         </td>
                     </tr>
@@ -118,6 +128,39 @@ if (!empty($oBegin) || !empty($aObjects)) {
                 ?>
             </tbody>
         </table>
+        <?php
+
+        if (count($aObjects) > 0) {
+            echo \Nails\Admin\Helper::floatingControls([
+                'save' => [
+                    'text'  => 'Delete Selected',
+                    'class' => 'btn btn-danger',
+                ],
+            ]);
+        }
+        echo form_close();
+
+        ?>
     </div>
+    <script>
+
+    const selectAll = document.querySelector('#cdn-unused-ids-select-all');
+    const checkboxes = document.querySelectorAll('.cdn-unused-ids');
+
+    selectAll.addEventListener('change', () => {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    });
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (!cb.checked) {
+                selectAll.checked = false;
+            } else if (document.querySelectorAll('.cdn-unused-ids:checked').length === checkboxes.length) {
+                selectAll.checked = true;
+            }
+        });
+    });
+
+    </script>
     <?php
 }

@@ -343,6 +343,41 @@ class Utilities extends Base
             }
         }
 
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Cdn $oCdn */
+        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+
+        $aDeleteIds = $oInput->post('ids');
+        if (!empty($aDeleteIds)) {
+            try {
+
+                //  Validate that all submitted IDs are present in the scan results
+                $aDeleteIds = array_map('intval', (array) $aDeleteIds);
+                $aKnownIds  = array_map('intval', (array) ($aIds ?? []));
+                $aInvalid   = array_values(array_diff($aDeleteIds, $aKnownIds));
+
+                if (!empty($aInvalid)) {
+                    throw new CdnException(
+                        'Some IDs are not present in the unused scan and cannot be deleted: ' . implode(', ', $aInvalid)
+                    );
+                }
+
+                foreach ($aDeleteIds as $iId) {
+                    if (!$oCdn->objectDelete($iId)) {
+                        throw new CdnException('Failed to delete object #' . $iId . '. ' . $oCdn->lastError());
+                    }
+                }
+
+                $this->oUserFeedback->success(count($aDeleteIds) . ' objects deleted successfully.');
+
+            } catch (\Throwable $e) {
+                $this->oUserFeedback->error($e->getMessage());
+            } finally {
+                redirect('admin/cdn/utilities/unused');
+            }
+        }
+
         $this->unusedIndex($aIds ?? []);
     }
 
