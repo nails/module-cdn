@@ -21,7 +21,7 @@ class Migration15 extends Migration14
      *
      * @return void
      */
-    public function execute()
+    public function execute(): void
     {
         /**
          * Applications moving from `pre-new-admin` to `develop`
