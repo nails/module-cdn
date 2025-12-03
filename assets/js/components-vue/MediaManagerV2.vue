@@ -1917,6 +1917,8 @@ export default {
 
             .body__actions {
                 display: flex;
+                align-items: center;
+                gap: 0.75rem; /* 12px */
             }
 
             .upload-button {
@@ -2031,6 +2033,44 @@ export default {
                         transform: scale(1);
                         opacity: 1;
                     }
+                }
+            }
+
+            .selected-object-info {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem; /* 8px */
+                padding: 6px 12px;
+                border-radius: 9999px; /* pill */
+                background: rgba(243, 244, 246, 0.9); /* #f3f4f6 */
+                border: 1px solid #e5e7eb;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 2px rgba(0, 0, 0, 0.03);
+                color: #111827; /* slate-900 */
+                font-weight: 700; /* bold */
+                text-align: center; /* centrally aligned text */
+
+                /* on narrow screens, allow it to wrap and center nicely */
+                @media (max-width: 640px) {
+                    flex-wrap: wrap;
+                    width: 100%;
+                    margin-top: 0.5rem;
+                    order: 2; /* keep between button and toggle but allow wrap */
+                }
+
+                &__label {
+                    color: #6b7280; /* gray-500 */
+                    font-weight: 700;
+                }
+
+                &__name {
+                    color: #111827;
+                    font-weight: 800; /* slightly heavier for filename emphasis */
+                }
+
+                &__details {
+                    color: #6b7280;
+                    font-weight: 600;
                 }
             }
         }
