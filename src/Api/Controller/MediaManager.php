@@ -14,6 +14,7 @@ namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api;
 use Nails\Cdn\Constants;
+use Nails\Cdn\Exception\CdnException;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Service\HttpCodes;
@@ -40,6 +41,7 @@ class MediaManager extends Api\Controller\Base
      * @throws Api\Exception\ApiException
      * @throws FactoryException
      * @throws ModelException
+     * @throws CdnException
      */
     public function getUrl(): Api\Factory\ApiResponse
     {

@@ -1,15 +1,22 @@
 <?php
 
-/** @var \Nails\Common\Service\Input $oInput */
-$oInput = \Nails\Factory::service('Input');
+use Nails\Cdn\Constants;
+use Nails\Cdn\Service\MediaManager;
+use Nails\Common\Service\Input;
+use Nails\Factory;
 
-if ($oInput::get('isModal')) {
+/** @var Input $input */
+$input = Factory::service('Input');
+/** @var MediaManager $mediaManager */
+$mediaManager = Factory::service('MediaManager', Constants::MODULE_SLUG);
 
-    $switchUrl = siteUrl(\Nails\Cdn\Constants::MEDIA_MANAGER_V2_URL . '/set_default');
+if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_MANAGER_V2)) {
 
-    if ($oInput::get()) {
-        $switchUrl .= '?' . http_build_query($oInput::get());
-    }
+    $switchUrl = $mediaManager->getUrl(
+        query: $input::get(),
+        path: '/set_default',
+        version: Constants::MEDIA_MANAGER_V2
+    );
 
     ?>
     <p class="try-new-manager">
@@ -34,7 +41,7 @@ if ($oInput::get('isModal')) {
 <!-- /ko -->
 <div class="manager-feedback__error"></div>
 <div class="manager-feedback__success"></div>
-<div class="module-cdn manager <?=$oInput::get('isModal') ? 'is-modal' : ''?> hidden" data-bind="css: {hidden: !ready()}">
+<div class="module-cdn manager <?=$input::get('isModal') ? 'is-modal' : ''?> hidden" data-bind="css: {hidden: !ready()}">
     <div class="manager__browse">
         <div class="manager__browse__buckets">
             <ul class="manager__browse__buckets__list">

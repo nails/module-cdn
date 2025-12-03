@@ -14,6 +14,7 @@ namespace Nails\Admin\Cdn;
 
 use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\BaseAdmin;
+use Nails\Cdn\Exception\CdnException;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Service\Input;
 use Nails\Factory;
@@ -48,6 +49,7 @@ class MediaManager extends BaseAdmin
 
     /**
      * @throws FactoryException
+     * @throws CdnException
      */
     public function index(): void
     {

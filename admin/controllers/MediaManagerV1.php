@@ -16,6 +16,7 @@ use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\BaseAdmin;
+use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Service\MediaManager;
 use Nails\Common\Exception\AssetException;
 use Nails\Common\Exception\FactoryException;
@@ -32,19 +33,40 @@ class MediaManagerV1 extends BaseAdmin
 {
     /**
      * Announces this controller's navGroups
+     *
+     * @throws FactoryException
      */
     public static function announce(): Nav|array|null
     {
-        if (userHasPermission('admin:cdn:manager:object:browse')) {
+        if (userHasPermission('admin:cdn:manager:object:browse') && self::isEnabled()) {
+            /** @var MediaManager $mediaManager */
+            $mediaManager = Factory::service('MediaManager', Constants::MODULE_SLUG);
             /** @var Nav $oNavGroup */
             $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
             $oNavGroup
                 ->setLabel('Media')
                 ->setIcon('fa-images')
-                ->addAction('Media Manager V1', order: 0);
+                ->addAction(
+                    count($mediaManager->getEnabledVersions()) === 1
+                        ? 'Media Manager'
+                        : 'Media Manager V1',
+                    order: 0
+                );
         }
 
         return $oNavGroup ?? null;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @throws FactoryException
+     */
+    protected static function isEnabled(): bool
+    {
+        /** @var MediaManager $mediaManager */
+        $mediaManager = Factory::service('MediaManager', Constants::MODULE_SLUG);
+        return $mediaManager->isVersionEnabled(Constants::MEDIA_MANAGER_V1);
     }
 
     // --------------------------------------------------------------------------
@@ -57,7 +79,7 @@ class MediaManagerV1 extends BaseAdmin
      */
     public function index(): void
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission('admin:cdn:manager:object:browse') || !self::isEnabled()) {
             unauthorised();
         }
 
@@ -99,10 +121,11 @@ class MediaManagerV1 extends BaseAdmin
 
     /**
      * @throws FactoryException
+     * @throws CdnException
      */
     public function set_default(): void
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission('admin:cdn:manager:object:browse') || !self::isEnabled()) {
             unauthorised();
         }
 

@@ -1,15 +1,21 @@
 <?php
 
-/** @var \Nails\Common\Service\Input $oInput */
-$oInput = \Nails\Factory::service('Input');
+use Nails\Cdn\Constants;
+use Nails\Cdn\Service\MediaManager;
+use Nails\Common\Service\Input;
+use Nails\Factory;
 
-if ($oInput::get('isModal')) {
+/** @var Input $input */
+$input = Factory::service('Input');
+/** @var MediaManager $mediaManager */
+$mediaManager = Factory::service('MediaManager', Constants::MODULE_SLUG);
 
-    $switchUrl = siteUrl(\Nails\Cdn\Constants::MEDIA_MANAGER_V1_URL . '/set_default');
-
-    if ($oInput::get()) {
-        $switchUrl .= '?' . http_build_query($oInput::get());
-    }
+if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_MANAGER_V1)) {
+    $switchUrl = $mediaManager->getUrl(
+        query: $input::get(),
+        path: '/set_default',
+        version: Constants::MEDIA_MANAGER_V1
+    );
 }
 
 ?>
