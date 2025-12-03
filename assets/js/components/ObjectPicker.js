@@ -224,7 +224,7 @@ class ObjectPicker {
         picker.addClass('cdn-object-picker--pending');
         this.adminController.log('Getting Manager URL');
         $.ajax({
-            'url': window.SITE_URL + 'api/cdn/manager/url',
+            'url': window.SITE_URL + 'api/cdn/mediaManager/url',
             'data': {
                 'bucket': picker.data('bucket'),
                 'object': picker.find('.cdn-object-picker__input').val(),

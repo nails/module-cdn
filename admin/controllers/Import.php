@@ -18,7 +18,7 @@ use Nails\Cdn\Constants;
 use Nails\Cdn\Controller\BaseAdmin;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Model\Bucket;
-use Nails\Cdn\Model\CdnObject\Import;
+use Nails\Cdn\Model\CdnObject\Import as ImportModel;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
@@ -26,7 +26,6 @@ use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Head;
 use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Helper\Model\Where;
-use Nails\Common\Service\Asset;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
@@ -35,11 +34,11 @@ use Nails\Common\Service\Uri;
 use Nails\Factory;
 
 /**
- * Class Manager
+ * Class Import
  *
  * @package Nails\Admin\Cdn
  */
-class Manager extends BaseAdmin
+class Import extends BaseAdmin
 {
     /**
      * Announces this controller's navGroups
@@ -52,108 +51,11 @@ class Manager extends BaseAdmin
             $oNavGroup
                 ->setLabel('Media')
                 ->setIcon('fa-images')
-                ->addAction('Media Manager', 'index', [], 0)
-                ->addAction('Import via URL', 'import');
+                ->addAction('Import via URL', order: 999);
         }
 
         return $oNavGroup ?? null;
     }
-
-    // --------------------------------------------------------------------------
-
-    public static function permissions(): array
-    {
-        $aPermissions = parent::permissions();
-
-        $aPermissions['object:browse']  = 'Can browse existing objects';
-        $aPermissions['object:create']  = 'Can create new objects';
-        $aPermissions['object:edit']    = 'Can edit existing objects';
-        $aPermissions['object:replace'] = 'Can replace existing objects';
-        $aPermissions['object:move']    = 'Can move existing objects';
-        $aPermissions['object:copy']    = 'Can copy existing objects';
-        $aPermissions['object:import']  = 'Can import via URL';
-        $aPermissions['object:delete']  = 'Can delete existing objects';
-        $aPermissions['object:restore'] = 'Can restore deleted objects';
-        $aPermissions['object:purge']   = 'Can purge deleted objects';
-        $aPermissions['bucket:create']  = 'Can create new buckets';
-        $aPermissions['bucket:edit']    = 'Can edit existing buckets';
-        $aPermissions['bucket:delete']  = 'Can delete existing buckets';
-
-        return $aPermissions;
-    }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Browse CDN Objects
-     *
-     * @return void
-     */
-    public function index()
-    {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            unauthorised();
-        }
-
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
-        /** @var Asset $oAsset */
-        $oAsset = Factory::service('Asset');
-
-        $this->data['sBucketSlug'] = $oInput->get('bucket');
-
-        $oAsset
-            ->library('KNOCKOUT')
-            //  @todo (Pablo - 2018-12-01) - Update/Remove/Use minified once JS is refactored to be a module
-            ->load('admin.mediamanager.js', Constants::MODULE_SLUG);
-
-        $sBucketSlug      = $oInput->get('bucket');
-        $sCallbackHandler = $oInput->get('CKEditor') ? 'ckeditor' : 'picker';
-
-        $aCallback = $sCallbackHandler === 'ckeditor'
-            ? [$oInput->get('CKEditorFuncNum')]
-            : array_filter((array) $oInput->get('callback'));
-
-        $oAsset->inline(
-            'ko.applyBindings(
-                new MediaManager(
-                    "' . $sBucketSlug . '",
-                    "' . $sCallbackHandler . '",
-                    ' . json_encode($aCallback) . ',
-                    ' . json_encode((bool) $oInput->get('isModal')) . '
-                )
-            );',
-            'JS'
-        );
-
-        Helper::loadView('index');
-    }
-
-    // --------------------------------------------------------------------------
-
-    public function choose()
-    {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
-            unauthorised();
-        }
-
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
-        /** @var Session $oSession */
-        $oSession = Factory::service('Session');
-
-        $sBaseUrl = $oSession->getUserData('MEDIA_MANAGER_DEFAULT') === 2
-            ? 'admin/cdn/mediaManagerV2'
-            : 'admin/cdn/manager';
-
-        if ($oInput::get()) {
-            $sBaseUrl .= '?' . http_build_query($oInput::get());
-        }
-
-        redirect($sBaseUrl);
-    }
-
-    // --------------------------------------------------------------------------
 
     /**
      * Routes import requests
@@ -162,7 +64,7 @@ class Manager extends BaseAdmin
      * @throws FactoryException
      * @throws ModelException
      */
-    public function import()
+    public function index(): void
     {
         if (!userHasPermission('admin:cdn:manager:object:import')) {
             unauthorised();
@@ -172,11 +74,11 @@ class Manager extends BaseAdmin
         $oUri = Factory::service('Uri');
         switch ($oUri->segment(5)) {
             case 'cancel':
-                $this->importCancel((int) $oUri->segment(6));
+                $this->cancel((int) $oUri->segment(6));
                 break;
 
             default:
-                $this->importIndex();
+                $this->form();
                 break;
         }
     }
@@ -190,7 +92,7 @@ class Manager extends BaseAdmin
      * @throws FactoryException
      * @throws ModelException
      */
-    private function importIndex()
+    private function form(): void
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
@@ -200,7 +102,7 @@ class Manager extends BaseAdmin
         $oSession = Factory::service('Session');
         /** @var Bucket $oBucketModel */
         $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
-        /** @var Import $oImportModel */
+        /** @var ImportModel $oImportModel */
         $oImportModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
 
         $aBuckets = $oBucketModel->getAllFlat([
@@ -256,7 +158,7 @@ class Manager extends BaseAdmin
                 }
 
                 $oSession->setFlashData('import_accepted', true);
-                redirect('admin/cdn/manager/import');
+                redirect('admin/cdn/import');
 
             } catch (ValidationException $e) {
                 $this->oUserFeedback->error(sprintf(
@@ -293,9 +195,9 @@ class Manager extends BaseAdmin
      *
      * @throws FactoryException
      */
-    private function importCancel(int $iImportId)
+    private function cancel(int $iImportId): void
     {
-        /** @var Import $oImportModel */
+        /** @var ImportModel $oImportModel */
         $oImportModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
 
         try {
@@ -320,6 +222,6 @@ class Manager extends BaseAdmin
             $this->oUserFeedback->error('Failed to cancel import. ' . $e->getMessage());
         }
 
-        redirect('admin/cdn/manager/import');
+        redirect('admin/cdn/import');
     }
 }

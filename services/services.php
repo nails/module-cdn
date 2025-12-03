@@ -22,6 +22,16 @@ return [
                 return new Service\Cdn($oMimeService, $oEventService);
             }
         },
+        'MediaManager'  => function (?Common\Service\Session $session = null): Service\MediaManager {
+
+            $session = $session ?? \Nails\Factory::service('Session');
+
+            if (class_exists('\App\Cdn\Service\MediaManager')) {
+                return new \App\Cdn\Service\MediaManager($session);
+            } else {
+                return new Service\MediaManager($session);
+            }
+        },
         'Monitor'       => function (): Service\Monitor {
             if (class_exists('\App\Cdn\Service\Monitor')) {
                 return new \App\Cdn\Service\Monitor();

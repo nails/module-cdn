@@ -14,9 +14,10 @@ namespace Nails\Cdn\Api\Controller;
 
 use Nails\Api;
 use Nails\Cdn\Constants;
+use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\ModelException;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
-use Nails\Common\Service\Session;
 use Nails\Factory;
 
 /**
@@ -24,7 +25,7 @@ use Nails\Factory;
  *
  * @package Nails\Cdn\Api\Controller
  */
-class Manager extends Api\Controller\Base
+class MediaManager extends Api\Controller\Base
 {
     /**
      * Require the user be authenticated to use any endpoint
@@ -36,9 +37,11 @@ class Manager extends Api\Controller\Base
     /**
      * Returns the URL for a manager
      *
-     * @return array
+     * @throws Api\Exception\ApiException
+     * @throws FactoryException
+     * @throws ModelException
      */
-    public function getUrl()
+    public function getUrl(): Api\Factory\ApiResponse
     {
         if (!userHasPermission('admin:cdn:manager:object:browse')) {
             /** @var HttpCodes $oHttpCodes */
@@ -51,8 +54,8 @@ class Manager extends Api\Controller\Base
 
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
-        /** @var Session $oSession */
-        $oSession = Factory::service('Session');
+        /** @var \Nails\Cdn\Service\MediaManager $oMediaManager */
+        $oMediaManager = Factory::service('MediaManager', Constants::MODULE_SLUG);
         /** @var \Nails\Cdn\Model\Bucket $oBucketModel */
         $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
         /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
@@ -68,20 +71,16 @@ class Manager extends Api\Controller\Base
             $oObject = $oObjectModel->getById($oInput->get('object'));
         }
 
-        $sBaseUrl = $oSession->getUserData('MEDIA_MANAGER_DEFAULT') === 2
-            ? 'admin/cdn/mediaManagerV2'
-            : 'admin/cdn/manager';
-
         return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
-            ->setData(siteUrl(
-                $sBaseUrl . '?' .
-                http_build_query([
-                    'bucket'      => $oInput->get('bucket'),
-                    'bucket_id'   => $oBucket->id ?? null,
-                    'bucket_slug' => $oBucket->slug ?? null,
-                    'object_id'   => $oObject->id ?? null,
-                    'callback'    => $oInput->get('callback'),
-                ])
-            ));
+            ->setData($oMediaManager
+                ->getUrl(
+                    query: [
+                        'bucket'      => $oInput->get('bucket'),
+                        'bucket_id'   => $oBucket->id ?? null,
+                        'bucket_slug' => $oBucket->slug ?? null,
+                        'object_id'   => $oObject->id ?? null,
+                        'callback'    => $oInput->get('callback'),
+                    ]
+                ));
     }
 }

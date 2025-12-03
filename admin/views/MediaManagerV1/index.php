@@ -5,7 +5,7 @@ $oInput = \Nails\Factory::service('Input');
 
 if ($oInput::get('isModal')) {
 
-    $switchUrl = siteUrl('admin/cdn/mediaManagerV2/set_default');
+    $switchUrl = siteUrl(\Nails\Cdn\Constants::MEDIA_MANAGER_V2_URL . '/set_default');
 
     if ($oInput::get()) {
         $switchUrl .= '?' . http_build_query($oInput::get());
