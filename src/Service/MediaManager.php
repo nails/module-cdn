@@ -81,11 +81,15 @@ class MediaManager
         if (!$version && $this->session->getUserData(static::SESSION_KEY_DEFAULT)) {
             $version = $this->session->getUserData(static::SESSION_KEY_DEFAULT);
             if (!$this->isVersionEnabled($version)) {
-                //  Version stored in session is no longer valid, default to the first enabled manager
-                $enabledVersions = $this->getEnabledVersions();
-                $version         = reset($enabledVersions);
-                $this->setDefault($version);
+                //  Session version is no longer valid, so reset
+                $version = null;
             }
+        }
+
+        if (!$version) {
+            $enabledVersions = $this->getEnabledVersions();
+            $version         = reset($enabledVersions);
+            $this->setDefault($version);
         }
 
         $managerUrl = match ($version) {
