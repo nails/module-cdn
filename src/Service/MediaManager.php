@@ -33,7 +33,7 @@ class MediaManager
     {
         $enabled = Config::get('CDN_MEDIA_MANAGER_ENABLE');
         if (!is_array($enabled)) {
-            $enabled = [$enabled];
+            $enabled = array_filter([(int) $enabled]);
         }
 
         $enabled = array_values(
