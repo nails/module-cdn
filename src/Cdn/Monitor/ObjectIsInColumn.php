@@ -15,6 +15,7 @@ use Nails\Common\Helper\Model\Sort;
 use Nails\Common\Helper\Model\Where;
 use Nails\Common\Model\Base;
 use Nails\Common\Resource\Entity;
+use Nails\Common\Traits\Model\Nestable;
 use Nails\Factory;
 
 abstract class ObjectIsInColumn implements Monitor
@@ -110,6 +111,10 @@ abstract class ObjectIsInColumn implements Monitor
              */
             'label' => $this->getEntityLabel($oEntity),
         ];
+
+        if (classUses($oModel, Nestable::class)) {
+            $aDetails['nested_under'] = json_decode($oEntity->{$oModel->getBreadcrumbsColumn()});
+        }
 
         if (!$oModel->isDestructiveDelete()) {
             $aDetails[$oModel->getColumnIsDeleted()] = $oEntity->{$oModel->getColumnIsDeleted()};
