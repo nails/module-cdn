@@ -210,7 +210,7 @@ class CdnObject extends Api\Controller\Base
         /** @var \Nails\Cdn\Model\CdnObject $oModel */
         $oModel = Factory::model('Object', constants::MODULE_SLUG);
 
-        if (!userHasPermission('admin:cdn:manager:object:edit')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:edit')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -293,7 +293,7 @@ class CdnObject extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:object:delete')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:delete')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -370,7 +370,7 @@ class CdnObject extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:object:restore')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:restore')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -408,7 +408,7 @@ class CdnObject extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:browse')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -459,7 +459,7 @@ class CdnObject extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:browse')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED

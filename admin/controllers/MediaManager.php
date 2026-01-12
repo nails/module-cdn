@@ -53,7 +53,7 @@ class MediaManager extends BaseAdmin
      */
     public function index(): void
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:browse')) {
             unauthorised();
         }
 

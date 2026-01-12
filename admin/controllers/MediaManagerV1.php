@@ -38,7 +38,7 @@ class MediaManagerV1 extends BaseAdmin
      */
     public static function announce(): Nav|array|null
     {
-        if (userHasPermission('admin:cdn:manager:object:browse') && self::isEnabled()) {
+        if (userHasPermission('admin:cdn:mediamanager:object:browse') && self::isEnabled()) {
             /** @var MediaManager $mediaManager */
             $mediaManager = Factory::service('MediaManager', Constants::MODULE_SLUG);
             /** @var Nav $oNavGroup */
@@ -79,7 +79,7 @@ class MediaManagerV1 extends BaseAdmin
      */
     public function index(): void
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse') || !self::isEnabled()) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:browse') || !self::isEnabled()) {
             unauthorised();
         }
 
@@ -125,7 +125,7 @@ class MediaManagerV1 extends BaseAdmin
      */
     public function set_default(): void
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse') || !self::isEnabled()) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:browse') || !self::isEnabled()) {
             unauthorised();
         }
 

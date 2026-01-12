@@ -131,7 +131,7 @@ if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_M
                 </li>
                 <!-- /ko -->
                 <?php
-                if (userHasPermission('admin:cdn:manager:bucket:create')) {
+                if (userHasPermission('admin:cdn:mediamanager:bucket:create')) {
                     ?>
                     <!-- ko if: !$root.showAddBucket() -->
                     <li class="manager__browse__buckets__list__action">
@@ -164,7 +164,7 @@ if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_M
             </div>
             <!-- /ko -->
             <?php
-            if (userHasPermission('admin:cdn:manager:object:create')) {
+            if (userHasPermission('admin:cdn:mediamanager:object:create')) {
                 ?>
                 <!-- ko if: canUpload() -->
                 <div class="manager__upload" data-bind="

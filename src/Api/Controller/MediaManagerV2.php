@@ -45,7 +45,7 @@ class MediaManagerV2 extends Api\Controller\Base
 
     public static function isAuthenticated($sHttpMethod = '', $sMethod = '')
     {
-        return parent::isAuthenticated($sHttpMethod, $sMethod) && userHasPermission('admin:cdn:manager:object:browse');
+        return parent::isAuthenticated($sHttpMethod, $sMethod) && userHasPermission('admin:cdn:mediamanager:object:browse');
     }
 
     public function getFileTypes(): ApiResponse
@@ -320,7 +320,7 @@ class MediaManagerV2 extends Api\Controller\Base
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:object:restore')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:restore')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -444,7 +444,7 @@ class MediaManagerV2 extends Api\Controller\Base
         /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
 
-        if (!userHasPermission('admin:cdn:manager:object:replace')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:replace')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -497,7 +497,7 @@ class MediaManagerV2 extends Api\Controller\Base
         /** @var \Nails\Cdn\Model\Bucket $oBucketModel */
         $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
 
-        if (!userHasPermission('admin:cdn:manager:object:move')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:move')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -576,7 +576,7 @@ class MediaManagerV2 extends Api\Controller\Base
         /** @var \Nails\Cdn\Model\Bucket $oBucketModel */
         $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
 
-        if (!userHasPermission('admin:cdn:manager:object:copy')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:copy')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED

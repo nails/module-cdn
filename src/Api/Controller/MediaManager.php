@@ -45,7 +45,7 @@ class MediaManager extends Api\Controller\Base
      */
     public function getUrl(): Api\Factory\ApiResponse
     {
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:browse')) {
             /** @var HttpCodes $oHttpCodes */
             $oHttpCodes = Factory::service('HttpCodes');
             throw new Api\Exception\ApiException(

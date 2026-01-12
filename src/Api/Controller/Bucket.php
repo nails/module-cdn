@@ -55,7 +55,7 @@ class Bucket extends Api\Controller\CrudController
         /** @var \Nails\Cdn\Model\CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
 
-        if (!userHasPermission('admin:cdn:manager:object:browse')) {
+        if (!userHasPermission('admin:cdn:mediamanager:object:browse')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to access this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
@@ -108,7 +108,7 @@ class Bucket extends Api\Controller\CrudController
         /** @var HttpCodes $oHttpCodes */
         $oHttpCodes = Factory::service('HttpCodes');
 
-        if (!userHasPermission('admin:cdn:manager:bucket:create')) {
+        if (!userHasPermission('admin:cdn:mediamanager:bucket:create')) {
             throw new Api\Exception\ApiException(
                 'You do not have permission to create this resource',
                 $oHttpCodes::STATUS_UNAUTHORIZED
