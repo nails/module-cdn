@@ -160,10 +160,10 @@ class Utilities extends Base
                 ->oUserFeedback
                 ->error(
                     sprintf(
-                        'Failed to delete object #%s (%s): %s',
+                        'Failed to remove references to object #%s (%s):<br>%s',
                         $oObject->id,
                         $oObject->file->name->human,
-                        $e->getMessage()
+                        $this->humaniseMySQLError($e->getMessage())
                     )
                 );
         }
@@ -180,7 +180,12 @@ class Utilities extends Base
             /** @var Cdn $oCdn */
             $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
             if (!$oCdn->objectDelete($oObject->id)) {
-                throw new CdnException('Failed to delete object. ' . $oCdn->lastError());
+                throw new CdnException(
+                    sprintf(
+                        'Failed to delete object. %s',
+                        $this->humaniseMySQLError($oCdn->lastError())
+                    )
+                );
             }
 
             $this
@@ -201,7 +206,7 @@ class Utilities extends Base
                         'Failed to delete object #%s (%s): %s',
                         $oObject->id,
                         $oObject->file->name->human,
-                        $e->getMessage()
+                        $this->humaniseMySQLError($e->getMessage())
                     )
                 );
         }
@@ -255,7 +260,7 @@ class Utilities extends Base
                         'Failed to replace object #%s (%s): %s',
                         $oObject->id,
                         $oObject->file->name->human,
-                        $e->getMessage()
+                        $this->humaniseMySQLError($e->getMessage())
                     )
                 );
         }
@@ -365,7 +370,13 @@ class Utilities extends Base
 
                 foreach ($aDeleteIds as $iId) {
                     if (!$oCdn->objectDelete($iId)) {
-                        throw new CdnException('Failed to delete object #' . $iId . '. ' . $oCdn->lastError());
+                        throw new CdnException(
+                            sprintf(
+                                'Failed to delete object #%s. %s',
+                                $iId,
+                                $this->humaniseMySQLError($oCdn->lastError())
+                            )
+                        );
                     }
                 }
 
@@ -426,10 +437,146 @@ class Utilities extends Base
                     'Failed to delete object #%s (%s): %s',
                     $oObject->id ?? '',
                     $oObject->file->name->human ?? '',
-                    $e->getMessage()
+                    $this->humaniseMySQLError($e->getMessage())
                 ));
         }
 
         redirect(self::url('unused'));
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function humaniseMySQLError(string $error): string
+    {
+        $original = trim($error);
+        $lower    = mb_strtolower($original);
+
+        // Strip any huge SQL statement to avoid confusing users (keep only the first part of the error).
+        // Many drivers append " ... UPDATE ...", " ... INSERT ..." etc.
+        $sanitised = preg_replace('/\s+(SELECT|INSERT|UPDATE|DELETE)\b[\s\S]*$/i', '', $original);
+        $sanitised = $sanitised ? trim($sanitised) : $original;
+
+        // Helper: extract a quoted identifier if present (works for Column 'x', key 'x', constraint "x", etc.)
+        $extractQuoted = static function (string $pattern, string $haystack): ?string {
+            if (preg_match($pattern, $haystack, $m)) {
+                return $m[1] ?? null;
+            }
+            return null;
+        };
+
+        // 1) NOT NULL / required field missing
+        if (
+            str_contains($lower, 'cannot be null')
+        ) {
+            $col =
+                $extractQuoted("/Column\s+'([^']+)'/i", $original) ??
+                $extractQuoted('/column\s+"([^"]+)"/i', $original) ??
+                $extractQuoted('/NOT NULL constraint failed:\s*([^\s.]+)\.([^\s.]+)/i', $original); // sqlite: table.column
+
+            $fieldHint = $col ? " the column `{$col}` " : ' the target column ';
+            $out       = sprintf('Operation failed because %s cannot be empty.', $fieldHint);
+        }
+
+        // 2) UNIQUE / duplicate
+        if (
+            str_contains($lower, 'duplicate entry') ||
+            str_contains($lower, 'unique constraint failed') ||
+            str_contains($lower, 'violates unique constraint') ||
+            str_contains($lower, 'duplicate key value')
+        ) {
+            $key =
+                $extractQuoted("/for key\s+'([^']+)'/i", $original) ??
+                $extractQuoted('/constraint\s+"([^"]+)"/i', $original) ??
+                $extractQuoted('/unique\s+constraint\s+failed:\s*([^\s.]+)\.([^\s.]+)/i', $original);
+
+            $out = 'Operation failed because setting the new value would violate a unique rule. Please choose a different value and try again.';
+        }
+
+        // 3) FOREIGN KEY constraint
+        if (
+            str_contains($lower, 'foreign key constraint fails') ||
+            str_contains($lower, 'violates foreign key constraint') ||
+            str_contains($lower, 'foreign key constraint failed') ||
+            preg_match('/\bforeign key\b/i', $original)
+        ) {
+            $out = 'Operation failed because this record references something that no longer exists (or isn’t available). Please choose a different value and try again.';
+        }
+
+        // 4) CHECK constraint
+        if (
+            str_contains($lower, 'check constraint failed') ||
+            str_contains($lower, 'violates check constraint')
+        ) {
+            $check =
+                $extractQuoted('/constraint\s+"([^"]+)"/i', $original) ??
+                $extractQuoted("/CONSTRAINT\s+'([^']+)'/i", $original);
+
+            $hint = $check ? " (rule: {$check})" : '';
+            $out  = sprintf('Operation failed because one of the values isn’t allowed%s. Please review your entry and try again.', $hint);
+        }
+
+        // 5) Data too long / truncated
+        if (
+            str_contains($lower, 'data too long') ||
+            str_contains($lower, 'would be truncated') ||
+            str_contains($lower, 'truncated') ||
+            str_contains($lower, 'value too long')
+        ) {
+            $col =
+                $extractQuoted("/Data too long for column\s+'([^']+)'/i", $original) ??
+                $extractQuoted('/column\s+"([^"]+)"/i', $original);
+
+            $fieldHint = $col ? "column `{$col}`" : 'target column';
+            $out       = sprintf('Operation failed because the new value for the %s would cause it to be too long. Please choose a different value and try again', $fieldHint);
+        }
+
+        // 6) Invalid format / type mismatch
+        if (
+            str_contains($lower, 'invalid input syntax') ||
+            str_contains($lower, 'incorrect integer value') ||
+            str_contains($lower, 'cannot convert') ||
+            str_contains($lower, 'data type mismatch') ||
+            str_contains($lower, 'invalid datetime format')
+        ) {
+            $out = 'Operation failed because one of the values was in an invalid format. Please check your entry and try again.';
+        }
+
+        // 7) Deadlock / lock timeout / database busy
+        if (
+            str_contains($lower, 'deadlock') ||
+            str_contains($lower, 'lock wait timeout') ||
+            str_contains($lower, 'could not serialize access') ||
+            str_contains($lower, 'database is locked') ||
+            str_contains($lower, 'database is busy')
+        ) {
+            $out = 'Operation failed due to other the database being busy with another process. Please try again in a moment.';
+        }
+
+        // 8) Permission / access denied
+        if (
+            str_contains($lower, 'access denied') ||
+            str_contains($lower, 'permission denied') ||
+            str_contains($lower, 'not authorized')
+        ) {
+            $out = 'Operation failed because the system doesn’t have permission to perform that action. Please contact support if this keeps happening.';
+        }
+
+        // 9) Fall back: keep it short and user-safe
+        if (empty($out)) {
+
+            // If we can, remove verbose prefixes like "Error Number: 1048"
+            $sanitised = preg_replace('/\bError\s*Number:\s*\d+\s*/i', '', $sanitised);
+            $sanitised = trim($sanitised);
+
+            return $sanitised !== ''
+                ? 'Operation failed: ' . $sanitised
+                : 'Operation failed due to an unexpected database error.';
+        }
+
+        return sprintf(
+            '<span class="hint--right" aria-label="%s">%s</span>',
+            str_replace('"', '\"', $original),
+            $out
+        );
     }
 }

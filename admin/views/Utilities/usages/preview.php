@@ -150,6 +150,17 @@
             'data'    => [
                 'revealer' => 'usage-action',
             ],
+            'info' => <<<EOT
+            <p class="alert alert-info" data-revealer="usage-action" data-reveal-on="delete">
+            Removing references erases the link between the atatched entities and the object. In most cases this fully disconnects the oject, allowing it to be deleted.
+            </p>
+            <p class="alert alert-info" data-revealer="usage-action" data-reveal-on="replace">
+            When replacing references, the attached entities are updated to point to the replacement file. The old file then becomes fully disconnected, allowing it to be deleted.
+            </p>
+            <p class="alert alert-info" data-revealer="usage-action" data-reveal-on="delete-object">
+            Deleting a file is available to objects which are not in use. Performing this action moves the object to the trash.
+            </p>
+            EOT
         ]);
 
         echo form_field_cdn_object_picker([
