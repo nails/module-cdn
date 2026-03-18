@@ -148,7 +148,7 @@ class Bucket extends Api\Controller\CrudController
             'label'          => $oObj->label,
             'max_size'       => $sMaxSize,
             'max_size_human' => $sMaxSizeHuman,
-            'object_count'   => $oObj->objects,
+            'object_count'   => $oObj->objects->count,
         ];
     }
 
