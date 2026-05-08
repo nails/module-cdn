@@ -29,6 +29,7 @@ use Nails\Common\Exception\ModelException;
 use Nails\Common\Helper\Model\Condition;
 use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Helper\Model\Limit;
+use Nails\Common\Helper\Model\Select;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Uri;
 use Nails\Common\Traits\Model\Searchable;
@@ -312,65 +313,95 @@ class Utilities extends BaseAdmin
 
         /** @var Uri $oUri */
         $oUri = Factory::service('Uri');
-        $iId  = (int) $oUri->segment(5);
-
-        if ($iId) {
-
-            if (!in_array($iId, $this->data['aIds'])) {
-                show404();
-            }
-
-            switch ($oUri->segment(6)) {
-                case 'delete':
-                    return $this->unusedDelete($iId);
-
-                default:
-                    show404();
-            }
-        }
-
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
+
+        //  If we just deleted and now have zero results and are on a >1 page, go back to the beginning of the results
+        if (
+            Factory::service('Session')->getFlashdata('did_delete') &&
+            empty($this->data['aObjects']) &&
+            (int) $oInput->get('page') > 1
+        ) {
+            $this->oUserFeedback->persist();
+            $aParts = parse_url($_SERVER['REQUEST_URI'] ?? '');
+            parse_str($aParts['query'] ?? '', $aQuery);
+            unset($aQuery['page']);
+            redirect(($aParts['path'] ?? '') . (!empty($aQuery) ? '?' . http_build_query($aQuery) : ''));
+        }
+
+        //  Coerce a single URL-segment ID into the bulk-delete path
+        $iUrlId = (int) $oUri->segment(5);
+        if ($iUrlId) {
+            if ($oUri->segment(6) !== 'delete') {
+                show404();
+            }
+            $aDeleteIds = [$iUrlId];
+        } else {
+            $aDeleteIds = $oInput->post('ids');
+        }
+
+        if (!empty($aDeleteIds)) {
+            $sReturn = urldecode($oInput->get('return') ?: $oInput->post('return') ?: '');
+            $this->unusedDelete($aDeleteIds, $sReturn);
+        } else {
+            $this->unusedIndex();
+        }
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function unusedDelete(array $aDeleteIds, string $sReturn): void
+    {
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
 
-        $aDeleteIds = $oInput->post('ids');
-        if (!empty($aDeleteIds)) {
+        $aDeleteIds = array_map('intval', $aDeleteIds);
+        $aKnownIds  = array_map('intval', (array) ($this->data['aIds'] ?? []));
+        $aInvalid   = array_values(array_diff($aDeleteIds, $aKnownIds));
+
+        if (!empty($aInvalid)) {
+            $this->oUserFeedback->error(
+                'Some IDs are not present in the unused scan and cannot be deleted: ' . implode(', ', $aInvalid)
+            );
+            redirect($sReturn ?: 'admin/cdn/utilities/unused');
+            return;
+        }
+
+        $aFailed = [];
+        $iOk     = 0;
+
+        foreach ($aDeleteIds as $iId) {
             try {
-
-                //  Validate that all submitted IDs are present in the scan results
-                $aDeleteIds = array_map('intval', (array) $aDeleteIds);
-                $aKnownIds  = array_map('intval', (array) ($this->data['aIds'] ?? []));
-                $aInvalid   = array_values(array_diff($aDeleteIds, $aKnownIds));
-
-                if (!empty($aInvalid)) {
-                    throw new CdnException(
-                        'Some IDs are not present in the unused scan and cannot be deleted: ' . implode(', ', $aInvalid)
-                    );
+                if (!$oCdn->objectDelete($iId)) {
+                    throw new CdnException($this->humaniseMySQLError($oCdn->lastError()));
                 }
-
-                foreach ($aDeleteIds as $iId) {
-                    if (!$oCdn->objectDelete($iId)) {
-                        throw new CdnException(
-                            sprintf(
-                                'Failed to delete object #%s. %s',
-                                $iId,
-                                $this->humaniseMySQLError($oCdn->lastError())
-                            )
-                        );
-                    }
-                }
-
-                $this->oUserFeedback->success(count($aDeleteIds) . ' objects deleted successfully.');
-
+                $iOk++;
             } catch (\Throwable $e) {
-                $this->oUserFeedback->error($e->getMessage());
-            } finally {
-                redirect('admin/cdn/utilities/unused');
+                $aFailed[] = sprintf('#%s: %s', $iId, $e->getMessage());
             }
         }
 
-        $this->unusedIndex();
+        if ($iOk > 0) {
+            $this->oUserFeedback->success(sprintf(
+                '%d %s deleted successfully.',
+                $iOk,
+                $iOk === 1 ? 'object' : 'objects'
+            ));
+        }
+
+        if (!empty($aFailed)) {
+            $this->oUserFeedback->error(
+                sprintf(
+                    '%d deletion%s failed: %s',
+                    count($aFailed),
+                    count($aFailed) === 1 ? '' : 's',
+                    '<ul><li>' . implode('</li><li>', $aFailed) . '</li></ul>'
+                )
+            );
+        }
+
+        Factory::service('Session')->setFlashdata('did_delete', true);
+        redirect($sReturn ?: 'admin/cdn/utilities/unused');
     }
 
     // --------------------------------------------------------------------------
@@ -433,21 +464,22 @@ class Utilities extends BaseAdmin
         );
 
         //  Prepare conditionals
-        $sUnusedKey = Unused::METADATA_KEY_UNUSED;
-        $aQuery     = [
+        $sUnusedKey  = Unused::METADATA_KEY_UNUSED;
+        $oUnusedCond = new Condition(
+            <<<EOT
+            JSON_SEARCH(
+                JSON_EXTRACT(
+                    `metadata`,
+                    '$[*].key'
+                ),
+                'one',
+                '$sUnusedKey'
+            ) IS NOT NULL
+            EOT
+        );
+        $aQuery      = [
             new Expand('bucket'),
-            new Condition(
-                <<<EOT
-                    JSON_SEARCH(
-                        JSON_EXTRACT(
-                            `metadata`,
-                            '$[*].key'
-                        ),
-                        'one',
-                        '$sUnusedKey'
-                    ) IS NOT NULL
-                    EOT
-            ),
+            $oUnusedCond,
             new Limit($iPerPage, $iPage),
             'keywords' => $sKeywords,
             'sort'     => array_filter([
@@ -457,11 +489,12 @@ class Utilities extends BaseAdmin
             ]),
         ];
 
+        $aAllUnusedIds  = array_column($oModel->getAllRawQuery([new Select(['id']), $oUnusedCond])->result(), 'id');
         $aUnusedObjects = $oModel->getAll($aQuery);
-        $iTotalObjects  = $oModel->countAll($aQuery);
+        $iTotalObjects  = count($aAllUnusedIds);
 
         $this->data['oLastRun']      = $oLastRun;
-        $this->data['aIds']          = array_column($aUnusedObjects, 'id');
+        $this->data['aIds']          = $aAllUnusedIds;
         $this->data['aObjects']      = $aUnusedObjects;
         $this->data['iTotalObjects'] = $iTotalObjects;
         $this->data['pagination']    = Helper::paginationObject($iPage, $iPerPage, $iTotalObjects);
@@ -487,43 +520,6 @@ class Utilities extends BaseAdmin
         );
 
         Helper::loadView('unused');
-    }
-
-    // --------------------------------------------------------------------------
-
-    private function unusedDelete(int $iId)
-    {
-        try {
-
-            /** @var Cdn $oCdn */
-            $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
-            /** @var Model\CdnObject $oModel */
-            $oModel = Factory::model('Object', Constants::MODULE_SLUG);
-            /** @var Resource\CdnObject $oObject */
-            $oObject = $oModel->getById($iId);
-
-            $oCdn->objectDelete($oObject->id);
-
-            $this
-                ->oUserFeedback
-                ->success(sprintf(
-                    'Object #%s (%s) deleted successfully.',
-                    $oObject->id,
-                    $oObject->file->name->human
-                ));
-
-        } catch (\Throwable $e) {
-            $this
-                ->oUserFeedback
-                ->error(sprintf(
-                    'Failed to delete object #%s (%s): %s',
-                    $oObject->id,
-                    $oObject->file->name->human,
-                    $this->humaniseMySQLError($e->getMessage())
-                ));
-        }
-
-        redirect('admin/cdn/utilities/unused');
     }
 
     // --------------------------------------------------------------------------
