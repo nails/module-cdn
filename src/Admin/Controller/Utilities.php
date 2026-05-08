@@ -13,6 +13,7 @@
 namespace Nails\Cdn\Admin\Controller;
 
 use Nails\Admin\Controller\Base;
+use DateMalformedStringException;
 use Nails\Admin\Factory\Nav;
 use Nails\Cdn\Admin\Permission;
 use Nails\Cdn\Console\Command\Monitor\Unused;
@@ -23,9 +24,14 @@ use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
 use Nails\Cdn\Service\Cdn;
 use Nails\Cdn\Service\Monitor;
+use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\ModelException;
+use Nails\Common\Helper\Model\Condition;
 use Nails\Common\Helper\Model\Expand;
+use Nails\Common\Helper\Model\Limit;
 use Nails\Common\Service\Input;
 use Nails\Common\Service\Uri;
+use Nails\Common\Traits\Model\Searchable;
 use Nails\Factory;
 
 /**
@@ -35,10 +41,9 @@ use Nails\Factory;
  */
 class Utilities extends Base
 {
-    const MAX_UNUSED_OBJECTS = 100;
-
-    // --------------------------------------------------------------------------
-
+    /**
+     * Announces this controller's navGroups
+     */
     public static function announce(): Nav|array|null
     {
         $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
@@ -278,50 +283,18 @@ class Utilities extends Base
 
         try {
 
-            /** @var Model\CdnObject $oModel */
-            $oModel = Factory::model('Object', Constants::MODULE_SLUG);
-
             if (Unused::isRunning()) {
                 throw new CdnException('Tool disabled whilst scan is running.');
             }
 
-            $sCacheFile = Unused::getCacheFile();
-            if (!file_exists($sCacheFile)) {
+            $oLastRun = Unused::lastRunAt();
+            if (!$oLastRun) {
                 throw new CdnException(
                     'No scan has been run. Scan should be executed on the command line using <code>cdn:monitor:unused</code>'
                 );
             }
 
-            $rCacheFile     = fopen($sCacheFile, 'r');
-            $oBegin         = null;
-            $aIdsUnfiltered = [];
-            while (($line = fgets($rCacheFile)) !== false) {
-                if (preg_match('/^BEGIN: \d+$/', $line)) {
-                    $oBegin = \DateTime::createFromFormat('U', trim(substr($line, 7)));
-                } else {
-                    $aIdsUnfiltered[] = (int) $line;
-                }
-            }
-
-            $aObjects = [];
-            $aIds     = [];
-            foreach ($aIdsUnfiltered as $iId) {
-
-                $aIds[] = $iId;
-
-                if (count($aObjects) < min(self::MAX_UNUSED_OBJECTS, count($aIds))) {
-                    $oObject = $oModel->getById($iId, [
-                        new Expand('bucket'),
-                    ]);
-                    if ($oObject) {
-                        $aObjects[] = $oObject;
-                    }
-                }
-            }
-
-            $this->data['oBegin']   = $oBegin;
-            $this->data['aIds']     = $aIds;
-            $this->data['aObjects'] = $aObjects;
+            $this->unusedCompileData();
 
         } catch (\Throwable $e) {
             $this
@@ -335,7 +308,7 @@ class Utilities extends Base
 
         if ($iId) {
 
-            if (!in_array($iId, $aIds ?? [])) {
+            if (!in_array($iId, $this->data['aIds'])) {
                 show404();
             }
 
@@ -359,7 +332,7 @@ class Utilities extends Base
 
                 //  Validate that all submitted IDs are present in the scan results
                 $aDeleteIds = array_map('intval', (array) $aDeleteIds);
-                $aKnownIds  = array_map('intval', (array) ($aIds ?? []));
+                $aKnownIds  = array_map('intval', (array) ($this->data['aIds'] ?? []));
                 $aInvalid   = array_values(array_diff($aDeleteIds, $aKnownIds));
 
                 if (!empty($aInvalid)) {
@@ -389,20 +362,124 @@ class Utilities extends Base
             }
         }
 
-        $this->unusedIndex($aIds ?? []);
+        $this->unusedIndex();
     }
 
     // --------------------------------------------------------------------------
 
-    private function unusedIndex(array $aIds)
+    /**
+     * @return void
+     * @throws FactoryException
+     * @throws ModelException
+     * @throws DateMalformedStringException
+     */
+    private function unusedCompileData()
+    {
+        /** @var Input $oInput */
+        $oInput = Factory::service('Input');
+        /** @var Model\CdnObject $oModel */
+        $oModel = Factory::model('Object', Constants::MODULE_SLUG);
+
+        // --------------------------------------------------------------------------
+
+        $oLastRun = Unused::lastRunAt();
+
+        //  Search/Pagination options
+        $iPage       = (int) $oInput->get('page') ?: 0;
+        $iPerPage    = (int) $oInput->get('perPage') ?: 10;
+        $aSortConfig = [
+            'Unused'   => function () {
+                $sUnusedSinceKey = Unused::METADATA_KEY_UNUSED_SINCE;
+                return <<<EOT
+                    STR_TO_DATE(
+                        LEFT(
+                            JSON_UNQUOTE(
+                                JSON_EXTRACT(
+                                    `metadata`,
+                                    REPLACE(
+                                        JSON_UNQUOTE(JSON_SEARCH(`metadata`, 'one', '$sUnusedSinceKey')),
+                                        '.key', '.value'
+                                    )
+                                )
+                            ),
+                            19
+                        ),
+                        '%Y-%m-%dT%H:%i:%s'
+                    )
+                    EOT;
+
+            },
+            'ID'       => 'id',
+            'Filename' => 'filename_display',
+            'Created'  => 'created',
+        ];
+        $sSortOn     = (int) $oInput->get('sortOn') ?: 0;
+        $sSortOrder  = $oInput->get('sortOrder') ?: 'asc';
+        $sKeywords   = $oInput->get('keywords');
+
+        // Translate a sorting index to a column
+        $sSortKey = getFromArray(
+            $sSortOn,
+            array_values($aSortConfig),
+            reset($aSortConfig)
+        );
+
+        //  Prepare conditionals
+        $sUnusedKey = Unused::METADATA_KEY_UNUSED;
+        $aQuery     = [
+            new Expand('bucket'),
+            new Condition(
+                <<<EOT
+                    JSON_SEARCH(
+                        JSON_EXTRACT(
+                            `metadata`,
+                            '$[*].key'
+                        ),
+                        'one',
+                        '$sUnusedKey'
+                    ) IS NOT NULL
+                    EOT
+            ),
+            new Limit($iPerPage, $iPage),
+            'keywords' => $sKeywords,
+            'sort'     => array_filter([
+                is_callable($sSortKey)
+                    ? [call_user_func($sSortKey), $sSortOrder, false]
+                    : [$sSortKey, $sSortOrder],
+            ]),
+        ];
+
+        $aUnusedObjects = $oModel->getAll($aQuery);
+        $iTotalObjects  = $oModel->countAll($aQuery);
+
+        $this->data['oLastRun']      = $oLastRun;
+        $this->data['aIds']          = array_column($aUnusedObjects, 'id');
+        $this->data['aObjects']      = $aUnusedObjects;
+        $this->data['iTotalObjects'] = $iTotalObjects;
+        $this->data['pagination']    = Helper::paginationObject($iPage, $iPerPage, $iTotalObjects);
+        $this->data['search']        = Helper::searchObject(
+            classUses($oModel, Searchable::class),
+            array_keys($aSortConfig),
+            $sSortOn,
+            $sSortOrder,
+            $iPerPage,
+            $sKeywords,
+        );
+    }
+
+    // --------------------------------------------------------------------------
+
+    private function unusedIndex()
     {
         $this
             ->setTitles([
                 'CDN',
                 sprintf(
-                    'Unused Objects%s',
-                    !empty($aIds) ? ' (' . number_format(count($aIds)) . ')' : ''
-                ),
+                    'CDN: Unused Objects%s',
+                    !empty($this->data['iTotalObjects'])
+                        ? ' (' . number_format($this->data['iTotalObjects']) . ')'
+                        : ''
+                )
             ])
             ->loadView('unused');
     }

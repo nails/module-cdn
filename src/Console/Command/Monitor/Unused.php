@@ -2,12 +2,17 @@
 
 namespace Nails\Cdn\Console\Command\Monitor;
 
+use DateMalformedStringException;
+use DateTime;
 use Nails\Cdn\Constants;
-use Nails\Cdn\Model\CdnObject;
+use Nails\Cdn\Model;
+use Nails\Cdn\Resource;
+use Nails\Cdn\Service;
+use Nails\Common\Exception\FactoryException;
+use Nails\Common\Exception\ModelException;
 use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Helper\Model\Select;
 use Nails\Common\Service\Database;
-use Nails\Common\Service\FileCache;
 use Nails\Console\Command\Base;
 use Nails\Console\Exception\ConsoleException;
 use Nails\Factory;
@@ -15,6 +20,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
 
 /**
  * Class Unused
@@ -23,8 +29,9 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class Unused extends Base
 {
-    const CACHE_FILE      = 'cdn-monitor-unused.txt';
-    const PROGRESS_FORMAT = '%%current%%/%%max%% [%%bar%%] %%percent:3s%%%% %%elapsed:6s%% / %%estimated:-6s%% %%memory:6s%% (found %s unused items)';
+    const string METADATA_KEY_UNUSED       = 'cdn:monitor:unused';
+    const string METADATA_KEY_UNUSED_SINCE = 'cdn:monitor:unused:since';
+    const string PROGRESS_FORMAT           = '%%current%%/%%max%% [%%bar%%] %%percent:3s%%%% %%elapsed:6s%% / %%estimated:-6s%% %%memory:6s%% (found %s unused items)';
 
     // --------------------------------------------------------------------------
 
@@ -51,7 +58,10 @@ class Unused extends Base
      * @param OutputInterface $oOutput The Output Interface provided by Symfony
      *
      * @return int
-     * @throws \Exception
+     * @throws ConsoleException
+     * @throws FactoryException
+     * @throws ModelException
+     * @throws Throwable
      */
     protected function execute(InputInterface $oInput, OutputInterface $oOutput)
     {
@@ -59,16 +69,12 @@ class Unused extends Base
 
         // --------------------------------------------------------------------------
 
-        /** @var \Nails\Cdn\Service\Monitor $oService */
+        /** @var Service\Monitor $oService */
         $oService = Factory::service('Monitor', Constants::MODULE_SLUG);
-        /** @var CdnObject $oCdn */
+        /** @var Model\CdnObject $oObjectModel */
         $oObjectModel = Factory::model('Object', Constants::MODULE_SLUG);
         /** @var Database $oDb */
         $oDb = Factory::service('Database');
-
-        // --------------------------------------------------------------------------
-
-        $sCacheFile = self::getCacheFile();
 
         // --------------------------------------------------------------------------
 
@@ -79,9 +85,6 @@ class Unused extends Base
         if ($oInput->getOption('reset') || $oInput->getOption('force')) {
 
             $this->markAsRunning(false);
-            if (file_exists($sCacheFile)) {
-                unlink($sCacheFile);
-            }
 
             if ($oInput->getOption('reset')) {
                 $oOutput->writeln('<comment>Scan reset</comment>');
@@ -101,22 +104,35 @@ class Unused extends Base
 
         // --------------------------------------------------------------------------
 
-        $rCacheFile = fopen($sCacheFile, 'w');
+        $fnGetMetaValue = function (array $aMetadata, string $sKey): ?string {
+            foreach ($aMetadata as $oItem) {
+                if ($oItem->key === $sKey) {
+                    return $oItem->value;
+                }
+            }
+            return null;
+        };
 
-        $oOutput->writeln('');
-        $oOutput->writeln('Writing scan results to: <info>' . $sCacheFile . '</info>');
-        fwrite($rCacheFile, 'BEGIN: ' . time() . PHP_EOL);
+        $fnStripUnusedMeta = function (array $aMetadata): array {
+            return array_values(array_filter(
+                $aMetadata,
+                fn($oItem) => !in_array($oItem->key, [
+                    static::METADATA_KEY_UNUSED,
+                    static::METADATA_KEY_UNUSED_SINCE,
+                ])
+            ));
+        };
 
         // --------------------------------------------------------------------------
 
         try {
 
-            $iNumUnsed = 0;
+            $iNumUnused = 0;
 
             $oOutput->writeln('');
             $oOutput->writeln('Scanning objects...');
             $oProgressBar = new ProgressBar($oOutput, $oObjectModel->countAll());
-            $oProgressBar->setFormat(sprintf(self::PROGRESS_FORMAT, $iNumUnsed));
+            $oProgressBar->setFormat(sprintf(self::PROGRESS_FORMAT, $iNumUnused));
             $oProgressBar->start();
 
             $iStart = microtime(true);
@@ -124,12 +140,40 @@ class Unused extends Base
 
             while ($oResult = $oQuery->unbuffered_row()) {
 
+                /** @var Resource\CdnObject $oObject */
                 $oObject    = $oObjectModel->getById($oResult->id, [new Expand('bucket')]);
                 $aLocations = $oService->locate($oObject);
 
+                $aCurrentMeta    = (array) $oObject->metadata;
+                $bAlreadyFlagged = $fnGetMetaValue($aCurrentMeta, static::METADATA_KEY_UNUSED) !== null;
+
                 if (empty($aLocations)) {
-                    fwrite($rCacheFile, $oObject->id . PHP_EOL);
-                    $iNumUnsed++;
+
+                    if (!$bAlreadyFlagged) {
+                        $sSince     = $fnGetMetaValue($aCurrentMeta, static::METADATA_KEY_UNUSED_SINCE);
+                        $aNewMeta   = $fnStripUnusedMeta($aCurrentMeta);
+                        $aNewMeta[] = (object) [
+                            'key'   => static::METADATA_KEY_UNUSED,
+                            'value' => '1',
+                        ];
+                        $aNewMeta[] = (object) [
+                            'key'   => static::METADATA_KEY_UNUSED_SINCE,
+                            'value' => $sSince ?? date('c'),
+                        ];
+                        $oObjectModel->update($oObject->id, ['metadata' => json_encode($aNewMeta)]);
+                    }
+
+                    $iNumUnused++;
+
+                } elseif ($bAlreadyFlagged) {
+                    $aNewMeta = $fnStripUnusedMeta($aCurrentMeta);
+                    $oObjectModel
+                        ->skipUpdateTimestamp()
+                        ->skipUpdateUsers()
+                        ->update(
+                            $oObject->id,
+                            ['metadata' => json_encode($aNewMeta)]
+                        );
                 }
 
                 //  Clean up potential memory leaks
@@ -137,11 +181,10 @@ class Unused extends Base
                 $oObjectModel->clearCache();
                 $oDb->flushCache();
 
-                $oProgressBar->setFormat(sprintf(self::PROGRESS_FORMAT, $iNumUnsed));
+                $oProgressBar->setFormat(sprintf(self::PROGRESS_FORMAT, $iNumUnused));
                 $oProgressBar->advance();
             }
 
-            fclose($rCacheFile);
             $iEnd = microtime(true);
             $oProgressBar->finish();
             $oOutput->writeln('');
@@ -151,7 +194,7 @@ class Unused extends Base
             ));
             $oOutput->writeln('');
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
 
             $this->setLastError($e->getMessage());
             throw $e;
@@ -165,15 +208,9 @@ class Unused extends Base
 
     // --------------------------------------------------------------------------
 
-    public static function getCacheFile(): string
-    {
-        /** @var FileCache $oFileCache */
-        $oFileCache = Factory::service('FileCache');
-        return $oFileCache->getDir() . static::CACHE_FILE;
-    }
-
-    // --------------------------------------------------------------------------
-
+    /**
+     * @throws FactoryException
+     */
     public static function isRunning(): bool
     {
         return (bool) appSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG, null, true);
@@ -181,13 +218,39 @@ class Unused extends Base
 
     // --------------------------------------------------------------------------
 
-    private function markAsRunning(bool $bRunning): void
+    /**
+     * @throws FactoryException
+     * @throws DateMalformedStringException
+     */
+    public static function lastRunAt(): ?DateTime
     {
-        setAppSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG, $bRunning);
+        $sLastRun = appSetting('cdn:monitor:unused:last_run', Constants::MODULE_SLUG);
+        if (empty($sLastRun)) {
+            return null;
+        }
+        return new DateTime($sLastRun);
     }
 
     // --------------------------------------------------------------------------
 
+    /**
+     * @throws FactoryException
+     */
+    private function markAsRunning(bool $bRunning): void
+    {
+        setAppSetting('cdn:monitor:unused:running', Constants::MODULE_SLUG, $bRunning);
+        if ($bRunning) {
+            /** @var DateTime $oNow */
+            $oNow = Factory::factory('DateTime');
+            setAppSetting('cdn:monitor:unused:started', Constants::MODULE_SLUG, $oNow->format('c'));
+        }
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @throws FactoryException
+     */
     private function clearLastError(): void
     {
         setAppSetting('cdn:monitor:unused:lasterror', Constants::MODULE_SLUG, null);
@@ -195,6 +258,9 @@ class Unused extends Base
 
     // --------------------------------------------------------------------------
 
+    /**
+     * @throws FactoryException
+     */
     private function setLastError(string $error): void
     {
         setAppSetting('cdn:monitor:unused:lasterror', Constants::MODULE_SLUG, $error);

@@ -1,13 +1,17 @@
 <?php
 
+use Nails\Admin\Helper;
+use Nails\Cdn\Constants;
+use Nails\Cdn\Resource\CdnObject;
+
 /**
- * @var \DateTime                       $oBegin
- * @var \Nails\Cdn\Resource\CdnObject[] $aObjects
+ * @var DateTime    $oLastRun
+ * @var CdnObject[] $aObjects
+ * @var array       $search
+ * @var array       $pagination
  */
 
-use Nails\Cdn\Constants;
-
-if (!empty($oBegin) || !empty($aObjects)) {
+if (!empty($oLastRun) || !empty($aObjects)) {
 
     ?>
     <div class="cdn cdn-unused">
@@ -18,7 +22,7 @@ if (!empty($oBegin) || !empty($aObjects)) {
             <div class="alert alert-danger">
                 <p>
                     ⛔️ &nbsp; An error was encountered during the last scan:
-                    <pre style="padding: 1rem;margin-top:1rem"><?=appSetting('cdn:monitor:unused:lasterror', Constants::MODULE_SLUG)?></pre>
+                <pre style="padding: 1rem;margin-top:1rem"><?=appSetting('cdn:monitor:unused:lasterror', Constants::MODULE_SLUG)?></pre>
                 </p>
             </div>
             <?php
@@ -28,23 +32,14 @@ if (!empty($oBegin) || !empty($aObjects)) {
         <div class="alert alert-warning">
             <p>
                 ⚠️ &nbsp; The data below is produced using data generated on
-                <strong><?=toUserDateTime($oBegin)?></strong>
+                <strong><?=toUserDateTime($oLastRun)?></strong>
             </p>
         </div>
         <?php
 
-        if (count($aObjects) && count($aIds) > count($aObjects)) {
-            ?>
-            <div class="alert alert-info">
-                <p>
-                    ⚠️ &nbsp; For performance reasons only showing the first <?=count($aObjects)?> of
-                    <?=number_format(count($aIds))?> unused objects.
-                </p>
-            </div>
-            <?php
-        }
-
+        echo adminHelper('loadSearch', $search);
         echo form_open();
+        echo adminHelper('loadPagination', $pagination);
 
         ?>
         <table class="table table-striped table-hover table-bordered table-responsive u-mb0">
@@ -60,6 +55,7 @@ if (!empty($oBegin) || !empty($aObjects)) {
                     <th>Size</th>
                     <th>Bucket</th>
                     <th>Created</th>
+                    <th>Unused Since</th>
                     <th class="actions">Actions</th>
                 </tr>
             </thead>
@@ -105,9 +101,10 @@ if (!empty($oBegin) || !empty($aObjects)) {
                                 <?=$oObject->bucket->label?>
                                 <small><code><?=$oObject->bucket->slug?></code></small>
                             </td>
-                            <?=\Nails\Admin\Helper::loadDateTimeCell($oObject->created)?>
+                            <?=Helper::loadDateTimeCell($oObject->created)?>
+                            <?=Helper::loadDateTimeCell($oObject->unusedSince())?>
                             <td class="actions">
-                                <a href="<?=siteUrl('admin/cdn/utilities/unused/' . $oObject->id . '/delete')?>" class="btn btn-xs btn-danger confirm">
+                                <a href="<?=siteUrl('admin/cdn/utilities/unused/' . $oObject->id . '/delete?return=' . urlencode($_SERVER['REQUEST_URI'] ?? ''))?>" class="btn btn-xs btn-danger confirm">
                                     Delete
                                 </a>
                             </td>
@@ -130,8 +127,11 @@ if (!empty($oBegin) || !empty($aObjects)) {
         </table>
         <?php
 
+        echo adminHelper('loadPagination', $pagination);
+
         if (count($aObjects) > 0) {
-            echo \Nails\Admin\Helper::floatingControls([
+            echo form_hidden('return', urlencode($_SERVER['REQUEST_URI'] ?? ''));
+            echo Helper::floatingControls([
                 'save' => [
                     'text'  => 'Delete Selected',
                     'class' => 'btn btn-danger',

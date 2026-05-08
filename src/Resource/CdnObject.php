@@ -2,6 +2,8 @@
 
 namespace Nails\Cdn\Resource;
 
+use DateMalformedStringException;
+use Nails\Cdn\Console\Command\Monitor\Unused;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Resource\CdnObject\File;
 use Nails\Cdn\Resource\CdnObject\Image;
@@ -193,5 +195,34 @@ class CdnObject extends Entity
         unset($this->img_height);
         unset($this->img_orientation);
         unset($this->is_animated);
+    }
+
+    // --------------------------------------------------------------------------
+
+    public function isUnused(): bool
+    {
+        foreach ($this->metadata as $entry) {
+            if ($entry->key === Unused::METADATA_KEY_UNUSED) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * @throws DateMalformedStringException
+     */
+    public function unusedSince(): ?\DateTime
+    {
+        if ($this->isUnused()) {
+            foreach ($this->metadata as $entry) {
+                if ($entry->key === Unused::METADATA_KEY_UNUSED_SINCE) {
+                    return new \DateTime($entry->value);
+                }
+            }
+        }
+        return null;
     }
 }
