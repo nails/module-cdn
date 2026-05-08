@@ -115,7 +115,7 @@ if (!empty($oLastRun) || !empty($aObjects)) {
                 } else {
                     ?>
                     <tr>
-                        <td colspan="9" class="no-data">
+                        <td colspan="10" class="no-data">
                             No unused objects found
                         </td>
                     </tr>
