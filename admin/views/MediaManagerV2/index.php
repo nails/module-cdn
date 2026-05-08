@@ -2,6 +2,7 @@
 
 use Nails\Cdn\Constants;
 use Nails\Cdn\Service\MediaManager;
+use Nails\Cdn\Service\Monitor;
 use Nails\Common\Service\Input;
 use Nails\Factory;
 
@@ -9,6 +10,8 @@ use Nails\Factory;
 $input = Factory::service('Input');
 /** @var MediaManager $mediaManager */
 $mediaManager = Factory::service('MediaManager', Constants::MODULE_SLUG);
+/** @var Monitor $oMonitor */
+$oMonitor = Factory::service('Monitor', Constants::MODULE_SLUG);
 
 if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_MANAGER_V1)) {
     $switchUrl = $mediaManager->getUrl(
@@ -33,6 +36,7 @@ if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_M
      data-user-can-create-bucket="<?=json_encode(userHasPermission('admin:cdn:mediamanager:bucket:create'))?>"
      data-user-can-edit-bucket="<?=json_encode(userHasPermission('admin:cdn:mediamanager:bucket:edit'))?>"
      data-user-can-delete-bucket="<?=json_encode(userHasPermission('admin:cdn:mediamanager:bucket:delete'))?>"
+     data-system-metadata-keys="<?=htmlentities(json_encode($oMonitor->getSystemMetadataKeys()), ENT_QUOTES)?>"
 >
     Loading Media Manager...
 </div>

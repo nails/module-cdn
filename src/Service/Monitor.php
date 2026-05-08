@@ -11,6 +11,7 @@
 
 namespace Nails\Cdn\Service;
 
+use Nails\Cdn\Console\Command\Monitor\Unused;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\NotFoundException;
 use Nails\Cdn\Factory\Monitor\Detail;
@@ -69,6 +70,22 @@ class Monitor
         }
 
         return $aClasses;
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Returns metadata keys that are managed by the system and should be treated as read-only.
+     * Override this method to add application-level system keys.
+     *
+     * @return string[]
+     */
+    public function getSystemMetadataKeys(): array
+    {
+        return [
+            Unused::METADATA_KEY_UNUSED,
+            Unused::METADATA_KEY_UNUSED_SINCE,
+        ];
     }
 
     // --------------------------------------------------------------------------

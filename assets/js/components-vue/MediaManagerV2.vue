@@ -278,6 +278,7 @@
             :isEditing="isEditing"
             :editError="editError"
             :editSuccess="editSuccess"
+            :systemMetadataKeys="systemMetadataKeys"
             @close="closeEditModal"
             @save="saveObjectEditFromModal"
         />
@@ -499,6 +500,10 @@ export default {
         switchBackUrl: {
             type: String,
             default: ''
+        },
+        systemMetadataKeys: {
+            type: Array,
+            default: () => []
         }
     },
     data() {

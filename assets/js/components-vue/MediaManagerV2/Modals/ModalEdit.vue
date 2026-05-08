@@ -24,22 +24,27 @@
             >
                 <div class="metadata-editor">
                     <div class="metadata-list">
-                        <div v-for="(item, index) in localEditingObject.metadata" :key="index" class="metadata-item">
+                        <div
+                            v-for="(item, index) in localEditingObject.metadata"
+                            :key="index"
+                            :class="['metadata-item', {'metadata-item--system': item._systemLocked}]"
+                        >
                             <input
                                 type="text"
                                 v-model="item.key"
                                 placeholder="Key"
-                                :disabled="isEditing"
+                                :disabled="isEditing || item._systemLocked"
                                 class="metadata-key"
                             />
                             <input
                                 type="text"
                                 v-model="item.value"
                                 placeholder="Value"
-                                :disabled="isEditing"
+                                :disabled="isEditing || item._systemLocked"
                                 class="metadata-value"
                             />
                             <button
+                                v-if="!item._systemLocked"
                                 class="remove-button"
                                 @click="removeMetadata(index)"
                                 :disabled="isEditing"
@@ -49,6 +54,7 @@
                                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </button>
+                            <span v-else class="system-badge" title="Managed by the system">system</span>
                         </div>
                     </div>
                     <button
@@ -64,6 +70,11 @@
                     </button>
                 </div>
             </form-group>
+            <Status
+                v-if="systemKeyConflict"
+                type="error"
+                message="One or more metadata keys use a reserved system name and cannot be saved."
+            />
             <Status
                 v-if="editError"
                 type="error"
@@ -97,7 +108,7 @@
                     :text="isEditing ? 'Saving...' : 'Save Changes'"
                     icon="save"
                     @click="handleSave"
-                    :disabled="!localEditingObject?.filename_display || isEditing"
+                    :disabled="!localEditingObject?.filename_display || isEditing || systemKeyConflict"
                     :loading="isEditing"
                 />
             </div>
@@ -120,12 +131,19 @@ export default {
         editingObject: {type: Object, default: null},
         isEditing: {type: Boolean, default: false},
         editError: {type: String, default: null},
-        editSuccess: {type: Boolean, default: false}
+        editSuccess: {type: Boolean, default: false},
+        systemMetadataKeys: {type: Array, default: () => []}
     },
     data() {
         return {
             localEditingObject: this.cloneEditingObject(this.editingObject),
         };
+    },
+    computed: {
+        systemKeyConflict() {
+            return (this.localEditingObject?.metadata ?? [])
+                .some(item => !item._systemLocked && this.isSystemKey(item.key));
+        }
     },
     watch: {
         editingObject: {
@@ -137,10 +155,16 @@ export default {
     },
     methods: {
         cloneEditingObject(obj) {
-            // Deep clone and ensure metadata is always an array
             const clone = obj ? JSON.parse(JSON.stringify(obj)) : {metadata: []};
             if (!Array.isArray(clone.metadata)) clone.metadata = [];
+            clone.metadata = clone.metadata.map(item => ({
+                ...item,
+                _systemLocked: this.isSystemKey(item.key),
+            }));
             return clone;
+        },
+        isSystemKey(key) {
+            return !!key && this.systemMetadataKeys.includes(key);
         },
         addMetadata() {
             if (!this.localEditingObject.metadata) {
@@ -152,7 +176,12 @@ export default {
             this.localEditingObject.metadata.splice(index, 1);
         },
         handleSave() {
-            this.$emit('save', {...this.localEditingObject});
+            const payload = {
+                ...this.localEditingObject,
+                metadata: (this.localEditingObject.metadata || [])
+                    .map(({_systemLocked, ...item}) => item),
+            };
+            this.$emit('save', payload);
         },
         handleClose() {
             this.$emit('close');
@@ -262,5 +291,31 @@ export default {
 .add-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.metadata-item--system .metadata-key,
+.metadata-item--system .metadata-value {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.system-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 0 6px;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background: #f9fafb;
 }
 </style> 

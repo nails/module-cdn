@@ -49,6 +49,10 @@ class MediaManagerV2 {
                 const userCanEditBucket = mountPoint ? mountPoint.dataset.userCanEditBucket === 'true' : false;
                 const userCanDeleteBucket = mountPoint ? mountPoint.dataset.userCanDeleteBucket === 'true' : false;
 
+                // System metadata keys (reserved, read-only in the editor)
+                const systemMetadataKeys = mountPoint
+                    ? JSON.parse(mountPoint.dataset.systemMetadataKeys || '[]')
+                    : [];
 
                 // Create a new Vue instance with all components
                 new Vue({
@@ -74,6 +78,7 @@ class MediaManagerV2 {
                             userCanCreateBucket,
                             userCanEditBucket,
                             userCanDeleteBucket,
+                            systemMetadataKeys,
                         }
                     })
                 });
