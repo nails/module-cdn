@@ -142,6 +142,9 @@ class Cdn
     /** @var \Nails\Common\Interfaces\Service\FileCache\Driver\AccessibleByUrl */
     protected $oCachePublic;
 
+    /** @var array|null In-request index of public cache filenames (null = not yet loaded, false = dir empty/unreadable) */
+    protected static ?array $aPublicCacheIndex = null;
+
     // --------------------------------------------------------------------------
 
     /**
@@ -3270,6 +3273,16 @@ class Cdn
     ) {
         //  Is there a cached version of the file on disk we can serve up instead?
         //  @todo (Pablo - 2018-03-13) - This won't be reliable in multi-server environments unless the cache is shared
+
+        /** @var FileCache $oFileCache */
+        $oFileCache = Factory::service('FileCache');
+
+        //  Build the public cache index once per request (one scandir() vs N file_exists() calls)
+        if (static::$aPublicCacheIndex === null) {
+            $aFiles                    = @scandir($oFileCache->public()->getDir()) ?: [];
+            static::$aPublicCacheIndex = array_flip($aFiles);
+        }
+
         $sCachePath = static::getCachePath(
             $sBucket,
             $sObject,
@@ -3280,14 +3293,9 @@ class Cdn
             $iHeight
         );
 
-        /** @var FileCache $oFileCache */
-        $oFileCache = Factory::service('FileCache');
-
-        if ($oFileCache->public()->exists($sCachePath)) {
-            return $oFileCache->public()->getUrl($sCachePath);
-        }
-
-        return null;
+        return isset(static::$aPublicCacheIndex[$sCachePath])
+            ? $oFileCache->public()->getUrl($sCachePath)
+            : null;
     }
 
     // --------------------------------------------------------------------------
