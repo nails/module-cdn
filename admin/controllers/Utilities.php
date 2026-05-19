@@ -296,8 +296,8 @@ class Utilities extends BaseAdmin
                 throw new CdnException('Tool disabled whilst scan is running.');
             }
 
-            $oLastRun = Unused::lastRunAt();
-            if (!$oLastRun) {
+            $oLastStarted = Unused::lastStartedAt();
+            if (!$oLastStarted) {
                 throw new CdnException(
                     'No scan has been run. Scan should be executed on the command line using <code>cdn:monitor:unused</code>'
                 );
@@ -421,7 +421,7 @@ class Utilities extends BaseAdmin
 
         // --------------------------------------------------------------------------
 
-        $oLastRun = Unused::lastRunAt();
+        $oLastStarted = Unused::lastStartedAt();
 
         //  Search/Pagination options
         $iPage       = (int) $oInput->get('page') ?: 0;
@@ -493,7 +493,7 @@ class Utilities extends BaseAdmin
         $aUnusedObjects = $oModel->getAll($aQuery);
         $iTotalObjects  = count($aAllUnusedIds);
 
-        $this->data['oLastRun']      = $oLastRun;
+        $this->data['oLastStarted']  = $oLastStarted;
         $this->data['aIds']          = $aAllUnusedIds;
         $this->data['aObjects']      = $aUnusedObjects;
         $this->data['iTotalObjects'] = $iTotalObjects;
