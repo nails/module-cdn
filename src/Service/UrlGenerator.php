@@ -209,8 +209,9 @@ class UrlGenerator
             );
         }
 
+        $aObjectIdsSet = array_flip($aObjectIds);
         foreach ($this->aGenerators as $oUrlObject) {
-            if (in_array($oUrlObject->getObjectId(), $aObjectIds)) {
+            if (isset($aObjectIdsSet[$oUrlObject->getObjectId()])) {
 
                 $oObject = $this->aCachedObjects[$oUrlObject->getObjectId()] ?? null;
                 if (!empty($oObject)) {
