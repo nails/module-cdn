@@ -12,8 +12,8 @@
 
 namespace Nails\Cdn\Admin\Controller;
 
-use Nails\Admin\Controller\Base;
 use DateMalformedStringException;
+use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Cdn\Admin\Permission;
 use Nails\Cdn\Console\Command\Monitor\Unused;
@@ -288,8 +288,8 @@ class Utilities extends Base
                 throw new CdnException('Tool disabled whilst scan is running.');
             }
 
-            $oLastRun = Unused::lastRunAt();
-            if (!$oLastRun) {
+            $oLastStarted = Unused::lastStartedAt();
+            if (!$oLastStarted) {
                 throw new CdnException(
                     'No scan has been run. Scan should be executed on the command line using <code>cdn:monitor:unused</code>'
                 );
@@ -413,7 +413,7 @@ class Utilities extends Base
 
         // --------------------------------------------------------------------------
 
-        $oLastRun = Unused::lastRunAt();
+        $oLastStarted = Unused::lastStartedAt();
 
         //  Search/Pagination options
         $iPage       = (int) $oInput->get('page') ?: 0;
@@ -485,7 +485,7 @@ class Utilities extends Base
         $aUnusedObjects = $oModel->getAll($aQuery);
         $iTotalObjects  = count($aAllUnusedIds);
 
-        $this->data['oLastRun']      = $oLastRun;
+        $this->data['oLastStarted']  = $oLastStarted;
         $this->data['aIds']          = $aAllUnusedIds;
         $this->data['aObjects']      = $aUnusedObjects;
         $this->data['iTotalObjects'] = $iTotalObjects;
@@ -512,7 +512,7 @@ class Utilities extends Base
                     !empty($this->data['iTotalObjects'])
                         ? ' (' . number_format($this->data['iTotalObjects']) . ')'
                         : ''
-                )
+                ),
             ])
             ->loadView('unused');
     }

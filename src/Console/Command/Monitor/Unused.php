@@ -222,13 +222,13 @@ class Unused extends Base
      * @throws FactoryException
      * @throws DateMalformedStringException
      */
-    public static function lastRunAt(): ?DateTime
+    public static function lastStartedAt(): ?DateTime
     {
-        $sLastRun = appSetting('cdn:monitor:unused:last_run', Constants::MODULE_SLUG);
-        if (empty($sLastRun)) {
+        $sLastStarted = appSetting('cdn:monitor:unused:started', Constants::MODULE_SLUG);
+        if (empty($sLastStarted)) {
             return null;
         }
-        return new DateTime($sLastRun);
+        return new DateTime($sLastStarted);
     }
 
     // --------------------------------------------------------------------------

@@ -5,13 +5,13 @@ use Nails\Cdn\Constants;
 use Nails\Cdn\Resource\CdnObject;
 
 /**
- * @var DateTime    $oLastRun
+ * @var DateTime    $oLastStarted
  * @var CdnObject[] $aObjects
  * @var array       $search
  * @var array       $pagination
  */
 
-if (!empty($oLastRun) || !empty($aObjects)) {
+if (!empty($oLastStarted) || !empty($aObjects)) {
 
     ?>
     <div class="cdn cdn-unused">
@@ -32,7 +32,7 @@ if (!empty($oLastRun) || !empty($aObjects)) {
         <div class="alert alert-warning">
             <p>
                 ⚠️ &nbsp; The data below is produced using data generated on
-                <strong><?=toUserDateTime($oLastRun)?></strong>
+                <strong><?=toUserDateTime($oLastStarted)?></strong>
             </p>
         </div>
         <?php
