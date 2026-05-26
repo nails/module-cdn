@@ -99,6 +99,8 @@ class ObjectPicker {
      */
     refreshPicker(elements) {
 
+        //  Align this value with the constant in src/Api/Controller/CdnObject.php
+        const BATCH_SIZE = 50;
         let fetchIds = [];
 
         elements.addClass('cdn-object-picker--pending');
@@ -114,45 +116,57 @@ class ObjectPicker {
             }
         });
 
-        if (fetchIds.length > 0) {
+        if (fetchIds.length === 0) {
+            return;
+        }
 
+        let batches = [];
+        for (let i = 0; i < fetchIds.length; i += BATCH_SIZE) {
+            batches.push(fetchIds.slice(i, i + BATCH_SIZE));
+        }
+
+        let requests = batches.map((batch) =>
             $.ajax({
                 'url': window.SITE_URL + 'api/cdn/object',
                 'data': {
-                    'ids': fetchIds.join(','),
+                    'ids': batch.join(','),
                     'urls': '150x150-crop'
                 }
-            })
-                .done((data) => {
+            }).then((data) => data.data)
+        );
 
-                    elements.each((index, el) => {
-                        let $el = $(el);
-                        let iObjectId = parseInt($el.find('.cdn-object-picker__input').val(), 10);
-                        for (let i = data.data.length - 1; i >= 0; i--) {
-                            if (iObjectId === data.data[i].id) {
-                                this.setPickerObject($el, data.data[i]);
-                                return;
-                            }
+        Promise.all(requests)
+            .then((batchResults) => {
+
+                let allObjects = [].concat(...batchResults);
+
+                elements.each((index, el) => {
+                    let $el = $(el);
+                    let iObjectId = parseInt($el.find('.cdn-object-picker__input').val(), 10);
+                    for (let i = allObjects.length - 1; i >= 0; i--) {
+                        if (iObjectId === allObjects[i].id) {
+                            this.setPickerObject($el, allObjects[i]);
+                            return;
                         }
-                    });
-
-                    elements.removeClass('cdn-object-picker--pending');
-                })
-                .fail((data) => {
-
-                    let _data;
-                    try {
-                        _data = JSON.parse(data.responseText);
-                    } catch (e) {
-                        _data = {
-                            'status': 500,
-                            'error': 'An unknown error occurred.'
-                        };
                     }
-
-                    this.adminController.warn(_data.error);
                 });
-        }
+
+                elements.removeClass('cdn-object-picker--pending');
+            })
+            .catch((data) => {
+
+                let _data;
+                try {
+                    _data = JSON.parse(data.responseText);
+                } catch (e) {
+                    _data = {
+                        'status': 500,
+                        'error': 'An unknown error occurred.'
+                    };
+                }
+
+                this.adminController.warn(_data.error);
+            });
     };
 
     // --------------------------------------------------------------------------

@@ -34,6 +34,7 @@ class CdnObject extends Api\Controller\Base
 {
     /**
      * The maximum number of objects a user can request at any one time
+     * Align this value with the constant in assets/js/components/ObjectPicker.js
      *
      * @var int
      */
