@@ -28,7 +28,7 @@ class Zip extends Base
         $oUri     = Factory::service('Uri');
         $ids      = $oUri->segment(3);
         $hash     = $oUri->segment(4);
-        $filename = urldecode($oUri->segment(5));
+        $filename = urldecode((string) $oUri->segment(5));
 
         if ($ids && $hash) {
 
