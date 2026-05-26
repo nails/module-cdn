@@ -105,7 +105,7 @@ class CdnObject extends Api\Controller\Base
         $aIds = array_filter($aIds);
         $aIds = array_unique($aIds);
 
-        if (count($aIds) > 100) {
+        if (count($aIds) > static::MAX_OBJECTS_PER_REQUEST) {
             throw new Api\Exception\ApiException(
                 'You can request a maximum of ' . static::MAX_OBJECTS_PER_REQUEST . ' objects per request',
                 $oHttpCodes::STATUS_UNAUTHORIZED
