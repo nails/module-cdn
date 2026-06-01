@@ -119,6 +119,11 @@ class CdnObject extends Entity
      */
     protected $is_animated;
 
+    /**
+     * @var array
+     */
+    public $metadata;
+
     // --------------------------------------------------------------------------
 
     /**
@@ -184,6 +189,12 @@ class CdnObject extends Entity
                 'is_img' => $this->is_img,
             ]
         );
+
+        // --------------------------------------------------------------------------
+
+        $this->metadata = $this->metadata
+            ? (json_decode($this->metadata) ?? [])
+            : [];
 
         // --------------------------------------------------------------------------
 
