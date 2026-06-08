@@ -341,6 +341,17 @@ if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_M
             </select>
             <p class="manager-image-scaler__hint">These dimensions are configured by the application.</p>
         </div>
+
+        <div class="manager-image-scaler__preview">
+            <p class="manager-image-scaler__preview__label">Preview</p>
+            <!-- ko if: imageScalerPreviewLoading() -->
+            <div class="manager-image-scaler__preview__loading">Loading preview&hellip;</div>
+            <!-- /ko -->
+            <!-- ko if: !imageScalerPreviewLoading() && imageScalerPreviewUrl() -->
+            <img class="manager-image-scaler__preview__img"
+                 data-bind="attr: {src: imageScalerPreviewUrl()}" />
+            <!-- /ko -->
+        </div>
         <!-- /ko -->
 
         <div class="manager-image-scaler__actions">
