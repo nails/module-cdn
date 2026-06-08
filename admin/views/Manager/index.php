@@ -287,7 +287,12 @@
                 <option value="SCALE">Scale to dimensions</option>
             </select>
             <!-- ko if: imageScalerScaling() === 'NONE' -->
-            <p class="manager-image-scaler__hint">The image will be embedded at its native resolution.</p>
+            <p class="manager-image-scaler__hint">
+                The image will be embedded at its native resolution
+                <!-- ko if: imageScalerMetaSize() -->
+                &mdash; <span data-bind="text: imageScalerMetaSize()"></span>
+                <!-- /ko -->
+            </p>
             <!-- /ko -->
             <!-- ko if: imageScalerScaling() === 'CROP' -->
             <p class="manager-image-scaler__hint">The image is guaranteed to be exactly the chosen dimensions.</p>
@@ -319,7 +324,20 @@
             <!-- /ko -->
             <!-- ko if: !imageScalerPreviewLoading() && imageScalerPreviewUrl() -->
             <img class="manager-image-scaler__preview__img"
-                 data-bind="attr: {src: imageScalerPreviewUrl()}" />
+                 data-bind="attr: {
+                     src: imageScalerPreviewUrl()
+                 }, event: {load: imageScalerOnPreviewLoad}" />
+            <!-- /ko -->
+            <!-- ko if: imageScalerMetaWidth() || imageScalerMetaSize() -->
+            <p class="manager-image-scaler__meta">
+                <!-- ko if: imageScalerMetaWidth() -->
+                <span data-bind="text: imageScalerMetaWidth() + ' &times; ' + imageScalerMetaHeight() + 'px'"></span>
+                <!-- /ko -->
+                <!-- ko if: imageScalerMetaWidth() && imageScalerMetaSize() --> &mdash; <!-- /ko -->
+                <!-- ko if: imageScalerMetaSize() -->
+                <span data-bind="text: imageScalerMetaSize()"></span>
+                <!-- /ko -->
+            </p>
             <!-- /ko -->
         </div>
         <!-- /ko -->
