@@ -23,12 +23,14 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal, permitt
     base.listingXHR = null;
     base.localStorageCurrentBucketKey = 'NAILS:CDN:MEDIAMANAGER:BUCKET';
 
-    base.permittedDimensions  = permittedDimensions || [];
-    base.showImageScaler      = ko.observable(false);
-    base.imageScalerObject    = null;
-    base.imageScalerScaling   = ko.observable('NONE');
-    base.imageScalerSize      = ko.observable('');
-    base.imageScalerLoading   = ko.observable(false);
+    base.permittedDimensions       = permittedDimensions || [];
+    base.showImageScaler           = ko.observable(false);
+    base.imageScalerObject         = null;
+    base.imageScalerScaling        = ko.observable('NONE');
+    base.imageScalerSize           = ko.observable('');
+    base.imageScalerLoading        = ko.observable(false);
+    base.imageScalerPreviewUrl     = ko.observable('');
+    base.imageScalerPreviewLoading = ko.observable(false);
 
     // --------------------------------------------------------------------------
 
@@ -491,6 +493,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal, permitt
                 base.permittedDimensions[0].width + 'x' + base.permittedDimensions[0].height
             );
             base.showImageScaler(true);
+            base.fetchImageScalerPreview();
         } else if (callbackHandler === 'ckeditor') {
             base.callbackCKEditor(this);
             window.close();
@@ -567,6 +570,53 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal, permitt
         base.imageScalerObject = null;
         window.opener.CKEDITOR.tools.callFunction(callback[0], url);
         window.close();
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Fetches (or reads from cache) the preview URL for the current scaler state
+     * @returns {void}
+     */
+    base.fetchImageScalerPreview = function() {
+        var object  = base.imageScalerObject;
+        var scaling = base.imageScalerScaling();
+
+        if (!object) { return; }
+
+        if (scaling === 'NONE') {
+            base.imageScalerPreviewUrl('');
+            return;
+        }
+
+        var key = base.imageScalerSize() + '-' + scaling.toLowerCase();
+
+        if (object.url && object.url[key]) {
+            base.imageScalerPreviewUrl(object.url[key]);
+            return;
+        }
+
+        base.imageScalerPreviewLoading(true);
+        base.imageScalerPreviewUrl('');
+
+        $.ajax({
+            url:  window.SITE_URL + 'api/cdn/object',
+            data: { id: object.id, urls: key }
+        })
+            .done(function(response) {
+                var url = (response.data && response.data.url && response.data.url[key])
+                    ? response.data.url[key]
+                    : object.url.src;
+                if (!object.url) { object.url = {}; }
+                object.url[key] = url;
+                base.imageScalerPreviewUrl(url);
+            })
+            .fail(function() {
+                base.imageScalerPreviewUrl(object.url.preview || object.url.src);
+            })
+            .always(function() {
+                base.imageScalerPreviewLoading(false);
+            });
     };
 
     // --------------------------------------------------------------------------
@@ -968,6 +1018,18 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal, permitt
         }
         return base;
     };
+
+    // --------------------------------------------------------------------------
+
+    base.imageScalerScaling.subscribe(function() {
+        base.fetchImageScalerPreview();
+    });
+
+    base.imageScalerSize.subscribe(function() {
+        if (base.imageScalerScaling() !== 'NONE') {
+            base.fetchImageScalerPreview();
+        }
+    });
 
     // --------------------------------------------------------------------------
 

@@ -426,6 +426,35 @@
         font-weight: 600;
     }
 
+    &__preview {
+        margin-bottom: 1rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 2px;
+        padding: 0.75rem;
+
+        &__label {
+            margin: 0 0 0.5rem;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #aaaaaa;
+        }
+
+        &__img {
+            display: block;
+            max-width: 100%;
+            max-height: 450px;
+        }
+
+        &__loading {
+            color: #999999;
+            font-size: 13px;
+            padding: 2rem 0;
+            text-align: center;
+        }
+    }
+
     &__field {
         margin-bottom: 1rem;
     }
@@ -462,17 +491,6 @@
         .action {
             flex: 1;
             margin-top: 0;
-
-            //&--insert {
-            //    background-color: #444444;
-            //    color: #ffffff;
-            //    border-color: #444444;
-            //
-            //    &:disabled {
-            //        opacity: 0.5;
-            //        cursor: not-allowed;
-            //    }
-            //}
         }
     }
 }
