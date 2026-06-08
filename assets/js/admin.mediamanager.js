@@ -23,14 +23,17 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal, permitt
     base.listingXHR = null;
     base.localStorageCurrentBucketKey = 'NAILS:CDN:MEDIAMANAGER:BUCKET';
 
-    base.permittedDimensions       = permittedDimensions || [];
-    base.showImageScaler           = ko.observable(false);
-    base.imageScalerObject         = null;
-    base.imageScalerScaling        = ko.observable('NONE');
-    base.imageScalerSize           = ko.observable('');
-    base.imageScalerLoading        = ko.observable(false);
-    base.imageScalerPreviewUrl     = ko.observable('');
-    base.imageScalerPreviewLoading = ko.observable(false);
+    base.permittedDimensions        = permittedDimensions || [];
+    base.showImageScaler            = ko.observable(false);
+    base.imageScalerObject          = null;
+    base.imageScalerScaling         = ko.observable('NONE');
+    base.imageScalerSize            = ko.observable('');
+    base.imageScalerLoading         = ko.observable(false);
+    base.imageScalerPreviewUrl      = ko.observable('');
+    base.imageScalerPreviewLoading  = ko.observable(false);
+    base.imageScalerMetaWidth       = ko.observable(null);
+    base.imageScalerMetaHeight      = ko.observable(null);
+    base.imageScalerMetaSize        = ko.observable(null);
 
     // --------------------------------------------------------------------------
 
@@ -362,6 +365,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal, permitt
                             //  Update the object
                             element.id = data.data.object.id;
                             element.label = data.data.object.object.name;
+                            element.size = data.data.object.file ? data.data.object.file.size.human : null;
                             element.ext = element.label.substr((element.label.lastIndexOf('.') + 1));
                             element.url = {
                                 'src': data.data.object.url.src,
@@ -584,8 +588,13 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal, permitt
 
         if (!object) { return; }
 
+        base.imageScalerMetaWidth(null);
+        base.imageScalerMetaHeight(null);
+        base.imageScalerMetaSize(null);
+
         if (scaling === 'NONE') {
             base.imageScalerPreviewUrl('');
+            base.imageScalerMetaSize(object.size || null);
             return;
         }
 
@@ -617,6 +626,47 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal, permitt
             .always(function() {
                 base.imageScalerPreviewLoading(false);
             });
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Reads natural dimensions and file size from the loaded preview image.
+     *
+     * img.decode() resolves once the browser has fully decoded the image,
+     * at which point the PerformanceResourceTiming entry is guaranteed to be
+     * recorded. encodedBodySize gives the compressed payload in bytes with no
+     * extra network request. Cross-origin CDNs need a Timing-Allow-Origin
+     * response header for this to be non-zero.
+     *
+     * @param {object} data  Knockout data context (unused)
+     * @param {Event}  event The img load event
+     * @returns {void}
+     */
+    base.imageScalerOnPreviewLoad = function(data, event) {
+        var img = event.target;
+        img.decode().then(function() {
+            base.imageScalerMetaWidth(img.naturalWidth);
+            base.imageScalerMetaHeight(img.naturalHeight);
+            var entries = window.performance ? window.performance.getEntriesByName(img.src) : [];
+            var entry   = entries[entries.length - 1];
+            if (entry && entry.encodedBodySize > 0) {
+                base.imageScalerMetaSize(base.formatBytes(entry.encodedBodySize));
+            }
+        });
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Formats a byte count into a human-readable string
+     * @param {number} bytes
+     * @returns {string}
+     */
+    base.formatBytes = function(bytes) {
+        if (bytes < 1024) { return bytes + ' B'; }
+        if (bytes < 1048576) { return (bytes / 1024).toFixed(1) + ' KB'; }
+        return (bytes / 1048576).toFixed(2) + ' MB';
     };
 
     // --------------------------------------------------------------------------
@@ -703,6 +753,7 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal, permitt
         var newObject = {
             'id': object.id || null,
             'label': object.label || null,
+            'size': object.size || null,
             'ext': object.ext || null,
             'url': object.url || null,
             'is_img': object.is_img || null,
