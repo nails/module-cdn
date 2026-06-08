@@ -34,10 +34,8 @@ class Manager extends Api\Controller\Base
 
     /**
      * Returns the URL for a manager
-     *
-     * @return array
      */
-    public function getUrl()
+    public function getUrl(): Api\Factory\ApiResponse
     {
         if (!userHasPermission(Permission\Object\Browse::class)) {
             /** @var HttpCodes $oHttpCodes */
@@ -51,13 +49,18 @@ class Manager extends Api\Controller\Base
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
 
+        $aQuery = $oInput->get();
+        if ($oInput->get('bucket')) {
+            $aQuery['bucket'] = $oInput->get('bucket');
+        }
+        if ($oInput->get('callback')) {
+            $aQuery['callback'] = $oInput->get('callback');
+        }
+
         return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
             ->setData(siteUrl(
                 \Nails\Cdn\Admin\Controller\Manager::url() . '?' .
-                http_build_query([
-                    'bucket'   => $oInput->get('bucket'),
-                    'callback' => $oInput->get('callback'),
-                ])
+                http_build_query($aQuery)
             ));
     }
 }
