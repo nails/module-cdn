@@ -93,13 +93,21 @@ class Manager extends Base
             ? [$oInput->get('CKEditorFuncNum')]
             : array_filter((array) $oInput->get('callback'));
 
+        /** @var \Nails\Cdn\Service\Cdn $oCdn */
+        $oCdn                 = Factory::service('Cdn', Constants::MODULE_SLUG);
+        $aPermittedDimensions = array_values(array_map(
+            fn($o) => ['width' => $o->width, 'height' => $o->height],
+            $oCdn->getPermittedDimensions()
+        ));
+
         $oAsset->inline(
             'ko.applyBindings(
                 new MediaManager(
                     "' . $sBucketSlug . '",
                     "' . $sCallbackHandler . '",
                     ' . json_encode($aCallback) . ',
-                    ' . json_encode((bool) $oInput->get('isModal')) . '
+                    ' . json_encode((bool) $oInput->get('isModal')) . ',
+                    ' . json_encode($aPermittedDimensions) . '
                 )
             );',
             'JS'

@@ -273,3 +273,59 @@
         </div>
     </div>
 </div>
+<div class="manager-image-scaler hidden" data-bind="css: {hidden: !showImageScaler()}">
+    <div class="manager-image-scaler__dialog">
+
+        <h3 class="manager-image-scaler__title">Insert Image</h3>
+
+        <div class="manager-image-scaler__field">
+            <label class="manager-image-scaler__label">Scaling</label>
+            <select class="manager-image-scaler__select"
+                    data-bind="value: imageScalerScaling">
+                <option value="NONE">None &ndash; insert at full size</option>
+                <option value="CROP">Crop to dimensions</option>
+                <option value="SCALE">Scale to dimensions</option>
+            </select>
+            <!-- ko if: imageScalerScaling() === 'NONE' -->
+            <p class="manager-image-scaler__hint">The image will be embedded at its native resolution.</p>
+            <!-- /ko -->
+            <!-- ko if: imageScalerScaling() === 'CROP' -->
+            <p class="manager-image-scaler__hint">The image is guaranteed to be exactly the chosen dimensions.</p>
+            <!-- /ko -->
+            <!-- ko if: imageScalerScaling() === 'SCALE' -->
+            <p class="manager-image-scaler__hint">The image is guaranteed not to exceed the chosen dimensions.</p>
+            <!-- /ko -->
+        </div>
+
+        <!-- ko if: imageScalerScaling() !== 'NONE' -->
+        <div class="manager-image-scaler__field">
+            <label class="manager-image-scaler__label">Size</label>
+            <select class="manager-image-scaler__select"
+                    data-bind="value: imageScalerSize">
+                <!-- ko foreach: permittedDimensions -->
+                <option data-bind="
+                    value: width + 'x' + height,
+                    text:  width + 'px × ' + height + 'px'
+                "></option>
+                <!-- /ko -->
+            </select>
+            <p class="manager-image-scaler__hint">These dimensions are configured by the application.</p>
+        </div>
+        <!-- /ko -->
+
+        <div class="manager-image-scaler__actions">
+            <button class="action btn btn-default"
+                    data-bind="click: cancelImageScale">
+                Cancel
+            </button>
+            <button class="action action--insert btn btn-primary"
+                    data-bind="
+                        click:    confirmImageScale,
+                        disable:  imageScalerLoading,
+                        text:     imageScalerLoading() ? 'Please wait…' : 'Insert'
+                    ">
+            </button>
+        </div>
+
+    </div>
+</div>

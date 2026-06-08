@@ -1,5 +1,5 @@
 /* globals ko, $ */
-function MediaManager(initialBucket, callbackHandler, callback, isModal) {
+function MediaManager(initialBucket, callbackHandler, callback, isModal, permittedDimensions) {
     var base = this;
 
     // --------------------------------------------------------------------------
@@ -22,6 +22,13 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
     base.isTrash = ko.observable(false);
     base.listingXHR = null;
     base.localStorageCurrentBucketKey = 'NAILS:CDN:MEDIAMANAGER:BUCKET';
+
+    base.permittedDimensions  = permittedDimensions || [];
+    base.showImageScaler      = ko.observable(false);
+    base.imageScalerObject    = null;
+    base.imageScalerScaling   = ko.observable('NONE');
+    base.imageScalerSize      = ko.observable('');
+    base.imageScalerLoading   = ko.observable(false);
 
     // --------------------------------------------------------------------------
 
@@ -477,13 +484,89 @@ function MediaManager(initialBucket, callbackHandler, callback, isModal) {
      * @returns {void}
      */
     base.executeCallback = function() {
-        if (callbackHandler === 'ckeditor') {
+        if (callbackHandler === 'ckeditor' && this.is_img && base.permittedDimensions.length) {
+            base.imageScalerObject = this;
+            base.imageScalerScaling('NONE');
+            base.imageScalerSize(
+                base.permittedDimensions[0].width + 'x' + base.permittedDimensions[0].height
+            );
+            base.showImageScaler(true);
+        } else if (callbackHandler === 'ckeditor') {
             base.callbackCKEditor(this);
             window.close();
         } else {
             base.callbackPicker(this);
             window.parent.$.fancybox.close();
         }
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Confirms the image scaling choice and fires the CKEditor callback
+     * @returns {void}
+     */
+    base.confirmImageScale = function() {
+        var object  = base.imageScalerObject;
+        var scaling = base.imageScalerScaling();
+
+        if (scaling === 'NONE') {
+            base.finalizeImageCallback(object.url.src);
+            return;
+        }
+
+        var key = base.imageScalerSize() + '-' + scaling.toLowerCase();
+
+        if (object.url && object.url[key]) {
+            base.finalizeImageCallback(object.url[key]);
+            return;
+        }
+
+        base.imageScalerLoading(true);
+
+        $.ajax({
+            url:  window.SITE_URL + 'api/cdn/object',
+            data: { id: object.id, urls: key }
+        })
+            .done(function(response) {
+                var url = (response.data && response.data.url && response.data.url[key])
+                    ? response.data.url[key]
+                    : object.url.src;
+                if (!object.url) { object.url = {}; }
+                object.url[key] = url;
+                base.finalizeImageCallback(url);
+            })
+            .fail(function() {
+                base.finalizeImageCallback(object.url.src);
+            })
+            .always(function() {
+                base.imageScalerLoading(false);
+            });
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Dismisses the image scaler dialog without firing the callback
+     * @returns {void}
+     */
+    base.cancelImageScale = function() {
+        base.showImageScaler(false);
+        base.imageScalerObject = null;
+    };
+
+    // --------------------------------------------------------------------------
+
+    /**
+     * Fires the CKEditor callback with the chosen URL and closes the window
+     * @param {string} url The URL to pass back to CKEditor
+     * @returns {void}
+     */
+    base.finalizeImageCallback = function(url) {
+        base.showImageScaler(false);
+        base.imageScalerObject = null;
+        window.opener.CKEDITOR.tools.callFunction(callback[0], url);
+        window.close();
     };
 
     // --------------------------------------------------------------------------
