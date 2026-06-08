@@ -73,16 +73,21 @@ class MediaManager extends Api\Controller\Base
             $oObject = $oObjectModel->getById($oInput->get('object'));
         }
 
+        $aQuery = array_merge(
+            $oInput->get(),
+            [
+                'bucket'      => $oInput->get('bucket'),
+                'bucket_id'   => $oBucket->id ?? null,
+                'bucket_slug' => $oBucket->slug ?? null,
+                'object_id'   => $oObject->id ?? null,
+                'callback'    => $oInput->get('callback'),
+            ]
+        );
+
         return Factory::factory('ApiResponse', Api\Constants::MODULE_SLUG)
             ->setData($oMediaManager
                 ->getUrl(
-                    query: [
-                        'bucket'      => $oInput->get('bucket'),
-                        'bucket_id'   => $oBucket->id ?? null,
-                        'bucket_slug' => $oBucket->slug ?? null,
-                        'object_id'   => $oObject->id ?? null,
-                        'callback'    => $oInput->get('callback'),
-                    ]
+                    query: $aQuery
                 ));
     }
 }
