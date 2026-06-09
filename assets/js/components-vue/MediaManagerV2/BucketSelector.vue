@@ -1,0 +1,518 @@
+<template>
+    <div class="bucket-selector">
+        <div class="bucket-selector__selected" @click="toggleDropdown">
+            <span v-if="selectedBuckets.length === 0 || (singleSelect && !getSelectedBucketLabel())" class="select-placeholder">
+                {{ placeholder }}
+            </span>
+            <span v-else-if="singleSelect" class="selected-label">
+                {{ getSelectedBucketLabel() }}
+            </span>
+            <span v-else class="selected-count">{{ selectedBuckets.length }} selected</span>
+            <span :class="{ 'dropdown-arrow': true, 'dropdown-arrow--offset': offsetDropdownArrow }">▼</span>
+        </div>
+        <div class="bucket-selector__dropdown" v-if="isOpen">
+            <div class="search-box" v-if="buckets.length > 5">
+                <input
+                    type="text"
+                    v-model="searchQuery"
+                    placeholder="Search buckets..."
+                    @click.stop
+                    ref="searchInput"
+                />
+            </div>
+            <div class="options-list">
+                <div
+                    v-for="bucket in filteredBuckets"
+                    :key="bucket.id"
+                    class="option-wrapper"
+                >
+                    <label
+                        class="option"
+                        @click.stop
+                    >
+                        <input
+                            type="checkbox"
+                            :value="bucket.id"
+                            :checked="isSelected(bucket.id)"
+                            @change="toggleBucket(bucket.id)"
+                        />
+                        <div class="option-content">
+                            <span class="option-label">{{ bucket.label }}</span>
+                            <span class="option-sublabel">
+                                {{ bucket.object_count_human }}
+                            </span>
+                        </div>
+                    </label>
+                    <div class="option-actions" v-if="showActions">
+                        <button
+                            v-if="userPermissions.bucket.edit"
+                            class="option-action-button edit-action"
+                            @click.stop="handleEditBucket(bucket)"
+                            title="Rename Bucket"
+                        >
+                            <span class="icon-wrapper" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            v-if="userPermissions.bucket.delete && showActions && bucket.object_count === 0"
+                            class="option-action-button delete-action"
+                            @click.stop="handleDeleteBucket(bucket)"
+                            title="Delete Bucket"
+                        >
+                            <span class="icon-wrapper" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="display: block; margin: auto;">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="actions" v-if="!singleSelect">
+                <button @click.stop="selectAll" class="btn-select-all">Select All</button>
+                <button @click.stop="deselectAll" class="btn-clear">Clear</button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import Button from "./Button.vue";
+
+export default {
+    name: 'BucketSelector',
+    components: {Button},
+    inject: ['userPermissions'],
+    props: {
+        value: {
+            type: [Array, Number, String],
+            default: () => []
+        },
+        buckets: {
+            type: Array,
+            required: true
+        },
+        placeholder: {
+            type: String,
+            default: 'Select Bucket'
+        },
+        singleSelect: {
+            type: Boolean,
+            default: false
+        },
+        showActions: {
+            type: Boolean,
+            default: false
+        },
+        offsetDropdownArrow: {
+            type: Boolean,
+            default: false
+        }
+    },
+    data() {
+        return {
+            selectedBuckets: [],
+            isOpen: false,
+            searchQuery: '',
+        };
+    },
+    computed: {
+        filteredBuckets() {
+            if (!this.searchQuery) {
+                return this.buckets;
+            }
+
+            const query = this.searchQuery.toLowerCase();
+            return this.buckets.filter(bucket => {
+                const label = bucket.label.toLowerCase();
+                return label.includes(query);
+            });
+        }
+    },
+    created() {
+        this.initializeSelectedBuckets();
+    },
+    mounted() {
+        document.addEventListener('keydown', this.handleKeydown);
+    },
+    beforeDestroy() {
+        document.removeEventListener('click', this.closeDropdown);
+        document.removeEventListener('keydown', this.handleKeydown);
+    },
+    watch: {
+        value: {
+            handler(newVal) {
+                this.initializeSelectedBuckets();
+            },
+            deep: true
+        },
+        buckets: {
+            handler() {
+                this.initializeSelectedBuckets();
+            },
+            deep: true
+        }
+    },
+    methods: {
+        initializeSelectedBuckets() {
+            if (this.singleSelect) {
+                this.selectedBuckets = this.value ? [this.value] : [];
+            } else {
+                this.selectedBuckets = Array.isArray(this.value) ? [...this.value] : [];
+            }
+        },
+        toggleDropdown(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const wasOpen = this.isOpen;
+            this.isOpen = !wasOpen;
+            this.$emit('dropdown-toggled', this.isOpen);
+
+            if (this.isOpen) {
+                setTimeout(() => {
+                    document.addEventListener('click', this.closeDropdown);
+                }, 0);
+
+                this.$nextTick(() => {
+                    this.positionDropdown();
+                    if (this.buckets.length > 5) {
+                        this.$refs.searchInput?.focus();
+                    }
+                });
+            } else {
+                document.removeEventListener('click', this.closeDropdown);
+            }
+        },
+        closeDropdown(event) {
+            if (this.isOpen && event) {
+                const isOutside = !this.$el.contains(event.target);
+                if (isOutside) {
+                    this.isOpen = false;
+                    this.$emit('dropdown-toggled', false);
+                    document.removeEventListener('click', this.closeDropdown);
+                }
+            } else if (this.isOpen) {
+                this.isOpen = false;
+                this.$emit('dropdown-toggled', false);
+                document.removeEventListener('click', this.closeDropdown);
+            }
+        },
+        toggleBucket(bucketId) {
+            if (this.singleSelect) {
+                this.selectedBuckets = [bucketId];
+                this.$emit('input', bucketId);
+                this.$emit('change', bucketId);
+                this.closeDropdown();
+            } else {
+                const index = this.selectedBuckets.indexOf(bucketId);
+                if (index > -1) {
+                    this.selectedBuckets.splice(index, 1);
+                } else {
+                    this.selectedBuckets.push(bucketId);
+                }
+                this.$emit('input', this.selectedBuckets);
+                this.$emit('change', this.selectedBuckets);
+            }
+        },
+        isSelected(bucketId) {
+            return this.selectedBuckets.includes(bucketId);
+        },
+        selectAll() {
+            this.selectedBuckets = this.buckets.map(bucket => bucket.id);
+            this.$emit('input', this.selectedBuckets);
+            this.$emit('change', this.selectedBuckets);
+        },
+        deselectAll() {
+            this.selectedBuckets = [];
+            this.$emit('input', this.selectedBuckets);
+            this.$emit('change', this.selectedBuckets);
+        },
+        getSelectedBucketLabel() {
+            const selectedBucket = this.buckets.find(bucket => bucket.id === this.selectedBuckets[0]);
+            return selectedBucket ? selectedBucket.label : '';
+        },
+        handleDeleteBucket(bucket) {
+            this.$emit('delete-bucket', bucket);
+        },
+        handleEditBucket(bucket) {
+            this.$emit('edit-bucket', bucket);
+        },
+        handleKeydown(event) {
+            if (event.key === 'Escape' && this.isOpen) {
+                this.closeDropdown();
+            }
+        },
+        positionDropdown() {
+            const trigger = this.$el.querySelector('.bucket-selector__selected');
+            const dropdown = this.$el.querySelector('.bucket-selector__dropdown');
+
+            if (!trigger || !dropdown) return;
+
+            const rect = trigger.getBoundingClientRect();
+            const dropdownHeight = 300; // max-height of dropdown
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            // Set width to match trigger
+            dropdown.style.width = `${rect.width}px`;
+
+            // Position horizontally
+            dropdown.style.left = `${rect.left}px`;
+
+            // Position vertically - prefer below, but above if not enough space
+            if (spaceBelow >= dropdownHeight || spaceBelow > spaceAbove) {
+                dropdown.style.top = `${rect.bottom + 4}px`;
+            } else {
+                dropdown.style.top = `${rect.top - dropdownHeight - 4}px`;
+            }
+        }
+    }
+}
+</script>
+
+<style lang="scss" scoped>
+.bucket-selector {
+    position: relative;
+    width: 100%;
+
+    &__selected {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+
+        &:hover {
+            border-color: #9ca3af;
+        }
+
+        .select-placeholder {
+            color: #9ca3af;
+        }
+
+        .selected-label {
+            color: #111827;
+            font-weight: 500;
+        }
+
+        .selected-count {
+            color: #4f46e5;
+            font-weight: 500;
+        }
+
+        .dropdown-arrow {
+            color: #6b7280;
+            font-size: 10px;
+            transition: transform 0.2s ease;
+
+            &--offset {
+                margin-right: 1.7rem;
+            }
+        }
+    }
+
+    &__dropdown {
+        position: fixed;
+        width: 100%;
+        max-height: 300px;
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        margin-top: 4px;
+        z-index: 100000;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        display: flex;
+        flex-direction: column;
+        animation: dropdownSlideDown 0.2s ease-out;
+
+        @keyframes dropdownSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .search-box {
+            padding: 8px 8px 4px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            flex-shrink: 0;
+
+            input {
+                width: 100%;
+                padding: 6px 8px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 14px;
+                margin: 0 0 4px 0;
+
+                &:focus {
+                    outline: none;
+                    border-color: #4f46e5;
+                    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+                }
+            }
+        }
+
+        .options-list {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px 0;
+            flex-grow: 1;
+
+            .option-wrapper {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 6px 12px;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+                width: 100%; /* Ensure it takes full width */
+                overflow: hidden; /* Prevent content from overflowing */
+
+                &:hover {
+                    background: #f9fafb;
+                }
+
+                .option {
+                    display: flex;
+                    align-items: flex-start;
+                    flex-grow: 1;
+                    margin: 0;
+                    padding: 0;
+                    min-width: 0; /* Allow container to shrink below content size */
+                    overflow: hidden; /* Ensure content doesn't overflow */
+
+                    input {
+                        margin-right: 8px;
+                        margin-top: 5px;
+                        margin-bottom: 0;
+                        flex-shrink: 0;
+                        align-self: flex-start;
+                    }
+
+                    .option-content {
+                        display: flex;
+                        flex-direction: column;
+                        flex-grow: 1;
+                        flex-shrink: 1;
+                        flex-basis: 0%;
+                        min-width: 0; /* Allow content to shrink below content size */
+                        overflow: hidden; /* Ensure content doesn't overflow */
+                    }
+
+                    .option-label {
+                        color: #111827;
+                        font-size: 14px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        max-width: 100%;
+                    }
+
+                    .option-sublabel {
+                        color: #6b7280;
+                        font-size: 12px;
+                        margin-top: 2px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                }
+
+                .option-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    margin-left: 8px;
+                    flex-shrink: 0; /* Prevent the actions from shrinking */
+
+                    .option-action-button {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 24px;
+                        height: 24px;
+                        border: none;
+                        background: none;
+                        border-radius: 4px;
+                        padding: 0;
+                        cursor: pointer;
+                        color: #6b7280;
+                        transition: all 0.2s ease;
+
+                        &:hover {
+                            background-color: #e5e7eb;
+                            color: #4b5563;
+                        }
+
+                        &.delete-action {
+                            color: white;
+                            background-color: #ef4444;
+
+                            &:hover {
+                                background-color: #dc2626;
+                            }
+                        }
+
+                        svg {
+                            width: 14px;
+                            height: 14px;
+                            display: block;
+                            vertical-align: middle;
+                            margin: auto;
+                        }
+                    }
+                }
+            }
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+
+            button {
+                flex: 1;
+                padding: 6px 12px;
+                border: none;
+                border-radius: 4px;
+                background: #f3f4f6;
+                cursor: pointer;
+                font-size: 12px;
+                color: #4b5563;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background: #e5e7eb;
+                }
+
+                &.btn-select-all {
+                    background: #eef2ff;
+                    color: #4f46e5;
+
+                    &:hover {
+                        background: #e0e7ff;
+                    }
+                }
+            }
+        }
+    }
+}
+</style>

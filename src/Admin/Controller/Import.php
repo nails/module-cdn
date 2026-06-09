@@ -16,10 +16,10 @@ use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Admin\Helper;
 use Nails\Cdn\Admin\Permission;
-use Nails\Cdn\Admin\Permission\Object\Import;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\CdnException;
 use Nails\Cdn\Model\Bucket;
+use Nails\Cdn\Model\CdnObject\Import as ImportModel;
 use Nails\Common\Exception\FactoryException;
 use Nails\Common\Exception\ModelException;
 use Nails\Common\Exception\NailsException;
@@ -27,7 +27,6 @@ use Nails\Common\Exception\ValidationException;
 use Nails\Common\Factory\HttpRequest\Head;
 use Nails\Common\Helper\Model\Expand;
 use Nails\Common\Helper\Model\Where;
-use Nails\Common\Service\Asset;
 use Nails\Common\Service\FormValidation;
 use Nails\Common\Service\HttpCodes;
 use Nails\Common\Service\Input;
@@ -36,108 +35,30 @@ use Nails\Common\Service\Uri;
 use Nails\Factory;
 
 /**
- * Class Manager
+ * Class Import
  *
- * @package Nails\Cdn\Admin\Controller
+ * @package Nails\Admin\Cdn
  */
-class Manager extends Base
+class Import extends Base
 {
+    /**
+     * Announces this controller's navGroups
+     *
+     * @throws FactoryException
+     */
     public static function announce(): Nav|array|null
     {
-        if (userHasPermission(Permission\Object\Browse::class)) {
+        if (userHasPermission(Permission\Object\Import::class)) {
             /** @var Nav $oNavGroup */
             $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
             $oNavGroup
                 ->setLabel('Media')
                 ->setIcon('fa-images')
-                ->addAction('Media Manager', 'index', [], 0);
-
-            if (userHasPermission(Import::class)) {
-                $oNavGroup
-                    ->addAction('Import via URL', 'import');
-            }
+                ->addAction('Import via URL', iOrder: 999);
         }
 
         return $oNavGroup ?? null;
     }
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * Browse CDN Objects
-     *
-     * @return void
-     */
-    public function index()
-    {
-        if (!userHasPermission(Permission\Object\Browse::class)) {
-            unauthorised();
-        }
-
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
-        /** @var Asset $oAsset */
-        $oAsset = Factory::service('Asset');
-
-        $this->data['sBucketSlug'] = $oInput->get('bucket');
-
-        $oAsset
-            ->library('KNOCKOUT')
-            //  @todo (Pablo - 2018-12-01) - Update/Remove/Use minified once JS is refactored to be a module
-            ->load('admin.mediamanager.js', Constants::MODULE_SLUG);
-
-        $sBucketSlug      = $oInput->get('bucket');
-        $sCallbackHandler = $oInput->get('CKEditor') ? 'ckeditor' : 'picker';
-
-        $aCallback = $sCallbackHandler === 'ckeditor'
-            ? [$oInput->get('CKEditorFuncNum')]
-            : array_filter((array) $oInput->get('callback'));
-
-        /** @var \Nails\Cdn\Service\Cdn $oCdn */
-        $oCdn                 = Factory::service('Cdn', Constants::MODULE_SLUG);
-        $aPermittedDimensions = array_values(array_map(
-            fn($o) => ['width' => $o->width, 'height' => $o->height],
-            $oCdn->getPermittedDimensions()
-        ));
-
-        $oAsset->inline(
-            'ko.applyBindings(
-                new MediaManager(
-                    "' . $sBucketSlug . '",
-                    "' . $sCallbackHandler . '",
-                    ' . json_encode($aCallback) . ',
-                    ' . json_encode((bool) $oInput->get('isModal')) . ',
-                    ' . json_encode($aPermittedDimensions) . '
-                )
-            );',
-            'JS'
-        );
-
-        Helper::loadView('index');
-    }
-
-    // --------------------------------------------------------------------------
-
-    //  @todo (Pablo 2025-03-31) - This is a placeholder function so existing apps don't break
-    public function choose()
-    {
-        if (!userHasPermission(Permission\Object\Browse::class)) {
-            unauthorised();
-        }
-
-        /** @var Input $oInput */
-        $oInput = Factory::service('Input');
-
-        $sBaseUrl = self::url();
-
-        if ($oInput::get()) {
-            $sBaseUrl .= '?' . http_build_query($oInput::get());
-        }
-
-        redirect($sBaseUrl);
-    }
-
-    // --------------------------------------------------------------------------
 
     /**
      * Routes import requests
@@ -146,7 +67,7 @@ class Manager extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    public function import()
+    public function index(): void
     {
         if (!userHasPermission(Permission\Object\Import::class)) {
             unauthorised();
@@ -156,11 +77,11 @@ class Manager extends Base
         $oUri = Factory::service('Uri');
         switch ($oUri->segment(5)) {
             case 'cancel':
-                $this->importCancel((int) $oUri->segment(6));
+                $this->cancel((int) $oUri->segment(6));
                 break;
 
             default:
-                $this->importIndex();
+                $this->form();
                 break;
         }
     }
@@ -174,7 +95,7 @@ class Manager extends Base
      * @throws FactoryException
      * @throws ModelException
      */
-    private function importIndex()
+    private function form(): void
     {
         /** @var Input $oInput */
         $oInput = Factory::service('Input');
@@ -184,7 +105,7 @@ class Manager extends Base
         $oSession = Factory::service('Session');
         /** @var Bucket $oBucketModel */
         $oBucketModel = Factory::model('Bucket', Constants::MODULE_SLUG);
-        /** @var Import $oImportModel */
+        /** @var ImportModel $oImportModel */
         $oImportModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
 
         $aBuckets = $oBucketModel->getAllFlat([
@@ -240,7 +161,9 @@ class Manager extends Base
                 }
 
                 $oSession->setFlashData('import_accepted', true);
-                redirect(self::url());
+                redirect(
+                    static::url()
+                );
 
             } catch (ValidationException $e) {
                 $this->oUserFeedback->error(sprintf(
@@ -250,22 +173,22 @@ class Manager extends Base
             }
         }
 
-        $this
-            ->setData('sMaxUploadSize', maxUploadSize())
-            ->setData('aBuckets', $aBuckets)
-            ->setData('bImportAccepted', (bool) $oSession->getFlashData('import_accepted'))
-            ->setData('aImports', $oImportModel->getAll([
-                new Expand('bucket'),
-                'where' => [
-                    [$oImportModel->getColumnCreatedBy(), activeUser('id')],
-                    sprintf(
-                        '%s >= DATE_SUB(NOW(), INTERVAL 24 HOUR)',
-                        $oImportModel->getColumnCreated()
-                    ),
-                ],
-            ]))
-            ->setTitles(['Import via URL'])
-            ->loadView('import');
+        $this->data['page']->title     = 'Import via URL';
+        $this->data['sMaxUploadSize']  = maxUploadSize();
+        $this->data['aBuckets']        = $aBuckets;
+        $this->data['bImportAccepted'] = (bool) $oSession->getFlashData('import_accepted');
+        $this->data['aImports']        = $oImportModel->getAll([
+            new Expand('bucket'),
+            'where' => [
+                [$oImportModel->getColumnCreatedBy(), activeUser('id')],
+                sprintf(
+                    '%s >= DATE_SUB(NOW(), INTERVAL 24 HOUR)',
+                    $oImportModel->getColumnCreated()
+                ),
+            ],
+        ]);
+
+        Helper::loadView('import');
     }
 
     // --------------------------------------------------------------------------
@@ -277,14 +200,14 @@ class Manager extends Base
      *
      * @throws FactoryException
      */
-    private function importCancel(int $iImportId)
+    private function cancel(int $iImportId): void
     {
-        /** @var \Nails\Cdn\Model\CdnObject\Import $oImportModel */
+        /** @var ImportModel $oImportModel */
         $oImportModel = Factory::model('ObjectImport', Constants::MODULE_SLUG);
 
         try {
 
-            /** @var \Nails\Cdn\Resource\CdnObject\Import|null $oImport */
+            /** @var \Nails\Cdn\Resource\CdnObject\Import $oImport */
             $oImport = $oImportModel->getById($iImportId);
 
             if (empty($oImport)) {
@@ -304,6 +227,8 @@ class Manager extends Base
             $this->oUserFeedback->error('Failed to cancel import. ' . $e->getMessage());
         }
 
-        redirect(self::url());
+        redirect(
+            static::url()
+        );
     }
 }

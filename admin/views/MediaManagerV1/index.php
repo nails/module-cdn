@@ -1,3 +1,33 @@
+<?php
+
+use Nails\Cdn\Constants;
+use Nails\Cdn\Service\MediaManager;
+use Nails\Common\Service\Input;
+use Nails\Factory;
+
+/** @var Input $input */
+$input = Factory::service('Input');
+/** @var MediaManager $mediaManager */
+$mediaManager = Factory::service('MediaManager', Constants::MODULE_SLUG);
+
+if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_MANAGER_V2)) {
+
+    $switchUrl = $mediaManager->getUrl(
+        query: $input::get(),
+        path: '/set_default',
+        version: Constants::MEDIA_MANAGER_V2
+    );
+
+    ?>
+    <p class="try-new-manager">
+        <a href="<?=$switchUrl?>" class="btn btn-primary">Switch</a>
+        <span><strong>New!</strong> ✨ Try the new Media Manager</span>
+    </p>
+    <?php
+}
+
+?>
+
 <!-- ko if: !ready() -->
 <div class="module-cdn manager-loading">
     <svg width="30" height="30" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="lds-ring" style="background: none;">

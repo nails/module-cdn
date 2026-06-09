@@ -15,4 +15,7 @@ class Constants
      * @var string
      */
     const MODULE_SLUG = 'nails/module-cdn';
+
+    const MEDIA_MANAGER_V1 = 1;
+    const MEDIA_MANAGER_V2 = 2;
 }

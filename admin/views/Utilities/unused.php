@@ -1,6 +1,7 @@
 <?php
 
 use Nails\Admin\Helper;
+use Nails\Cdn\Admin\Controller\Utilities;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Resource\CdnObject;
 
@@ -104,7 +105,7 @@ if (!empty($oLastStarted) || !empty($aObjects)) {
                             <?=Helper::loadDateTimeCell($oObject->created)?>
                             <?=Helper::loadDateTimeCell($oObject->unusedSince())?>
                             <td class="actions">
-                                <a href="<?=siteUrl('admin/cdn/utilities/unused/' . $oObject->id . '/delete?return=' . urlencode($_SERVER['REQUEST_URI'] ?? ''))?>" class="btn btn-xs btn-danger confirm">
+                                <a href="<?=siteUrl(Utilities::url(sprintf('utilities/%s/delete?return=%s', $oObject->id, urlencode($_SERVER['REQUEST_URI'] ?? ''))))?>" class="btn btn-xs btn-danger confirm">
                                     Delete
                                 </a>
                             </td>
