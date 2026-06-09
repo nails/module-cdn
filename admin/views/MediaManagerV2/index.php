@@ -40,7 +40,7 @@ if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_M
      data-user-can-copy-object="<?=json_encode(userHasPermission('admin:cdn:mediamanager:object:copy'))?>"
      data-user-can-delete-object="<?=json_encode(userHasPermission('admin:cdn:mediamanager:object:delete'))?>"
      data-user-can-restore-object="<?=json_encode(userHasPermission('admin:cdn:mediamanager:object:restore'))?>"
-     data-user-can-purge-object="<?=json_encode(userHasPermission('admin:cdn:mediamanager:object:restore'))?>"
+     data-user-can-purge-object="<?=json_encode(userHasPermission('admin:cdn:mediamanager:object:purge'))?>"
      data-user-can-create-bucket="<?=json_encode(userHasPermission('admin:cdn:mediamanager:bucket:create'))?>"
      data-user-can-edit-bucket="<?=json_encode(userHasPermission('admin:cdn:mediamanager:bucket:edit'))?>"
      data-user-can-delete-bucket="<?=json_encode(userHasPermission('admin:cdn:mediamanager:bucket:delete'))?>"

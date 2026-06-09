@@ -45,7 +45,7 @@ class Import extends BaseAdmin
      */
     public static function announce(): Nav|array|null
     {
-        if (userHasPermission('admin:cdn:mediamanager:object:browse')) {
+        if (userHasPermission('admin:cdn:mediamanager:object:import')) {
             /** @var Nav $oNavGroup */
             $oNavGroup = Factory::factory('Nav', \Nails\Admin\Constants::MODULE_SLUG);
             $oNavGroup
