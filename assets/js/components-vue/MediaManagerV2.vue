@@ -533,7 +533,7 @@ export default {
                     fetch: () => `${this.siteUrl}api/cdn/mediamanagerv2/objects`,
                 },
                 object: {
-                    fetch: (id) => `${this.siteUrl}/api/cdn/object?id=${id}`,
+                    fetch: (id) => `${this.siteUrl}api/cdn/object?id=${id}`,
                     edit: () => `${this.siteUrl}api/cdn/object/edit`,
                     delete: () => `${this.siteUrl}api/cdn/object/delete`,
                     restore: () => `${this.siteUrl}api/cdn/mediamanagerv2/restore`,
