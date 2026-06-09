@@ -2,8 +2,8 @@
    Nails CDN Module Admin Styles
 -------------------------------------------------------------- */
 
-@import './components/mediamanager.scss';
-@import './components/objectpicker.scss';
+@use './components/mediamanager.scss';
+@use './components/objectpicker.scss';
 
 .group-cdn {
     &.browse {
