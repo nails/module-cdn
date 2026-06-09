@@ -401,6 +401,15 @@
             @close="closeDeleteBucketModal"
             @confirm="confirmDeleteBucket"
         />
+
+        <!-- CKEditor Image Scaler -->
+        <ModalImageScaler
+            :visible="showImageScalerModal"
+            :object="imageScalerObject"
+            :permitted-dimensions="permittedDimensions"
+            @close="handleImageScalerClose"
+            @confirm="handleImageScalerConfirm"
+        />
     </div>
 </template>
 
@@ -423,6 +432,7 @@ import ModalCreateBucket from './MediaManagerV2/Modals/ModalCreateBucket.vue'
 import ModalDeleteBucket from './MediaManagerV2/Modals/ModalDeleteBucket.vue'
 import ModalEditBucket from './MediaManagerV2/Modals/ModalEditBucket.vue'
 import ModalTrash from './MediaManagerV2/Modals/ModalTrash.vue'
+import ModalImageScaler from './MediaManagerV2/Modals/ModalImageScaler.vue'
 import Button from './MediaManagerV2/Button.vue'
 import FilePreview from './MediaManagerV2/FilePreview.vue'
 
@@ -446,7 +456,8 @@ export default {
         ModalCreateBucket,
         ModalDeleteBucket,
         ModalEditBucket,
-        ModalTrash
+        ModalTrash,
+        ModalImageScaler,
     },
     props: {
         maxUploadSize: {
@@ -502,6 +513,10 @@ export default {
             default: ''
         },
         systemMetadataKeys: {
+            type: Array,
+            default: () => []
+        },
+        permittedDimensions: {
             type: Array,
             default: () => []
         }
@@ -633,7 +648,10 @@ export default {
             moveObject: null,
             // Copy modal properties
             showCopyModal: false,
-            copyObject: null
+            copyObject: null,
+            // Image scaler properties
+            showImageScalerModal: false,
+            imageScalerObject: null,
         }
     },
 
@@ -677,7 +695,7 @@ export default {
         },
         dateUpper() {
             this.debouncedSearch();
-        }
+        },
     },
 
     computed: {
@@ -1123,8 +1141,23 @@ export default {
         },
 
         callbackCkeditor(selectedObject) {
-            window.opener.CKEDITOR.tools.callFunction(this.callbackFunction[0], selectedObject.url.src);
+            if (selectedObject.is_img && this.permittedDimensions.length) {
+                this.imageScalerObject = selectedObject;
+                this.showImageScalerModal = true;
+            } else {
+                window.opener.CKEDITOR.tools.callFunction(this.callbackFunction[0], selectedObject.url.src);
+                window.close();
+            }
+        },
+
+        handleImageScalerConfirm(url) {
+            window.opener.CKEDITOR.tools.callFunction(this.callbackFunction[0], url);
             window.close();
+        },
+
+        handleImageScalerClose() {
+            this.showImageScalerModal = false;
+            this.imageScalerObject = null;
         },
 
         callbackPicker(selectedObject) {

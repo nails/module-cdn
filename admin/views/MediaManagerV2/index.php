@@ -1,6 +1,7 @@
 <?php
 
 use Nails\Cdn\Constants;
+use Nails\Cdn\Service\Cdn;
 use Nails\Cdn\Service\MediaManager;
 use Nails\Cdn\Service\Monitor;
 use Nails\Common\Service\Input;
@@ -12,6 +13,13 @@ $input = Factory::service('Input');
 $mediaManager = Factory::service('MediaManager', Constants::MODULE_SLUG);
 /** @var Monitor $oMonitor */
 $oMonitor = Factory::service('Monitor', Constants::MODULE_SLUG);
+/** @var Cdn $oCdn */
+$oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+
+$aPermittedDimensions = array_values(array_map(
+    fn($o) => ['width' => $o->width, 'height' => $o->height],
+    $oCdn->getPermittedDimensions()
+));
 
 if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_MANAGER_V1)) {
     $switchUrl = $mediaManager->getUrl(
@@ -37,6 +45,7 @@ if ($input::get('isModal') && $mediaManager->isVersionEnabled(Constants::MEDIA_M
      data-user-can-edit-bucket="<?=json_encode(userHasPermission('admin:cdn:mediamanager:bucket:edit'))?>"
      data-user-can-delete-bucket="<?=json_encode(userHasPermission('admin:cdn:mediamanager:bucket:delete'))?>"
      data-system-metadata-keys="<?=htmlentities(json_encode($oMonitor->getSystemMetadataKeys()), ENT_QUOTES)?>"
+     data-permitted-dimensions="<?=htmlentities(json_encode($aPermittedDimensions), ENT_QUOTES)?>"
 >
     Loading Media Manager...
 </div>

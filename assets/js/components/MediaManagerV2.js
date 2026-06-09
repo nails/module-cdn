@@ -54,6 +54,11 @@ class MediaManagerV2 {
                     ? JSON.parse(mountPoint.dataset.systemMetadataKeys || '[]')
                     : [];
 
+                // Permitted dimensions for CKEditor image scaling
+                const permittedDimensions = mountPoint
+                    ? JSON.parse(mountPoint.dataset.permittedDimensions || '[]')
+                    : [];
+
                 // Create a new Vue instance with all components
                 new Vue({
                     el: '#nails-module-cdn-media-manager-v2',
@@ -79,6 +84,7 @@ class MediaManagerV2 {
                             userCanEditBucket,
                             userCanDeleteBucket,
                             systemMetadataKeys,
+                            permittedDimensions,
                         }
                     })
                 });
