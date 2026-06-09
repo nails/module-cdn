@@ -16,12 +16,12 @@ class Url extends Resource
     /**
      * @var int
      */
-    protected $id;
+    public $id;
 
     /**
      * @var bool
      */
-    protected $is_img;
+    public $is_img;
 
     /**
      * @var string
