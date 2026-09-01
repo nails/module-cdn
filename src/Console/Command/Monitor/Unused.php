@@ -4,6 +4,7 @@ namespace Nails\Cdn\Console\Command\Monitor;
 
 use DateMalformedStringException;
 use DateTime;
+use Nails\Cdn\Cdn\MetaData\SystemKey;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Model;
 use Nails\Cdn\Resource;
@@ -29,9 +30,7 @@ use Throwable;
  */
 class Unused extends Base
 {
-    const string METADATA_KEY_UNUSED       = 'cdn:monitor:unused';
-    const string METADATA_KEY_UNUSED_SINCE = 'cdn:monitor:unused:since';
-    const string PROGRESS_FORMAT           = '%%current%%/%%max%% [%%bar%%] %%percent:3s%%%% %%elapsed:6s%% / %%estimated:-6s%% %%memory:6s%% (found %s unused items)';
+    const string PROGRESS_FORMAT = '%%current%%/%%max%% [%%bar%%] %%percent:3s%%%% %%elapsed:6s%% / %%estimated:-6s%% %%memory:6s%% (found %s unused items)';
 
     // --------------------------------------------------------------------------
 
@@ -113,12 +112,15 @@ class Unused extends Base
             return null;
         };
 
-        $fnStripUnusedMeta = function (array $aMetadata): array {
+        $sSystemKeyUnused      = (new SystemKey\Unused)->get();
+        $sSystemKeyUnusedSince = (new SystemKey\UnusedSince)->get();
+
+        $fnStripUnusedMeta = function (array $aMetadata) use ($sSystemKeyUnused, $sSystemKeyUnusedSince): array {
             return array_values(array_filter(
                 $aMetadata,
                 fn($oItem) => !in_array($oItem->key, [
-                    static::METADATA_KEY_UNUSED,
-                    static::METADATA_KEY_UNUSED_SINCE,
+                    $sSystemKeyUnused,
+                    $sSystemKeyUnusedSince,
                 ])
             ));
         };
@@ -145,19 +147,19 @@ class Unused extends Base
                 $aLocations = $oService->locate($oObject);
 
                 $aCurrentMeta    = (array) $oObject->metadata;
-                $bAlreadyFlagged = $fnGetMetaValue($aCurrentMeta, static::METADATA_KEY_UNUSED) !== null;
+                $bAlreadyFlagged = $fnGetMetaValue($aCurrentMeta, $sSystemKeyUnused) !== null;
 
                 if (empty($aLocations)) {
 
                     if (!$bAlreadyFlagged) {
-                        $sSince     = $fnGetMetaValue($aCurrentMeta, static::METADATA_KEY_UNUSED_SINCE);
+                        $sSince     = $fnGetMetaValue($aCurrentMeta, $sSystemKeyUnusedSince);
                         $aNewMeta   = $fnStripUnusedMeta($aCurrentMeta);
                         $aNewMeta[] = (object) [
-                            'key'   => static::METADATA_KEY_UNUSED,
+                            'key'   => $sSystemKeyUnused,
                             'value' => '1',
                         ];
                         $aNewMeta[] = (object) [
-                            'key'   => static::METADATA_KEY_UNUSED_SINCE,
+                            'key'   => $sSystemKeyUnusedSince,
                             'value' => $sSince ?? date('c'),
                         ];
                         $oObjectModel->update($oObject->id, ['metadata' => json_encode($aNewMeta)]);

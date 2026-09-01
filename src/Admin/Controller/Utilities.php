@@ -16,6 +16,7 @@ use DateMalformedStringException;
 use Nails\Admin\Controller\Base;
 use Nails\Admin\Factory\Nav;
 use Nails\Cdn\Admin\Permission;
+use Nails\Cdn\Cdn\MetaData\SystemKey;
 use Nails\Cdn\Console\Command\Monitor\Unused;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\CdnException;
@@ -420,7 +421,7 @@ class Utilities extends Base
         $iPerPage    = (int) $oInput->get('perPage') ?: 10;
         $aSortConfig = [
             'Unused'   => function () {
-                $sUnusedSinceKey = Unused::METADATA_KEY_UNUSED_SINCE;
+                $sUnusedSinceKey = (new SystemKey\UnusedSince)->get();
                 return <<<EOT
                     STR_TO_DATE(
                         LEFT(
@@ -456,7 +457,7 @@ class Utilities extends Base
         );
 
         //  Prepare conditionals
-        $sUnusedKey  = Unused::METADATA_KEY_UNUSED;
+        $sUnusedKey  = (new SystemKey\Unused)->get();;
         $oUnusedCond = new Condition(
             <<<EOT
             JSON_SEARCH(
