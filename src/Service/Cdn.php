@@ -1006,6 +1006,13 @@ class Cdn
                 $oData->filename = $this->generateFileName($oData->ext);
             }
 
+            /**
+             * If any custom meta data is passed in ensure it is persisted
+             */
+            if (!empty($aOptions['metadata'])) {
+                $oData->metadata = $aOptions['metadata'];
+            }
+
             // --------------------------------------------------------------------------
 
             //  Calculate the MD5 hash, don't upload duplicates in the same bucket
