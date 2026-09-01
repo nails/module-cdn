@@ -3,7 +3,7 @@
 namespace Nails\Cdn\Resource;
 
 use DateMalformedStringException;
-use Nails\Cdn\Console\Command\Monitor\Unused;
+use Nails\Cdn\Cdn\MetaData\SystemKey;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Resource\CdnObject\File;
 use Nails\Cdn\Resource\CdnObject\Image;
@@ -212,8 +212,9 @@ class CdnObject extends Entity
 
     public function isUnused(): bool
     {
+        $sSystemKeyUnused = (new SystemKey\Unused)->get();
         foreach ($this->metadata as $entry) {
-            if ($entry->key === Unused::METADATA_KEY_UNUSED) {
+            if ($entry->key === $sSystemKeyUnused) {
                 return true;
             }
         }
@@ -228,8 +229,9 @@ class CdnObject extends Entity
     public function unusedSince(): ?\DateTime
     {
         if ($this->isUnused()) {
+            $sSystemKeyUnusedSince = (new SystemKey\UnusedSince)->get();
             foreach ($this->metadata as $entry) {
-                if ($entry->key === Unused::METADATA_KEY_UNUSED_SINCE) {
+                if ($entry->key === $sSystemKeyUnusedSince) {
                     return new \DateTime($entry->value);
                 }
             }
