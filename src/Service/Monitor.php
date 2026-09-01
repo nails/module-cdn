@@ -76,16 +76,35 @@ class Monitor
 
     /**
      * Returns metadata keys that are managed by the system and should be treated as read-only.
-     * Override this method to add application-level system keys.
      *
-     * @return string[]
+     * @return Interfaces\MetaData\SystemKey[]
      */
     public function getSystemMetadataKeys(): array
     {
-        return [
-            Unused::METADATA_KEY_UNUSED,
-            Unused::METADATA_KEY_UNUSED_SINCE,
-        ];
+        $aKeys = [];
+
+        foreach (Components::available() as $oComponent) {
+
+            $oClasses = $oComponent
+                ->findClasses('Cdn\\MetaData\\SystemKey')
+                ->whichImplement(Interfaces\MetaData\SystemKey::class)
+                ->whichCanBeInstantiated();
+
+            foreach ($oClasses as $sClass) {
+                $aKeys[] = new $sClass();
+            }
+        }
+
+        return array_values(
+            array_filter(
+                array_unique(
+                    array_map(
+                        fn($oKey) => $oKey->get(),
+                        $aKeys
+                    )
+                )
+            )
+        );
     }
 
     // --------------------------------------------------------------------------
