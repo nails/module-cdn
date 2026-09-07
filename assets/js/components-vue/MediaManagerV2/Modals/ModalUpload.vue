@@ -242,7 +242,7 @@ export default {
                                 onUploadProgress: (progressEvent) => {
                                     if (progressEvent.total) {
                                         const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                                        this.$set(this.uploadProgress, i, percent);
+                                        this.uploadProgress[i] = percent;
                                         // Update overall progress
                                         let total = 0;
                                         for (let j = 0; j < this.uploadProgress.length; j++) {
@@ -253,7 +253,7 @@ export default {
                                 }
                             }
                         );
-                        this.$set(this.uploadProgress, i, 100);
+                        this.uploadProgress[i] = 100;
                     } catch (err) {
                         this.uploadError = `Failed to upload file: ${file.name}`;
                         break;

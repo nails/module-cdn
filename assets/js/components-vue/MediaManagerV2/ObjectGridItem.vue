@@ -60,7 +60,7 @@ export default {
         document.addEventListener('click', this.handleClickOutside);
         document.addEventListener('keydown', this.handleKeydown);
     },
-    beforeDestroy() {
+    beforeUnmount() {
         document.removeEventListener('click', this.handleClickOutside);
         document.removeEventListener('keydown', this.handleKeydown);
     },

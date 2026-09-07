@@ -81,7 +81,7 @@ class MediaManagerV2 extends Base
 
         /** @var Asset $oAsset */
         $oAsset = Factory::service('Asset');
-        $oAsset->vue2();
+        $oAsset->vue3();
 
         Helper::loadView('index');
     }

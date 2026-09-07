@@ -87,7 +87,7 @@ export default {
     components: {Button},
     inject: ['userPermissions'],
     props: {
-        value: {
+        modelValue: {
             type: [Array, Number, String],
             default: () => []
         },
@@ -138,13 +138,13 @@ export default {
     mounted() {
         document.addEventListener('keydown', this.handleKeydown);
     },
-    beforeDestroy() {
+    beforeUnmount() {
         document.removeEventListener('click', this.closeDropdown);
         document.removeEventListener('keydown', this.handleKeydown);
     },
     watch: {
-        value: {
-            handler(newVal) {
+        modelValue: {
+            handler() {
                 this.initializeSelectedBuckets();
             },
             deep: true
@@ -159,9 +159,9 @@ export default {
     methods: {
         initializeSelectedBuckets() {
             if (this.singleSelect) {
-                this.selectedBuckets = this.value ? [this.value] : [];
+                this.selectedBuckets = this.modelValue ? [this.modelValue] : [];
             } else {
-                this.selectedBuckets = Array.isArray(this.value) ? [...this.value] : [];
+                this.selectedBuckets = Array.isArray(this.modelValue) ? [...this.modelValue] : [];
             }
         },
         toggleDropdown(event) {
@@ -205,7 +205,7 @@ export default {
         toggleBucket(bucketId) {
             if (this.singleSelect) {
                 this.selectedBuckets = [bucketId];
-                this.$emit('input', bucketId);
+                this.$emit('update:modelValue', bucketId);
                 this.$emit('change', bucketId);
                 this.closeDropdown();
             } else {
@@ -215,7 +215,7 @@ export default {
                 } else {
                     this.selectedBuckets.push(bucketId);
                 }
-                this.$emit('input', this.selectedBuckets);
+                this.$emit('update:modelValue', this.selectedBuckets);
                 this.$emit('change', this.selectedBuckets);
             }
         },
@@ -224,12 +224,12 @@ export default {
         },
         selectAll() {
             this.selectedBuckets = this.buckets.map(bucket => bucket.id);
-            this.$emit('input', this.selectedBuckets);
+            this.$emit('update:modelValue', this.selectedBuckets);
             this.$emit('change', this.selectedBuckets);
         },
         deselectAll() {
             this.selectedBuckets = [];
-            this.$emit('input', this.selectedBuckets);
+            this.$emit('update:modelValue', this.selectedBuckets);
             this.$emit('change', this.selectedBuckets);
         },
         getSelectedBucketLabel() {

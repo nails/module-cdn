@@ -47,18 +47,21 @@
                         </div>
                     </label>
                     <div class="option-actions" v-if="optionActions.length > 0">
-                        <button
+                        <template
                             v-for="(action, actionIndex) in optionActions"
                             :key="actionIndex"
-                            v-if="action.condition ? action.condition(option) : true"
-                            class="option-action-button"
-                            :class="action.class"
-                            @click.stop="handleOptionAction(action, option)"
-                            :title="action.title"
                         >
-                            <span v-if="action.icon" v-html="action.icon"></span>
-                            <span v-else>{{ action.label }}</span>
-                        </button>
+                            <button
+                                v-if="action.condition ? action.condition(option) : true"
+                                class="option-action-button"
+                                :class="action.class"
+                                @click.stop="handleOptionAction(action, option)"
+                                :title="action.title"
+                            >
+                                <span v-if="action.icon" v-html="action.icon"></span>
+                                <span v-else>{{ action.label }}</span>
+                            </button>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -74,7 +77,7 @@
 export default {
     name: 'MultiSelect',
     props: {
-        value: {
+        modelValue: {
             type: Array,
             default: () => []
         },
@@ -137,20 +140,20 @@ export default {
         }
     },
     created() {
-        this.selectedItems = [...this.value];
+        this.selectedItems = [...this.modelValue];
     },
     mounted() {
         // Add global event listeners
         document.addEventListener('keydown', this.handleKeydown);
         // We'll add the click listener in toggleDropdown instead
     },
-    beforeDestroy() {
+    beforeUnmount() {
         // Remove global event listeners
         document.removeEventListener('click', this.closeDropdown);
         document.removeEventListener('keydown', this.handleKeydown);
     },
     watch: {
-        value: {
+        modelValue: {
             handler(newVal) {
                 this.selectedItems = [...newVal];
             },
@@ -226,18 +229,18 @@ export default {
                     this.selectedItems.splice(index, 1);
                 }
             }
-            this.$emit('input', [...this.selectedItems]);
+            this.$emit('update:modelValue', [...this.selectedItems]);
         },
         selectAll() {
             if (!this.singleSelect) {
                 this.selectedItems = this.filteredOptions.map(option => option.id);
-                this.$emit('input', [...this.selectedItems]);
+                this.$emit('update:modelValue', [...this.selectedItems]);
             }
             this.close(); // Use close() instead of closeDropdown() to ensure event listener is removed
         },
         deselectAll() {
             this.selectedItems = [];
-            this.$emit('input', []);
+            this.$emit('update:modelValue', []);
             this.close(); // Use close() instead of closeDropdown() to ensure event listener is removed
         },
         handleKeydown(event) {
