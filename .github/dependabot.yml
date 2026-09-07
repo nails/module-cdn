@@ -20,3 +20,12 @@ updates:
       - "dependencies"
       - "npm"
       - "automerge"
+    ignore:
+      # vue-loader 16+ is Vue 3 only; this module is on Vue 2.7
+      - dependency-name: "vue-loader"
+        update-types: ["version-update:semver-major"]
+      # Stay on Vue 2 until an intentional migration
+      - dependency-name: "vue"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vue-template-compiler"
+        update-types: ["version-update:semver-major"]
