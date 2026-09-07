@@ -1,7 +1,4 @@
 import MediaManagerV2Vue from '../components-vue/MediaManagerV2.vue';
-import ObjectListItem from '../components-vue/MediaManagerV2/ObjectListItem.vue';
-import ObjectGridItem from '../components-vue/MediaManagerV2/ObjectGridItem.vue';
-import MultiSelect from '../components-vue/MediaManagerV2/MultiSelect.vue';
 
 class MediaManagerV2 {
     constructor(adminController) {
@@ -13,7 +10,7 @@ class MediaManagerV2 {
     waitForVue() {
         return new Promise((resolve) => {
             const checkVue = () => {
-                if (window.Vue) {
+                if (window.Vue && typeof window.Vue.createApp === 'function') {
                     resolve(window.Vue);
                 } else {
                     setTimeout(checkVue, 100);
@@ -31,63 +28,50 @@ class MediaManagerV2 {
                 this.adminController.log('Mounting MediaManagerV2');
 
                 // Get switch back URL from mount point
-                const switchBackUrl = mountPoint ? mountPoint.dataset.switchBackUrl : '';
+                const switchBackUrl = mountPoint.dataset.switchBackUrl || '';
 
                 // Get max upload size from mount point
-                const maxUploadSize = mountPoint ? parseInt(mountPoint.dataset.maxUploadSize) : 10485760; // Default to 10MB if not set
+                const maxUploadSize = parseInt(mountPoint.dataset.maxUploadSize) || 10485760; // Default to 10MB if not set
 
                 // User permissions
-                const userCanCreateObject = mountPoint ? mountPoint.dataset.userCanCreateObject === 'true' : false;
-                const userCanEditObject = mountPoint ? mountPoint.dataset.userCanEditObject === 'true' : false;
-                const userCanReplaceObject = mountPoint ? mountPoint.dataset.userCanReplaceObject === 'true' : false;
-                const userCanMoveObject = mountPoint ? mountPoint.dataset.userCanMoveObject === 'true' : false;
-                const userCanCopyObject = mountPoint ? mountPoint.dataset.userCanCopyObject === 'true' : false;
-                const userCanDeleteObject = mountPoint ? mountPoint.dataset.userCanDeleteObject === 'true' : false;
-                const userCanRestoreObject = mountPoint ? mountPoint.dataset.userCanRestoreObject === 'true' : false;
-                const userCanPurgeObject = mountPoint ? mountPoint.dataset.userCanPurgeObject === 'true' : false;
-                const userCanCreateBucket = mountPoint ? mountPoint.dataset.userCanCreateBucket === 'true' : false;
-                const userCanEditBucket = mountPoint ? mountPoint.dataset.userCanEditBucket === 'true' : false;
-                const userCanDeleteBucket = mountPoint ? mountPoint.dataset.userCanDeleteBucket === 'true' : false;
+                const userCanCreateObject = mountPoint.dataset.userCanCreateObject === 'true';
+                const userCanEditObject = mountPoint.dataset.userCanEditObject === 'true';
+                const userCanReplaceObject = mountPoint.dataset.userCanReplaceObject === 'true';
+                const userCanMoveObject = mountPoint.dataset.userCanMoveObject === 'true';
+                const userCanCopyObject = mountPoint.dataset.userCanCopyObject === 'true';
+                const userCanDeleteObject = mountPoint.dataset.userCanDeleteObject === 'true';
+                const userCanRestoreObject = mountPoint.dataset.userCanRestoreObject === 'true';
+                const userCanPurgeObject = mountPoint.dataset.userCanPurgeObject === 'true';
+                const userCanCreateBucket = mountPoint.dataset.userCanCreateBucket === 'true';
+                const userCanEditBucket = mountPoint.dataset.userCanEditBucket === 'true';
+                const userCanDeleteBucket = mountPoint.dataset.userCanDeleteBucket === 'true';
 
                 // System metadata keys (reserved, read-only in the editor)
-                const systemMetadataKeys = mountPoint
-                    ? JSON.parse(mountPoint.dataset.systemMetadataKeys || '[]')
-                    : [];
+                const systemMetadataKeys = JSON.parse(mountPoint.dataset.systemMetadataKeys || '[]');
 
                 // Permitted dimensions for CKEditor image scaling
-                const permittedDimensions = mountPoint
-                    ? JSON.parse(mountPoint.dataset.permittedDimensions || '[]')
-                    : [];
+                const permittedDimensions = JSON.parse(mountPoint.dataset.permittedDimensions || '[]');
 
-                // Create a new Vue instance with all components
-                new Vue({
-                    el: '#nails-module-cdn-media-manager-v2',
-                    components: {
-                        MediaManagerV2Vue,
-                        ObjectListItem,
-                        ObjectGridItem,
-                        MultiSelect
-                    },
-                    render: h => h(MediaManagerV2Vue, {
-                        props: {
-                            switchBackUrl,
-                            maxUploadSize,
-                            userCanCreateObject,
-                            userCanEditObject,
-                            userCanReplaceObject,
-                            userCanMoveObject,
-                            userCanCopyObject,
-                            userCanDeleteObject,
-                            userCanRestoreObject,
-                            userCanPurgeObject,
-                            userCanCreateBucket,
-                            userCanEditBucket,
-                            userCanDeleteBucket,
-                            systemMetadataKeys,
-                            permittedDimensions,
-                        }
+                const { createApp, h } = Vue;
+                createApp({
+                    render: () => h(MediaManagerV2Vue, {
+                        switchBackUrl,
+                        maxUploadSize,
+                        userCanCreateObject,
+                        userCanEditObject,
+                        userCanReplaceObject,
+                        userCanMoveObject,
+                        userCanCopyObject,
+                        userCanDeleteObject,
+                        userCanRestoreObject,
+                        userCanPurgeObject,
+                        userCanCreateBucket,
+                        userCanEditBucket,
+                        userCanDeleteBucket,
+                        systemMetadataKeys,
+                        permittedDimensions,
                     })
-                });
+                }).mount('#nails-module-cdn-media-manager-v2');
             } catch (error) {
                 this.adminController.log('Error initializing Vue:', error);
             }

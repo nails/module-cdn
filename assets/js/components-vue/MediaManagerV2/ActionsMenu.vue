@@ -22,6 +22,8 @@ const menuEventBus = {
     }
 };
 
+let nextMenuId = 0;
+
 export default {
     name: 'ActionsMenu',
     inject: ['userPermissions'],
@@ -46,6 +48,7 @@ export default {
     },
     data() {
         return {
+            menuId: ++nextMenuId,
             openUpwards: false,
             menuPosition: {top: 0, left: 0},
             menuElement: null
@@ -55,7 +58,7 @@ export default {
         // Listen for other menus being opened
         menuEventBus.$on('menu-opened', (menuId) => {
             // If this isn't the menu that was just opened and our menu is open, close it
-            if (menuId !== this._uid && this.isOpen) {
+            if (menuId !== this.menuId && this.isOpen) {
                 this.$emit('close');
             }
         });
@@ -64,7 +67,7 @@ export default {
         isOpen(newValue) {
             if (newValue) {
                 // Notify other menus that this one is opening
-                menuEventBus.$emit('menu-opened', this._uid);
+                menuEventBus.$emit('menu-opened', this.menuId);
                 this.createMenu();
             } else {
                 this.removeMenu();
@@ -77,7 +80,7 @@ export default {
         window.addEventListener('resize', this.handleResize);
         window.addEventListener('scroll', this.handleScroll, true);
     },
-    beforeDestroy() {
+    beforeUnmount() {
         // Clean up event listeners
         menuEventBus.$off('menu-opened');
         document.removeEventListener('click', this.handleClickOutside);
