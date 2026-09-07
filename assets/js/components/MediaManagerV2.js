@@ -1,5 +1,3 @@
-import MediaManagerV2Vue from '../components-vue/MediaManagerV2.vue';
-
 class MediaManagerV2 {
     constructor(adminController) {
         this.adminController = adminController;
@@ -24,8 +22,16 @@ class MediaManagerV2 {
         const mountPoint = document.querySelector('#nails-module-cdn-media-manager-v2');
         if (mountPoint) {
             try {
+                // Vue is loaded after module admin.min.js (Asset libraries come last).
+                // Vue 3 SFCs import from 'vue' at module eval time, so load them only
+                // after the CDN global is available — unlike Vue 2 / vue-loader 15.
                 const Vue = await this.waitForVue();
                 this.adminController.log('Mounting MediaManagerV2');
+
+                const { default: MediaManagerV2Vue } = await import(
+                    /* webpackChunkName: "admin.mediamanager-v2" */
+                    '../components-vue/MediaManagerV2.vue'
+                );
 
                 // Get switch back URL from mount point
                 const switchBackUrl = mountPoint.dataset.switchBackUrl || '';

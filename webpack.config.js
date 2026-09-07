@@ -9,7 +9,11 @@ module.exports = {
     },
     output: {
         filename: '[name].min.js',
-        path: path.resolve(__dirname, 'assets/js/')
+        chunkFilename: '[name].min.js',
+        path: path.resolve(__dirname, 'assets/js/'),
+        // Resolve async chunks relative to this script's URL
+        // (e.g. /vendor/nails/module-cdn/assets/js/)
+        publicPath: 'auto'
     },
     module: {
         rules: [
@@ -40,11 +44,17 @@ module.exports = {
     },
     plugins: [
         new MiniCssExtractPlugin({
-            filename: '../css/[name].min.css'
+            filename: '../css/[name].min.css',
+            chunkFilename: '../css/[name].min.css'
         }),
         new VueLoaderPlugin(),
 
     ],
+    // Keep the MediaManagerV2 async import as a single stable chunk
+    // (avoid hashed vendor split chunks like 621.min.js)
+    optimization: {
+        splitChunks: false
+    },
     externals: {
         vue: 'Vue'
     },
