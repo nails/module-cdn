@@ -9,56 +9,37 @@
 
 namespace Nails\Cdn\Console\Command\Trash;
 
-use Nails\Cdn\Constants;
-use Nails\Cdn\Model\CdnObject\Trash;
-use Nails\Cdn\Resource\CdnObject;
-use Nails\Cdn\Service\Cdn;
+use Nails\Cdn\Housekeeping\Trash;
+use Nails\Components;
 use Nails\Config;
 use Nails\Console\Command\Base;
 use Nails\Factory;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Class EmptyTrash
- *
- * @package Nails\Cdn\Console\Command\Trash
+ * @deprecated Use housekeeping:run --routine=Nails\Cdn\Housekeeping\Trash
  */
 class EmptyTrash extends Base
 {
-    /**
-     * The number of days to keep trashed objects
-     *
-     * @var int
-     */
-    protected $iTrashRetention;
-
-    // --------------------------------------------------------------------------
-
-    /**
-     * EmptyTrash constructor.
-     *
-     * @param string|null $name
-     */
-    public function __construct(?string $name = null)
-    {
-        $this->iTrashRetention = (int) Config::get('CDN_TRASH_RETENTION', 180);
-        parent::__construct($name);
-    }
-
-    // --------------------------------------------------------------------------
-
     /**
      * Configure the cdn:trash:empty command
      */
     protected function configure()
     {
+        $iRetention = (int) Config::get('CDN_TRASH_RETENTION', 180);
+
         $this
             ->setName('cdn:trash:empty')
-            ->setDescription('Deletes items which have been in the trash for ' . $this->iTrashRetention . ' days');
+            ->setDescription('[DEPRECATED] Deletes items which have been in the trash for ' . $iRetention . ' days')
+            ->addOption(
+                'dry-run',
+                null,
+                InputOption::VALUE_NONE,
+                'Log what would be deleted without deleting'
+            );
     }
-
-    // --------------------------------------------------------------------------
 
     /**
      * Execute the command
@@ -72,43 +53,25 @@ class EmptyTrash extends Base
     {
         parent::execute($oInput, $oOutput);
 
-        $this->banner('CDN: Trash: Empty');
-        $oOutput->writeln('Deleting trashed items older than <comment>' . $this->iTrashRetention . '</comment> days');
-        $oOutput->writeln('');
+        $this->banner('CDN: Trash: Empty (deprecated)');
 
-        /** @var Cdn $oCdn */
-        $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
+        if (!Components::exists('nails/module-housekeeping')) {
+            $oOutput->writeln('<error>This command now requires nails/module-housekeeping.</error>');
+            $oOutput->writeln('Install it with <comment>composer require nails/module-housekeeping</comment>');
+            $oOutput->writeln('then run <comment>nails housekeeping:run --routine=' . Trash::class . '</comment>');
 
-        /** @var Trash $oModel */
-        $oModel = Factory::model('ObjectTrash', Constants::MODULE_SLUG);
-
-        /** @var \DateTime $oNow */
-        $oNow = Factory::factory('DateTime');
-        $oNow->sub(new \DateInterval('P' . $this->iTrashRetention . 'D'));
-
-        $aTrashedItems = $oModel->getAll([
-            'where' => [
-                ['trashed <', $oNow->format('Y-m-d H:i:s')],
-            ],
-        ]);
-
-        $oOutput->writeln('Deleting <comment>' . count($aTrashedItems) . '</comment> items...');
-
-        /** @var CdnObject $oObject */
-        foreach ($aTrashedItems as $oObject) {
-
-            $oOutput->write(' ↳ Deleting Object <comment>' . $oObject->id . '</comment> (' . $oObject->file->name->human . ')... ');
-            if ($oCdn->objectDestroy($oObject->id)) {
-                $oOutput->writeln('<comment>done</comment>');
-            } else {
-                $oOutput->writeln('<error>Error:' . $oCdn->lastError() . '</error>');
-            }
+            return static::EXIT_CODE_FAILURE;
         }
 
-        $oOutput->writeln('');
-        $oOutput->writeln('Complete');
-        $oOutput->writeln('');
+        /** @var \Nails\Housekeeping\Service\Orchestrator $oOrchestrator */
+        $oOrchestrator = Factory::service('Orchestrator', 'nails/module-housekeeping');
+        $oResult       = $oOrchestrator->runRoutine(
+            Trash::class,
+            (bool) $oInput->getOption('dry-run'),
+            true,
+            $oOutput
+        );
 
-        return static::EXIT_CODE_SUCCESS;
+        return $oResult->isSuccess() ? static::EXIT_CODE_SUCCESS : static::EXIT_CODE_FAILURE;
     }
 }
