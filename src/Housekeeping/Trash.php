@@ -21,6 +21,13 @@ class Trash extends Base
     public function execute(Context $oContext): Result
     {
         $iRetention = $this->retentionDays();
+        if ($iRetention < 1) {
+            $oContext
+                ->writeln('Trash cleanup disabled')
+                ->log('DISABLED CDN_TRASH_RETENTION=0');
+
+            return Result::ok(0, 'Trash cleanup disabled');
+        }
 
         /** @var Cdn $oCdn */
         $oCdn = Factory::service('Cdn', Constants::MODULE_SLUG);
@@ -107,9 +114,7 @@ class Trash extends Base
 
     protected function retentionDays(): int
     {
-        $iRetention = (int) Config::get('CDN_TRASH_RETENTION', 180);
-
-        return $iRetention > 0 ? $iRetention : 180;
+        return (int) Config::get('CDN_TRASH_RETENTION', 180);
     }
 
     protected function formatAudit(CdnObject $oObject): string
