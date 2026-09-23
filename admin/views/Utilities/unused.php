@@ -43,7 +43,7 @@ if (!empty($oLastStarted) || !empty($aObjects)) {
         echo adminHelper('loadPagination', $pagination);
 
         ?>
-        <table class="table table-striped table-hover table-bordered table-responsive u-mb0">
+        <table class="table table-striped table-hover table-responsive u-mb0">
             <thead class="table-dark">
                 <tr>
                     <th class="text-center" style="width:50px;">
