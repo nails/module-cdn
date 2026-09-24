@@ -79,8 +79,7 @@ class Form
         $_field_sub_label = $_field_sub_label ? '<small>' . $_field_sub_label . '</small>' : '';
 
         //  Has the field got a tip?
-        $_tipclass = $_tip['title'] ? 'with-tip' : '';
-        $_tip      = Field::getTipHtml((object) $_tip);
+        $_tip = Field::getTipHtml((object) $_tip);
 
         // --------------------------------------------------------------------------
 
@@ -157,11 +156,11 @@ class Form
             <label>
                 <span class="label">
                     $_field_label
+                    $_tip
                     $_field_sub_label
                 </span>
-                <span class="input $_tipclass">
+                <span class="input">
                     $_field_html
-                    $_tip
                     $_error
                     $info_block
                 <span>
@@ -229,8 +228,7 @@ class Form
         $_field_sub_label = $_field_sub_label ? '<small>' . $_field_sub_label . '</small>' : '';
 
         //  Has the field got a tip?
-        $_tipclass = $_tip['title'] ? 'with-tip' : '';
-        $_tip      = Field::getTipHtml((object) $_tip);
+        $_tip = Field::getTipHtml((object) $_tip);
 
         // --------------------------------------------------------------------------
 
@@ -360,10 +358,11 @@ class Form
                 <div>
                     <span class="label">
                         $_field_label
+                        $_tip
                         $_field_sub_label
                     </span>
-                    <span class="input $_tipclass">
-                        <table class="table table-striped table-hover table-bordered table-responsive">
+                    <span class="input">
+                        <table class="table table-striped table-hover table-responsive">
                             <thead class="table-dark">
                                 <th width="*" $sFieldSortableColspan>File</th>
                                 <th width="10"></th>
@@ -382,7 +381,6 @@ class Form
                             </tbody>
                         </table>
 
-                        $_tip
                         $_error
                         $info_block
                     <span>
@@ -457,8 +455,7 @@ class Form
         $sFieldSubLabel = $sFieldSubLabel ? '<small>' . $sFieldSubLabel . '</small>' : '';
 
         //  Has the field got a tip?
-        $sTipClass = $aTip['title'] ? 'with-tip' : '';
-        $sTip      = Field::getTipHtml((object) $aTip);
+        $sTip = Field::getTipHtml((object) $aTip);
 
         // --------------------------------------------------------------------------
 
@@ -585,10 +582,11 @@ class Form
                 <div>
                     <span class="label">
                         $sFieldLabel
+                        $sTip
                         $sFieldSubLabel
                     </span>
-                    <span class="input $sTipClass">
-                        <table class="table table-striped table-hover table-bordered table-responsive">
+                    <span class="input">
+                        <table class="table table-striped table-hover table-responsive">
                             <thead class="table-dark">
                                 <th width="300" $sFieldSortableColspan>$sFieldTableLabelObject</th>
                                 <th width="*">$sFieldTableLabelLabel</th>
@@ -608,7 +606,6 @@ class Form
                             </tbody>
                         </table>
 
-                        $sTip
                         $sError
                         $sInfoBlock
                     <span>
