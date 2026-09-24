@@ -73,7 +73,7 @@ class Form
         // --------------------------------------------------------------------------
 
         //  Is the label required?
-        $_field_label .= $_field_required ? '*' : '';
+        $_field_label .= Field::requiredMarker((bool) $_field_required);
 
         //  Prep sublabel
         $_field_sub_label = $_field_sub_label ? '<small>' . $_field_sub_label . '</small>' : '';
@@ -222,7 +222,7 @@ class Form
         // --------------------------------------------------------------------------
 
         //  Is the label required?
-        $_field_label .= $_field_required ? '*' : '';
+        $_field_label .= Field::requiredMarker((bool) $_field_required);
 
         //  Prep sublabel
         $_field_sub_label = $_field_sub_label ? '<small>' . $_field_sub_label . '</small>' : '';
@@ -449,7 +449,7 @@ class Form
         // --------------------------------------------------------------------------
 
         //  Is the label required?
-        $sFieldLabel .= $sFieldRequired ? '*' : '';
+        $sFieldLabel .= Field::requiredMarker((bool) $sFieldRequired);
 
         //  Prep sublabel
         $sFieldSubLabel = $sFieldSubLabel ? '<small>' . $sFieldSubLabel . '</small>' : '';
