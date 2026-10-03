@@ -67,21 +67,37 @@ class Source
      */
     public function generate(): string
     {
-        return sprintf(
-            '<source srcset="%s" media="%s">',
-            implode(' ', array_filter([
-                $this->oCdn->urlCrop($this->iCdnObjectId, $this->iWidth, $this->iHeight),
-                $this->getDensityString(),
-            ])),
-            $this->getBreakpointString()
-        );
+        $sSrcset = implode(' ', array_filter([
+            $this->oCdn->urlCrop($this->iCdnObjectId, $this->iWidth, $this->iHeight),
+            $this->getDensityString(),
+        ]));
+
+        $sMedia = $this->getMediaString();
+
+        if ($sMedia === null) {
+            return sprintf('<source srcset="%s">', $sSrcset);
+        }
+
+        return sprintf('<source srcset="%s" media="%s">', $sSrcset, $sMedia);
     }
 
     // --------------------------------------------------------------------------
 
-    protected function getBreakpointString(): ?string
+    /**
+     * A breakpoint limits the source to a viewport. Density on its own limits
+     * it to that pixel density, so a 1x display keeps the fallback img.
+     */
+    protected function getMediaString(): ?string
     {
-        return $this->iBreakpoint ? '(min-width: ' . $this->iBreakpoint . 'px)' : null;
+        if ($this->iBreakpoint) {
+            return '(min-width: ' . $this->iBreakpoint . 'px)';
+        }
+
+        if ($this->fDensity) {
+            return '(min-resolution: ' . $this->fDensity . 'dppx)';
+        }
+
+        return null;
     }
 
     // --------------------------------------------------------------------------
