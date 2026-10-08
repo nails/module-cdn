@@ -61,6 +61,11 @@
             "Nails\\Cdn\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Cdn\\": "tests/"
+        }
+    },
     "suggest": {
         "nails/driver-cdn-local": "Use the local file system for file storage.",
         "nails/driver-cdn-awslocal": "Use AWS S3 for file storage.",

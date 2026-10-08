@@ -67,6 +67,11 @@ class Cdn
     const DEFAULT_DRIVER = 'nails/driver-cdn-local';
 
     /**
+     * Driver error treated as success: the file is already gone, so the DB row can still be purged
+     */
+    const ERROR_NO_FILE_TO_DELETE = 'No file to delete';
+
+    /**
      * How precise to make human friendly file sizes
      *
      * @var int
@@ -1634,6 +1639,8 @@ class Cdn
         int|string|Resource\CdnObject|null $object
     ): bool {
 
+        $this->clearErrors();
+
         $oObject = $this->getObject($object);
         if (!$oObject) {
             //  Object doesn't exist but may exist in the trash
@@ -1658,45 +1665,52 @@ class Cdn
 
         // --------------------------------------------------------------------------
 
-        //  Attempt to remove the file
-        if ($this->callDriver('objectDestroy', [$oObject->file->name->disk, $oObject->bucket->slug])) {
-
-            //  Remove the database entries
-            /** @var Database $oDb */
-            $oDb = Factory::service('Database');
-            $oDb->transaction()->start();
-
-            $oDb->where('id', $oObject->id);
-            $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
-
-            $oDb->where('id', $oObject->id);
-            $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash');
-
-            if ($oDb->transaction()->status() === false) {
-
-                $oDb->transaction()->rollback();
+        //  Attempt to remove the file. A missing file is still a success: purge the DB row.
+        if (!$this->callDriver('objectDestroy', [$oObject->file->name->disk, $oObject->bucket->slug])) {
+            $sError = $this->callDriver('lastError');
+            $this->setError($sError);
+            if (!$this->isMissingFileError($sError)) {
                 return false;
-
-            } else {
-
-                $oDb->transaction()->commit();
-                $this->unsetCacheObject($oObject);
-
-                $this->oEventService
-                    ->trigger(
-                        Events::OBJECT_DESTROYED,
-                        Events::getEventNamespace(),
-                        [
-                            $oObject,
-                        ]
-                    );
-
-                return true;
             }
-        } else {
-            $this->setError($this->callDriver('lastError'));
-            return false;
         }
+
+        //  Remove the database entries
+        /** @var Database $oDb */
+        $oDb = Factory::service('Database');
+        $oDb->transaction()->start();
+
+        $oDb->where('id', $oObject->id);
+        $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object');
+
+        $oDb->where('id', $oObject->id);
+        $oDb->delete(Config::get('NAILS_DB_PREFIX') . 'cdn_object_trash');
+
+        if ($oDb->transaction()->status() === false) {
+
+            $oDb->transaction()->rollback();
+            return false;
+
+        } else {
+
+            $oDb->transaction()->commit();
+            $this->unsetCacheObject($oObject);
+
+            $this->oEventService
+                ->trigger(
+                    Events::OBJECT_DESTROYED,
+                    Events::getEventNamespace(),
+                    [
+                        $oObject,
+                    ]
+                );
+
+            return true;
+        }
+    }
+
+    protected function isMissingFileError(mixed $mError): bool
+    {
+        return is_string($mError) && str_contains($mError, static::ERROR_NO_FILE_TO_DELETE);
     }
 
     // --------------------------------------------------------------------------
