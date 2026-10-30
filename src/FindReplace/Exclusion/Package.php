@@ -13,6 +13,8 @@ class Package implements Exclusion
             NAILS_DB_PREFIX . 'cdn_object_trash',
             NAILS_DB_PREFIX . 'cdn_object_import',
             NAILS_DB_PREFIX . 'cdn_object.md5_hash',
+            //  System flags, e.g. [{"key": "cdn:monitor:unused", "value": "1"}].
+            NAILS_DB_PREFIX . 'cdn_object.metadata',
         ];
     }
 

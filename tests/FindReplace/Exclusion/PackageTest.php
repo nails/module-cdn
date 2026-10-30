@@ -22,6 +22,7 @@ class PackageTest extends TestCase
                 NAILS_DB_PREFIX . 'cdn_object_trash',
                 NAILS_DB_PREFIX . 'cdn_object_import',
                 NAILS_DB_PREFIX . 'cdn_object.md5_hash',
+                NAILS_DB_PREFIX . 'cdn_object.metadata',
             ],
             (new Package())->hidden()
         );
