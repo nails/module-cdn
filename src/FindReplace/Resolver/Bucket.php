@@ -2,7 +2,6 @@
 
 namespace Nails\Cdn\FindReplace\Resolver;
 
-use Nails\Cdn\Admin\Controller\MediaManager;
 use Nails\Common\Service\Database;
 use Nails\Factory;
 use Nails\FindReplace\Factory\Action;
@@ -79,6 +78,6 @@ class Bucket implements Resolver
      */
     protected function mediaManagerUrl(): string
     {
-        return MediaManager::url();
+        return siteUrl('admin/cdn/mediaManager');
     }
 }
