@@ -5,7 +5,8 @@ const { VueLoaderPlugin } = require('vue-loader');
 module.exports = {
     entry: {
         'admin': './assets/js/admin.js',
-        'admin.mediamanager': './assets/js/admin.mediamanager.js'
+        'admin.mediamanager': './assets/js/admin.mediamanager.js',
+        'admin.widget-editor-fields': './assets/js/admin.widget-editor-fields.js'
     },
     output: {
         filename: '[name].min.js',
