@@ -15,8 +15,11 @@
 
 namespace Nails\Cdn\Cms\Widgets;
 
+use Nails\Cdn\Cms\Fields\ObjectPicker;
 use Nails\Cdn\Constants;
 use Nails\Cdn\Exception\CdnException;
+use Nails\Cms\Cms\Fields\Select;
+use Nails\Cms\Cms\Fields\Text;
 use Nails\Cms\WidgetEditor\Widget\Base;
 use Nails\Factory;
 
@@ -57,38 +60,26 @@ class Image extends Base
         }
 
         return [
-            ['key' => 'iImageId', 'type' => 'cdn_object', 'label' => 'Image', 'required' => true],
-            [
-                'key'     => 'sScaling',
-                'type'    => 'select',
-                'label'   => 'Scaling',
-                'tip'     => 'Crop guarantees the defined size. Scale guarantees the image does not exceed it.',
-                'options' => ['NONE' => 'None, show fullsize', 'CROP' => 'Crop', 'SCALE' => 'Scale'],
-            ],
-            [
-                'key'     => 'sSize',
-                'type'    => 'select',
-                'label'   => 'Size',
-                'tip'     => 'These dimensions are configured by the application.',
-                'options' => $aSizes,
-            ],
-            [
-                'key'     => 'sLinking',
-                'type'    => 'select',
-                'label'   => 'Linking',
-                'options' => ['NONE' => 'Do not link', 'FULLSIZE' => 'Link to fullsize', 'CUSTOM' => 'Custom URL'],
-            ],
-            ['key' => 'sUrl', 'type' => 'text', 'label' => 'URL', 'visibleWhen' => ['sLinking' => 'CUSTOM']],
-            [
-                'key'     => 'sTarget',
-                'type'    => 'select',
-                'label'   => 'Target',
-                'options' => ['' => 'None', '_blank' => 'New window/tab', '_parent' => 'Parent window/tab'],
-            ],
-            ['key' => 'sImgAlt', 'type' => 'text', 'label' => 'Alt'],
-            ['key' => 'sImgTitle', 'type' => 'text', 'label' => 'Title'],
-            ['key' => 'sImgAttr', 'type' => 'text', 'label' => 'Attributes', 'tip' => 'Extra attributes for the image tag.'],
-            ['key' => 'sLinkAttr', 'type' => 'text', 'label' => 'Link Attributes', 'tip' => 'Extra attributes for the link tag.'],
+            ObjectPicker::make('iImageId')->label('Image')->required(),
+            Select::make('sScaling')
+                ->label('Scaling')
+                ->tip('Crop guarantees the defined size. Scale guarantees the image does not exceed it.')
+                ->options(['NONE' => 'None, show fullsize', 'CROP' => 'Crop', 'SCALE' => 'Scale']),
+            Select::make('sSize')
+                ->label('Size')
+                ->tip('These dimensions are configured by the application.')
+                ->options($aSizes),
+            Select::make('sLinking')
+                ->label('Linking')
+                ->options(['NONE' => 'Do not link', 'FULLSIZE' => 'Link to fullsize', 'CUSTOM' => 'Custom URL']),
+            Text::make('sUrl')->label('URL')->visibleWhen(['sLinking' => 'CUSTOM']),
+            Select::make('sTarget')
+                ->label('Target')
+                ->options(['' => 'None', '_blank' => 'New window/tab', '_parent' => 'Parent window/tab']),
+            Text::make('sImgAlt')->label('Alt'),
+            Text::make('sImgTitle')->label('Title'),
+            Text::make('sImgAttr')->label('Attributes')->tip('Extra attributes for the image tag.'),
+            Text::make('sLinkAttr')->label('Link Attributes')->tip('Extra attributes for the link tag.'),
         ];
     }
 

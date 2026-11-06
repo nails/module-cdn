@@ -13,3 +13,4 @@ parameters:
         - ../vendor/nails/module-auth
     scanFiles:
         - ../vendor/nails/common/helpers/url.php
+        - module-cms.stub.php
