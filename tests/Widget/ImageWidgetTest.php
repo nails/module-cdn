@@ -47,6 +47,11 @@ class ImageWidgetTest extends TestCase
         }
     }
 
+    public function testCdnMonitorWatchesTheImageId(): void
+    {
+        $this->assertSame(['iImageId'], $this->widget()->getCdnMonitorPaths());
+    }
+
     public function testSizeOptionsGroupLandscapePortraitAndSquare(): void
     {
         $options = Image::sizeOptions([

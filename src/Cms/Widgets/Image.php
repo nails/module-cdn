@@ -67,6 +67,18 @@ class Image extends Base
     // --------------------------------------------------------------------------
 
     /**
+     * The CDN monitor finds this object under the canonical slug and the `image` alias.
+     *
+     * @return string[]
+     */
+    public function getCdnMonitorPaths(): array
+    {
+        return ['iImageId'];
+    }
+
+    // --------------------------------------------------------------------------
+
+    /**
      * @inheritDoc
      */
     public function getFields(): ?array
