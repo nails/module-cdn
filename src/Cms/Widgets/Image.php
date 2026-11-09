@@ -49,8 +49,8 @@ class Image extends Base
     protected string $summary     = 'A single image.';
     protected string $description = 'A single image.';
     protected string $icon        = 'fa-image';
-    protected array $keywords     = ['image', 'images', 'photo', 'photos'];
-    protected array $defaults     = [
+    protected array  $keywords    = ['image', 'images', 'photo', 'photos'];
+    protected array  $defaults    = [
         'iImageId'   => null,
         'sScaling'   => 'NONE',
         'sSize'      => '',
@@ -84,30 +84,64 @@ class Image extends Base
     public function getFields(): ?array
     {
         return [
-            ObjectPicker::make('iImageId')->label('Image')->required(),
+            ObjectPicker::make('iImageId')
+                ->label('Image')
+                ->required(),
+
             Select::make('sScaling')
                 ->label('Scaling')
                 ->tip('Crop guarantees the defined size. Scale guarantees the image does not exceed it.')
-                ->options(['NONE' => 'None, show fullsize', 'CROP' => 'Crop', 'SCALE' => 'Scale']),
+                ->options([
+                    'NONE'  => 'None, show fullsize',
+                    'CROP'  => 'Crop',
+                    'SCALE' => 'Scale',
+                ]),
+
             Select::make('sSize')
                 ->label('Size')
                 ->tip('These dimensions are configured by the application.')
                 ->options(static::sizeOptions($this->permittedDimensions()))
                 ->visibleWhen(['sScaling' => ['CROP', 'SCALE']]),
+
             Select::make('sAlignment')
                 ->label('Alignment')
-                ->options(['left' => 'Left', 'center' => 'Center', 'right' => 'Right']),
+                ->options([
+                    'left'   => 'Left',
+                    'center' => 'Center',
+                    'right'  => 'Right',
+                ]),
+
             Select::make('sLinking')
                 ->label('Linking')
-                ->options(['NONE' => 'Do not link', 'FULLSIZE' => 'Link to fullsize', 'CUSTOM' => 'Custom URL']),
-            Text::make('sUrl')->label('URL')->visibleWhen(['sLinking' => 'CUSTOM']),
+                ->options([
+                    'NONE'     => 'Do not link',
+                    'FULLSIZE' => 'Link to fullsize',
+                    'CUSTOM'   => 'Custom URL',
+                ]),
+
+            Text::make('sUrl')
+                ->label('URL')
+                ->visibleWhen(['sLinking' => 'CUSTOM']),
+
             Select::make('sTarget')
                 ->label('Target')
-                ->options(['' => 'None', '_blank' => 'New window/tab', '_parent' => 'Parent window/tab'])
+                ->options([
+                    ''        => 'None',
+                    '_blank'  => 'New window/tab',
+                    '_parent' => 'Parent window/tab',
+                ])
                 ->visibleWhen(['sLinking' => ['FULLSIZE', 'CUSTOM']]),
-            Text::make('sImgAlt')->label('Alt'),
-            Text::make('sImgTitle')->label('Title'),
-            Text::make('sImgAttr')->label('Attributes')->tip('Extra attributes for the image tag.'),
+
+            Text::make('sImgAlt')
+                ->label('Alt'),
+
+            Text::make('sImgTitle')
+                ->label('Title'),
+
+            Text::make('sImgAttr')
+                ->label('Attributes')
+                ->tip('Extra attributes for the image tag.'),
+
             Text::make('sLinkAttr')
                 ->label('Link Attributes')
                 ->tip('Extra attributes for the link tag.')
