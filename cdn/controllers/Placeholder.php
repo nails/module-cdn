@@ -173,12 +173,6 @@ class Placeholder extends Base
 
             //  Save local version, make sure cache is writable
             imagepng($img, $this->cdnCacheDir . $this->cdnCacheFile);
-
-            // --------------------------------------------------------------------------
-
-            //  Destroy the images to free up resource
-            imagedestroy($tile);
-            imagedestroy($img);
         }
 
         $this->serveFromCache($this->cdnCacheFile);
