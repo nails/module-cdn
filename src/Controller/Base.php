@@ -248,12 +248,6 @@ abstract class Base extends \Nails\Common\Controller\Base
 
         // --------------------------------------------------------------------------
 
-        //  Destroy the images
-        imagedestroy($icon);
-        imagedestroy($bg);
-
-        // --------------------------------------------------------------------------
-
         /**
          * Kill script, th, th, that's all folks.
          * Stop the output class from hijacking our headers and
