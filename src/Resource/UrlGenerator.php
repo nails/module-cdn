@@ -66,7 +66,7 @@ abstract class UrlGenerator extends Resource implements Interfaces\UrlGenerator,
     /**
      * Simplify the debug output when using `dd`, `var_dump` etc
      */
-    public function __debugInfo(): ?array
+    public function __debugInfo(): array
     {
         return [
             'iObjectId'  => $this->iObjectId,
